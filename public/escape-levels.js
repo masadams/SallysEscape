@@ -432,11 +432,11 @@
       "facing": 3.141592653589793,
       "patrol": [
         [
-          5,
+          8,
           10
         ],
         [
-          5,
+          8,
           9
         ],
         [
@@ -1960,7 +1960,7 @@
       gates:[{"id":"blue","name":"Blue","color":[106,195,236],"switch":[8,4],"initialOpen":false,"tiles":[[18,3],[18,4],[18,5]]},{"id":"descent","name":"descent","color":[202,164,105],"initialOpen":false,"tiles":[[25,10],[26,10],[27,10],[28,10]]},{"id":"middle-seal","name":"middle seal","color":[202,164,105],"initialOpen":true,"tiles":[[22,13],[22,14],[22,15]]},{"id":"lower-span","name":"lower span","color":[202,164,105],"initialOpen":false,"tiles":[[18,21],[18,22],[18,23]]},{"id":"west-stair","name":"west stair","color":[202,164,105],"initialOpen":false,"tiles":[[4,12],[5,12],[6,12]]}],
       reactions:[{"id":"span-entry","when":"enter","region":[25,2,33,7],"requiresOpen":["blue"],"close":["blue"],"open":["descent"],"spawn":["span-toad"],"message":"The bridge seals behind you. A toad emerges on the old crossing; the eastern descent opens.","objective":"Take the eastern descent. Find the central chest for a lower crossing."},{"id":"span-chest","when":"treasure","at":[17,14],"close":["middle-seal"],"open":["lower-span","west-stair"],"spawn":["lower-spider"],"message":"The chest seals the middle bridge and releases the lower crossing. A den opens below.","objective":"Use the lower crossing to reach the western hatch."}],
       loot:[[5,3,1],[12,4,1],[27,2,1],[31,6,1],[17,14,3],[6,22,1],[14,26,1],[26,21,1]],
-      guards:[{"kind":"scorpion","spawn":[6,5],"facing":3.141592653589793,"patrol":[[3,3],[6,3],[6,5],[3,5]]},{"kind":"toad","spawn":[15,4],"facing":3.141592653589793,"patrol":[[11,3],[15,3],[15,4],[11,4]]},{"kind":"snake","spawn":[31,6],"facing":3.141592653589793,"patrol":[[27,2],[31,2],[31,6],[27,6]]},{"kind":"beetle","spawn":[27,18],"facing":3.141592653589793,"patrol":[[26,14],[27,14],[27,18],[26,18]]},{"kind":"spider","spawn":[18,15],"facing":3.141592653589793,"patrol":[[14,13],[18,13],[18,15],[14,15]]},{"kind":"snake","spawn":[6,24],"facing":3.141592653589793,"patrol":[[3,20],[6,20],[6,24],[3,24]]}],
+      guards:[{"kind":"scorpion","spawn":[9,8],"facing":3.141592653589793,"patrol":[[5,7],[9,7],[9,8],[5,8]]},{"kind":"toad","spawn":[15,4],"facing":3.141592653589793,"patrol":[[11,3],[15,3],[15,4],[11,4]]},{"kind":"snake","spawn":[31,6],"facing":3.141592653589793,"patrol":[[27,2],[31,2],[31,6],[27,6]]},{"kind":"beetle","spawn":[27,18],"facing":3.141592653589793,"patrol":[[26,14],[27,14],[27,18],[26,18]]},{"kind":"spider","spawn":[18,15],"facing":3.141592653589793,"patrol":[[14,13],[18,13],[18,15],[14,15]]},{"kind":"snake","spawn":[6,24],"facing":3.141592653589793,"patrol":[[3,20],[6,20],[6,24],[3,24]]}],
       reinforcements:[{"kind":"toad","spawn":[21,4],"facing":3.141592653589793,"patrol":[[18,3],[21,3],[21,4],[18,4]],"id":"span-toad"},{"kind":"spider","spawn":[24,22],"facing":3.141592653589793,"patrol":[[21,21],[24,21],[24,22],[21,22]],"id":"lower-spider"}]
     },
     {
