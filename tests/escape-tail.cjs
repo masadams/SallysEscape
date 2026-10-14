@@ -9,7 +9,7 @@ function bitten(levelId='fern-cloister'){
 }
 test('only the later chapters forgive a catch; early routes and every challenge stay one-touch',()=>{
   const forgiving=EscapeCatalog.levels.filter(l=>l.tailDrop).map(l=>EscapeCatalog.levels.indexOf(l));
-  assert.ok(forgiving.length>=15);assert.ok(Math.min(...forgiving)>=32,'no tail drop before the Hollow Jungle');
+  assert.ok(forgiving.length>=15);assert.equal(Math.min(...forgiving),23,"the tail drop starts with the scorpions of Venom Depths");
   assert.equal(new EscapeAdventure({levelId:'quiet-vault'}).tailDrop,false);assert.equal(new EscapeAdventure({levelId:'the-heartwood'}).tailDrop,true);
   for(const c of EscapeCatalog.challenges)assert.equal(new EscapeAdventure({challengeId:c.id}).tailDrop,false);
   for(const l of EscapeCatalog.levels.filter(l=>l.regrowth))assert.ok(l.tailDrop,l.id+' has bugs only with a tail to regrow');
@@ -41,9 +41,16 @@ test('regrowth bugs only feed a tailless Sally, by foot or by tongue',()=>{
   assert.equal(t.useTongue(),true);ticks(t,.3);assert.equal(t.hasTail,true);assert.equal(t.regrowthBugs[0].eaten,true);
 });
 test('the Shedding Hollow is a hard tail-drop region where a recorded escape loses and regrows the tail',()=>{
-  const hollow=EscapeCatalog.levels.slice(49);assert.deepEqual(hollow.map(l=>l.id),['shedskin-gully','thornback-warren','moltwater-steps','old-shedding-tree']);
+  const hollow=EscapeCatalog.levels.slice(49,53);assert.deepEqual(hollow.map(l=>l.id),['shedskin-gully','thornback-warren','moltwater-steps','old-shedding-tree']);
   assert.equal(hollow[0].unlockAfter,'the-heartwood');for(const l of hollow){assert.ok(l.tailDrop);assert.ok(l.regrowth.length>=3);assert.ok(l.guards.length>=4);}
   const recording=require('./fixtures/escape-playthroughs.json').find(r=>r.options.levelId==='shedskin-gully'),g=new EscapeAdventure(recording.options);
   for(const c of recording.commands){if(c.kind==='move')for(let n=0;n<c.frames;n++)g.advance(1/120,c);else g[{pebble:'throwDecoy',burrow:'burrow',tongue:'useTongue',seed:'plantSeed'}[c.kind]]();}
   assert.equal(g.status,'won');assert.equal(g.tailsDropped,1);assert.equal(g.hasTail,true);assert.equal(g.regrowthBugs.filter(b=>b.eaten).length,1);
+});
+test('the Lantern Marsh follows the Hollow with five routes that each reuse a different earlier mechanic',()=>{
+  const marsh=EscapeCatalog.levels.slice(53,58);assert.deepEqual(marsh.map(l=>l.id),['firefly-ford','bramble-switchyard','snapdragon-terrace','rival-rooftops','moonwell-keep']);
+  assert.equal(marsh[0].unlockAfter,'old-shedding-tree');for(const l of marsh){assert.ok(l.tailDrop);assert.ok(l.regrowth.length>=2);}
+  assert.ok(marsh[0].dark&&marsh[0].gates[0].bridge);assert.equal(marsh[1].gates.filter(g=>g.duration&&g.plates.length===2).length,3);
+  assert.ok(marsh[2].living&&marsh[2].guards.filter(h=>h.kind==='mimic').length===3&&marsh[2].seeds);assert.equal(marsh[3].rivalries.length,2);
+  assert.equal(marsh.filter(l=>l.guards.some(h=>h.kind==='owl')).length,3);assert.equal(marsh[4].requiredTreasure,7);assert.equal(marsh[4].reactions.length,2);assert.equal(marsh[4].reinforcements.length,2);
 });

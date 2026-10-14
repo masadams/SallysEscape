@@ -2,7 +2,7 @@
   const catalog=typeof module!=='undefined'&&module.exports?require('./escape-levels.js').EscapeCatalog:root.EscapeCatalog;
   const KEY='sallys-escape-progress-v1',validTime=n=>Number.isFinite(n)&&n>0&&n<1000000;
   class EscapeProgress{
-    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[]};this.persistent=Boolean(storage);this.read();}
+    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[]};this.persistent=Boolean(storage);this.read();}
     read(){
       let raw,value;
       try{raw=this.storage?.getItem(KEY);this.persistent=Boolean(this.storage);}catch(_){this.persistent=false;return;}
@@ -10,6 +10,8 @@
       if(!value||value.version!==1)return;
       if(['follow','overview'].includes(value.view))this.data.view=value.view;
       // World caches are only ever added; a stale tab cannot forget one.
+      if(Number.isInteger(value.goldflies)&&value.goldflies>this.data.goldflies)this.data.goldflies=Math.min(value.goldflies,100000);
+      if(Array.isArray(value.regionsSeen))for(const i of value.regionsSeen)if(Number.isInteger(i)&&i>=0&&i<64&&!this.data.regionsSeen.includes(i))this.data.regionsSeen.push(i);
       if(Array.isArray(value.caches))for(const id of value.caches)if(typeof id==='string'&&/^[a-z]+-(north|south)$/.test(id)&&!this.data.caches.includes(id))this.data.caches.push(id);
       for(const [kind,entries] of [['levels',catalog.levels],['challenges',catalog.challenges]])for(const item of entries){
         const saved=value[kind]?.[item.id];
@@ -23,15 +25,21 @@
         this.data[kind][item.id]={cleared:true,bestTime:Math.min(compatible?old.bestTime||Infinity:Infinity,saved.bestTime),revision,...(kind==='levels'?{stars:Math.max(compatible?old.stars||0:0,saved.stars),treasure:Math.max(compatible?old.treasure||0:0,saved.treasure)}:{})};
       }
     }
-    unlocked(id){const index=catalog.levels.findIndex(l=>l.id===id);if(index<0)return false;const prerequisite=catalog.levels[index].unlockAfter||catalog.levels[index-1]?.id;return index===0||index===1||Boolean(this.data.levels[id]?.cleared)||(catalog.levels[index].unlockAny?catalog.levels[index].unlockAny.some(id=>this.data.levels[id]?.cleared):Boolean(prerequisite&&this.data.levels[prerequisite]?.cleared));}
+    challengesCleared(){return catalog.challenges.filter(c=>this.data.challenges[c.id]?.cleared).length;}
+    unlocked(id){const index=catalog.levels.findIndex(l=>l.id===id);if(index<0)return false;
+      // Some branches also wait for a number of completed challenges.
+      if(catalog.levels[index].unlockChallenges&&!this.data.levels[id]?.cleared&&this.challengesCleared()<catalog.levels[index].unlockChallenges)return false;const prerequisite=catalog.levels[index].unlockAfter||catalog.levels[index-1]?.id;return index===0||index===1||Boolean(this.data.levels[id]?.cleared)||(catalog.levels[index].unlockAny?catalog.levels[index].unlockAny.some(id=>this.data.levels[id]?.cleared):Boolean(prerequisite&&this.data.levels[prerequisite]?.cleared));}
     challengeUnlocked(id){const c=catalog.challenges.find(c=>c.id===id);return Boolean(c&&this.data.levels[c.levelId]?.cleared);}
     setView(view){if(!['follow','overview'].includes(view))return false;this.read();this.data.view=view;this.write();return true;}
+    catchGoldfly(){this.read();this.data.goldflies=Math.min(this.data.goldflies+1,100000);this.write();return this.data.goldflies;}
+    // Returns the regions that are open now but were never announced before.
+    announceRegions(open){this.read();const fresh=open.filter(i=>!this.data.regionsSeen.includes(i));if(fresh.length){this.data.regionsSeen.push(...fresh);this.write();}return fresh;}
     findCache(id){if(typeof id!=='string'||!/^[a-z]+-(north|south)$/.test(id))return false;this.read();if(this.data.caches.includes(id))return false;this.data.caches.push(id);this.write();return true;}
     // Lifetime totals for the world map: best stars and treasure per route, challenges and caches.
     totals(cacheValue=0){
       const levels=catalog.levels.map(l=>({level:l,saved:this.data.levels[l.id]}));
       return {stars:levels.reduce((n,{saved})=>n+(saved?.stars||0),0),maxStars:levels.length*3,
-        treasure:levels.reduce((n,{saved})=>n+(saved?.treasure||0),0)+this.data.caches.length*cacheValue,
+        treasure:levels.reduce((n,{saved})=>n+(saved?.treasure||0),0)+this.data.caches.length*cacheValue+this.data.goldflies*2,goldflies:this.data.goldflies,
         maxTreasure:levels.reduce((n,{level})=>n+level.loot.reduce((t,l)=>t+l[2],0),0),
         cleared:levels.filter(({saved})=>saved?.cleared).length,levels:levels.length,
         challenges:catalog.challenges.filter(c=>this.data.challenges[c.id]?.cleared).length,maxChallenges:catalog.challenges.length,caches:this.data.caches.length};

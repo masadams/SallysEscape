@@ -230,3 +230,15 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 #escape-stamina-fill { display:block; height:100%; width:100%; border-radius:4px; background:#b6dda0; transition:width .1s linear; }
 .mobile-game .key-hint { display:none; }
 .escape-select-totals { color:#f3e3b1; font-size:.85rem; }
+
+#escape-intro { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(460px,calc(100% - 32px)); max-height:calc(100% - 32px); overflow:auto; z-index:20; padding:22px 26px; border:1px solid #e7c873; border-radius:14px; background:linear-gradient(160deg,#143a37f2,#0d2526f5); color:#f2ead2; box-shadow:0 18px 50px #000a; cursor:pointer; }
+.escape-intro-number { font-size:.68rem; letter-spacing:.14em; color:#b9d3a4; }
+#escape-intro h2 { margin:6px 0 8px; font-size:1.45rem; color:#ffe9a8; }
+.escape-intro-brief { margin:0 0 8px; font-size:.95rem; }
+.escape-intro-hint { margin:0 0 10px; font-size:.85rem; color:#cfe0c4; }
+.escape-intro-tools { display:flex; flex-wrap:wrap; gap:6px; list-style:none; margin:0 0 10px; padding:0; }
+.escape-intro-tools li { padding:3px 9px; border-radius:999px; background:#ffffff14; font-size:.75rem; }
+.escape-intro-tail { margin:0 0 8px; font-size:.8rem; color:#f2a1b8; }
+.escape-intro-best { margin:0 0 8px; font-size:.8rem; color:#e9c46a; }
+#escape-intro-start { margin-top:4px; }
+@media (max-height:430px){ #escape-intro { padding:12px 16px; } #escape-intro h2 { font-size:1.1rem; margin:3px 0 4px; } .escape-intro-brief,.escape-intro-hint { font-size:.78rem; margin-bottom:5px; } }

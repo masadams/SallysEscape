@@ -1,0 +1,85 @@
+// Procedural sound effects. Every sound is synthesised with Web Audio, so the
+// game ships no audio files; music can later play through its own channel.
+(function(root){
+  let context=null,master=null,noiseBuffer=null;
+  function setup(ctx){
+    if(context===ctx&&master)return true;
+    context=ctx;master=ctx.createDynamicsCompressor();master.threshold.value=-18;master.ratio.value=4;master.connect(ctx.destination);
+    noiseBuffer=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);const data=noiseBuffer.getChannelData(0);
+    let seed=7;for(let i=0;i<data.length;i++){seed=(seed*16807)%2147483647;data[i]=seed/1073741823.5-1;}
+    return true;
+  }
+  function envelope(gain,start,peak,attack,duration){
+    gain.gain.setValueAtTime(0.0001,start);gain.gain.exponentialRampToValueAtTime(Math.max(peak,0.0002),start+attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001,start+duration);
+  }
+  // One oscillator voice: frequency may glide to `to`, and `wobble` adds vibrato.
+  function tone(volume,{freq=440,to=null,type='triangle',dur=.15,delay=0,gain=.5,attack=.008,wobble=0,wobbleRate=18}){
+    const start=context.currentTime+delay,osc=context.createOscillator(),amp=context.createGain();
+    osc.type=type;osc.frequency.setValueAtTime(freq,start);if(to)osc.frequency.exponentialRampToValueAtTime(to,start+dur);
+    let lfo=null;if(wobble){lfo=context.createOscillator();const depth=context.createGain();lfo.frequency.value=wobbleRate;depth.gain.value=wobble;lfo.connect(depth);depth.connect(osc.frequency);lfo.start(start);lfo.stop(start+dur+.05);}
+    envelope(amp,start,gain*volume,attack,dur);osc.connect(amp);amp.connect(master);osc.start(start);osc.stop(start+dur+.05);
+    osc.onended=()=>{osc.disconnect();amp.disconnect();lfo?.disconnect();};
+  }
+  // Filtered noise for footsteps, digging, splashes and impacts.
+  function noise(volume,{dur=.12,delay=0,gain=.5,filter='bandpass',freq=1200,to=null,q=1,attack=.004}){
+    const start=context.currentTime+delay,src=context.createBufferSource(),f=context.createBiquadFilter(),amp=context.createGain();
+    src.buffer=noiseBuffer;f.type=filter;f.Q.value=q;f.frequency.setValueAtTime(freq,start);if(to)f.frequency.exponentialRampToValueAtTime(to,start+dur);
+    envelope(amp,start,gain*volume,attack,dur);src.connect(f);f.connect(amp);amp.connect(master);src.start(start,Math.random()*.5);src.stop(start+dur+.05);
+    src.onended=()=>{src.disconnect();f.disconnect();amp.disconnect();};
+  }
+  const notes=(volume,list,opts={})=>list.forEach(([freq,delay,dur=.14],i)=>tone(volume,{type:'triangle',gain:.45,...opts,freq,delay,dur}));
+  const recipes={
+    step:(v,o)=>noise(v,{dur:.05,gain:o.sprint?.22:.13,filter:'lowpass',freq:o.alt?520:420,q:.7}),
+    paddle:(v)=>noise(v,{dur:.16,gain:.16,freq:700,to:300,q:1.5}),
+    treasure:(v)=>{notes(v,[[988,0,.09],[1319,.07,.22]],{type:'square',gain:.16});tone(v,{freq:2637,delay:.07,dur:.2,type:'sine',gain:.12});},
+    chest:(v)=>{notes(v,[[784,0],[988,.06],[1175,.12],[1568,.18,.3]],{type:'square',gain:.14});noise(v,{dur:.3,delay:.18,gain:.1,filter:'highpass',freq:5000});},
+    key:(v)=>{notes(v,[[1047,0],[1319,.07],[1568,.14],[2093,.21,.4]],{type:'sine',gain:.4});tone(v,{freq:4186,delay:.21,dur:.35,type:'sine',gain:.08});},
+    won:(v)=>{notes(v,[[523,0],[659,.1],[784,.2],[1047,.3,.5]],{gain:.45});notes(v,[[392,.3,.6],[523,.3,.6]],{type:'sine',gain:.2});},
+    caught:(v)=>{tone(v,{freq:330,to:92,dur:.55,type:'sawtooth',gain:.18});noise(v,{dur:.25,gain:.3,filter:'lowpass',freq:300});},
+    failed:(v)=>notes(v,[[392,0,.18],[311,.18,.35]],{gain:.35}),
+    warning:(v)=>notes(v,[[520,0,.07],[640,.09,.1]],{type:'sine',gain:.3}),
+    spotted:(v)=>{notes(v,[[880,0,.08],[1175,.08,.14]],{type:'square',gain:.18});noise(v,{dur:.08,gain:.12,freq:3000});},
+    lost:(v)=>tone(v,{freq:620,to:390,dur:.35,type:'sine',gain:.3}),
+    decoy:(v)=>{noise(v,{dur:.04,gain:.35,freq:2600,q:4});noise(v,{dur:.03,delay:.13,gain:.22,freq:2900,q:4});noise(v,{dur:.025,delay:.22,gain:.12,freq:3100,q:4});},
+    distracted:(v)=>tone(v,{freq:700,to:760,dur:.18,type:'sine',gain:.25}),
+    burrow:(v)=>{noise(v,{dur:.4,gain:.4,filter:'lowpass',freq:500,to:120});tone(v,{freq:90,to:55,dur:.3,type:'sine',gain:.4,delay:.05});},
+    tongue:(v)=>tone(v,{freq:260,to:1300,dur:.09,type:'sine',gain:.35}),
+    tailDrop:(v)=>{noise(v,{dur:.05,gain:.4,freq:1800,q:2});tone(v,{freq:900,to:500,dur:.45,type:'square',gain:.1,wobble:120,wobbleRate:22,delay:.03});},
+    regrow:(v)=>{tone(v,{freq:500,to:1400,dur:.5,type:'sine',gain:.3,wobble:30,wobbleRate:12});notes(v,[[1568,.35,.12],[2093,.45,.2]],{type:'sine',gain:.2});},
+    gate:(v)=>{tone(v,{freq:150,to:95,dur:.3,type:'square',gain:.12});noise(v,{dur:.3,gain:.2,filter:'lowpass',freq:800,to:200});},
+    plate:(v)=>notes(v,[[1200,0,.05],[800,.05,.08]],{type:'square',gain:.12}),
+    creak:(v)=>tone(v,{freq:140,to:120,dur:.4,type:'sawtooth',gain:.1,wobble:12,wobbleRate:9}),
+    maze:(v)=>{tone(v,{freq:70,to:45,dur:.8,type:'sine',gain:.5});noise(v,{dur:.7,gain:.25,filter:'lowpass',freq:260,to:80});},
+    seal:(v)=>{tone(v,{freq:95,to:60,dur:.35,type:'square',gain:.15});noise(v,{dur:.15,gain:.3,filter:'lowpass',freq:400});},
+    splash:(v)=>noise(v,{dur:.35,gain:.35,freq:1200,to:300,q:.8}),
+    tail:(v)=>noise(v,{dur:.12,gain:.2,freq:900,q:3}),
+    sting:(v)=>{tone(v,{freq:1400,to:400,dur:.12,type:'sawtooth',gain:.12});noise(v,{dur:.06,gain:.25,freq:4000,q:2});},
+    charge:(v)=>{noise(v,{dur:.35,gain:.25,filter:'lowpass',freq:300,to:900});tone(v,{freq:110,to:180,dur:.3,type:'sawtooth',gain:.1});},
+    hop:(v)=>tone(v,{freq:180,to:420,dur:.16,type:'sine',gain:.35}),
+    scrape:(v)=>noise(v,{dur:.25,gain:.2,freq:1600,to:900,q:6}),
+    rumble:(v)=>noise(v,{dur:.5,gain:.3,filter:'lowpass',freq:160}),
+    den:(v)=>{tone(v,{freq:160,to:120,dur:.4,type:'triangle',gain:.25,wobble:20,wobbleRate:6});noise(v,{dur:.4,gain:.15,filter:'lowpass',freq:500});},
+    emerge:(v)=>{noise(v,{dur:.3,gain:.25,filter:'lowpass',freq:400,to:1200});tone(v,{freq:210,to:320,dur:.25,gain:.18});},
+    web:(v)=>tone(v,{freq:1800,to:900,dur:.18,type:'sine',gain:.15,wobble:200,wobbleRate:30}),
+    flutter:(v)=>noise(v,{dur:.25,gain:.18,freq:2200,q:1.5,attack:.05}),
+    glimmer:(v)=>notes(v,[[1760,0,.1],[2349,.06,.2]],{type:'sine',gain:.14}),
+    clash:(v)=>{noise(v,{dur:.15,gain:.35,freq:700,q:2});noise(v,{dur:.12,delay:.12,gain:.3,freq:900,q:2});},
+    grow:(v)=>tone(v,{freq:300,to:820,dur:.35,type:'sine',gain:.28,wobble:15,wobbleRate:8}),
+    wilt:(v)=>tone(v,{freq:520,to:220,dur:.4,type:'sine',gain:.22}),
+    rustle:(v)=>noise(v,{dur:.3,gain:.18,freq:3500,q:.6,attack:.04}),
+    snap:(v)=>{noise(v,{dur:.05,gain:.4,freq:1500,q:3});tone(v,{freq:220,to:110,dur:.12,type:'square',gain:.12});},
+    cache:(v)=>{recipes.chest(v);notes(v,[[2093,.32,.12],[2637,.4,.25]],{type:'sine',gain:.15});},
+    hoot:(v)=>{tone(v,{freq:420,to:360,dur:.22,type:'sine',gain:.35,wobble:6,wobbleRate:7});tone(v,{freq:400,to:330,dur:.35,type:'sine',gain:.3,delay:.28,wobble:6,wobbleRate:7});},
+    screech:(v)=>{tone(v,{freq:2400,to:1500,dur:.45,type:'sawtooth',gain:.08,wobble:90,wobbleRate:24});tone(v,{freq:1800,to:1200,dur:.35,type:'sine',gain:.12,delay:.08});},
+    dive:(v)=>noise(v,{dur:.4,gain:.35,freq:600,to:2400,q:1.2,attack:.2}),
+    camo:(v)=>{tone(v,{freq:900,to:520,dur:.35,type:'sine',gain:.18,wobble:40,wobbleRate:16});noise(v,{dur:.3,gain:.08,filter:'highpass',freq:4000,attack:.08});},
+    click:(v)=>tone(v,{freq:900,to:700,dur:.05,type:'sine',gain:.12})
+  };
+  function play(ctx,name,volume=.25,options={}){
+    const recipe=recipes[name];if(!recipe||!ctx||volume<=0)return false;
+    try{setup(ctx);recipe(Math.min(1,volume*1.6),options);return true;}catch(_){return false;}
+  }
+  root.EscapeAudio={play,recipes:Object.keys(recipes)};
+  if(typeof module!=='undefined'&&module.exports)module.exports=root.EscapeAudio;
+})(typeof globalThis!=='undefined'?globalThis:this);
