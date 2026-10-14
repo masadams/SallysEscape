@@ -421,7 +421,7 @@
           if(this.elapsed<h.pauseUntil){speed=0;}else{h.pauseUntil=0;h.routeIndex=(h.routeIndex+1)%h.patrol.length;target=h.patrol[h.routeIndex];}
         }
       }
-      if(h.state==='chase'&&previousState!=='chase')this.alarms++;
+      if(h.state==='chase'&&previousState!=='chase'){this.alarms++;this.events.push('spotted');}
       if(target&&speed>0)this.moveHunter(target,speed*dt,h);
     }
     updateRivalries(){
@@ -445,7 +445,7 @@
       else if(h.lastKnown&&this.elapsed-h.lastObserved<1.2){h.state='search';target=h.lastKnown;speed=1.2;}
       else{h.state='patrol';h.awareness=0;h.lastKnown=null;target=h.patrol[h.routeIndex];if(distance(h,target)<.1){h.routeIndex=(h.routeIndex+1)%h.patrol.length;target=h.patrol[h.routeIndex];}}
       if(h.state==='alert'&&previousState!=='alert')this.events.push('warning');
-      if(h.state==='chase'&&previousState!=='chase')this.alarms++;
+      if(h.state==='chase'&&previousState!=='chase'){this.alarms++;this.events.push('spotted');}
       if(target&&speed)this.moveHunter(target,speed*dt,h);
     }
     updateMimic(dt,h){

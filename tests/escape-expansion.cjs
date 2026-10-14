@@ -7,7 +7,7 @@ const result=(levelId,extra={})=>({status:'won',levelId,challengeId:null,totalTr
 function storage(){const data=new Map();return {getItem:k=>data.get(k),setItem:(k,v)=>data.set(k,v)};}
 
 test('all forty-seven routes have closed borders; static gate puzzles have permanently openable walking routes',()=>{
- assert.equal(EscapeCatalog.levels.length,53);assert.equal(EscapeCatalog.challenges.length,16);
+ assert.equal(EscapeCatalog.levels.length,58);assert.equal(EscapeCatalog.challenges.length,16);
  for(const level of EscapeCatalog.levels){
   const g=new EscapeAdventure({levelId:level.id}),grid=escapeGridFor(level);
   assert.ok(grid[0].every(c=>c==='#')&&grid.at(-1).every(c=>c==='#'));assert.ok(grid.every(row=>row[0]==='#'&&row.at(-1)==='#'));

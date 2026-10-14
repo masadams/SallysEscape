@@ -3,7 +3,17 @@ function escapeRecordSummary(level,saved,challenge=false){
   if(!saved)return '';
   return challenge?'✓ Complete · Best '+saved.bestTime.toFixed(1)+'s':'★'.repeat(saved.stars)+'☆'.repeat(3-saved.stars)+' · Best '+saved.bestTime.toFixed(1)+'s';
 }
-let escapeGame=null;
+function escapeToolkit(level){return [[level.seeds||0,'seed pod'],[level.tongues||0,'tongue grab'],[level.burrows,'burrow'],[level.pebbles,'pebble']].filter(([n])=>n>0).map(([n,label])=>n+' '+label+(n>1?'s':'')).concat(level.requiredTreasure?[level.requiredTreasure+' treasure to escape']:[],level.timeLimit?[level.timeLimit+' second escape']:[],level.tailDrop?['spare tail']:[],level.regrowth?[level.regrowth.length+' regrowth bugs']:[]);}
+let escapeGame=null,escapeIntroOpen=false;
+// The intro card holds the hunters still until the player is ready.
+function showEscapeIntro(){
+  const g=escapeGame,level=g.level,index=EscapeCatalog.levels.indexOf(level),best=!g.challenge&&escapeProgress.data.levels[level.id];
+  const card=document.getElementById('escape-intro');escapeIntroOpen=true;
+  const tools=escapeToolkit(level).map(t=>'<li>'+t+'</li>').join('');
+  card.innerHTML='<span class="escape-intro-number">'+(g.challenge?'CHALLENGE · '+level.name:(level.expedition?'EXPEDITION ':'ESCAPE ')+(index+1))+'</span><h2 id="escape-intro-title">'+(g.challenge?g.challenge.name:level.name)+'</h2><p class="escape-intro-brief">'+(g.challenge?g.challenge.brief:level.brief)+'</p><p class="escape-intro-hint">'+level.hint+'</p>'+(tools?'<ul class="escape-intro-tools">'+tools+'</ul>':'')+(g.tailDrop?'<p class="escape-intro-tail">Sally can drop her tail once here. The next catch is final.</p>':'')+(best?'<p class="escape-intro-best">Best: '+escapeRecordSummary(level,best)+'</p>':'')+'<button id="escape-intro-start" class="escape-primary">Start<span class="key-hint"> · any key</span></button>';
+  card.style.display='block';card.onclick=hideEscapeIntro;document.getElementById('escape-intro-start').focus();
+}
+function hideEscapeIntro(){if(!escapeIntroOpen)return;escapeIntroOpen=false;document.getElementById('escape-intro').style.display='none';document.activeElement?.blur?.();escapeHudAt=-Infinity;escapeSound('click');}
 let escapeHudAt=-Infinity;
 let escapeResultShown=false;
 let escapeOptions={};
@@ -20,8 +30,8 @@ function showEscapeSelect(){
   const stars=n=>'★'.repeat(n)+'☆'.repeat(3-n);
   panel.innerHTML='<button id="world-list-back" class="escape-secondary">← World map</button><div class="escape-select-heading"><span>'+EscapeCatalog.levels.length+' ESCAPES · '+EscapeCatalog.challenges.length+' CHALLENGES</span><h2>Sally’s Escape Trail</h2><p>Find the key, choose your risks, and bring Sally home.</p><p class="escape-select-totals">'+(t=>'★ '+t.stars+' / '+t.maxStars+' stars · ◆ '+t.treasure+' treasure · ⚑ '+t.challenges+' / '+t.maxChallenges+' challenges · '+t.cleared+' / '+t.levels+' escapes cleared')(escapeProgress.totals(ESCAPE_CACHE_VALUE))+'</p><div class="escape-view-choice"><label for="escape-view-choice">Larger routes</label><select id="escape-view-choice"><option value="follow" '+(escapeProgress.data.view==='follow'?'selected':'')+'>Follow Sally · explored map</option><option value="overview" '+(escapeProgress.data.view==='overview'?'selected':'')+'>Show the whole maze</option></select><small>The first five routes keep their full-map view.</small></div></div><div class="escape-levels">'+EscapeCatalog.levels.map((level,i)=>{
     const unlocked=escapeProgress.unlocked(level.id),best=escapeProgress.data.levels[level.id];
-    const toolkit=[[level.seeds||0,'seed pod'],[level.tongues||0,'tongue grab'],[level.burrows,'burrow'],[level.pebbles,'pebble']].filter(([n])=>n>0).map(([n,label])=>n+' '+label+(n>1?'s':'')).concat(level.requiredTreasure?[level.requiredTreasure+' treasure to escape']:[],level.timeLimit?[level.timeLimit+' second escape']:[],level.tailDrop?['spare tail']:[],level.regrowth?[level.regrowth.length+' regrowth bugs']:[]).join(' · ');
-    return (i===0?'<div class="escape-chapter-heading">Chapter 1 · The first escapes</div>':i===5?'<div class="escape-chapter-heading">Chapter 2 · Into the ruins</div>':i===9?'<div class="escape-chapter-heading">Chapter 3 · Tools of the trade</div>':i===13?'<div class="escape-chapter-heading">Chapter 4 · The ruins fight back</div>':i===17?'<div class="escape-chapter-heading">Chapter 5 · Deep Trials</div>':i===23?'<div class="escape-chapter-heading">Chapter 6 · Venom Depths</div>':i===27?'<div class="escape-chapter-heading">Chapter 7 · The waking maze</div>':i===32?'<div class="escape-chapter-heading">Chapter 8 · The hollow jungle</div>':i===37?'<div class="escape-chapter-heading">Chapter 9 · The luminous depths</div>':i===42?'<div class="escape-chapter-heading">Chapter 10 · The living labyrinth</div>':i===47?'<div class="escape-chapter-heading">Optional expedition · Sun and sea</div>':i===49?'<div class="escape-chapter-heading">Chapter 11 · The Shedding Hollow</div>':'')+'<article class="escape-level-card '+(unlocked?'':'escape-locked')+'"><span class="escape-stage-number">'+(i+1)+'</span><h3>'+level.name+'</h3><p>'+level.brief+'</p><div class="escape-toolkit">'+toolkit+'</div><div class="escape-best">'+(best?escapeRecordSummary(level,best):unlocked?'A new route awaits.':escapeUnlockHint(level))+'</div><button id="escape-level-'+level.id+'" class="escape-primary" '+(unlocked?'':'disabled')+'>'+(unlocked?best?'Play again':'Start escape':'Locked')+'</button></article>';
+    const toolkit=escapeToolkit(level).join(' · ');
+    return (i===0?'<div class="escape-chapter-heading">Chapter 1 · The first escapes</div>':i===5?'<div class="escape-chapter-heading">Chapter 2 · Into the ruins</div>':i===9?'<div class="escape-chapter-heading">Chapter 3 · Tools of the trade</div>':i===13?'<div class="escape-chapter-heading">Chapter 4 · The ruins fight back</div>':i===17?'<div class="escape-chapter-heading">Chapter 5 · Deep Trials</div>':i===23?'<div class="escape-chapter-heading">Chapter 6 · Venom Depths</div>':i===27?'<div class="escape-chapter-heading">Chapter 7 · The waking maze</div>':i===32?'<div class="escape-chapter-heading">Chapter 8 · The hollow jungle</div>':i===37?'<div class="escape-chapter-heading">Chapter 9 · The luminous depths</div>':i===42?'<div class="escape-chapter-heading">Chapter 10 · The living labyrinth</div>':i===47?'<div class="escape-chapter-heading">Optional expedition · Sun and sea</div>':i===49?'<div class="escape-chapter-heading">Chapter 11 · The Shedding Hollow</div>':i===53?'<div class="escape-chapter-heading">Chapter 12 · The Lantern Marsh</div>':'')+'<article class="escape-level-card '+(unlocked?'':'escape-locked')+'"><span class="escape-stage-number">'+(i+1)+'</span><h3>'+level.name+'</h3><p>'+level.brief+'</p><div class="escape-toolkit">'+toolkit+'</div><div class="escape-best">'+(best?escapeRecordSummary(level,best):unlocked?'A new route awaits.':escapeUnlockHint(level))+'</div><button id="escape-level-'+level.id+'" class="escape-primary" '+(unlocked?'':'disabled')+'>'+(unlocked?best?'Play again':'Start escape':'Locked')+'</button></article>';
   }).join('')+'</div><h3 class="escape-challenge-heading">Extra challenges</h3><div class="escape-contracts">'+EscapeCatalog.challenges.map(challenge=>{
     const unlocked=escapeProgress.challengeUnlocked(challenge.id),best=escapeProgress.data.challenges[challenge.id],level=EscapeCatalog.levels.find(l=>l.id===challenge.levelId);
     return '<article class="escape-contract '+(unlocked?'':'escape-locked')+'"><h3>'+challenge.name+'</h3><p>'+challenge.brief+'</p><div class="escape-best">'+(best?escapeRecordSummary(level,best,true):unlocked?level.name:'Clear '+level.name+' to unlock.')+'</div><button id="escape-contract-'+challenge.id+'" class="escape-secondary" '+(unlocked?'':'disabled')+'>'+(unlocked?'Try challenge':'Locked')+'</button></article>';
@@ -40,7 +50,7 @@ function startEscape(options={}){
   escapeOptions={levelId:escapeGame.level.id,challengeId:escapeGame.challenge?.id||null};
   gameState='escape';escapeLibraryOpen=false;document.getElementById('game-area').classList.remove('escape-world-open');mountEscapeChrome(true);
   document.getElementById('game-area').classList.toggle('escape-exploring',Boolean(escapeGame.level.explore));
-  for(const id of ['start-menu-container','escape-result','escape-select'])document.getElementById(id).style.display='none';
+  for(const id of ['start-menu-container','escape-result','escape-select','escape-intro'])document.getElementById(id).style.display='none';escapeIntroOpen=false;
   document.getElementById('game-container').style.display='block';
   document.getElementById('game-area').classList.add('escape-mode');
   document.getElementById('scoreboard').innerHTML=`
@@ -58,6 +68,7 @@ function startEscape(options={}){
   document.getElementById('escape-seed-action').onclick=useEscapeSeed;
   document.getElementById('escape-map-button').onclick=toggleEscapeMap;
   clearTouchInput();suppressHeldKeys();unlockAudio();renderEscapeHUD();updateToolbar();
+  if(!options.skipIntro)showEscapeIntro();
   window.scrollTo?.(0,0);
 }
 function leaveEscape(){
@@ -75,10 +86,12 @@ function useEscapeLook(){if(gameState==='escape'&&!paused&&escapeGame){escapeGam
 function useEscapeSeed(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.plantSeed();renderEscapeHUD(true);}}
 function escapeKeyPressed(){
   const k=String(key).toLowerCase();
+  if(gameState==='escapeSelect'&&!escapeLibraryOpen&&(k==='r'||k==='t')){if(escapeWorld?.tongue())escapeSound('tongue');return;}
   if(gameState==='escapeSelect'){if(!escapeLibraryOpen&&(keyCode===13||k==='enter')&&document.activeElement?.tagName!=='BUTTON')enterEscapeWorld();return;}
-  if(gameState==='escapeResult'&&k==='r'){startEscape(escapeOptions);return;}
+  if(gameState==='escapeResult'&&k==='r'){startEscape({...escapeOptions,skipIntro:true});return;}
   if(gameState==='escape'&&k==='g'){toggleEscapeMap();return;}
   if(gameState!=='escape'||paused)return;
+  if(escapeIntroOpen){hideEscapeIntro();return;}
   if(k==='e')useEscapeBurrow();
   if(k==='q')useEscapeDecoy();
   if(k==='r'||k==='t')useEscapeTongue();
@@ -103,15 +116,13 @@ function toggleEscapeMap(){
 function playEscape(){
   if(!escapeGame)return;
   escapeGame.paused=paused;
-  if(gameState==='escape'&&!paused&&!skipSimulationFrame){
+  if(escapeIntroOpen&&gameState==='escape'&&!paused){const m=escapeMovement();if(m.x||m.y)hideEscapeIntro();}
+  if(gameState==='escape'&&!paused&&!skipSimulationFrame&&!escapeIntroOpen){
     let {x,y,sprint}=escapeMovement();
     escapeGame.advance(deltaTime/1000,{x,y,sprint});
   }
-  for(const event of new Set(escapeGame.drainEvents())){
-    if(event==='treasure')playEffect(coinSound);
-    else if(['key','burrow','won','gate','regrow'].includes(event))playEffect(colorSound);
-    else escapeSound(event);
-  }
+  for(const event of new Set(escapeGame.drainEvents()))escapeSound(event==='treasure'&&escapeGame.message.startsWith('A whole')?'chest':event);
+  if(gameState==='escape'&&!paused)escapeFootsteps(escapeGame.player);
   drawEscapeVault();renderEscapeHUD();
   if(escapeGame.status!=='playing' && !escapeResultShown)showEscapeResult();
 }
@@ -163,23 +174,21 @@ function showEscapeResult(){
   nextButton.textContent=next?(next.expedition?'Explore expedition →':'Try next escape →'):'Return to world map';
   nextButton.onclick=next?()=>startEscape({levelId:next.id}):showEscapeSelect;
   document.getElementById('escape-result').style.display='block';
-  document.getElementById('escape-retry-btn').onclick=()=>startEscape(escapeOptions);
+  document.getElementById('escape-retry-btn').onclick=()=>startEscape({...escapeOptions,skipIntro:true});
   document.getElementById('escape-retry-btn').className=won&&!r.challengeId?'escape-secondary':'escape-primary';
   document.getElementById('escape-menu-btn').onclick=showEscapeSelect;document.getElementById('escape-menu-btn').textContent='Explore the world';document.getElementById('escape-menu-btn').className=won?'escape-primary':'escape-secondary';
   (won&&!r.challengeId?nextButton:document.getElementById('escape-retry-btn')).focus();renderEscapeHUD(true);
 }
-function escapeSound(event){
-  if(isMuted||paused||!audioUnlocked||soundVolume===0)return;
-  try{
-    const context=getAudioContext(),osc=context.createOscillator(),gain=context.createGain();
-    const start=context.currentTime;
-    const frequencies={warning:280,decoy:650,distracted:420,lost:520,caught:110,tongue:840,maze:145,seal:95,tail:190,tailDrop:230,regrow:780,sting:125,den:160,emerge:210,web:710,hop:360,scrape:115,rumble:85,plate:610,creak:135,glimmer:920,flutter:480,splash:180,clash:95,grow:590,wilt:240,rustle:175,snap:105};
-    osc.type='triangle';osc.frequency.setValueAtTime(frequencies[event]||350,start);
-    osc.frequency.exponentialRampToValueAtTime(event==='caught'?60:180,start+0.16);
-    gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(soundVolume*0.18,start+0.01);gain.gain.exponentialRampToValueAtTime(0.001,start+0.2);
-    osc.connect(gain);gain.connect(context.destination);osc.start(start);osc.stop(start+0.22);
-    osc.onended=()=>{osc.disconnect();gain.disconnect();};
-  }catch(_){/* Audio feedback remains optional. */}
+function escapeSound(event,options={}){
+  if(isMuted||paused||!audioUnlocked||soundVolume===0||typeof EscapeAudio==='undefined')return;
+  try{EscapeAudio.play(getAudioContext(),event,soundVolume,options);}catch(_){/* Audio feedback remains optional. */}
+}
+// Soft footfalls follow Sally's real travelled distance, louder when sprinting.
+let escapeStepFrom=null,escapeStepDistance=0,escapeStepAlt=false;
+function escapeFootsteps(p){
+  if(!escapeStepFrom||!p.moving){escapeStepFrom={x:p.x,y:p.y};escapeStepDistance=0;return;}
+  escapeStepDistance+=Math.hypot(p.x-escapeStepFrom.x,p.y-escapeStepFrom.y);escapeStepFrom={x:p.x,y:p.y};
+  if(escapeStepDistance>=(p.sprinting?.62:.48)){escapeStepDistance=0;escapeStepAlt=!escapeStepAlt;escapeSound(p.swimming?'paddle':'step',{sprint:p.sprinting,alt:escapeStepAlt});}
 }
 function drawEscapeVault(){
   const g=escapeGame,view=escapeCameraFor(g,width,height-(mobile?110:160),escapeProgress.data.view==='overview');view.oy+=mobile?45:65;const {cell,ox,oy}=view;
@@ -191,7 +200,8 @@ function drawEscapeVault(){
   const livingPalettes=[[[19,31,22],[51,77,43],[92,117,66]],[[25,31,20],[62,77,38],[110,130,64]],[[22,30,29],[53,73,63],[96,118,91]],[[30,24,33],[75,54,74],[121,84,110]],[[28,27,20],[75,68,40],[129,112,64]]];
   const hollowPalettes=[[[30,22,24],[74,48,46],[126,82,70]],[[24,24,32],[61,52,72],[111,90,118]],[[29,26,19],[78,62,36],[133,104,58]],[[33,20,27],[83,44,60],[140,78,98]]];
   const biomePalettes=[[[117,83,46],[175,120,66],[231,178,106]],[[47,78,61],[82,113,101],[155,180,140]]];
-  const palette=index>=49?hollowPalettes[(index-49)%hollowPalettes.length]:index>=47?biomePalettes[index-47]:index>=42?livingPalettes[index-42]:index>=37?glowPalettes[index-37]:index>=32?junglePalettes[index-32]:index>=27?wakingPalettes[index-27]:palettes[index]||(index>=17?deepPalettes[(index-17)%deepPalettes.length]:palettes[0]);
+  const lanternPalettes=[[[10,22,26],[30,52,56],[62,96,94]],[[20,24,20],[58,62,40],[104,108,70]],[[16,28,22],[44,72,50],[86,118,82]],[[24,22,32],[62,54,78],[104,92,126]],[[12,20,30],[34,50,72],[70,96,126]]];
+  const palette=index>=53?lanternPalettes[(index-53)%lanternPalettes.length]:index>=49?hollowPalettes[(index-49)%hollowPalettes.length]:index>=47?biomePalettes[index-47]:index>=42?livingPalettes[index-42]:index>=37?glowPalettes[index-37]:index>=32?junglePalettes[index-32]:index>=27?wakingPalettes[index-27]:palettes[index]||(index>=17?deepPalettes[(index-17)%deepPalettes.length]:palettes[0]);
   background(10,18,25);push();translate(ox,oy);textFont('sans-serif');textAlign(CENTER,CENTER);
   for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){
     const tile=g.grid[y][x],floor=g.floor(x,y);
