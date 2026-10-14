@@ -1,0 +1,221 @@
+*{box-sizing:border-box}body{margin:0;padding:12px;background:#102c2d;color:#eaf1d8;font-family:system-ui,sans-serif}#game-area{position:relative;max-width:1400px;margin:auto}#game-container{position:relative;display:none;margin:auto}canvas{max-width:100%;height:auto;border-radius:18px}button,select{font:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.6}button:focus-visible,select:focus-visible{outline:3px solid #f1ce7a;outline-offset:3px}.game-toolbar{display:flex;justify-content:flex-end;gap:8px;margin:8px 0}.game-toolbar button{background:#183d3e;color:#eaf1d8;border:1px solid #73938a;padding:8px 12px;border-radius:10px}#start-menu-container{max-width:600px;margin:12vh auto;text-align:center;padding:40px;border:1px solid #597962;border-radius:24px;background:#183b32}h1{font-size:clamp(2rem,6vw,4rem);margin:15px 0}.eyebrow{letter-spacing:.2em;font-size:.7rem;color:#c8d495}.controls-note{font-size:.8rem;line-height:1.8;color:#b2c5ad}.escape-primary,.escape-secondary{padding:12px 20px;border-radius:10px;border:1px solid #c5d590;background:#55794c;color:#fff6d5;margin:6px;min-height:44px}.escape-secondary{background:#22453f}.ability-pad{display:flex;flex-wrap:wrap;gap:6px}.direction-pad{display:flex;gap:6px}#touch-controls{gap:8px}#touch-controls button{min-width:48px;min-height:48px;border:1px solid #a1be96;border-radius:10px;background:#123b3b;color:white;touch-action:none}#scoreboard-box{display:none}
+#escape-select { width: 100%; box-sizing: border-box; padding: 20px 12px; border: 1px solid #385e57; border-radius: 14px; background: #102326; color: #e2ece0; font-family: system-ui, sans-serif; text-align: left; }
+.escape-select-heading { margin-bottom: 20px; }
+.escape-select-heading span { font-size: .7rem; letter-spacing: .08em; color: #a3c89d; }
+.escape-select-heading h2 { margin: 8px 0; font-size: 1.6rem; }
+.escape-select-heading p { color: #b7cbc1; margin: 0; line-height: 1.5; }
+.escape-levels { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.escape-chapter-heading { grid-column: 1 / -1; padding-top: 8px; color: #a8c5af; font-size: .9rem; }
+.escape-level-card, .escape-contract { display: flex; flex-direction: column; align-items: flex-start; padding: 15px; border: 1px solid #467269; border-radius: 10px; background: #193333; }
+.escape-stage-number { display: inline-block; padding: 4px 9px; border-radius: 6px; background: #314e3e; color: #d5ebba; font-size: .75rem; }
+.escape-level-card h3, .escape-contract h3 { margin: 8px 0; font-size: 1.05rem; }
+.escape-level-card p, .escape-contract p { margin: 0 0 10px; color: #bbcbc0; font-size: .85rem; line-height: 1.5; }
+.escape-best { margin: auto 0 10px; padding-top: 10px; color: #d4cb9b; font-size: .75rem; }
+.escape-toolkit { margin: 2px 0 8px; color: #c5b6cf; font-size: .75rem; line-height: 1.5; }
+#escape-tongue-action { border-color: #b47695; color: #f2cedf; }
+.escape-level-card button, .escape-contract button { padding: 8px 14px; font-size: .85rem; margin: 0; }
+.escape-locked { background: #182a2d; border-color: #30494a; }
+.escape-locked button { background: #24363a; color: #84968d; border-color: #415450; cursor: default; }
+.escape-challenge-heading { margin: 24px 0 12px; }
+.escape-contracts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.escape-save-note { color: #b6c5bb; font-size: .8rem; margin: 20px 0; }
+.escape-view-choice { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 16px; font-size: .85rem; }
+.escape-view-choice select { max-width: 100%; padding: 8px; border-radius: 7px; border: 1px solid #608f82; background: #193333; color: #e2ece0; font: inherit; }
+.escape-view-choice small { flex-basis: 100%; color: #a8c4b3; }
+#escape-map { padding: 20px; color: #dceadc; text-align: center; background: #10252b; border: 1px solid #4e786f; border-radius: 12px; font-family: system-ui,sans-serif; }
+#escape-map h3 { margin: 0 0 10px; }
+#escape-map p { font-size: .85rem; line-height: 1.5; }
+#escape-map svg { display: block; max-height: 340px; width: 100%; margin: 16px auto; }
+.escape-map-open #game-container canvas, .escape-map-open .scoreboard-box, .escape-map-open #touch-controls { display: none !important; }
+@media (max-width: 600px) {
+  .escape-levels, .escape-contracts { grid-template-columns: 1fr; }
+  #escape-select { padding: 16px 10px; }
+  .escape-mode #scoreboard { grid-template-columns: 1fr; gap: 5px; padding: 10px; }
+  .escape-breath { grid-column: 1; }
+  .escape-actions { display: none; }
+  .escape-mode #touch-controls { flex-wrap: nowrap; gap: 8px; align-items: center; }
+  .escape-mode .direction-pad { display: grid; grid-template-columns: repeat(3,48px); gap: 4px; }
+  .escape-mode #touch-up { grid-column: 2; grid-row: 1; }
+  .escape-mode #touch-left { grid-column: 1; grid-row: 2; }
+  .escape-mode #touch-down { grid-column: 2; grid-row: 2; }
+  .escape-mode #touch-right { grid-column: 3; grid-row: 2; }
+  .escape-mode .ability-pad { display: grid; grid-template-columns: repeat(2,70px); gap: 4px; }
+  .escape-mode #touch-sprint { grid-column: 1 / -1; }
+  .escape-mode #touch-zoom { grid-column: 1 / -1; }
+  .escape-exploring #touch-sprint { grid-column: 1; grid-row: 1; }
+  .escape-exploring #touch-zoom { grid-column: 2; grid-row: 1; }
+  .escape-mode #touch-controls button { font-size: .85rem; }
+  #escape-result { inset: 5% 4%; padding: 16px 10px; }
+  #escape-result h2 { font-size: 1.25rem; }
+  #escape-result p { font-size: .9rem; margin-bottom: 12px; }
+  #escape-result button { display: block; width: 100%; margin: 8px 0 0; padding: 10px; }
+}
+
+.options-title {
+  font-size: 2em;
+  margin-bottom: 20px;
+  text-shadow:
+    0 0 10px rgba(0,255,255,0.8),
+    0 0 20px rgba(0,255,255,0.8);
+}
+
+.option-item {
+  margin: 15px 0;
+  font-size: 1.2em;
+}
+
+.option-item label {
+  margin-right: 10px;
+}
+
+.option-item p {
+  margin-bottom: 10px;
+}
+
+/* Tron-button styles are reused from your existing CSS */
+.tron-button {
+  padding: 10px 20px;
+  font-size: 1.2em;
+  background-color: rgba(0,200,0,0.8);
+  border: 2px solid rgba(0,255,0,0.5);
+  border-radius: 8px;
+  cursor: pointer;
+  color: #fff;
+  box-shadow:
+    0 0 10px rgba(0,255,0,0.5),
+    0 0 20px rgba(0,255,0,0.5);
+  transition: background-color 0.2s;
+  margin: 10px;
+}
+
+.tron-button:hover {
+  background-color: rgba(0,230,0,0.9);
+}
+
+
+/* Escape is a standalone playfield; its controls live inside the stage. */
+body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 70%); }
+.escape-mode { width:min(1040px,100%) !important; gap:0 !important; }
+.escape-mode .title-box { display:none; }
+.escape-mode #game-container { max-width:1040px; padding:0; overflow:hidden; border-radius:20px; }
+.escape-mode #game-container canvas { display:block; }
+#escape-stage-ui { position:absolute; inset:0; z-index:3; pointer-events:none; }
+#escape-stage-ui button, #escape-stage-ui #touch-controls { pointer-events:auto; }
+.escape-playing #escape-stage-ui .game-toolbar { position:absolute; top:15px; right:16px; gap:5px; }
+.escape-playing #escape-stage-ui .game-toolbar button { min-height:38px; padding:7px 10px; border-radius:10px; background:rgba(17,37,37,.88); }
+.escape-playing #escape-stage-ui .scoreboard-box { position:absolute; inset:0; max-width:none; border:0; background:none; border-radius:0; }
+.escape-playing #escape-stage-ui #scoreboard { display:block; padding:0; }
+.escape-playing .escape-mission { position:absolute; top:17px; left:20px; display:flex; flex-direction:column; gap:4px; max-width:42%; font-size:.8rem; padding:8px 11px; border-radius:10px; background:rgba(12,29,31,.86); }
+.escape-playing .escape-inventory { position:absolute; top:81px; left:20px; justify-content:flex-start; font-size:.8rem; padding:7px 11px; border-radius:10px; background:rgba(12,29,31,.82); }
+.escape-playing .escape-breath { position:absolute; top:119px; left:25px; width:155px; font-size:.68rem; }
+.escape-playing #escape-objective { position:absolute; bottom:92px; left:20px; max-width:62%; padding:6px 10px; border-radius:9px; font-size:.78rem; color:#d1decb; background:rgba(12,29,31,.75); }
+.escape-playing #escape-warning { position:absolute; bottom:123px; left:20px; max-width:68%; padding:6px 10px; border-radius:9px; background:rgba(12,29,31,.86); font-size:.82rem; }
+.escape-playing #escape-warning:empty { display:none; }
+.escape-playing .escape-actions { position:absolute; bottom:18px; right:20px; gap:6px; }
+.escape-playing .escape-actions button { flex:0 1 118px; width:118px; min-height:54px; padding:8px 10px; font-size:.78rem; line-height:1.6; background:rgba(24,47,48,.94); border-radius:12px; box-shadow:0 4px 12px #0003; }
+.escape-playing #touch-controls { position:absolute; left:14px; right:14px; bottom:14px; width:auto; justify-content:space-between; }
+.escape-world-open #escape-stage-ui .game-toolbar { top:16px; right:18px; }
+.escape-world-open #pause-button, .escape-world-open #escape-map-button, .escape-world-open #end-run-button { display:none !important; }
+.escape-world-open #scoreboard-box { display:none !important; }
+.escape-world-open #escape-stage-ui .game-toolbar button { background:#edf0d5dd; color:#31584a; border-color:#c6d3ae; }
+.escape-world-open #game-container canvas { border-color:#b5cca0; }
+#escape-world-ui { position:absolute; inset:0; z-index:4; pointer-events:none; color:#294c3b; font-family:system-ui,sans-serif; }
+#escape-world-ui button, #escape-world-ui select { pointer-events:auto; }
+.world-heading { position:absolute; top:20px; left:22px; background:#f8f2dbeb; border:1px solid #d4d9b1; border-radius:16px; padding:14px 18px; box-shadow:0 5px 20px #456b4930; }
+.world-heading>span { font-size:.65rem; letter-spacing:.13em; color:#628363; }
+.world-heading h2 { margin:4px 0 10px; font-size:1.3rem; font-weight:700; }
+.world-travel { display:flex; align-items:center; gap:9px; font-size:.72rem; color:#53725b; }
+.world-travel select { max-width:230px; padding:5px 8px; color:#345841; background:#fff9e9; border:1px solid #b4c69b; border-radius:7px; font:inherit; }
+.world-guide { position:absolute; bottom:22px; left:22px; padding:12px 14px; background:#f5efd8e8; border-radius:14px; max-width:42%; font-size:.72rem; color:#49684d; }
+.world-guide>span { font-weight:650; }
+.world-guide p { margin:5px 0 10px; line-height:1.5; }
+.world-guide button { border:1px solid #b1c196; border-radius:8px; padding:8px 9px; margin:0 5px 0 0; background:#eff0d5; color:#426349; font:inherit; }
+.world-route { position:absolute; bottom:22px; right:22px; width:38%; max-width:350px; padding:16px 18px; border:1px solid #d6dcb9; border-radius:16px; background:#faf4dfef; box-shadow:0 8px 25px #46614b30; }
+.world-route>span { font-size:.65rem; letter-spacing:.09em; color:#668063; }
+.world-route h3 { margin:5px 0; font-size:1.15rem; }
+.world-route p { margin:6px 0; font-size:.75rem; line-height:1.45; color:#5b7259; }
+.world-route #world-route-best { color:#a5783d; font-size:.7rem; }
+.world-route button { padding:9px 12px; margin:7px 0 0; font-size:.8rem; box-shadow:none; background:#4c7b55; color:#fff7df; border-color:#517956; }
+#escape-world-portals { position:absolute; inset:0; z-index:2; pointer-events:none; }
+.world-node { position:absolute; transform:translate(-50%,-50%); min-width:38px; min-height:38px; border:2px solid #fff7d5; border-radius:50%; background:#faf0c3; color:#7b633e; font:bold .85rem system-ui,sans-serif; box-shadow:0 3px 5px #24472c33; pointer-events:auto; cursor:pointer; }
+.world-node.world-available { background:#d9e69f; color:#365c39; border-color:#fff5bf; }
+.world-node.world-cleared { background:#589b61; color:#fff4d0; }
+.world-node.world-locked { background:#a5b49b; color:#425d4c; border-color:#cdd6bb; }
+.escape-map-open #escape-stage-ui, .escape-map-open #escape-world-ui, .escape-results-open #escape-stage-ui { display:none; }
+.escape-world-open .ability-pad button:not(#touch-sprint) { display:none; }
+.escape-playing #escape-stage-ui #touch-controls.world-touch { bottom:14px; }
+@media(max-width:600px){
+  .escape-mode #game-container { border-radius:14px; }
+  .escape-playing #escape-stage-ui .game-toolbar { top:10px; right:10px; }
+  .escape-playing #escape-stage-ui .game-toolbar button { min-height:44px; padding:7px !important; font-size:.72rem !important; }
+  .escape-playing .escape-mission { top:11px; left:10px; padding:6px 8px; max-width:48%; font-size:.76rem; }
+  .escape-playing .escape-inventory { top:70px; left:10px; font-size:.74rem; gap:9px; padding:6px 8px; }
+  .escape-playing .escape-breath { top:103px; left:14px; width:135px; }
+  .escape-playing #escape-objective { bottom:166px; left:12px; max-width:91%; font-size:.72rem; }
+  .escape-playing #escape-warning { bottom:191px; left:12px; max-width:91%; font-size:.72rem; }
+  .escape-playing .escape-actions { display:none; }
+  .escape-playing #touch-controls .direction-pad { grid-template-columns:repeat(3,44px); gap:3px; }
+  .escape-playing #touch-controls .ability-pad { grid-template-columns:repeat(2,64px); gap:3px; }
+  .escape-playing #touch-controls button { min-width:44px; min-height:44px; padding:5px; font-size:.75rem; }
+  .world-heading { top:12px; left:12px; padding:10px 12px; max-width:70%; }
+  .world-heading h2 { font-size:1rem; margin-bottom:5px; }
+  .world-travel { font-size:.63rem; }
+  .world-travel select { max-width:170px; }
+  .world-route { right:12px; bottom:140px; left:12px; width:auto; max-width:none; padding:10px 12px; }
+  .world-route h3 { font-size:.95rem; }
+  .world-route p { font-size:.66rem; }
+  .world-route button { min-height:38px; padding:7px 10px; }
+  .world-guide { left:170px; bottom:15px; max-width:calc(100% - 182px); padding:9px; font-size:.68rem; }
+  .world-guide p { display:none; }
+  .world-guide button { display:block; padding:6px; font-size:.7rem; margin:4px 0 0; }
+  .escape-world-open #escape-stage-ui .game-toolbar { top:12px; right:12px; }
+  .escape-world-open #escape-stage-ui .game-toolbar button { font-size:.65rem; padding:6px; }
+  .escape-world-open #touch-controls .ability-pad { display:none; }
+  .escape-world-open #touch-controls { justify-content:flex-start; }
+  .world-node { min-width:35px; min-height:35px; font-size:.7rem; }
+}
+
+/* The playfield stays visible behind arcade results. */
+.escape-mode { width:min(1400px,100%) !important; }
+.escape-mode #game-container { max-width:1400px; }
+.escape-results-open #game-container canvas { display:block !important; filter:brightness(.35); }
+.escape-results-open #escape-result { position:absolute; inset:auto; top:50%; left:50%; transform:translate(-50%,-50%); width:min(600px,86%); max-height:90%; overflow:auto; box-sizing:border-box; padding:26px; margin:0; z-index:10; border:2px solid #e4c578; background:linear-gradient(145deg,#12393aee,#10282aee); box-shadow:0 16px 80px #0009,0 0 32px #d0b65a25; }
+#escape-result-title { text-transform:uppercase; letter-spacing:.06em; color:#fff0b5; }
+#movement-stick { display:none; position:relative; width:116px; height:116px; flex:none; border:2px solid #d6ead27d; border-radius:50%; background:radial-gradient(circle,#254f4d99,#122f3999); box-shadow:inset 0 0 20px #0003; touch-action:none; user-select:none; }
+#movement-stick-knob { position:absolute; left:50%; top:50%; width:49px; height:49px; border-radius:50%; transform:translate(-50%,-50%); background:#b3d8afbb; border:2px solid #edffe7cc; box-shadow:0 3px 12px #0005; pointer-events:none; }
+.escape-playing .escape-inventory { display:flex; gap:9px; }
+.world-heading,.world-guide,.world-route { background:#143032ed; color:#e4edd6; border-color:#668575; box-shadow:0 5px 20px #0004; }
+.world-heading>span,.world-travel,.world-guide,.world-route>span,.world-route p { color:#b3c7ae; }
+.world-travel select,.world-guide button { background:#21443f; color:#e4edd6; border-color:#789575; }
+.world-route #world-route-best { color:#dec987; }
+.world-route button { background:#557b4b; }
+#landscape-gate { display:none; position:fixed; inset:0; z-index:100; background:#112e30; color:#e9f2d5; font:16px system-ui,sans-serif; align-items:center; justify-content:center; flex-direction:column; text-align:center; padding:24px; }
+#landscape-gate>span { font-size:80px; color:#efd391; }
+.mobile-portrait #landscape-gate { display:flex; }
+.mobile-game #movement-stick { display:block; }
+.mobile-game .direction-pad { display:none !important; }
+.mobile-game.escape-shell { margin:0; padding:8px; box-sizing:border-box; overflow:hidden; }
+.mobile-game .escape-playing #touch-controls { bottom:12px; left:max(14px,env(safe-area-inset-left)); right:max(14px,env(safe-area-inset-right)); align-items:flex-end; pointer-events:none; }
+.mobile-game #movement-stick,.mobile-game .ability-pad { pointer-events:auto; }
+.mobile-game .escape-actions { display:none; }
+.mobile-game .ability-pad { display:grid; grid-template-columns:repeat(3,60px); gap:6px; max-width:204px; }
+.mobile-game #touch-controls button { min-width:56px; min-height:48px; font-size:.72rem; padding:5px; border-color:#a2c9b688; border-radius:14px; background:#14393ae8; }
+@media (orientation:landscape) and (max-height:550px){
+ .escape-mode #game-container { border-radius:12px; }
+ .escape-playing .escape-mission { top:10px; left:14px; padding:5px 8px; }
+ .escape-playing .escape-inventory { top:47px; left:14px; font-size:.72rem; }
+ .escape-playing .escape-breath { top:78px; left:14px; width:110px; }
+ .escape-playing #escape-objective { bottom:12px; left:155px; max-width:calc(100% - 380px); font-size:.67rem; }
+ .escape-playing #escape-warning { bottom:45px; left:155px; max-width:calc(100% - 380px); font-size:.67rem; }
+ .world-heading { top:10px; left:12px; padding:8px 11px; }
+ .world-heading h2 { font-size:1rem; margin:3px 0 5px; }
+ .world-heading>span,.world-guide>span,.world-guide p { display:none; }
+ .world-guide { bottom:12px; left:150px; padding:6px; }
+ .world-guide button { padding:7px; font-size:.65rem; }
+ .world-route { left:auto; width:210px; bottom:12px; right:14px; padding:10px; }
+ .world-route h3 { font-size:.92rem; }
+ .world-route p { font-size:.65rem; margin:4px 0; }
+ .escape-results-open #escape-result { padding:16px; width:min(620px,80%); }
+ #escape-result p { margin:5px 0 10px; line-height:1.4; }
+ #escape-result button { display:inline-block; width:auto; margin:5px; min-height:44px; }
+}

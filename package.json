@@ -1,0 +1,17 @@
+{
+  "name": "sallys-escape",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sally's Escape: standalone exploration and stealth adventure",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node server/index.cjs",
+    "prepare:static": "node scripts/prepare-static.cjs",
+    "test": "node --test tests/*.cjs"
+  },
+  "devDependencies": {
+    "p5": "1.11.2"
+  }
+}

@@ -1,0 +1,34 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#163b32"><title>Sally's Escape</title><link rel="stylesheet" href="style.css"><script src="vendor/p5.min.js"></script><script src="game.js"></script><script src="creature-rig.js"></script><script src="escape-levels.js"></script><script src="escape-progress.js"></script><script src="escape-engine.js"></script><script src="escape-view.js"></script><script src="escape-world.js"></script><script src="escape-world-scene.js"></script><script src="escapescene.js"></script></head><body>    <div id="landscape-gate" role="status"><span>↻</span><h2>Turn to explore</h2><p>Rotate your phone to landscape.</p><small>Your adventure is paused.</small></div><main id="game-area"><div id="game-toolbar" class="game-toolbar"><button id="mute-button">Sound: On</button><button id="pause-button">Pause</button><button id="escape-map-button" style="display:none">Map [G]</button><button id="end-run-button" style="display:none">Leave Escape</button></div><div id="scoreboard-box" class="scoreboard-box"><div id="scoreboard"></div></div>      <div id="game-container">
+        <div id="escape-stage-ui"></div>
+        <div id="escape-world-portals"></div>
+        <div id="escape-world-ui" style="display:none"></div>
+        <div id="escape-map" style="display:none"></div>
+        <div id="escape-result" style="display:none">
+          <p id="escape-result-location"></p>
+          <h2 id="escape-result-title"></h2>
+          <p id="escape-result-summary"></p>
+          <p id="escape-result-medals"></p>
+          <button id="escape-next-btn" class="escape-primary" style="display:none">Next escape →</button>
+          <button id="escape-retry-btn" class="escape-primary">Try again <span>[R]</span></button>
+          <button id="escape-menu-btn" class="escape-secondary">Choose escape</button>
+        </div>
+      </div>
+      <div id="escape-select" style="display:none"></div>
+      <div id="touch-controls" aria-label="Game controls" style="display:none">
+        <div id="movement-stick" role="group" aria-label="Movement joystick"><span id="movement-stick-knob"></span></div>
+        <div class="direction-pad">
+          <button id="touch-up" aria-label="Move up">↑</button>
+          <button id="touch-left" aria-label="Move left">←</button>
+          <button id="touch-down" aria-label="Move down">↓</button>
+          <button id="touch-right" aria-label="Move right">→</button>
+        </div>
+        <div class="ability-pad">
+          <button id="touch-sprint">Sprint</button>
+          <button id="touch-burrow">Burrow</button>
+          <button id="touch-camo">Camo</button>
+          <button id="touch-zoom">Map</button>
+          <button id="touch-seed" style="display:none" title="Grow cover, brace an open door or make a vine crossing">Seed</button>
+          <button id="touch-look" style="display:none" title="Turn your gaze behind you briefly">Look back</button>
+          <button id="touch-tongue" style="display:none" title="Grab a key or treasure within three tiles ahead">Tongue</button>
+        </div>
+      </div><section id="start-menu-container"><span class="eyebrow">A WORLD OF SMALL ESCAPES</span><h1>Sally’s Escape</h1><p>Explore an overgrown world. Find a clever way home.</p><button id="play-button" class="escape-primary">Explore the world</button><p class="controls-note">WASD / arrows · Shift to run<br>On phones: landscape · left stick · right actions</p></section></main></body></html>

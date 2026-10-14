@@ -1,0 +1,14 @@
+services:
+  sallys-escape:
+    image: ghcr.io/masadams/sallysescape:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp]
+    networks: [proxy]
+    expose: ["8080"]
+networks:
+  proxy:
+    external: true
+    name: ${NPM_NETWORK:-nginx_default}

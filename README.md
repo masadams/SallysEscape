@@ -1,1 +1,20 @@
-# SallysEscape
+# Sally’s Escape
+
+A standalone top-down stealth and exploration game: 49 escapes, 15 optional challenges, a walkable maze overworld, limited tools and eleven creature types.
+
+Explore themed courtyards and branching passages along a clear main route. The Quiet Vault and Leafy Crossroads are available immediately; later regions are physically gated. Choose between paired routes. Harder paths rejoin after either route; later chapters retain their progression gates. The original MazeAdventure campaign, shop, upgrades, gauntlet, leaderboard API and database are absent.
+
+Desktop: WASD or arrows, Shift sprint, Q pebble, E burrow, R tongue, F seed, Space look back, G map, Escape pause. Phones use landscape orientation, a left thumbstick and right action buttons. Rotating to portrait pauses a run until resumed. Completion stays inside the playfield.
+
+## Self hosting
+
+Deploy `compose.yaml` from this repository in Portainer. Set `IMAGE_TAG=latest` and `NPM_NETWORK=nginx_default` (or your existing proxy network). In Nginx Proxy Manager, point your chosen hostname to `sallys-escape:8080`. No database volume, API hostname or Netlify project is required. This static game serves its own code and p5 library; progress is stored on each browser/device under this game’s own save key. MazeAdventure records do not carry into it.
+
+For private images, use your existing GitHub Container Registry credentials in Portainer. GitHub Actions tests the game, builds the image, checks its HTTP health and publishes both amd64 and arm64 images after a successful main-branch run.
+
+## Development
+
+Node 24. Run `npm ci`, `npm run prepare:static`, `npm test`, then `npm start`. The only development dependency is p5; the production server uses Node’s built-in HTTP and filesystem libraries.
+
+The new main-theme direction is mysterious folk adventure. No generated music has been bundled yet. Music and progression notes are in `docs/`.
+
