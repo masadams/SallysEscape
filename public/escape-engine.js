@@ -1,0 +1,607 @@
+// Escape's rules are independent of the campaign, its upgrades and leaderboards.
+(function(root){
+  const CreatureMotion=typeof module!=='undefined'&&module.exports?require('./creature-rig.js').EscapeCreatureMotion:root.EscapeCreatureMotion;
+  const catalog=typeof module!=='undefined'&&module.exports?require('./escape-levels.js'):{EscapeCatalog:root.EscapeCatalog,escapeGridFor:root.escapeGridFor};
+  const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  const copy=p=>({x:p.x,y:p.y});
+  const centre=(x,y)=>({x:x+0.5,y:y+0.5});
+  const directions=[[1,0],[-1,0],[0,1],[0,-1]];
+  class EscapeAdventure{
+    constructor(options={}){
+      this.challenge=options.challengeId?catalog.EscapeCatalog.challenges.find(c=>c.id===options.challengeId):null;
+      if(options.challengeId&&!this.challenge)throw new Error('Unknown Escape challenge');
+      this.level=catalog.EscapeCatalog.levels.find(l=>l.id===(this.challenge?.levelId||options.levelId||'quiet-vault'));
+      if(!this.level)throw new Error('Unknown Escape level');
+      this.grid=catalog.escapeGridFor(this.level);this.height=this.grid.length;this.width=this.grid[0].length;
+      this.player={...centre(...this.level.spawn),facing:{x:0,y:-1},tongueAim:null,stamina:100,exhausted:false,moving:false,sprinting:false,hidden:false,noisy:false};
+      this.hunters=this.level.guards.map(guard=>this.makeHunter(guard));
+      this.pendingSpawns=[];this.spawnedReinforcements=new Set();this.webs=[];this.glowTrail=[];this.trailAt=0;
+      this.hunter=this.hunters[0];this.patrol=this.hunter.patrol;
+      this.gates=(this.level.gates||[]).map(g=>({...g,open:Boolean(g.initialOpen),sealed:false,closingAt:null,expiresAt:null,pressed:false,warned:false,activations:0,switch:g.switch?centre(...g.switch):null,plates:(g.plates||[]).map(p=>centre(...p)),tiles:g.tiles.map(p=>p.slice())}));
+      this.reactionsFired=new Set();this.mazeObjective=null;
+      this.wheelAngle=0;this.clashes=0;this.swimDistance=0;
+      this.key=centre(...this.level.key);this.exit=centre(...this.level.exit);this.hasKey=false;
+      this.loot=this.level.loot.map(([x,y,value])=>({...centre(x,y),value,taken:false}));
+      this.treasure=0;this.totalTreasure=this.loot.reduce((n,p)=>n+p.value,0);
+      this.burrows=this.level.burrows;this.decoys=this.level.pebbles;this.decoy=null;this.decoyReadyAt=0;this.dug=[];
+      this.seeds=this.level.seeds||0;this.seedGrowth=[];this.seedReadyAt=0;this.seedsUsed=0;
+      this.tongues=this.level.tongues||0;this.tongueRange=3;this.tongue=null;this.tongueReadyAt=0;this.tonguesUsed=0;this.keyByTongue=false;
+      this.elapsed=0;this.accumulator=0;this.status='playing';this.paused=false;this.result=null;
+      this.invulnerableUntil=0;this.exitHold=0;this.closeCalls=0;this.alarms=0;this.events=[];
+      this.requiredTreasure=this.challenge?.allTreasure?this.totalTreasure:this.level.requiredTreasure||0;this.timeLimit=this.challenge?.timeLimit||this.level.timeLimit||null;
+      this.message=this.challenge?.brief||this.level.hint;this.messageUntil=7;
+      this.visible=new Set();this.discovered=new Set();this.visibilityAt=-Infinity;this.updateVisibility(true);
+      this.motion=new CreatureMotion(this);
+    }
+    makeHunter(guard){return {...centre(...guard.spawn),id:guard.id||null,kind:guard.kind||'snake',facing:guard.facing,state:guard.kind==='mimic'?'rooted':'patrol',awareness:0,lastKnown:null,lastObserved:-Infinity,reason:'seen',path:[],routeIndex:0,pauseUntil:0,searchUntil:0,patrol:guard.patrol.map(p=>centre(...p)),aim:null,phaseUntil:0,distanceMoved:0};}
+    floor(x,y){return this.grid[y]?.[x]!==undefined && !['#','B','G','P'].includes(this.grid[y][x]);}
+    water(p){return this.grid[Math.floor(p.y)]?.[Math.floor(p.x)]==='U';}
+    actorFloor(x,y,h){const wet=this.grid[y]?.[x]==='U';return this.floor(x,y)&&(!h||h.kind==='sea-snake'||(h.kind==='fish'?wet:!wet));}
+    sightFloor(x,y){return this.floor(x,y)||this.grid[y]?.[x]==='P';}
+    visibleTile(x,y){return !this.level.explore||this.visible.has(x+','+y);}
+    lineVisible(a,b){
+      // A blocking wall itself is visible; tiles beyond it are not. Do not
+      // reveal diagonally across two touching walls.
+      const count=Math.max(1,Math.ceil(distance(a,b)*16));let previous=copy(a);
+      for(let i=0;i<=count;i++){
+        const p={x:a.x+(b.x-a.x)*i/count,y:a.y+(b.y-a.y)*i/count},x=Math.floor(p.x),y=Math.floor(p.y),px=Math.floor(previous.x),py=Math.floor(previous.y);
+        if(x!==px&&y!==py&&(!this.sightFloor(x,py)||!this.sightFloor(px,y)))return false;
+        if(!this.sightFloor(x,y))return x===Math.floor(b.x)&&y===Math.floor(b.y);
+        previous=p;
+      }
+      return true;
+    }
+    playerSees(point){
+      const p=this.player,d=distance(p,point),r=this.level.sightRadius||6;
+      if(d>r||!this.clear(p,point,true))return false;
+      if(!this.level.gaze)return true;
+      return d<.15||((point.x-p.x)*p.facing.x+(point.y-p.y)*p.facing.y)/d>=.5;
+    }
+    lookBack(){
+      if(!this.active()||!this.level.gaze)return false;
+      this.player.facing={x:-this.player.facing.x||0,y:-this.player.facing.y||0};
+      this.player.tongueAim={...this.player.facing};this.lookUntil=this.elapsed+.65;
+      this.updateVisibility(true);return true;
+    }
+    plantSeed(){
+      if(!this.active()||!this.seeds||this.elapsed<this.seedReadyAt)return false;
+      const p=this.player,d=p.facing,forward=q=>distance(p,q)<=1.6&&(q.x-p.x)*d.x+(q.y-p.y)*d.y>.15&&Math.abs((q.x-p.x)*d.y-(q.y-p.y)*d.x)<=.6&&this.lineVisible(p,q);
+      const gate=this.gates.find(g=>g.tiles.some(([x,y])=>forward(centre(x,y))));
+      if(gate&&(!gate.open||gate.bracedUntil>this.elapsed)){this.notice(gate.open?'This doorway is already braced.':'Seeds can brace an opening, but cannot reopen a closed root.');return false;}
+      const bank=(this.level.seedCrossings||[]).find(b=>b.banks.some(([x,y])=>distance(p,centre(x,y))<.65));
+      const bed=bank&&bank.tiles.some(([x,y])=>forward(centre(x,y)))&&bank.tiles.every(([x,y])=>this.grid[y][x]==='P')?bank:null;
+      if(!gate&&bank&&!bed){this.notice('Face the water from this bank. An existing vine cannot be planted twice.');return false;}
+      let message;
+      if(gate){gate.bracedUntil=this.elapsed+12;gate.braceWarned=false;message='Roots brace '+gate.name+' for twelve seconds.';}
+      else if(bed){
+        const growth={id:bed.id,kind:'vine',tiles:bed.tiles.map(([x,y])=>({x,y,old:'P'})),expires:this.elapsed+12,warned:false};
+        for(const t of growth.tiles)this.grid[t.y][t.x]='V';this.seedGrowth.push(growth);message='A vine crossing grows. It lasts twelve seconds.';
+      }else{
+        const x=Math.floor(p.x),y=Math.floor(p.y),old=this.grid[y][x];
+        if(!['.','M','N'].includes(old)){this.notice('Plant on bare ground, face an open doorway, or stand at a marked vine bank.');return false;}
+        this.grid[y][x]='L';this.seedGrowth.push({kind:'cover',tiles:[{x,y,old}],expires:this.elapsed+12,warned:false});message='Leaves grow around Sally. Stand still to hide; they last twelve seconds.';
+      }
+      this.seeds--;this.seedsUsed++;this.seedReadyAt=this.elapsed+.5;for(const h of this.hunters){h.path=[];h.targetId=null;}this.updateVisibility(true);this.notice(message,'grow');return true;
+    }
+    updateSeedGrowth(){
+      if(!this.active())return;
+      for(const gate of this.gates)if(gate.bracedUntil&&this.elapsed>=gate.bracedUntil-1.2&&!gate.braceWarned){gate.braceWarned=true;this.events.push('wilt');}
+      this.seedGrowth=this.seedGrowth.filter(growth=>{
+        if(!growth.warned&&this.elapsed>=growth.expires-1.2){growth.warned=true;this.events.push('wilt');}
+        if(this.elapsed<growth.expires)return true;
+        if(growth.kind==='vine'&&growth.tiles.some(({x,y})=>[this.player,...this.hunters.filter(h=>h.kind!=='moth')].some(p=>p.x+.28>x&&p.x-.28<x+1&&p.y+.28>y&&p.y-.28<y+1)))return true;
+        for(const t of growth.tiles)this.grid[t.y][t.x]=t.old;
+        for(const h of this.hunters){h.path=[];h.targetId=null;}this.updateVisibility(true);return false;
+      });
+    }
+    updateVisibility(force=false){
+      if(!this.level.explore)return;
+      if(!force&&this.elapsed<this.visibilityAt)return;this.visibilityAt=this.elapsed+.08;this.visible.clear();
+      const p=this.player,r=this.level.dark?6.5:this.level.sightRadius||6;
+      for(let y=Math.max(0,Math.floor(p.y-r));y<=Math.min(this.height-1,Math.ceil(p.y+r));y++)for(let x=Math.max(0,Math.floor(p.x-r));x<=Math.min(this.width-1,Math.ceil(p.x+r));x++){
+        const point=centre(x,y),d=distance(p,point);
+        const lit=!this.level.dark||d<=this.level.sightRadius||(this.level.glowPlants||[]).some(([x,y])=>distance(point,centre(x,y))<=1.5&&this.lineVisible(centre(x,y),point))||this.glowTrail.some(t=>t.expires>this.elapsed&&distance(point,t)<=.75&&this.lineVisible(t,point));
+        if(d<=r&&lit&&this.lineVisible(p,point)&&(!this.level.gaze||d<.8||((point.x-p.x)*p.facing.x+(point.y-p.y)*p.facing.y)/d>=.5)){const id=x+','+y;this.visible.add(id);this.discovered.add(id);}
+      }
+    }
+    activateSwitches(){
+      for(const gate of this.gates){
+        const pressed=[...(gate.switch?[gate.switch]:[]),...gate.plates].some(p=>distance(this.player,p)<.4);
+        if(gate.duration){
+          if(pressed&&!gate.sealed){
+            if(!gate.pressed){gate.activations++;this.notice(gate.name+' '+(gate.bridge?'bridge':'gate')+' lasts '+gate.duration+' seconds after you leave the plate.','plate');}
+            this.setGateOpen(gate,true);gate.expiresAt=this.elapsed+gate.duration;gate.closingAt=null;gate.warned=false;
+          }gate.pressed=pressed;continue;
+        }
+        if(gate.switch&&!gate.open&&!gate.sealed&&pressed){
+        this.setGateOpen(gate,true);
+        this.notice(gate.name+(this.level.reactions?' gates open.':' gates open. They stay open.'),'gate');
+        }
+      }
+    }
+    updateTimedGates(){
+      if(!this.active())return;
+      for(const gate of this.gates)if(gate.duration&&gate.open&&!gate.sealed&&gate.expiresAt!==null){
+        if(!gate.warned&&this.elapsed>=gate.expiresAt-1.2){gate.warned=true;this.events.push('creak');}
+        if(this.elapsed>=gate.expiresAt&&gate.closingAt===null)gate.closingAt=this.elapsed;
+      }
+    }
+    setGateOpen(gate,open){
+      if(gate.open===open)return;
+      gate.open=open;for(const [x,y] of gate.tiles)this.grid[y][x]=gate.bridge?(open?'W':'P'):(open?'g':'G');
+      for(const h of this.hunters){h.path=[];h.targetId=null;}
+      this.updateVisibility(true);
+    }
+    reactToMaze(when,item=null){
+      if(!this.active())return;
+      for(const reaction of this.level.reactions||[]){
+        if(reaction.when!==when||this.reactionsFired.has(reaction.id)||reaction.requiresKey&&!this.hasKey)continue;
+        if(reaction.requiresOpen?.some(id=>!this.gates.find(g=>g.id===id)?.open))continue;
+        if(when==='enter'){const [x1,y1,x2,y2]=reaction.region,x=Math.floor(this.player.x),y=Math.floor(this.player.y);if(x<x1||x>x2||y<y1||y>y2)continue;}
+        if(when==='treasure'&&(!item||Math.floor(item.x)!==reaction.at[0]||Math.floor(item.y)!==reaction.at[1]))continue;
+        this.reactionsFired.add(reaction.id);
+        for(const id of reaction.spawn||[]){
+          if(this.spawnedReinforcements.has(id))continue;
+          const guard=(this.level.reinforcements||[]).find(h=>h.id===id);if(!guard)continue;
+          this.spawnedReinforcements.add(id);this.pendingSpawns.push({id,guard,...centre(...guard.spawn),readyAt:this.elapsed+2});
+          this.events.push('den');
+        }
+        // The alternate route opens before any door closes. A sealed switch
+        // cannot silently undo the reversal on a later visit.
+        for(const id of reaction.open||[]){const gate=this.gates.find(g=>g.id===id);if(gate&&!gate.sealed)this.setGateOpen(gate,true);}
+        for(const id of reaction.close||[]){const gate=this.gates.find(g=>g.id===id);if(!gate||gate.sealed)continue;gate.sealed=true;if(gate.open)gate.closingAt=this.elapsed+(gate.root?1.4:.9);}
+        this.mazeObjective={text:reaction.objective,untilGate:reaction.untilGate};
+        this.notice(reaction.message,'maze');this.messageUntil=this.elapsed+7;
+      }
+    }
+    updateClosingGates(){
+      if(!this.active())return;
+      for(const gate of this.gates)if(gate.closingAt!==null&&this.elapsed>=gate.closingAt){
+        if(this.elapsed<(gate.bracedUntil||0))continue;
+        // Do not close on either a player or an enemy, including the edge of
+        // its collider. The warning stays active until the doorway is clear.
+        const occupied=gate.tiles.some(([x,y])=>[this.player,...this.hunters.filter(h=>!gate.bridge||h.kind!=='moth')].some(p=>p.x+.28>x&&p.x-.28<x+1&&p.y+.28>y&&p.y-.28<y+1));
+        if(occupied)continue;
+        gate.closingAt=null;this.setGateOpen(gate,false);if(gate.duration)gate.expiresAt=null;this.events.push(gate.bridge?'creak':'seal');
+      }
+    }
+    updateEmergences(){
+      if(!this.active())return;
+      this.pendingSpawns=this.pendingSpawns.filter(den=>{
+        if(this.elapsed<den.readyAt||!this.fits(den)||distance(den,this.player)<3||this.hunters.some(h=>distance(h,den)<.65))return true;
+        const h=this.makeHunter(den.guard);h.state='emerge';h.phaseUntil=this.elapsed+.8;
+        this.hunters.push(h);this.motion.resetHunter(h,this.hunters.length-1);this.events.push('emerge');return false;
+      });
+    }
+    mazeObjectiveText(){
+      const goal=this.mazeObjective;if(!goal||goal.untilGate&&this.gates.find(g=>g.id===goal.untilGate)?.open)return null;
+      return goal.text;
+    }
+    clear(a,b,overGaps=false,actor=null){
+      const steps=Math.max(1,Math.ceil(distance(a,b)*20));
+      const open=(x,y)=>overGaps?this.sightFloor(x,y):this.actorFloor(x,y,actor);
+      let previous=copy(a);
+      for(let i=0;i<=steps;i++){
+        const p={x:a.x+(b.x-a.x)*i/steps,y:a.y+(b.y-a.y)*i/steps};
+        const x=Math.floor(p.x),y=Math.floor(p.y),px=Math.floor(previous.x),py=Math.floor(previous.y);
+        if(!open(x,y) || (x!==px && y!==py && (!open(x,py)||!open(px,y))))return false;
+        previous=p;
+      }
+      return true;
+    }
+    fits(p,radius=0.22,actor=null){
+      return [[-1,-1],[-1,1],[1,-1],[1,1]].every(([x,y])=>this.actorFloor(Math.floor(p.x+x*radius),Math.floor(p.y+y*radius),actor));
+    }
+    route(from,to,actor=null){
+      const sx=Math.floor(from.x),sy=Math.floor(from.y),tx=Math.floor(to.x),ty=Math.floor(to.y);
+      if(!this.actorFloor(tx,ty,actor)||!this.actorFloor(sx,sy,actor))return [];
+      const queue=[[sx,sy]],previous=new Map([[sx+','+sy,null]]);
+      for(let i=0;i<queue.length;i++){
+        const [x,y]=queue[i];
+        if(x===tx&&y===ty){
+          const path=[];let cell=[x,y];
+          while(cell){path.unshift(centre(...cell));cell=previous.get(cell.join(','));}
+          // Align with the starting cell centre before turning at a corner.
+          if(distance(from,path[0])<0.05 || (path[1] && (Math.abs(from.x-path[1].x)<0.02 || Math.abs(from.y-path[1].y)<0.02) && this.clear(from,path[1],false,actor)))path.shift();return path;
+        }
+        for(const [dx,dy] of directions){const nx=x+dx,ny=y+dy,id=nx+','+ny;
+          if(this.actorFloor(nx,ny,actor)&&!previous.has(id)){previous.set(id,[x,y]);queue.push([nx,ny]);}
+        }
+      }
+      return [];
+    }
+    audible(a,b,range){
+      if(Math.floor(a.x)===Math.floor(b.x)&&Math.floor(a.y)===Math.floor(b.y))return this.clear(a,b);
+      const path=this.route(a,b);return path.length>0 && path.length<=range;
+    }
+    notice(message,event){this.message=message;this.messageUntil=this.elapsed+2.5;if(event)this.events.push(event);}
+    active(){return this.status==='playing'&&!this.paused;}
+    burrow(){
+      if(!this.active())return false;
+      if(this.burrows===0){this.notice('No burrows left. Find a way around.');return false;}
+      const p=this.player,x=Math.floor(p.x),y=Math.floor(p.y),d=p.facing;
+      const wx=x+d.x,wy=y+d.y,landing=centre(x+2*d.x,y+2*d.y);
+      if(this.grid[wy]?.[wx]==='G'){const gate=this.gates.find(g=>g.tiles.some(([x,y])=>x===wx&&y===wy));this.notice(gate?.sealed?'This passage is sealed. Find a new way around.':gate?.switch?'This gate needs its matching switch.':'The ruins control this passage. Look for another route.');return false;}
+      if(!['#','B'].includes(this.grid[wy]?.[wx]) || wx<=0||wy<=0||wx>=this.width-1||wy>=this.height-1||!this.fits(landing)){
+        this.notice('Face a thin wall with an open tile on the other side.');return false;
+      }
+      p.x=landing.x;p.y=landing.y;p.sprinting=false;p.moving=false;
+      this.motion.resetPlayer(p);
+      this.tongue=null;
+      this.updateVisibility(true);
+      this.burrows--;this.dug.push({x:wx,y:wy});this.invulnerableUntil=this.elapsed+0.35;
+      this.notice('Under the wall. Keep moving!','burrow');return true;
+    }
+    throwDecoy(){
+      if(!this.active())return false;
+      if(this.decoys===0){this.notice('No pebbles left. Use cover.');return false;}
+      if(this.elapsed<this.decoyReadyAt)return false;
+      const p=this.player,d=p.facing,start=centre(Math.floor(p.x),Math.floor(p.y));let target=start;
+      for(let i=1;i<=3;i++){
+        const next={x:start.x+d.x*i,y:start.y+d.y*i};if(!this.clear(start,next))break;target=next;
+      }
+      if(distance(start,target)<0.5){this.notice('Face an open corridor to toss a pebble.');return false;}
+      this.decoys--;this.decoyReadyAt=this.elapsed+0.8;
+      this.decoy={...target,expires:this.elapsed+4,noticed:false};
+      this.notice('Pebble tossed. Watch for the guard\'s reaction.','decoy');return true;
+    }
+    tongueTarget(){
+      const p=this.player,d=p.tongueAim||p.facing,targets=[];
+      if(!this.hasKey)targets.push({kind:'key',point:this.key});
+      this.loot.forEach((item,index)=>{if(!item.taken)targets.push({kind:'loot',index,point:item});});
+      return targets.filter(t=>{const dx=t.point.x-p.x,dy=t.point.y-p.y,forward=dx*d.x+dy*d.y,side=Math.abs(dx*d.y-dy*d.x);return forward>.25&&distance(p,t.point)<=this.tongueRange+1e-9&&side<=.35&&this.clear(p,t.point,true);}).sort((a,b)=>distance(p,a.point)-distance(p,b.point))[0]||null;
+    }
+    useTongue(){
+      if(!this.active())return false;
+      if(!this.tongues){this.notice(this.level.tongues?'No tongue grabs left. Take a walking route.':'No tongue grabs on this route.');return false;}
+      if(this.tongue||this.elapsed<this.tongueReadyAt)return false;
+      const target=this.tongueTarget();if(!target){this.notice('Face a key or treasure within three tiles. Walls and gates block your tongue.');return false;}
+      this.tongues--;this.tonguesUsed++;this.tongueReadyAt=this.elapsed+.55;
+      this.tongue={...target,point:copy(target.point),startedAt:this.elapsed,hit:false};this.events.push('tongue');return true;
+    }
+    collectKey(byTongue=false){
+      if(this.hasKey)return;this.hasKey=true;this.keyByTongue=byTongue;
+      this.notice(this.requiredTreasure>this.treasure?'Key found! Bring '+(this.requiredTreasure-this.treasure)+' more treasure to the hatch.':'Key found! The hatch is open.','key');
+      this.reactToMaze('key');
+    }
+    collectLoot(item){
+      if(item.taken)return;item.taken=true;this.treasure+=item.value;this.notice(item.value>1?'A whole treasure chest!':'Treasure pocketed.','treasure');this.reactToMaze('treasure',item);
+    }
+    updateTongue(){
+      const t=this.tongue;if(!t)return;
+      const age=this.elapsed-t.startedAt;
+      if(!t.hit&&age>=.14){
+        t.hit=true;const present=t.kind==='key'?!this.hasKey:!this.loot[t.index].taken;
+        if(present&&distance(this.player,t.point)<=this.tongueRange+1e-9&&this.clear(this.player,t.point,true)){
+          t.caught=true;t.kind==='key'?this.collectKey(true):this.collectLoot(this.loot[t.index]);
+        }else this.notice('The grab missed. Keep a clear line and stay within reach.');
+      }
+      if(age>=.34)this.tongue=null;
+    }
+    advance(seconds,input={}){
+      if(!this.active() || !Number.isFinite(seconds) || seconds<=0)return;
+      this.accumulator+=Math.min(seconds,0.1);
+      while(this.accumulator+1e-10>=1/120 && this.active()){
+        this.accumulator-=1/120;this.step(1/120,input);
+      }
+    }
+    step(dt,input){
+      this.elapsed+=dt;
+      if(this.level.rootWheel)this.wheelAngle+=Math.min(this.reactionsFired.size*Math.PI*.5-this.wheelAngle,dt*Math.PI/1.4);
+      this.updateSeedGrowth();this.updateTimedGates();this.updateClosingGates();
+      this.webs=this.webs.filter(w=>w.expires>this.elapsed);
+      this.updateEmergences();
+      const p=this.player,old=copy(p),length=Math.hypot(input.x||0,input.y||0);
+      const dx=length>0?(input.x||0)/Math.max(1,length):0,dy=length>0?(input.y||0)/Math.max(1,length):0;
+      if(length&&this.elapsed>=(this.lookUntil||0)){p.facing=Math.abs(dx)>=Math.abs(dy)?{x:Math.sign(dx),y:0}:{x:0,y:Math.sign(dy)};p.tongueAim={x:(input.x||0)/length,y:(input.y||0)/length};}
+      if(p.stamina<=0)p.exhausted=true;
+      if(p.exhausted&&p.stamina>=25)p.exhausted=false;
+      p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
+      const sprint=Boolean(input.sprint&&!p.exhausted&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',speed=(sprint?4:2.45)*(p.webbed?.45:mud?.72:1)*(this.water(p)?.55:1);
+      for(const [axis,direction] of [['x',dx],['y',dy]]){
+        const next={...p,[axis]:p[axis]+direction*speed*dt};if(this.fits(next))p[axis]=next[axis];
+      }
+      p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);if(p.swimming&&!this.water(old))this.events.push('splash');p.moving=distance(old,p)>0.0001;p.sprinting=sprint&&p.moving;
+      p.stamina=Math.max(0,Math.min(100,p.stamina+(p.sprinting?-24:18)*dt));
+      p.hidden=!p.moving&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='L';
+      p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
+      p.noisy=p.sprinting||(p.moving&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='N');
+      if(this.level.dark){
+        this.glowTrail=this.glowTrail.filter(t=>t.expires>this.elapsed);
+        if(p.moving&&this.elapsed>=this.trailAt){this.glowTrail.push({...copy(p),born:this.elapsed,expires:this.elapsed+8});this.trailAt=this.elapsed+.18;}
+      }
+      this.activateSwitches();this.reactToMaze('enter');this.updateVisibility();
+      if(this.decoy&&this.decoy.expires<=this.elapsed)this.decoy=null;
+      this.updateRivalries();for(const hunter of this.hunters)this.updateHunter(dt,hunter);this.updateRivalries();
+      this.motion.update(dt,this);
+      const stinger=this.hunters.find(h=>h.kind==='scorpion'&&h.state==='sting'&&h.aim&&distance(h,h.aim)<=3.25&&distance(p,h.aim)<.65&&this.clear(h,p,true));
+      if(this.elapsed>=this.invulnerableUntil&&stinger){this.finish('caught','The scorpion struck the marked ground. Move away when its tail rises.');return;}
+      // Capture wins over picking up the key or escaping in the same simulation step.
+      const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&distance(p,h)<.48&&this.clear(p,h));
+      if(this.elapsed>=this.invulnerableUntil && captor){
+        this.finish('caught',captor.kind==='millipede'?'A rustle, then darkness. Try another route through the ruins.':captor.kind==='mimic'?'The plant snapped at its marked spot. Provoke it from a distance or step aside when it opens.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'The guard spotted you. Break sight at a corner or use a pebble.');return;
+      }
+      if(this.challenge?.noChase&&this.alarms>0){this.finish('failed','A guard gave chase. Break sight before it is sure next time.');return;}
+      if(this.timeLimit&&this.elapsed>=this.timeLimit){this.finish('failed','Time ran out. Try a shorter route or save a burrow for the return.');return;}
+      this.updateTongue();
+      if(this.challenge?.keyByTongue&&!this.hasKey&&this.tongues===0&&!this.tongue){this.finish('failed','The key needs a tongue grab. Save one for it next time.');return;}
+      if(!this.hasKey&&distance(p,this.key)<0.5&&this.clear(p,this.key)&&!(this.tongue?.kind==='key'&&!this.tongue.hit)){
+        if(!this.challenge?.keyByTongue)this.collectKey();
+        else if(this.messageUntil<this.elapsed)this.notice('This challenge needs a tongue grab for the key. Step back and face it.');
+      }
+      for(const loot of this.loot)if(!loot.taken&&distance(p,loot)<0.5&&this.clear(p,loot)&&!(this.tongue?.kind==='loot'&&this.loot[this.tongue.index]===loot&&!this.tongue.hit)){
+        this.collectLoot(loot);
+      }
+      if(distance(p,this.exit)<0.55){
+        if(this.exitUnlocked()){this.exitHold+=dt;if(this.exitHold>=0.55)this.finish('won','Sally made it out!');}
+        else if(this.messageUntil<this.elapsed)this.notice(this.hasKey?'Bring '+(this.requiredTreasure-this.treasure)+' more treasure to the hatch.':'The hatch needs the golden key.');
+      }else this.exitHold=0;
+    }
+    exitUnlocked(){return this.hasKey&&this.treasure>=this.requiredTreasure&&(!this.challenge?.keyByTongue||this.keyByTongue);}
+    seesPlayer(h=this.hunter){
+      const p=this.player,d=distance(p,h);
+      if(p.hidden||d>4.5||!this.clear(h,p,true))return false;
+      const angle=Math.atan2(p.y-h.y,p.x-h.x);
+      const difference=Math.atan2(Math.sin(angle-h.facing),Math.cos(angle-h.facing));
+      return d<1 || Math.abs(difference)<(h.kind==='beetle'?Math.PI/5:Math.PI/3);
+    }
+    updateHunter(dt,h=this.hunter){
+      if(h.state==='clash'){if(this.elapsed>=h.phaseUntil){h.state='patrol';h.path=[];h.targetId=null;h.awareness=0;h.graceUntil=this.elapsed+.6;}return;}
+      if(h.kind==='fish'){this.updateFish(dt,h);return;}
+      if(h.state==='emerge'){if(this.elapsed>=h.phaseUntil)h.state=h.kind==='mimic'?'rooted':'patrol';return;}
+      if(h.kind==='millipede'){this.updateMillipede(dt,h);return;}
+      if(h.kind==='cricket'){this.updateCricket(dt,h);return;}
+      if(h.kind==='moth'){this.updateMoth(dt,h);return;}
+      if(h.kind==='mimic'){this.updateMimic(dt,h);return;}
+      if(h.kind==='toad'||h.kind==='spider'){this.updateNestHunter(dt,h);return;}
+      if(h.kind==='scorpion'){this.updateScorpion(dt,h);return;}
+      if(h.kind==='beetle'){this.updateBeetle(dt,h);return;}
+      const p=this.player,previousState=h.state;
+      // Nearby visible danger overrides a lure; a pebble cannot make it ignore a bite.
+      const seen=this.seesPlayer(h),heard=(p.noisy||p.sprinting)&&!p.hidden&&this.audible(h,p,p.sprinting?6:3.5);
+      const lure=this.decoy&&this.audible(h,this.decoy,9)&&!(seen&&distance(h,p)<1.2);
+      let target,speed=1.25;
+      if(lure){
+        if(!this.decoy.noticed){this.decoy.noticed=true;this.notice('It heard the pebble. Now is your chance!','distracted');}
+        h.state='decoy';h.awareness=0;h.lastKnown=null;target=this.decoy;speed=1.7;
+      }else if(seen||heard){
+        h.reason=seen?'seen':'heard';h.lastKnown=copy(p);h.lastObserved=this.elapsed;
+        h.awareness=Math.min(1,h.awareness+dt/0.7);
+        h.state=h.awareness>=1?'chase':'alert';target=h.lastKnown;
+        if(h.state==='alert'){
+          if(h.awareness-dt/0.7<=0)this.events.push('warning');
+          h.facing=Math.atan2(p.y-h.y,p.x-h.x);speed=0;
+        }else speed=2.75;
+      }else if(h.state==='alert'){
+        h.awareness=Math.max(0,h.awareness-dt*1.5);speed=0;
+        if(h.awareness===0){h.lastKnown=null;h.state='patrol';}
+      }else if(h.lastKnown&&this.elapsed-h.lastObserved<1.5){h.state='chase';target=h.lastKnown;speed=2.75;}
+      else if(h.state==='chase'){
+        h.state='search';h.searchUntil=this.elapsed+2;h.awareness=0;
+        this.closeCalls++;this.notice('Lost it. Catch your breath.','lost');target=h.lastKnown;speed=1.3;
+      }else if(h.state==='search'&&this.elapsed<h.searchUntil){
+        target=h.lastKnown;speed=1.3;if(target&&distance(h,target)<0.15){h.facing+=dt;speed=0;}
+      }else{
+        h.state='patrol';h.awareness=Math.max(0,h.awareness-dt*1.5);h.lastKnown=null;
+        target=h.patrol[h.routeIndex];
+        if(distance(h,target)<0.1){
+          if(h.pauseUntil===0)h.pauseUntil=this.elapsed+0.75;
+          if(this.elapsed<h.pauseUntil){speed=0;}else{h.pauseUntil=0;h.routeIndex=(h.routeIndex+1)%h.patrol.length;target=h.patrol[h.routeIndex];}
+        }
+      }
+      if(h.state==='chase'&&previousState!=='chase')this.alarms++;
+      if(target&&speed>0)this.moveHunter(target,speed*dt,h);
+    }
+    updateRivalries(){
+      if(!this.active())return;
+      // Only authored rivals clash. Armed strikes keep their original targets;
+      // neither walls nor another fight can silently cancel their warning.
+      const free=h=>!['clash','emerge','windup','charge','sting','leap','lunge','reveal','glimmer','swoop','dig','buried','rise'].includes(h.state)&&this.elapsed>=(h.rivalReadyAt||0);
+      for(const [a,b] of this.level.rivalries||[]){
+        const first=this.hunters.find(h=>h.id===a),second=this.hunters.find(h=>h.id===b);
+        if(!first||!second||!free(first)||!free(second)||distance(first,second)>1.35||!this.clear(first,second))continue;
+        for(const [h,other] of [[first,second],[second,first]]){h.state='clash';h.phaseUntil=this.elapsed+3;h.rivalReadyAt=this.elapsed+11;h.path=[];h.targetId=null;h.facing=Math.atan2(other.y-h.y,other.x-h.x);}
+        this.clashes++;this.notice('The hunters clash! Slip past while they are distracted.','clash');
+      }
+    }
+    updateFish(dt,h){
+      if(h.state==='emerge'){if(this.elapsed>=h.phaseUntil)h.state='patrol';return;}
+      const seen=this.water(this.player)&&this.seesPlayer(h),lure=this.decoy&&this.water(this.decoy)&&this.audible(h,this.decoy,8);
+      const previousState=h.state;let target,speed=.9;
+      if(lure){h.state='decoy';h.awareness=0;target=this.decoy;speed=1.4;}
+      else if(seen){h.lastKnown=copy(this.player);h.lastObserved=this.elapsed;h.awareness=Math.min(1,h.awareness+dt/.9);h.state=h.awareness>=1?'chase':'alert';target=h.lastKnown;speed=h.state==='chase'?1.85:0;h.facing=Math.atan2(target.y-h.y,target.x-h.x);}
+      else if(h.lastKnown&&this.elapsed-h.lastObserved<1.2){h.state='search';target=h.lastKnown;speed=1.2;}
+      else{h.state='patrol';h.awareness=0;h.lastKnown=null;target=h.patrol[h.routeIndex];if(distance(h,target)<.1){h.routeIndex=(h.routeIndex+1)%h.patrol.length;target=h.patrol[h.routeIndex];}}
+      if(h.state==='alert'&&previousState!=='alert')this.events.push('warning');
+      if(h.state==='chase'&&previousState!=='chase')this.alarms++;
+      if(target&&speed)this.moveHunter(target,speed*dt,h);
+    }
+    updateMimic(dt,h){
+      h.anchor||=copy(h);
+      if(h.state==='reveal'){
+        if(this.elapsed>=h.phaseUntil){h.state='lunge';h.phaseUntil=this.elapsed+.55;this.alarms++;this.events.push('snap');}return;
+      }
+      if(h.state==='lunge'){
+        const remaining=distance(h,h.aim),step=Math.min(4.4*dt,remaining),next={x:h.x+Math.cos(h.facing)*step,y:h.y+Math.sin(h.facing)*step};
+        if(remaining<.05||this.elapsed>=h.phaseUntil||!this.fits(next,.22,h)||!this.clear(h,next)){h.state='recover';h.phaseUntil=this.elapsed+2;return;}
+        h.x=next.x;h.y=next.y;h.distanceMoved+=step;return;
+      }
+      if(h.state==='recover'){if(this.elapsed>=h.phaseUntil){h.state='retract';h.path=[];}return;}
+      if(h.state==='retract'){
+        this.moveHunter(h.anchor,1.4*dt,h);if(distance(h,h.anchor)<.05){h.state='rooted';h.aim=null;}return;
+      }
+      h.state='rooted';
+      const lure=this.decoy&&this.decoy.expires!==h.lastLure&&distance(h,this.decoy)<=5&&this.clear(h,this.decoy),seen=!this.player.hidden&&distance(h,this.player)<=2.8&&this.clear(h,this.player);
+      if(lure||seen){
+        h.aim=copy(lure?this.decoy:this.player);if(lure)h.lastLure=this.decoy.expires;
+        h.reason=lure?'heard':'seen';h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='reveal';h.phaseUntil=this.elapsed+.8;this.events.push('rustle');
+      }
+    }
+    updateMillipede(dt,h){
+      // Observation uses the same facing, distance and occlusion as its artwork.
+      // A creature must first be encountered; untouched rooms cannot send it
+      // hunting through the maze. Every fresh glance resets the reaction delay.
+      if(this.playerSees(h)){
+        h.awakened=true;h.state='still';h.followAt=this.elapsed+.9;return;
+      }
+      if(!h.awakened||this.elapsed<(h.followAt||0)){h.state='still';return;}
+      if(!this.audible(h,this.player,14)){h.state='still';return;}
+      if(h.state!=='follow'&&this.elapsed>=(h.scrapeAt||0)){this.events.push('scrape');h.scrapeAt=this.elapsed+3;}
+      h.state='follow';h.reason='seen';
+      this.moveHunter(this.player,(distance(h,this.player)<1.5?1.1:1.7)*dt,h);
+    }
+    updateMoth(dt,h){
+      // Follow actual luminous footprints, never an unseen player's position.
+      // Once a swoop is armed its landing point stays fixed.
+      if(h.state==='glimmer'){
+        if(this.elapsed>=h.phaseUntil){h.state='swoop';h.phaseUntil=this.elapsed+.85;this.events.push('flutter');this.alarms++;}return;
+      }
+      if(h.state==='swoop'){
+        const d=distance(h,h.aim),step=Math.min(d,2.8*dt),next={x:h.x+Math.cos(h.facing)*step,y:h.y+Math.sin(h.facing)*step};
+        if(d<.05||this.elapsed>=h.phaseUntil||!this.clear(h,next,true)){h.state='recover';h.phaseUntil=this.elapsed+1.4;return;}
+        h.x=next.x;h.y=next.y;h.distanceMoved+=step;return;
+      }
+      if(h.state==='recover'){if(this.elapsed>=h.phaseUntil){h.state='patrol';h.aim=null;}return;}
+      const target=[...(this.decoy?[this.decoy]:[]),...this.glowTrail.slice().reverse()].find(t=>distance(h,t)<=4&&this.clear(h,t,true));
+      if(target){h.aim=copy(target);h.state='glimmer';h.phaseUntil=this.elapsed+.8;h.facing=Math.atan2(target.y-h.y,target.x-h.x);this.events.push('glimmer');return;}
+      h.state='patrol';let point=h.patrol[h.routeIndex];
+      if(distance(h,point)<.1){h.routeIndex=(h.routeIndex+1)%h.patrol.length;point=h.patrol[h.routeIndex];}
+      if(this.clear(h,point,true)){
+        const d=distance(h,point),step=Math.min(d,.9*dt);if(d>.001){h.facing=Math.atan2(point.y-h.y,point.x-h.x);h.x+=Math.cos(h.facing)*step;h.y+=Math.sin(h.facing)*step;h.distanceMoved+=step;}
+      }else this.moveHunter(point,.9*dt,h);
+    }
+    updateCricket(dt,h){
+      if(h.state==='dig'){
+        if(this.elapsed>=h.phaseUntil){h.state='buried';h.path=[];}return;
+      }
+      if(h.state==='buried'){
+        this.moveHunter(h.aim,2.8*dt,h);
+        if(distance(h,h.aim)<.15||this.elapsed>=h.tunnelUntil){h.state='rise';h.phaseUntil=this.elapsed+.9;this.events.push('rumble');}return;
+      }
+      if(h.state==='rise'){
+        if(this.elapsed>=h.phaseUntil){h.state='chase';h.phaseUntil=this.elapsed+1.2;this.alarms++;}return;
+      }
+      if(h.state==='chase'){
+        this.moveHunter(h.aim,3.1*dt,h);
+        if(this.elapsed>=h.phaseUntil){h.state='recover';h.phaseUntil=this.elapsed+1.3;}return;
+      }
+      if(h.state==='recover'){if(this.elapsed>=h.phaseUntil){h.state='patrol';h.aim=null;}return;}
+      const lure=this.decoy&&this.audible(h,this.decoy,9),heard=this.player.noisy&&!this.player.hidden&&this.audible(h,this.player,8);
+      if(lure||heard){
+        h.aim=copy(lure?this.decoy:this.player);h.reason='heard';h.state='dig';h.phaseUntil=this.elapsed+.5;h.tunnelUntil=this.elapsed+4;this.events.push('rumble');return;
+      }
+      h.state='patrol';const target=h.patrol[h.routeIndex];
+      if(distance(h,target)<.1)h.routeIndex=(h.routeIndex+1)%h.patrol.length;
+      this.moveHunter(h.patrol[h.routeIndex],.8*dt,h);
+    }
+    updateBeetle(dt,h){
+      if(h.state==='windup'){
+        if(this.elapsed>=h.phaseUntil){h.state='charge';h.phaseUntil=this.elapsed+.65;this.events.push('charge');}
+        return;
+      }
+      if(h.state==='charge'){
+        const remaining=distance(h,h.aim),step=Math.min(7*dt,remaining),next={x:h.x+Math.cos(h.facing)*step,y:h.y+Math.sin(h.facing)*step};
+        if(this.elapsed>=h.phaseUntil||remaining<.05||!this.fits(next,.22,h)){h.state='recover';h.phaseUntil=this.elapsed+1.3;h.awareness=0;h.path=[];return;}
+        h.x=next.x;h.y=next.y;h.distanceMoved+=step;return;
+      }
+      if(h.state==='recover'){if(this.elapsed>=h.phaseUntil){h.state='patrol';h.aim=null;}return;}
+      const seen=this.seesPlayer(h),heard=this.player.noisy&&!this.player.hidden&&this.audible(h,this.player,this.player.sprinting?6:3.5);
+      if(seen){
+        h.awareness=Math.min(1,h.awareness+dt/.85);h.state='alert';h.reason='seen';
+        h.facing=Math.atan2(this.player.y-h.y,this.player.x-h.x);
+        if(h.awareness>=1){h.aim=copy(this.player);h.state='windup';h.phaseUntil=this.elapsed+.8;this.alarms++;this.notice('The beetle is aiming. Dodge sideways!','warning');}
+        return;
+      }
+      if(h.state==='alert'){h.awareness=Math.max(0,h.awareness-dt*1.5);if(h.awareness>0)return;h.state='patrol';}
+      const lure=this.decoy&&this.audible(h,this.decoy,9);
+      if(lure||heard){h.state='decoy';this.moveHunter(lure?this.decoy:this.player,1.3*dt,h);return;}
+      h.state='patrol';let target=h.patrol[h.routeIndex];
+      if(distance(h,target)<.1){
+        if(!h.pauseUntil)h.pauseUntil=this.elapsed+.9;
+        if(this.elapsed<h.pauseUntil){h.facing+=dt*.7;return;}
+        h.pauseUntil=0;h.routeIndex=(h.routeIndex+1)%h.patrol.length;target=h.patrol[h.routeIndex];
+      }
+      this.moveHunter(target,1.15*dt,h);
+    }
+    updateScorpion(dt,h){
+      // The sting commits to an observed patch of ground. It never follows
+      // Sally through cover or around a wall after the tail has been raised.
+      if(h.state==='windup'){
+        if(this.elapsed>=h.phaseUntil){h.state='sting';h.phaseUntil=this.elapsed+.2;this.events.push('sting');}
+        return;
+      }
+      if(h.state==='sting'){
+        if(this.elapsed>=h.phaseUntil){h.state='recover';h.phaseUntil=this.elapsed+1.5;h.awareness=0;}
+        return;
+      }
+      if(h.state==='recover'){if(this.elapsed>=h.phaseUntil){h.state='patrol';h.aim=null;h.path=[];}return;}
+      const p=this.player,seen=this.seesPlayer(h),lure=this.decoy&&this.audible(h,this.decoy,9)&&!(seen&&distance(h,p)<1.2);
+      if(lure){h.state='decoy';h.awareness=0;this.moveHunter(this.decoy,1.35*dt,h);return;}
+      if(seen){
+        h.state='alert';h.reason='seen';h.facing=Math.atan2(p.y-h.y,p.x-h.x);
+        h.awareness=Math.min(1,h.awareness+dt/.7);
+        if(distance(h,p)>3.2){this.moveHunter(p,1.15*dt,h);return;}
+        if(h.awareness>=1){h.aim=copy(p);h.state='windup';h.phaseUntil=this.elapsed+.95;this.alarms++;this.notice('Scorpion tail raised! Leave the marked ground.','tail');}
+        return;
+      }
+      h.awareness=Math.max(0,h.awareness-dt*1.8);
+      if(h.state==='alert'&&h.awareness>0)return;
+      h.state='patrol';let target=h.patrol[h.routeIndex];
+      if(distance(h,target)<.1){
+        if(!h.pauseUntil)h.pauseUntil=this.elapsed+.8;
+        if(this.elapsed<h.pauseUntil){h.facing+=dt*.5;return;}
+        h.pauseUntil=0;h.routeIndex=(h.routeIndex+1)%h.patrol.length;target=h.patrol[h.routeIndex];
+      }
+      this.moveHunter(target,1.05*dt,h);
+    }
+    updateNestHunter(dt,h){
+      if(h.state==='windup'){
+        if(this.elapsed>=h.phaseUntil){
+          if(h.kind==='toad'){h.state='leap';h.phaseUntil=this.elapsed+.5;this.events.push('hop');}
+          else{if(this.fits(h.aim)&&this.clear(h,h.aim,true))this.webs.push({...h.aim,expires:this.elapsed+5});h.state='recover';h.phaseUntil=this.elapsed+1.5;this.events.push('web');}
+        }return;
+      }
+      if(h.state==='leap'){
+        const remaining=distance(h,h.aim),step=Math.min(5.5*dt,remaining),next={x:h.x+Math.cos(h.facing)*step,y:h.y+Math.sin(h.facing)*step};
+        if(this.elapsed>=h.phaseUntil||remaining<.05||!this.fits(next,.22,h)){h.state='recover';h.phaseUntil=this.elapsed+1.4;h.awareness=0;h.path=[];return;}
+        h.x=next.x;h.y=next.y;h.distanceMoved+=step;return;
+      }
+      if(h.state==='recover'){if(this.elapsed>=h.phaseUntil){h.state='patrol';h.aim=null;h.awareness=0;}return;}
+      const p=this.player,seen=this.seesPlayer(h),lure=this.decoy&&this.audible(h,this.decoy,9)&&!(seen&&distance(h,p)<1.2);
+      if(lure){h.state='decoy';h.awareness=0;this.moveHunter(this.decoy,1.4*dt,h);return;}
+      if(seen){
+        h.state='alert';h.reason='seen';h.facing=Math.atan2(p.y-h.y,p.x-h.x);h.awareness=Math.min(1,h.awareness+dt/.75);
+        const range=h.kind==='toad'?2.4:3.4;
+        if(distance(h,p)>range){this.moveHunter(p,1.1*dt,h);return;}
+        if(h.awareness>=1){h.aim=copy(p);h.state='windup';h.phaseUntil=this.elapsed+(h.kind==='toad'?.7:.9);this.alarms++;this.notice(h.kind==='toad'?'The toad crouches! Step out of its landing lane.':'The spider aims silk! Leave the marked ground.','warning');}return;
+      }
+      h.awareness=Math.max(0,h.awareness-dt*1.8);if(h.state==='alert'&&h.awareness>0)return;
+      h.state='patrol';let target=h.patrol[h.routeIndex];if(distance(h,target)<.1){if(!h.pauseUntil)h.pauseUntil=this.elapsed+.8;if(this.elapsed<h.pauseUntil)return;h.pauseUntil=0;h.routeIndex=(h.routeIndex+1)%h.patrol.length;target=h.patrol[h.routeIndex];}
+      this.moveHunter(target,(h.kind==='toad'?1.05:.95)*dt,h);
+    }
+    moveHunter(target,budget,h=this.hunter){
+      if(this.grid[Math.floor(h.y)]?.[Math.floor(h.x)]==='M')budget*=.72;
+      if(h.kind==='sea-snake')budget*=this.water(h)?1.05:.65;
+      const id=Math.floor(target.x)+','+Math.floor(target.y);
+      if(h.targetId!==id || !h.path.length){h.path=this.route(h,target,h);h.targetId=id;}
+      while(h.path.length&&budget>0){
+        const point=h.path[0],d=distance(h,point);
+        if(d<0.01){h.path.shift();continue;}
+        const step=Math.min(budget,d),next={x:h.x+(point.x-h.x)*step/d,y:h.y+(point.y-h.y)*step/d};
+        if(!this.clear(h,next,false,h)||!this.fits(next,.22,h)){h.path=[];break;}
+        h.facing=Math.atan2(next.y-h.y,next.x-h.x);h.x=next.x;h.y=next.y;h.distanceMoved+=step;budget-=step;
+        if(step>=d-0.00001)h.path.shift();
+      }
+    }
+    finish(status,message){
+      if(this.status!=='playing')return;
+      this.status=status;this.notice(message,status);
+      this.tongue=null;
+      const stars=status==='won'?1+Number(this.treasure>=Math.ceil(this.totalTreasure*.6))+Number(this.alarms===0):0;
+      this.result=Object.freeze({status,levelId:this.level.id,routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,message});
+    }
+    drainEvents(){const events=this.events;this.events=[];return events;}
+  }
+  root.EscapeAdventure=EscapeAdventure;
+  if(typeof module!=='undefined'&&module.exports)module.exports={EscapeAdventure};
+})(typeof globalThis!=='undefined'?globalThis:this);
