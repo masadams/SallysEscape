@@ -2,13 +2,15 @@
   const catalog=typeof module!=='undefined'&&module.exports?require('./escape-levels.js').EscapeCatalog:root.EscapeCatalog;
   const KEY='sallys-escape-progress-v1',validTime=n=>Number.isFinite(n)&&n>0&&n<1000000;
   class EscapeProgress{
-    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{}};this.persistent=Boolean(storage);this.read();}
+    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[]};this.persistent=Boolean(storage);this.read();}
     read(){
       let raw,value;
       try{raw=this.storage?.getItem(KEY);this.persistent=Boolean(this.storage);}catch(_){this.persistent=false;return;}
       try{value=JSON.parse(raw||'null');}catch(_){return;}
       if(!value||value.version!==1)return;
       if(['follow','overview'].includes(value.view))this.data.view=value.view;
+      // World caches are only ever added; a stale tab cannot forget one.
+      if(Array.isArray(value.caches))for(const id of value.caches)if(typeof id==='string'&&/^[a-z]+-(north|south)$/.test(id)&&!this.data.caches.includes(id))this.data.caches.push(id);
       for(const [kind,entries] of [['levels',catalog.levels],['challenges',catalog.challenges]])for(const item of entries){
         const saved=value[kind]?.[item.id];
         if(!saved||saved.cleared!==true||!validTime(saved.bestTime))continue;
@@ -24,6 +26,16 @@
     unlocked(id){const index=catalog.levels.findIndex(l=>l.id===id);if(index<0)return false;const prerequisite=catalog.levels[index].unlockAfter||catalog.levels[index-1]?.id;return index===0||index===1||Boolean(this.data.levels[id]?.cleared)||(catalog.levels[index].unlockAny?catalog.levels[index].unlockAny.some(id=>this.data.levels[id]?.cleared):Boolean(prerequisite&&this.data.levels[prerequisite]?.cleared));}
     challengeUnlocked(id){const c=catalog.challenges.find(c=>c.id===id);return Boolean(c&&this.data.levels[c.levelId]?.cleared);}
     setView(view){if(!['follow','overview'].includes(view))return false;this.read();this.data.view=view;this.write();return true;}
+    findCache(id){if(typeof id!=='string'||!/^[a-z]+-(north|south)$/.test(id))return false;this.read();if(this.data.caches.includes(id))return false;this.data.caches.push(id);this.write();return true;}
+    // Lifetime totals for the world map: best stars and treasure per route, challenges and caches.
+    totals(cacheValue=0){
+      const levels=catalog.levels.map(l=>({level:l,saved:this.data.levels[l.id]}));
+      return {stars:levels.reduce((n,{saved})=>n+(saved?.stars||0),0),maxStars:levels.length*3,
+        treasure:levels.reduce((n,{saved})=>n+(saved?.treasure||0),0)+this.data.caches.length*cacheValue,
+        maxTreasure:levels.reduce((n,{level})=>n+level.loot.reduce((t,l)=>t+l[2],0),0),
+        cleared:levels.filter(({saved})=>saved?.cleared).length,levels:levels.length,
+        challenges:catalog.challenges.filter(c=>this.data.challenges[c.id]?.cleared).length,maxChallenges:catalog.challenges.length,caches:this.data.caches.length};
+    }
     write(){try{this.storage?.setItem(KEY,JSON.stringify(this.data));this.persistent=Boolean(this.storage);}catch(_){this.persistent=false;}}
     record(result){
       if(result?.status!=='won'||!validTime(result.time))return false;
