@@ -52,5 +52,5 @@ test('the Lantern Marsh follows the Hollow with five routes that each reuse a di
   assert.equal(marsh[0].unlockAfter,'old-shedding-tree');for(const l of marsh){assert.ok(l.tailDrop);assert.ok(l.regrowth.length>=2);}
   assert.ok(marsh[0].dark&&marsh[0].gates[0].bridge);assert.equal(marsh[1].gates.filter(g=>g.duration&&g.plates.length===2).length,3);
   assert.ok(marsh[2].living&&marsh[2].guards.filter(h=>h.kind==='mimic').length===3&&marsh[2].seeds);assert.equal(marsh[3].rivalries.length,2);
-  assert.equal(marsh[4].requiredTreasure,7);assert.equal(marsh[4].reactions.length,2);assert.equal(marsh[4].reinforcements.length,2);
+  assert.equal(marsh.filter(l=>l.guards.some(h=>h.kind==='owl')).length,3);assert.equal(marsh[4].requiredTreasure,7);assert.equal(marsh[4].reactions.length,2);assert.equal(marsh[4].reinforcements.length,2);
 });

@@ -70,6 +70,7 @@
     rustle:(v)=>noise(v,{dur:.3,gain:.18,freq:3500,q:.6,attack:.04}),
     snap:(v)=>{noise(v,{dur:.05,gain:.4,freq:1500,q:3});tone(v,{freq:220,to:110,dur:.12,type:'square',gain:.12});},
     cache:(v)=>{recipes.chest(v);notes(v,[[2093,.32,.12],[2637,.4,.25]],{type:'sine',gain:.15});},
+    hoot:(v)=>{tone(v,{freq:420,to:360,dur:.22,type:'sine',gain:.35,wobble:6,wobbleRate:7});tone(v,{freq:400,to:330,dur:.35,type:'sine',gain:.3,delay:.28,wobble:6,wobbleRate:7});},
     click:(v)=>tone(v,{freq:900,to:700,dur:.05,type:'sine',gain:.12})
   };
   function play(ctx,name,volume=.25,options={}){
