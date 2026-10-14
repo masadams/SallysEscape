@@ -219,3 +219,9 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
  #escape-result p { margin:5px 0 10px; line-height:1.4; }
  #escape-result button { display:inline-block; width:auto; margin:5px; min-height:44px; }
 }
+
+.escape-tail-lost{color:#f2a1b8}
+.world-totals { display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:8px; font-size:.78rem; color:#f3e3b1; }
+.world-toast { margin:8px 0 0; font-size:.78rem; color:#f6dd96; min-height:1em; }
+.world-route-challenge { font-size:.8rem; color:#e9dcb4; }
+#world-challenge { margin-left:6px; }

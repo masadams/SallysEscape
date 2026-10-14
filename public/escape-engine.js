@@ -28,6 +28,9 @@
       this.tongues=this.level.tongues||0;this.tongueRange=3;this.tongue=null;this.tongueReadyAt=0;this.tonguesUsed=0;this.keyByTongue=false;
       this.elapsed=0;this.accumulator=0;this.status='playing';this.paused=false;this.result=null;
       this.invulnerableUntil=0;this.exitHold=0;this.closeCalls=0;this.alarms=0;this.events=[];
+      // Later routes forgive one catch: Sally sheds her tail as a wriggling decoy.
+      this.tailDrop=Boolean(this.level.tailDrop&&!this.challenge);this.hasTail=true;this.tailsDropped=0;this.droppedTail=null;
+      this.regrowthBugs=(this.level.regrowth||[]).map(p=>({...centre(...p),eaten:false}));
       this.requiredTreasure=this.challenge?.allTreasure?this.totalTreasure:this.level.requiredTreasure||0;this.timeLimit=this.challenge?.timeLimit||this.level.timeLimit||null;
       this.message=this.challenge?.brief||this.level.hint;this.messageUntil=7;
       this.visible=new Set();this.discovered=new Set();this.visibilityAt=-Infinity;this.updateVisibility(true);
@@ -249,6 +252,7 @@
       const p=this.player,d=p.tongueAim||p.facing,targets=[];
       if(!this.hasKey)targets.push({kind:'key',point:this.key});
       this.loot.forEach((item,index)=>{if(!item.taken)targets.push({kind:'loot',index,point:item});});
+      if(!this.hasTail)this.regrowthBugs.forEach((bug,index)=>{if(!bug.eaten)targets.push({kind:'bug',index,point:bug});});
       return targets.filter(t=>{const dx=t.point.x-p.x,dy=t.point.y-p.y,forward=dx*d.x+dy*d.y,side=Math.abs(dx*d.y-dy*d.x);return forward>.25&&distance(p,t.point)<=this.tongueRange+1e-9&&side<=.35&&this.clear(p,t.point,true);}).sort((a,b)=>distance(p,a.point)-distance(p,b.point))[0]||null;
     }
     useTongue(){
@@ -267,13 +271,33 @@
     collectLoot(item){
       if(item.taken)return;item.taken=true;this.treasure+=item.value;this.notice(item.value>1?'A whole treasure chest!':'Treasure pocketed.','treasure');this.reactToMaze('treasure',item);
     }
+    shedTail(captor){
+      if(!this.tailDrop||!this.hasTail||this.status!=='playing')return false;
+      const p=this.player;this.hasTail=false;this.tailsDropped++;
+      this.droppedTail={x:p.x,y:p.y,born:this.elapsed,expires:this.elapsed+3};
+      this.invulnerableUntil=this.elapsed+1.2;p.stamina=100;p.exhausted=false;
+      // Every nearby hunter, including the one that caught her, turns on the wriggling tail.
+      for(const h of this.hunters){
+        if(h!==captor&&(distance(h,p)>=6||!this.clear(h,p,true)))continue;
+        h.graceUntil=Math.max(h.graceUntil||0,this.elapsed+2.8);
+        // Rooted plants, fish and burrowing hunters cannot chase a tail across the floor.
+        if(['mimic','fish'].includes(h.kind)||['emerge','dig','buried','rise','clash'].includes(h.state))continue;
+        h.tailLureUntil=this.elapsed+2.4;h.path=[];h.targetId=null;
+      }
+      this.notice(this.regrowthBugs.some(b=>!b.eaten)?'Tail dropped! It wriggles as a decoy. Run—then eat a glowing bug to regrow it.':'Tail dropped! It wriggles as a decoy. Run! The next catch is final.','tailDrop');
+      return true;
+    }
+    eatRegrowthBug(bug){
+      if(bug.eaten||this.hasTail)return;bug.eaten=true;this.hasTail=true;
+      this.notice('Crunch! Sally\'s tail grows back.','regrow');
+    }
     updateTongue(){
       const t=this.tongue;if(!t)return;
       const age=this.elapsed-t.startedAt;
       if(!t.hit&&age>=.14){
-        t.hit=true;const present=t.kind==='key'?!this.hasKey:!this.loot[t.index].taken;
+        t.hit=true;const present=t.kind==='key'?!this.hasKey:t.kind==='bug'?!this.regrowthBugs[t.index].eaten&&!this.hasTail:!this.loot[t.index].taken;
         if(present&&distance(this.player,t.point)<=this.tongueRange+1e-9&&this.clear(this.player,t.point,true)){
-          t.caught=true;t.kind==='key'?this.collectKey(true):this.collectLoot(this.loot[t.index]);
+          t.caught=true;t.kind==='key'?this.collectKey(true):t.kind==='bug'?this.eatRegrowthBug(this.regrowthBugs[t.index]):this.collectLoot(this.loot[t.index]);
         }else this.notice('The grab missed. Keep a clear line and stay within reach.');
       }
       if(age>=.34)this.tongue=null;
@@ -297,7 +321,7 @@
       if(p.stamina<=0)p.exhausted=true;
       if(p.exhausted&&p.stamina>=25)p.exhausted=false;
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
-      const sprint=Boolean(input.sprint&&!p.exhausted&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',speed=(sprint?4:2.45)*(p.webbed?.45:mud?.72:1)*(this.water(p)?.55:1);
+      const sprint=Boolean(input.sprint&&!p.exhausted&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',speed=(sprint?4:2.45)*(this.hasTail?1:.9)*(p.webbed?.45:mud?.72:1)*(this.water(p)?.55:1);
       for(const [axis,direction] of [['x',dx],['y',dy]]){
         const next={...p,[axis]:p[axis]+direction*speed*dt};if(this.fits(next))p[axis]=next[axis];
       }
@@ -315,9 +339,11 @@
       this.updateRivalries();for(const hunter of this.hunters)this.updateHunter(dt,hunter);this.updateRivalries();
       this.motion.update(dt,this);
       const stinger=this.hunters.find(h=>h.kind==='scorpion'&&h.state==='sting'&&h.aim&&distance(h,h.aim)<=3.25&&distance(p,h.aim)<.65&&this.clear(h,p,true));
+      if(this.elapsed>=this.invulnerableUntil&&stinger&&this.shedTail(stinger))return;
       if(this.elapsed>=this.invulnerableUntil&&stinger){this.finish('caught','The scorpion struck the marked ground. Move away when its tail rises.');return;}
       // Capture wins over picking up the key or escaping in the same simulation step.
       const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&distance(p,h)<.48&&this.clear(p,h));
+      if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
       if(this.elapsed>=this.invulnerableUntil && captor){
         this.finish('caught',captor.kind==='millipede'?'A rustle, then darkness. Try another route through the ruins.':captor.kind==='mimic'?'The plant snapped at its marked spot. Provoke it from a distance or step aside when it opens.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'The guard spotted you. Break sight at a corner or use a pebble.');return;
       }
@@ -332,6 +358,8 @@
       for(const loot of this.loot)if(!loot.taken&&distance(p,loot)<0.5&&this.clear(p,loot)&&!(this.tongue?.kind==='loot'&&this.loot[this.tongue.index]===loot&&!this.tongue.hit)){
         this.collectLoot(loot);
       }
+      if(this.droppedTail&&this.droppedTail.expires<=this.elapsed)this.droppedTail=null;
+      if(!this.hasTail)for(const bug of this.regrowthBugs)if(!bug.eaten&&distance(p,bug)<0.5&&this.clear(p,bug))this.eatRegrowthBug(bug);
       if(distance(p,this.exit)<0.55){
         if(this.exitUnlocked()){this.exitHold+=dt;if(this.exitHold>=0.55)this.finish('won','Sally made it out!');}
         else if(this.messageUntil<this.elapsed)this.notice(this.hasKey?'Bring '+(this.requiredTreasure-this.treasure)+' more treasure to the hatch.':'The hatch needs the golden key.');
@@ -346,6 +374,10 @@
       return d<1 || Math.abs(difference)<(h.kind==='beetle'?Math.PI/5:Math.PI/3);
     }
     updateHunter(dt,h=this.hunter){
+      if(h.tailLureUntil){
+        if(this.elapsed<h.tailLureUntil&&this.droppedTail){h.state='decoy';h.awareness=0;h.lastKnown=null;h.aim=null;if(distance(h,this.droppedTail)>.3)this.moveHunter(this.droppedTail,1.3*dt,h);return;}
+        h.tailLureUntil=0;h.state=h.kind==='mimic'?'rooted':'patrol';h.path=[];h.targetId=null;h.aim=null;h.awareness=0;h.lastKnown=null;h.graceUntil=Math.max(h.graceUntil||0,this.elapsed+.4);
+      }
       if(h.state==='clash'){if(this.elapsed>=h.phaseUntil){h.state='patrol';h.path=[];h.targetId=null;h.awareness=0;h.graceUntil=this.elapsed+.6;}return;}
       if(h.kind==='fish'){this.updateFish(dt,h);return;}
       if(h.state==='emerge'){if(this.elapsed>=h.phaseUntil)h.state=h.kind==='mimic'?'rooted':'patrol';return;}
@@ -597,8 +629,8 @@
       if(this.status!=='playing')return;
       this.status=status;this.notice(message,status);
       this.tongue=null;
-      const stars=status==='won'?1+Number(this.treasure>=Math.ceil(this.totalTreasure*.6))+Number(this.alarms===0):0;
-      this.result=Object.freeze({status,levelId:this.level.id,routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,message});
+      const stars=status==='won'?1+Number(this.treasure>=Math.ceil(this.totalTreasure*.6))+Number(this.alarms===0&&this.hasTail):0;
+      this.result=Object.freeze({status,levelId:this.level.id,routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,message});
     }
     drainEvents(){const events=this.events;this.events=[];return events;}
   }
