@@ -8699,7 +8699,7 @@
     levels[b-1].unlockAny=entry===1?[levels[0].id,levels[1].id]:[levels[entry-1].id];levels[join-1].unlockAny=[levels[a-1].id,levels[b-1].id];
   }
   // Later chapters forgive one catch with a tail drop; early routes keep one-touch tension.
-  for(const level of levels.slice(32,47))level.tailDrop=true;
+  for(const level of levels.slice(23,47))level.tailDrop=true;
   const catalog=freeze({levels,challenges});
   root.EscapeCatalog=catalog;root.escapeGridFor=gridFor;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeCatalog:catalog,escapeGridFor:gridFor};

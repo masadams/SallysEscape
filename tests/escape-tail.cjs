@@ -9,7 +9,7 @@ function bitten(levelId='fern-cloister'){
 }
 test('only the later chapters forgive a catch; early routes and every challenge stay one-touch',()=>{
   const forgiving=EscapeCatalog.levels.filter(l=>l.tailDrop).map(l=>EscapeCatalog.levels.indexOf(l));
-  assert.ok(forgiving.length>=15);assert.ok(Math.min(...forgiving)>=32,'no tail drop before the Hollow Jungle');
+  assert.ok(forgiving.length>=15);assert.equal(Math.min(...forgiving),23,"the tail drop starts with the scorpions of Venom Depths");
   assert.equal(new EscapeAdventure({levelId:'quiet-vault'}).tailDrop,false);assert.equal(new EscapeAdventure({levelId:'the-heartwood'}).tailDrop,true);
   for(const c of EscapeCatalog.challenges)assert.equal(new EscapeAdventure({challengeId:c.id}).tailDrop,false);
   for(const l of EscapeCatalog.levels.filter(l=>l.regrowth))assert.ok(l.tailDrop,l.id+' has bugs only with a tail to regrow');
