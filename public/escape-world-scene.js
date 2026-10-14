@@ -79,6 +79,8 @@ function playEscapeWorld(){
 function drawEscapeWorld(){
   const w=escapeWorld,cell=width<600?23:30,clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),cx=clamp(w.player.x,width/(2*cell),w.width-width/(2*cell)),cy=clamp(w.player.y,(height-90)/(2*cell),w.height-(height-90)/(2*cell)),ox=width/2-cx*cell,oy=(width<600?height*.42:(height+30)/2)-cy*cell;
   const bounds=document.getElementById('game-container').getBoundingClientRect?.()||{left:0,top:0,width,height},panels=[...document.querySelectorAll('.world-heading,.world-route,.world-guide,.world-touch #movement-stick,.world-touch .direction-pad,.world-touch .ability-pad')].map(p=>p.getBoundingClientRect());
+  // Flag number buttons are DOM elements above the canvas; hide any the villager's speech bubble covers.
+  const talking=w.nearbyNpc();if(talking){const b=escapeSpeechRect(talking,cell),sx=v=>bounds.left+(v+ox)/width*bounds.width,sy=v=>bounds.top+(v+oy)/height*bounds.height;panels.push({left:sx(b.x),right:sx(b.x+b.w),top:sy(b.y),bottom:sy(b.y+b.h+cell*.3)});}
   const palettes={meadow:[[134,168,106],[51,86,65],[175,190,130]],garden:[[114,153,102],[50,83,63],[161,177,123]],river:[[103,156,127],[43,90,81],[150,182,139]],ruins:[[123,147,111],[73,94,82],[171,177,139]],quarry:[[155,138,104],[99,91,75],[192,173,132]],desert:[[201,162,99],[135,112,73],[232,193,125]],marsh:[[99,141,109],[40,81,72],[143,164,120]],jungle:[[77,125,91],[27,74,54],[122,153,94]],glow:[[38,77,82],[18,44,52],[96,168,151]],orchard:[[126,153,93],[56,93,53],[180,185,119]],coast:[[179,176,121],[56,118,110],[221,201,143]],hollow:[[128,104,112],[58,40,56],[176,140,150]],lantern:[[70,104,104],[24,52,58],[120,170,150]]};
   background(37,66,54);push();translate(ox,oy);
   const x1=Math.max(0,Math.floor(-ox/cell)),x2=Math.min(w.width-1,Math.ceil((width-ox)/cell)),y1=Math.max(0,Math.floor(-oy/cell)),y2=Math.min(w.height-1,Math.ceil((height-oy)/cell));
@@ -112,7 +114,7 @@ function drawEscapeWorld(){
   if(w.fly)drawEscapeGoldfly(w.fly,cell,w.elapsed);
   // Cloud shadows drift across the whole trail.
   noStroke();for(let i=0;i<7;i++){const cx=((i*41+w.elapsed*.35)%(w.width+24))-12,cy=(i*13+7)%w.height;fill(10,30,25,26);ellipse(cx*cell,cy*cell,cell*7,cell*3.4);ellipse((cx+2.6)*cell,(cy-.8)*cell,cell*5,cell*2.6);}
-  const talker=w.nearbyNpc();if(talker)drawEscapeSpeech(talker,escapeNpcLine(talker),cell);
+  if(talking)drawEscapeSpeech(talking,escapeNpcLine(talking),cell);
   pop();
   // A slow day and night cycle tints the trail every four minutes.
   const night=(1-Math.cos(w.elapsed/240*Math.PI*2))/2;if(night>.02){noStroke();fill(12,22,58,110*night);rect(0,0,width,height);}
@@ -126,8 +128,9 @@ function drawEscapeWorldNpc(npc,cell,clock){
   else{fill(70,92,150);ellipse(x,y,cell*.42,cell*.6);stroke(30,40,70);strokeWeight(cell*.03);line(x,y-cell*.3,x,y+cell*.3);for(const s of [-1,1])for(const o of [-.12,0,.12])line(x+s*cell*.2,y+o*cell,x+s*cell*.34,y+o*cell+cell*.06);noStroke();fill(150,190,255,120);ellipse(x-cell*.08,y-cell*.12,cell*.1,cell*.18);}
   fill(255,246,220,230);textAlign(CENTER,CENTER);textSize(cell*.28);text(npc.name,x,y-cell*.62);pop();
 }
+function escapeSpeechRect(npc,cell){const w=cell*8,h=cell*2.2;return {x:(npc.x+.5)*cell-w/2,y:(npc.y+.5)*cell-cell*1.2-h,w,h};}
 function drawEscapeSpeech(npc,line,cell){
-  const w=cell*8,h=cell*2.2,x=(npc.x+.5)*cell-w/2,y=(npc.y+.5)*cell-cell*1.2-h;noStroke();fill(250,244,222,240);rect(x,y,w,h,cell*.25);triangle((npc.x+.3)*cell,y+h,(npc.x+.7)*cell,y+h,(npc.x+.5)*cell,y+h+cell*.3);
+  const {w,h,x,y}=escapeSpeechRect(npc,cell);noStroke();fill(250,244,222,240);rect(x,y,w,h,cell*.25);triangle((npc.x+.3)*cell,y+h,(npc.x+.7)*cell,y+h,(npc.x+.5)*cell,y+h+cell*.3);
   fill(44,58,44);textAlign(LEFT,TOP);textSize(cell*.36);text(line,x+cell*.25,y+cell*.2,w-cell*.5,h-cell*.3);textAlign(CENTER,CENTER);
 }
 function drawEscapeGoldfly(fly,cell,clock){
