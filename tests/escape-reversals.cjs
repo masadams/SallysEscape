@@ -8,8 +8,8 @@ function advance(g,s,input={}){for(let n=0;n<Math.ceil(s*120);n++)g.advance(1/12
 function openBlue(g){Object.assign(g.player,g.gates.find(g=>g.id==='blue').switch);g.activateSwitches();}
 
 test('the maze only reacts in later chapters, with increasing enemy pressure',()=>{
- assert.equal(later.length,37);assert.ok(EscapeCatalog.levels.slice(0,13).every(l=>!l.reactions));
- assert.deepEqual(EscapeCatalog.levels.slice(13,17).map(l=>l.guards.length),[3,3,4,4]);assert.equal(EscapeCatalog.levels.length,58);assert.equal(EscapeCatalog.challenges.length,16);
+ assert.equal(later.length,39);assert.ok(EscapeCatalog.levels.slice(0,13).every(l=>!l.reactions));
+ assert.deepEqual(EscapeCatalog.levels.slice(13,17).map(l=>l.guards.length),[3,3,4,4]);assert.equal(EscapeCatalog.levels.length,63);assert.equal(EscapeCatalog.challenges.length,17);
  for(const level of later){const g=game(level.id);for(const p of [g.player,g.key,g.exit,...g.loot,...g.hunters,...g.hunters.flatMap(h=>h.patrol)])assert.ok(g.fits(p),level.id+' valid placement');
   for(const r of level.reactions){assert.ok(r.message&&r.objective);for(const id of [...r.close||[],...r.open||[]])assert.ok(g.gates.find(g=>g.id===id));}
  }

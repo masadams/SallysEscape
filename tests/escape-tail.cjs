@@ -48,7 +48,7 @@ test('the Shedding Hollow is a hard tail-drop region where a recorded escape los
   assert.equal(g.status,'won');assert.equal(g.tailsDropped,1);assert.equal(g.hasTail,true);assert.equal(g.regrowthBugs.filter(b=>b.eaten).length,1);
 });
 test('the Lantern Marsh follows the Hollow with five routes that each reuse a different earlier mechanic',()=>{
-  const marsh=EscapeCatalog.levels.slice(53);assert.deepEqual(marsh.map(l=>l.id),['firefly-ford','bramble-switchyard','snapdragon-terrace','rival-rooftops','moonwell-keep']);
+  const marsh=EscapeCatalog.levels.slice(53,58);assert.deepEqual(marsh.map(l=>l.id),['firefly-ford','bramble-switchyard','snapdragon-terrace','rival-rooftops','moonwell-keep']);
   assert.equal(marsh[0].unlockAfter,'old-shedding-tree');for(const l of marsh){assert.ok(l.tailDrop);assert.ok(l.regrowth.length>=2);}
   assert.ok(marsh[0].dark&&marsh[0].gates[0].bridge);assert.equal(marsh[1].gates.filter(g=>g.duration&&g.plates.length===2).length,3);
   assert.ok(marsh[2].living&&marsh[2].guards.filter(h=>h.kind==='mimic').length===3&&marsh[2].seeds);assert.equal(marsh[3].rivalries.length,2);

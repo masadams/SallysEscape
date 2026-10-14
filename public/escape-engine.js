@@ -31,6 +31,9 @@
       // Later routes forgive one catch: Sally sheds her tail as a wriggling decoy.
       this.tailDrop=Boolean(this.level.tailDrop&&!this.challenge);this.hasTail=true;this.tailsDropped=0;this.droppedTail=null;
       this.regrowthBugs=(this.level.regrowth||[]).map(p=>({...centre(...p),eaten:false}));
+      // Rooftop routes: camouflage charges, shaded awnings and a hawk overhead.
+      this.camos=this.level.camos||0;this.camoUntil=0;this.camosUsed=0;this.shade=new Set((this.level.shade||[]).map(([x,y])=>x+','+y));
+      const hawk=this.level.hawk;this.hawk=hawk?{every:hawk.every||8,warn:hawk.warn||1.8,radius:hawk.radius||1.2,speed:hawk.speed||1.5,nextAt:hawk.first||16,state:'circling',shadow:null,strikes:0,dodges:0,lastStrike:null}:null;
       this.requiredTreasure=this.challenge?.allTreasure?this.totalTreasure:this.level.requiredTreasure||0;this.timeLimit=this.challenge?.timeLimit||this.level.timeLimit||null;
       this.message=this.challenge?.brief||this.level.hint;this.messageUntil=7;
       this.visible=new Set();this.discovered=new Set();this.visibilityAt=-Infinity;this.updateVisibility(true);
@@ -287,6 +290,29 @@
       this.notice(this.regrowthBugs.some(b=>!b.eaten)?'Tail dropped! It wriggles as a decoy. Run—then eat a glowing bug to regrow it.':'Tail dropped! It wriggles as a decoy. Run! The next catch is final.','tailDrop');
       return true;
     }
+    camouflage(){
+      if(!this.active())return false;
+      if(!this.camos){this.notice(this.level.camos?'No camouflage left. Find shade or leaves.':'Nothing here to blend into.');return false;}
+      if(this.camoUntil>this.elapsed)return false;
+      this.camos--;this.camosUsed++;this.camoUntil=this.elapsed+6;this.notice('Sally blends into the ground. Keep still to stay hidden.','camo');return true;
+    }
+    shaded(p=this.player){return this.shade.has(Math.floor(p.x)+','+Math.floor(p.y));}
+    // The hawk circles out of reach, then its shadow drifts after Sally a
+    // little slower than she walks, and it dives on wherever the shadow is.
+    updateHawk(dt){
+      const k=this.hawk,p=this.player;if(!k)return;
+      if(k.state==='circling'){if(this.elapsed>=k.nextAt){k.state='stalk';k.shadow=copy(p);k.strikeAt=this.elapsed+k.warn;this.events.push('screech');}return;}
+      if(k.state==='stalk'){
+        const d=distance(k.shadow,p),step=Math.min(d,k.speed*dt);if(d>1e-6){k.shadow.x+=(p.x-k.shadow.x)/d*step;k.shadow.y+=(p.y-k.shadow.y)/d*step;}
+        if(this.elapsed>=k.strikeAt){k.state='dive';k.diveUntil=this.elapsed+.35;this.events.push('dive');}return;
+      }
+      if(k.state==='dive'&&this.elapsed>=k.diveUntil){
+        const exposed=!p.hidden&&!this.shaded()&&distance(k.shadow,p)<=k.radius&&this.elapsed>=this.invulnerableUntil;
+        k.strikes++;k.state='circling';k.nextAt=this.elapsed+k.every;k.lastStrike={...k.shadow,at:this.elapsed,hit:exposed};
+        if(!exposed){k.dodges++;return;}
+        this.alarms++;if(!this.shedTail(null))this.finish('caught','The hawk dropped out of the sun. Shelter under an awning, in leaves, or blend in.');
+      }
+    }
     eatRegrowthBug(bug){
       if(bug.eaten||this.hasTail)return;bug.eaten=true;this.hasTail=true;
       this.notice('Crunch! Sally\'s tail grows back.','regrow');
@@ -327,7 +353,9 @@
       }
       p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);if(p.swimming&&!this.water(old))this.events.push('splash');p.moving=distance(old,p)>0.0001;p.sprinting=sprint&&p.moving;
       p.stamina=Math.max(0,Math.min(100,p.stamina+(p.sprinting?-24:18)*dt));
-      p.hidden=!p.moving&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='L';
+      if(this.camoUntil>this.elapsed&&p.moving){this.camoUntil=0;this.notice('Moving broke the camouflage.');}
+      p.camo=this.camoUntil>this.elapsed;
+      p.hidden=!p.moving&&(this.grid[Math.floor(p.y)][Math.floor(p.x)]==='L'||p.camo);
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
       p.noisy=p.sprinting||(p.moving&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='N');
       if(this.level.dark){
@@ -338,6 +366,7 @@
       if(this.decoy&&this.decoy.expires<=this.elapsed)this.decoy=null;
       this.updateRivalries();for(const hunter of this.hunters)this.updateHunter(dt,hunter);this.updateRivalries();
       this.motion.update(dt,this);
+      this.updateHawk(dt);if(this.status!=='playing')return;
       const stinger=this.hunters.find(h=>h.kind==='scorpion'&&h.state==='sting'&&h.aim&&distance(h,h.aim)<=3.25&&distance(p,h.aim)<.65&&this.clear(h,p,true));
       if(this.elapsed>=this.invulnerableUntil&&stinger&&this.shedTail(stinger))return;
       if(this.elapsed>=this.invulnerableUntil&&stinger){this.finish('caught','The scorpion struck the marked ground. Move away when its tail rises.');return;}
@@ -660,7 +689,7 @@
       this.status=status;this.notice(message,status);
       this.tongue=null;
       const stars=status==='won'?1+Number(this.treasure>=Math.ceil(this.totalTreasure*.6))+Number(this.alarms===0&&this.hasTail):0;
-      this.result=Object.freeze({status,levelId:this.level.id,routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,message});
+      this.result=Object.freeze({status,levelId:this.level.id,routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,hawkDodges:this.hawk?.dodges||0,message});
     }
     drainEvents(){const events=this.events;this.events=[];return events;}
   }

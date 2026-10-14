@@ -71,6 +71,9 @@
     snap:(v)=>{noise(v,{dur:.05,gain:.4,freq:1500,q:3});tone(v,{freq:220,to:110,dur:.12,type:'square',gain:.12});},
     cache:(v)=>{recipes.chest(v);notes(v,[[2093,.32,.12],[2637,.4,.25]],{type:'sine',gain:.15});},
     hoot:(v)=>{tone(v,{freq:420,to:360,dur:.22,type:'sine',gain:.35,wobble:6,wobbleRate:7});tone(v,{freq:400,to:330,dur:.35,type:'sine',gain:.3,delay:.28,wobble:6,wobbleRate:7});},
+    screech:(v)=>{tone(v,{freq:2400,to:1500,dur:.45,type:'sawtooth',gain:.08,wobble:90,wobbleRate:24});tone(v,{freq:1800,to:1200,dur:.35,type:'sine',gain:.12,delay:.08});},
+    dive:(v)=>noise(v,{dur:.4,gain:.35,freq:600,to:2400,q:1.2,attack:.2}),
+    camo:(v)=>{tone(v,{freq:900,to:520,dur:.35,type:'sine',gain:.18,wobble:40,wobbleRate:16});noise(v,{dur:.3,gain:.08,filter:'highpass',freq:4000,attack:.08});},
     click:(v)=>tone(v,{freq:900,to:700,dur:.05,type:'sine',gain:.12})
   };
   function play(ctx,name,volume=.25,options={}){

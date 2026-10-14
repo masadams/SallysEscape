@@ -25,7 +25,10 @@
         this.data[kind][item.id]={cleared:true,bestTime:Math.min(compatible?old.bestTime||Infinity:Infinity,saved.bestTime),revision,...(kind==='levels'?{stars:Math.max(compatible?old.stars||0:0,saved.stars),treasure:Math.max(compatible?old.treasure||0:0,saved.treasure)}:{})};
       }
     }
-    unlocked(id){const index=catalog.levels.findIndex(l=>l.id===id);if(index<0)return false;const prerequisite=catalog.levels[index].unlockAfter||catalog.levels[index-1]?.id;return index===0||index===1||Boolean(this.data.levels[id]?.cleared)||(catalog.levels[index].unlockAny?catalog.levels[index].unlockAny.some(id=>this.data.levels[id]?.cleared):Boolean(prerequisite&&this.data.levels[prerequisite]?.cleared));}
+    challengesCleared(){return catalog.challenges.filter(c=>this.data.challenges[c.id]?.cleared).length;}
+    unlocked(id){const index=catalog.levels.findIndex(l=>l.id===id);if(index<0)return false;
+      // Some branches also wait for a number of completed challenges.
+      if(catalog.levels[index].unlockChallenges&&!this.data.levels[id]?.cleared&&this.challengesCleared()<catalog.levels[index].unlockChallenges)return false;const prerequisite=catalog.levels[index].unlockAfter||catalog.levels[index-1]?.id;return index===0||index===1||Boolean(this.data.levels[id]?.cleared)||(catalog.levels[index].unlockAny?catalog.levels[index].unlockAny.some(id=>this.data.levels[id]?.cleared):Boolean(prerequisite&&this.data.levels[prerequisite]?.cleared));}
     challengeUnlocked(id){const c=catalog.challenges.find(c=>c.id===id);return Boolean(c&&this.data.levels[c.levelId]?.cleared);}
     setView(view){if(!['follow','overview'].includes(view))return false;this.read();this.data.view=view;this.write();return true;}
     catchGoldfly(){this.read();this.data.goldflies=Math.min(this.data.goldflies+1,100000);this.write();return this.data.goldflies;}
