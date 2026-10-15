@@ -246,3 +246,13 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 #escape-result.escape-first-try #escape-result-title { color:#9ff5d0; }
 #escape-warmth { height:7px; margin:3px 0 4px; border-radius:4px; background:rgba(255,255,255,.14); overflow:hidden; }
 #escape-warmth-fill { display:block; height:100%; width:100%; border-radius:4px; background:#ffb36b; transition:width .1s linear; }
+/* Open challenges that have not been beaten yet glow so they are easy to spot. */
+.world-route-challenge.world-challenge-new { color:#ffe08a; font-weight:700; animation: challenge-glow 1.6s ease-in-out infinite; }
+.escape-contract.escape-contract-new { border-color:#e8c25c; box-shadow:0 0 0 1px #e8c25c55, 0 0 14px #e8c25c33; }
+.escape-result-challenge { color:#ffe08a; font-weight:700; margin:4px 0 0; }
+.escape-result-challenge:empty { display:none; }
+@keyframes challenge-glow { 50% { color:#fff4c8; } }
+@media (prefers-reduced-motion: reduce) { .world-route-challenge.world-challenge-new { animation:none; } }
+.escape-intro-hidden { display:none; }
+.escape-intro-kit { font-size:.85rem; color:#cfe0c8; margin:6px 0 10px; }
+#escape-intro-reveal { margin:0 0 10px; font-size:.8rem; padding:6px 12px; }
