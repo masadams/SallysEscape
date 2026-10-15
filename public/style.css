@@ -307,3 +307,21 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
  body:not(.mobile-game) .escape-actions button>svg { width:23px; height:23px; }
  body:not(.mobile-game) .escape-tail-status { min-height:54px; flex-basis:58px; gap:3px; }
 }
+
+/* Sally celebrates once, without holding up the result controls. */
+.sally-celebration { width:154px; height:86px; margin:0 auto 4px; }
+.sally-celebration svg { display:block; width:100%; height:100%; overflow:visible; }
+.sally-celebration-body { transform-origin:95px 82px; }
+.sally-proud { animation:sally-proud-hop .85s ease-out 1; }
+.sally-relieved { animation:sally-relieved-wiggle 1.15s ease-out 1; }
+.sally-sneaky .sally-celebration-eyes { animation:sally-check-both-ways 1.1s ease-out 1; }
+.sally-celebration-tail { transform-origin:69px 60px; animation:sally-tail-flick 1.1s ease-out 1; }
+@keyframes sally-proud-hop { 0%,55%,100%{transform:translateY(0)} 20%{transform:translateY(-9px) rotate(-4deg)} 38%{transform:translateY(0) scale(1.04,.96)} 70%{transform:translateY(-4px)} }
+@keyframes sally-relieved-wiggle { 0%{transform:rotate(-4deg)} 25%{transform:rotate(3deg)} 50%{transform:rotate(-2deg)} 75%,100%{transform:rotate(0)} }
+@keyframes sally-check-both-ways { 0%,20%{transform:translateX(-2px)} 50%,65%{transform:translateX(3px)} 100%{transform:translateX(0)} }
+@keyframes sally-tail-flick { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-7deg)} 60%{transform:rotate(5deg)} }
+@media (orientation:landscape) and (max-height:550px){ .sally-celebration { width:104px; height:58px; margin-bottom:0; } }
+@media (prefers-reduced-motion:reduce){ .sally-celebration * { animation:none !important; } }
+
+.sally-check-tail { transform-origin:118px 44px; animation:sally-check-tail 1.15s ease-out 1; }
+@keyframes sally-check-tail { 0%,35%{transform:scaleX(-1)} 65%,100%{transform:scaleX(1)} }
