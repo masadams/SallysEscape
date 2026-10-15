@@ -258,3 +258,52 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .escape-intro-hidden { display:none; }
 .escape-intro-kit { font-size:.85rem; color:#cfe0c8; margin:6px 0 10px; }
 #escape-intro-reveal { margin:0 0 10px; font-size:.8rem; padding:6px 12px; }
+
+/* Arcade kit: resources share one glance with breath, above the maze. */
+.escape-playing .escape-inventory { top:56px; padding:4px 10px; }
+.escape-playing .escape-kit { position:absolute; top:86px; left:20px; right:20px; display:flex; align-items:center; gap:10px; min-height:70px; pointer-events:none; }
+.escape-playing .escape-kit .escape-breath { position:static; flex:0 0 116px; width:116px; padding:10px; border:1px solid #70958a66; border-radius:12px; background:#10282eeb; font-size:.68rem; }
+.escape-breath>span { display:flex; justify-content:space-between; align-items:center; }
+.escape-kit kbd { font:600 10px system-ui,sans-serif; border:1px solid #b7d1bd55; border-radius:4px; padding:1px 4px; color:#deead0; background:#0a1d26; }
+.escape-playing .escape-kit .escape-actions { position:static; display:flex; gap:6px; min-width:0; }
+.escape-playing .escape-kit .escape-actions button { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; flex:0 0 66px; width:66px; min-height:70px; padding:5px 4px; border:1px solid #91b5a880; border-bottom:3px solid #53796e; color:#e4efdb; background:linear-gradient(#254747f5,#122c32f5); border-radius:12px; line-height:1; pointer-events:auto; }
+.escape-playing .escape-kit .escape-actions button:disabled { opacity:1; cursor:default; }
+.escape-actions button>svg,.escape-tail-status>svg { width:28px; height:28px; }
+.escape-ability-name { font:600 10px/1.2 system-ui,sans-serif; white-space:nowrap; }
+.escape-actions button kbd { position:absolute; top:-6px; right:-3px; }
+.escape-pips { display:flex; justify-content:center; align-items:center; gap:3px; min-height:7px; }
+.escape-pips i { display:block; width:6px; height:6px; border-radius:50%; background:#e6d591; box-shadow:0 0 4px #e6d59144; }
+.escape-pips i.spent { background:transparent; box-shadow:none; border:1px solid #82968d; }
+.escape-pips b { font:600 9px system-ui,sans-serif; }
+.escape-ability-state { font:600 9px system-ui,sans-serif; color:#c8e8b2; }
+.escape-kit .escape-empty>svg,.ability-pad .escape-empty>svg { opacity:.35; filter:grayscale(1); }
+.escape-empty .escape-ability-name { color:#a1b0ac; }
+.escape-kit .escape-cooling,.ability-pad .escape-cooling { border-style:dashed !important; }
+.escape-kit .escape-ability-active,.ability-pad .escape-ability-active { box-shadow:inset 0 0 0 2px #d4e5a2,0 0 12px #addc8244 !important; }
+.escape-tail-status { position:relative; display:flex; flex:0 0 66px; min-height:70px; flex-direction:column; align-items:center; justify-content:center; gap:8px; border:1px solid #b6cd9470; border-radius:12px; background:#172f2deb; color:#f4acb6; pointer-events:auto; }
+.escape-tail-heart { position:absolute; top:5px; right:5px; width:14px; height:14px; }
+.escape-tail-heart svg { width:100%; height:100%; }
+.escape-tail-lost>svg { opacity:.3; filter:grayscale(1); }
+.escape-tail-lost .escape-tail-heart svg path { fill:transparent; stroke:#efb2bd; stroke-width:3px; }
+.mobile-game .escape-playing .escape-kit { position:static; display:contents; }
+.mobile-game .escape-playing .escape-kit .escape-breath { position:absolute; top:78px; left:14px; width:110px; padding:0; border:0; border-radius:0; background:none; }
+.mobile-game .escape-playing .escape-kit .escape-actions { display:none; }
+.mobile-game .escape-tail-status { position:absolute; top:48px; left:230px; min-height:32px; width:84px; flex-direction:row; gap:4px; padding:3px; }
+.mobile-game .escape-tail-status>svg { width:23px; height:23px; }
+.mobile-game .escape-tail-heart { position:static; width:13px; height:13px; }
+.mobile-game .escape-tail-status .escape-ability-name { display:none; }
+.mobile-game .escape-breath kbd { display:none; }
+.mobile-game #touch-controls .ability-pad button { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:3px; min-height:54px; }
+.mobile-game .ability-pad button>svg { width:23px; height:23px; }
+.mobile-game .ability-pad .escape-ability-name { font-size:9px; }
+.mobile-game .ability-pad .escape-pips { gap:2px; }
+.mobile-game .ability-pad .escape-pips i { width:5px; height:5px; }
+.mobile-game .ability-pad .escape-ability-state { display:none; }
+@media (max-height:574px) {
+ body:not(.mobile-game) .escape-playing .escape-mission { top:8px; padding:4px 8px; }
+ body:not(.mobile-game) .escape-playing .escape-inventory { top:36px; padding:2px 8px; }
+ body:not(.mobile-game) .escape-playing .escape-kit { top:62px; left:14px; gap:7px; min-height:54px; }
+ body:not(.mobile-game) .escape-playing .escape-kit .escape-actions button { min-height:54px; flex-basis:58px; width:58px; gap:2px; padding:3px; }
+ body:not(.mobile-game) .escape-actions button>svg { width:23px; height:23px; }
+ body:not(.mobile-game) .escape-tail-status { min-height:54px; flex-basis:58px; gap:3px; }
+}

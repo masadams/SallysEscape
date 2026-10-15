@@ -69,6 +69,34 @@ function showEscapeSelect(){
   clearTouchInput();suppressHeldKeys();unlockAudio();openEscapeWorld(focus);updateToolbar();window.scrollTo?.(0,0);
 }
 
+// Shared artwork keeps desktop inventory and touch actions recognisable.
+function escapeAbilityIcon(kind){
+  const art={
+    burrow:'<path d="M4 21Q4 12 16 12T28 21" fill="#9b7859"/><ellipse cx="16" cy="21" rx="9" ry="4" fill="#172a2e"/><path d="M10 5l3 4m9-4-3 4m-3-7v6"/>',
+    decoy:'<path d="M5 22l3-10 10-5 8 8-2 10-12 2Z" fill="#a9c4cd"/><path d="m8 12 9 3 1-8m-1 8 7 10" stroke="#617e8b"/>',
+    tongue:'<path d="M5 11h13a6 6 0 0 1 0 12h-6a3 3 0 0 1 0-6h6" stroke="#f5a0bb" stroke-width="5"/><path d="m5 7 4 4-4 4" stroke="#ffdfcd"/>',
+    seed:'<path d="M16 27V13m0 7C5 20 4 11 5 7c8 0 12 6 11 13Zm0-5C16 6 22 4 28 5c0 7-5 11-12 10Z" fill="#a9d982" stroke="#c8efaa"/>',
+    camo:'<path d="M5 22C3 10 14 4 28 5c0 14-7 23-18 20Z" fill="#8fbf80"/><path d="M7 25 23 10m-10 9-1-6m6 1 5 1" stroke="#355d46"/>',
+    look:'<path d="M2 16Q16 1 30 16 16 31 2 16Z" fill="#b8dfd9"/><circle cx="16" cy="16" r="5" fill="#254e5a"/><path d="M7 5H2V1" stroke="#f0d992"/>',
+    tail:'<path d="M5 6c20-4 28 17 14 22-9 3-15-8-8-12 5-3 10 3 5 5" stroke="#abd88b" stroke-width="5"/>',
+    heart:'<path d="M16 28 4 16C-3 6 10 0 16 9 22 0 35 6 28 16Z" fill="currentColor" stroke="none"/>'
+  };
+  return '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(art[kind]||'')+'</svg>';
+}
+function escapeResourcePips(left,total){
+  return '<span class="escape-pips" aria-hidden="true">'+Array.from({length:Math.min(total,5)},(_,i)=>'<i class="'+(i<left?'':'spent')+'"></i>').join('')+(total>5?'<b>×'+left+'</b>':'')+'</span>';
+}
+function renderEscapeAbility(button,kind,label,key,left,total,ready=true,active=false){
+  const description=label+(total===null?'':': '+left+' remaining')+(active?' · Active':!left&&total!==null?' · Empty':!ready?' · Recharging':'')+(key?' ['+key+']':'');
+  const markup=escapeAbilityIcon(kind)+'<span class="escape-ability-name">'+label+'</span>'+(total===null?'<span class="escape-ability-state">'+(active?'Active':'Ready')+'</span>':escapeResourcePips(left,total))+(key?'<kbd>'+key+'</kbd>':'');
+  if(button.innerHTML!==markup)button.innerHTML=markup;
+  const help={burrow:'Face a thin cracked wall to burrow through it.',decoy:'Face an open corridor to toss a distraction.',tongue:'Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.',seed:'Plant cover, brace an open doorway, or grow a marked vine crossing.',camo:'Blend into the ground while keeping still.',look:'Turn your gaze behind you briefly, even while moving.'};
+  button.setAttribute('aria-label',description);button.title=description+'. '+help[kind];
+  button.classList.toggle('escape-empty',total!==null&&!left&&!active);
+  button.classList.toggle('escape-cooling',Boolean(left)&&!ready&&!active);
+  button.classList.toggle('escape-ability-active',active);
+}
+
 const ESCAPE_GLOWBUG_CHANCE=.25;
 function startEscape(options={}){
   escapeAbandonRun();
@@ -84,10 +112,10 @@ function startEscape(options={}){
   document.getElementById('game-area').classList.add('escape-mode');
   document.getElementById('scoreboard').innerHTML=`
     <div class="escape-mission"><span id="escape-mission-name"></span><span id="escape-timer"></span></div>
-    <div class="escape-inventory"><span id="escape-key">◇ Find the key</span><span id="escape-treasure">Treasure 0 / 10</span><span id="escape-tail" style="display:none"></span></div>
-    <div class="escape-breath"><span>Breath</span><div id="escape-stamina" role="progressbar" aria-label="Stamina" aria-valuemin="0" aria-valuemax="100"><i id="escape-stamina-fill"></i></div><div id="escape-warmth-row" style="display:none"><span>Warmth</span><div id="escape-warmth" role="progressbar" aria-label="Warmth" aria-valuemin="0" aria-valuemax="100"><i id="escape-warmth-fill"></i></div></div></div>
-    <div class="escape-actions"><button id="escape-burrow-action">Burrow <kbd>E</kbd></button><button id="escape-decoy-action">Toss pebble <kbd>Q</kbd></button><button id="escape-tongue-action" title="Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.">Tongue <kbd>R</kbd></button>
-    <button id="escape-seed-action" title="Plant on bare ground for cover, face an open doorway to brace it, or use a marked vine bank.">Seed <kbd>F</kbd></button><button id="escape-camo-action" title="Blend into the ground. You stay hidden while you keep still.">Camo <kbd>X</kbd></button><button id="escape-look-action" title="Turn your gaze behind you briefly, even while moving.">Look back <kbd>Space</kbd></button></div><p id="escape-objective">Find the golden key. Treasure is optional.</p><p id="escape-warning" role="status" aria-live="polite"></p>`;
+    <div class="escape-inventory"><span id="escape-key">◇ Find the key</span><span id="escape-treasure">Treasure 0 / 10</span></div>
+    <div class="escape-kit" role="group" aria-label="Sally’s abilities and breath"><div class="escape-breath"><span>Breath <kbd>Shift</kbd></span><div id="escape-stamina" role="progressbar" aria-label="Stamina" aria-valuemin="0" aria-valuemax="100"><i id="escape-stamina-fill"></i></div><div id="escape-warmth-row" style="display:none"><span>Warmth</span><div id="escape-warmth" role="progressbar" aria-label="Warmth" aria-valuemin="0" aria-valuemax="100"><i id="escape-warmth-fill"></i></div></div></div>
+    <div id="escape-tail" class="escape-tail-status" style="display:none" role="img"></div><div class="escape-actions"><button id="escape-burrow-action">Burrow <kbd>E</kbd></button><button id="escape-decoy-action">Toss pebble <kbd>Q</kbd></button><button id="escape-tongue-action" title="Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.">Tongue <kbd>R</kbd></button>
+    <button id="escape-seed-action" title="Plant on bare ground for cover, face an open doorway to brace it, or use a marked vine bank.">Seed <kbd>F</kbd></button><button id="escape-camo-action" title="Blend into the ground. You stay hidden while you keep still.">Camo <kbd>X</kbd></button><button id="escape-look-action" title="Turn your gaze behind you briefly, even while moving.">Look back <kbd>Space</kbd></button></div></div><p id="escape-objective">Find the golden key. Treasure is optional.</p><p id="escape-warning" role="status" aria-live="polite"></p>`;
   // p5 redraws synchronously on resize; the new HUD must exist first.
   const size=canvasDimensions();resizeCanvas(size.width,size.height,true);
   document.getElementById('escape-burrow-action').onclick=useEscapeBurrow;
@@ -177,21 +205,29 @@ function renderEscapeHUD(force=false){
   document.getElementById('escape-timer').textContent=g.timeLimit?Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0'):crossing?crossing.name+' · '+(crossing.closingAt!==null?'clearing':Math.max(0,Math.ceil(crossing.expiresAt-g.elapsed))+'s'):brace?'Root brace · '+Math.ceil(brace.bracedUntil-g.elapsed)+'s':growing?(growing.kind==='vine'?'Vine':'Leaves')+' · '+Math.max(0,Math.ceil(growing.expires-g.elapsed))+'s':'';
   document.getElementById('escape-key').textContent=g.hasKey?'⚿ Key found':'◇ Find the key';
   document.getElementById('escape-treasure').textContent='Treasure '+g.treasure+' / '+g.totalTreasure+(g.stolen?' · '+g.stolen+' stolen':'')+(g.requiredTreasure&&g.requiredTreasure<g.totalTreasure?' · need '+g.requiredTreasure:'');
-  const tail=document.getElementById('escape-tail');tail.style.display=g.tailDrop?'':'none';tail.textContent=g.hasTail?'Tail ✓ one spare escape':'Tail lost'+(g.regrowthBugs.some(b=>!b.eaten)?' · find a glowing bug':' · next catch is final');tail.className=g.hasTail?'':'escape-tail-lost';
+  const tail=document.getElementById('escape-tail');tail.style.display=g.tailDrop?'':'none';
+  const tailHint=g.hasTail?'Spare tail: one extra escape from a catch':'Tail lost'+(g.regrowthBugs.some(b=>!b.eaten)?' · find a glowing bug to regrow it':' · next catch is final');
+  const tailArt=escapeAbilityIcon('tail')+'<span class="escape-tail-heart">'+escapeAbilityIcon('heart')+'</span><span class="escape-ability-name">'+(g.hasTail?'Spare tail':'Tail lost')+'</span>';
+  if(tail.innerHTML!==tailArt)tail.innerHTML=tailArt;
+  tail.setAttribute('aria-label',tailHint);tail.title=tailHint;tail.classList.toggle('escape-tail-lost',!g.hasTail);
   const warmRow=document.getElementById('escape-warmth-row');warmRow.style.display=g.cold.size?'':'none';if(g.cold.size){const fillW=document.getElementById('escape-warmth-fill');fillW.style.width=Math.round(g.player.warmth)+'%';fillW.style.background=g.player.chilled?'#9fd0ff':'#ffb36b';document.getElementById('escape-warmth').setAttribute('aria-valuenow',String(Math.round(g.player.warmth)));}
   document.getElementById('escape-stamina-fill').style.width=Math.round(g.player.stamina)+'%';
   document.getElementById('escape-stamina-fill').style.background=g.player.exhausted?'#edc779':'#b6dda0';
   document.getElementById('escape-stamina').setAttribute('aria-valuenow',String(Math.round(g.player.stamina)));
   const burrow=document.getElementById('escape-burrow-action'),decoy=document.getElementById('escape-decoy-action'),tongue=document.getElementById('escape-tongue-action');
-  burrow.textContent='Burrow · '+g.burrows+' left [E]';decoy.textContent='Pebble · '+g.decoys+' left [Q]';
-  burrow.disabled=paused||!g.active()||g.burrows===0;
-  decoy.disabled=paused||!g.active()||g.decoys===0||g.elapsed<g.decoyReadyAt;
-  burrow.style.display=g.level.burrows?'':'none';decoy.style.display=g.level.pebbles?'':'none';tongue.style.display=g.level.tongues?'':'none';
-  tongue.textContent='Tongue · '+g.tongues+' left [R]';tongue.disabled=paused||!g.active()||g.tongues===0||Boolean(g.tongue)||g.elapsed<g.tongueReadyAt;
-  const camo=document.getElementById('escape-camo-action');camo.style.display=g.level.camos?'':'none';camo.textContent='Camo · '+g.camos+' left [X]';camo.disabled=paused||!g.active()||!g.camos||g.camoUntil>g.elapsed;
-  const look=document.getElementById('escape-look-action');look.style.display=g.level.gaze?'':'none';look.disabled=paused||!g.active();
-  look.textContent='Look back [Space]';
-  const seed=document.getElementById('escape-seed-action');seed.style.display=g.level.seeds?'':'none';seed.textContent='Seed · '+g.seeds+' left [F]';seed.disabled=paused||!g.active()||!g.seeds||g.elapsed<g.seedReadyAt;
+  const locked=paused||!g.active()||escapeIntroOpen;
+  const abilities=[
+    [burrow,'burrow','Burrow','E',g.burrows,g.level.burrows,true,false],
+    [decoy,'decoy','Pebble','Q',g.decoys,g.level.pebbles,g.elapsed>=g.decoyReadyAt,false],
+    [tongue,'tongue','Tongue','R',g.tongues,g.level.tongues,!g.tongue&&g.elapsed>=g.tongueReadyAt,Boolean(g.tongue)],
+    [document.getElementById('escape-seed-action'),'seed','Seed','F',g.seeds,g.level.seeds,g.elapsed>=g.seedReadyAt,false],
+    [document.getElementById('escape-camo-action'),'camo','Camo','X',g.camos,g.level.camos,g.camoUntil<=g.elapsed,g.camoUntil>g.elapsed],
+    [document.getElementById('escape-look-action'),'look','Look back','Space',1,g.level.gaze?null:0,true,g.lookUntil>g.elapsed]
+  ];
+  for(const [button,kind,label,key,left,total,ready,active]of abilities){
+    button.style.display=total===null||total>0?'':'none';button.disabled=locked||!left||!ready;
+    renderEscapeAbility(button,kind,label,key,left,total,ready,active);
+  }
   const nextGate=g.gates.find(gate=>!gate.open&&!gate.sealed&&gate.switch),mazeGoal=g.mazeObjectiveText();
   document.getElementById('escape-objective').textContent=mazeGoal|| (nextGate?(g.hasKey?'Key found. ':'Find the key. ')+nextGate.name+' switch opens the next room.':g.exitUnlocked()?'Hatch open. Head for the green door—or risk more treasure.':g.requiredTreasure?g.hasKey?'Bring '+(g.requiredTreasure-g.treasure)+' more treasure to the hatch.':'Find the key and '+(g.requiredTreasure===g.totalTreasure?'all ':'')+g.requiredTreasure+' treasure.':g.challenge?.keyByTongue?'Use a tongue grab for the key. Save one for it.':g.challenge?.steamTraps?'Daze '+Math.max(0,g.challenge.steamTraps-g.steamed)+' more hunters with steam, then escape.':g.challenge?.noChill?'Find the key. Never let Sally get chilled.':g.challenge?.noTheft?'Find the key. Do not let a gecko keep any treasure.':g.challenge?.noChase?'Find the key. Escape without a chase.':'Find the golden key. Treasure is optional.');
   const priority={patrol:0,recover:0,decoy:1,search:2,alert:3,chase:4,windup:5,charge:6,sting:7,leap:6,emerge:0,still:0,follow:0,dig:1,buried:1,rise:5,glimmer:5,swoop:6,rooted:0,reveal:5,lunge:6,retract:1,clash:2,glare:5,return:1},hunter=g.hunters.reduce((a,b)=>priority[a.state]>=priority[b.state]?a:b);
@@ -255,7 +291,7 @@ function escapeFootsteps(p){
   if(escapeStepDistance>=(p.sprinting?.62:.48)){escapeStepDistance=0;escapeStepAlt=!escapeStepAlt;escapeSound(p.swimming?'paddle':'step',{sprint:p.sprinting,alt:escapeStepAlt});}
 }
 function drawEscapeVault(){
-  const g=escapeGame,view=escapeCameraFor(g,width,height-(mobile?110:160),escapeProgress.data.view==='overview');view.oy+=mobile?45:65;const {cell,ox,oy}=view;
+  const g=escapeGame,top=mobile?45:height<=550?126:164,bottom=mobile?65:70,view=escapeCameraFor(g,width,height-top-bottom,escapeProgress.data.view==='overview');view.oy+=top;const {cell,ox,oy}=view;
   const palettes=[[[16,30,36],[39,65,74],[65,93,101]],[[19,34,29],[48,74,56],[78,103,76]],[[33,29,26],[77,63,48],[108,89,66]],[[21,28,37],[46,61,80],[75,91,109]],[[22,24,41],[54,57,85],[86,89,124]],[[14,31,26],[38,68,49],[58,92,66]],[[34,29,20],[80,67,39],[123,102,60]],[[16,30,39],[34,61,73],[55,90,103]],[[26,22,37],[62,48,76],[100,81,116]]];
   const index=EscapeCatalog.levels.indexOf(g.level),deepPalettes=[[[21,30,26],[53,75,58],[94,112,79]],[[22,29,35],[51,69,82],[91,111,124]],[[35,27,24],[80,58,45],[125,91,63]],[[27,23,38],[66,51,82],[103,82,125]],[[29,27,20],[75,68,39],[118,106,62]],[[32,27,20],[82,65,40],[132,108,65]]];
   const wakingPalettes=[[[14,32,28],[47,76,52],[87,113,73]],[[25,19,35],[62,49,75],[103,81,127]],[[19,31,43],[58,80,92],[96,123,141]],[[33,24,23],[79,65,57],[121,101,81]],[[29,22,36],[72,56,91],[118,91,141]]];

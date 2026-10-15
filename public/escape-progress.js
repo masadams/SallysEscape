@@ -57,7 +57,7 @@
     // Areas holding at least one perfect escape. Five of them open something; nothing says so,
     // except one quiet line after the very first perfect escape.
     perfectAreas(chapters){return chapters.filter(c=>catalog.levels.slice(c.start,c.end).some(l=>this.data.levels[l.id]?.perfect)).length;}
-    hiddenOpen(chapters){return this.perfectAreas(chapters)>=5;}
+    hiddenOpen(chapters){return Boolean(this.unlockAll)||this.perfectAreas(chapters)>=5;}
     whisper(){this.read();if(this.data.whisper||!catalog.levels.some(l=>this.data.levels[l.id]?.perfect))return false;this.data.whisper=true;this.write();return true;}
     setView(view){if(!['follow','overview'].includes(view))return false;this.read();this.data.view=view;this.write();return true;}
     catchGoldfly(){this.read();this.data.goldflies=Math.min(this.data.goldflies+1,100000);this.write();return this.data.goldflies;}
