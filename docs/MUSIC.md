@@ -1,52 +1,72 @@
 # Adaptive music
 
-The game plays synchronised loop **stems** and fades each one up or down to
-match what is happening (vertical layering). The engine
-(`public/escape-music.js`) knows nothing about any particular song: the
-stems, the mix for each game state and the fade times all live in
-`public/audio/music/manifest.json`.
+The music is composed in code with [Tone.js](https://tonejs.github.io/)
+(MIT, vendored into `public/vendor/` by `npm run prepare:static`). There are
+no audio files. `public/escape-music.js` holds both the score and the player:
 
-## Game states
+- **Score** (plain data, tested in `tests/escape-music.cjs`): four moods, each
+  with a four-bar chord progression, bass roots and fifths, and a melody scale.
+  An eight-bar tune per mood is generated from a fixed seed, so it is the same
+  every time.
+- **Player**: one sixteenth-note sequencer drives six layers in lockstep. The
+  game only picks a **state** and a **mood**; each layer fades toward that
+  state's mix.
 
-| State | When | Default mix |
+Music and the synthesised sound effects (`escape-audio.js`) share one
+AudioContext, so they share one clock.
+
+## Layers
+
+| Layer | Sound |
+| --- | --- |
+| `pad` | Soft chords, one per bar |
+| `bass` | Tiptoe pizzicato: root, fifth, octave, fifth |
+| `melody` | Marimba-like tune |
+| `perc` | Light shaker on the eighths |
+| `tension` | Tremolo strings and a heartbeat |
+| `chase` | Kick and snare, a driving ostinato and short stabs |
+
+## States
+
+| State | When | Mix |
 | --- | --- | --- |
-| `menu` | Start screen | ambient + melodic |
-| `world` | World map | ambient + melodic |
-| `explore` | In an escape, nothing has noticed Sally | ambient + mystery |
-| `tension` | A hunter is alert or searching, an owl glares, the hawk's shadow circles, Sally is freezing | mystery + intrigue, a little danger |
-| `chase` | A hunter is chasing or striking, the hawk dives, a gecko dashes, a tail was just dropped | danger up, everything else down |
-| `victory` / `caught` | The results card | melodic swell / ambient only |
+| `menu` | Start screen | pad + melody |
+| `world` | World map | pad, melody, light bass and shaker |
+| `explore` | In an escape, nothing has noticed Sally | bass leads; pad, melody and shaker |
+| `tension` | A hunter is alert or searching, an owl glares, the hawk's shadow circles, Sally is freezing | bass, strings and heartbeat |
+| `chase` | A hunter is chasing or striking, the hawk dives, a tail was just dropped | drums, ostinato and stabs |
+| `victory` / `caught` | The results card | a rising or falling stinger over a quiet pad |
 
-Danger fades in fast (0.35 s) and out slowly (3 s), and a chase holds for
-2.5 s so a hunter flickering in and out of sight does not pump the mix. A
-capture, an escape or leaving the level always cuts through. Pausing ducks
-the music; **Music: On/Off** in the toolbar is saved per browser, and
-**Sound: Off** silences both music and effects.
+Danger fades in fast (0.35 s) and out slowly (2.5 s). A chase holds for 2.5 s,
+so a hunter flickering in and out of sight does not pump the mix. A capture,
+an escape or leaving the level always cuts through. Pausing ducks the music.
+**Music: On/Off** in the toolbar is saved per browser, and **Sound: Off**
+silences both music and effects.
 
-## Adding the Lurking Layers pack (Imperial Dawn Audio)
+## Moods
 
-1. Download the free pack from https://imperial-dawn-audio.itch.io/lurking-layers
-   and unzip it anywhere, e.g. `~/Downloads/lurking-layers`.
-2. **Read the licence file in the pack.** The store page lists it as CC0; the
-   build copies the pack's own licence into `public/audio/music/` and refuses to
-   run if there isn't one.
-3. Run `npm run music:build -- ~/Downloads/lurking-layers --bpm <tempo>`
-   (ffmpeg required). It:
-   - picks the *Find Him* loop stems named in `scripts/music-sources.json`;
-   - checks every stem has exactly the same number of samples, that the loop is a
-     whole number of bars at the given tempo, and that no loop seam jumps hard
-     enough to click — any failure stops the build;
-   - encodes `.ogg` (Chrome, Firefox, Edge) and `.m4a` (Safari) copies into
-     `public/audio/music/lurking/`;
-   - writes the exact loop length into the manifest, which switches the music on.
-4. Commit `public/audio/music/` and play.
+| Mood | Regions | Harmony |
+| --- | --- | --- |
+| `meadow` | Sunny Meadow, Garden Ruins, Reedbanks | G major |
+| `sneaky` | Restless Ruins, Deep Trials, Waking Maze, Hollow Jungle, Living Labyrinth | D dorian |
+| `warm` | Venom Depths, Sun and Sea, Sunbaked Rooftops, Ant Kingdom, Steam Vents | E mixolydian |
+| `dark` | Luminous Depths, Shedding Hollow, Lantern Marsh, Frost Hollow | A minor |
 
-Until step 3 has run, the manifest has no loop length and the game simply
-plays without music.
+A new mood waits for the start of a four-bar phrase, so the harmony never
+lurches mid-bar. On the world map the mood follows the courtyard Sally is
+standing in.
 
-## Replacing the music later
+## Changing the music
 
-Point `scripts/music-sources.json` at new stems (change `track`, `match` and
-the layer name patterns), rebuild, and adjust the `states` mixes or `fades`
-in the manifest. Layer names are free-form: any layer a state does not list
-fades to silence. No code changes are needed.
+- **A new tune or harmony:** edit a mood in `MOODS` (chords, bass, fifth, scale,
+  seed), or add a mood and map regions to it in `THEME_MOOD`.
+- **A different arrangement:** edit `events()`, which lists everything that
+  plays on each sixteenth step.
+- **Mixes and fades:** edit `MIX` and `FADES`.
+- **Instrument sounds:** edit the synth settings in `load()`. The voice volumes
+  were balanced by rendering each layer offline, so every layer sits near the
+  same loudness at full mix. Re-check after big changes.
+
+The site's Content Security Policy allows `worker-src blob:` because Tone keeps
+its timing clock in a small worker. A background tab would otherwise throttle
+the music.

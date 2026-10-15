@@ -9,10 +9,10 @@
   "scripts": {
     "start": "node server/index.cjs",
     "prepare:static": "node scripts/prepare-static.cjs",
-    "test": "node --test tests/*.cjs",
-    "music:build": "node scripts/build-music.cjs"
+    "test": "node --test tests/*.cjs"
   },
   "devDependencies": {
-    "p5": "1.11.2"
+    "p5": "1.11.2",
+    "tone": "15.0.4"
   }
 }

@@ -10,7 +10,7 @@ Some branches open in parallel and also need completed challenges: Sunbaked Roof
 
 Escaping a route on your very first attempt (no catch, no quitting part-way) earns a **First try** badge: its stars turn mint and a ✓ joins the flag on the world map.
 
-Every escape opens with a short intro card (name, hint and tools); the hunters wait until you press a key or move. Sound effects are synthesised in the browser with Web Audio. Adaptive music fades synchronised stems in and out for exploring, tension and chases; see `docs/MUSIC.md` to add the Lurking Layers pack or your own stems. The Quiet Vault and Leafy Crossroads are available immediately; later regions are physically gated. Choose between paired routes. Harder paths rejoin after either route; later chapters retain their progression gates. The original MazeAdventure campaign, shop, upgrades, gauntlet, leaderboard API and database are absent.
+Every escape opens with a short intro card; the hunters wait until you press a key or move. **Cards** in the toolbar switches between Brief (the hint stays folded behind **Show hint [H]** except where an area teaches something new), Full and Off. A challenge opens once its escape is cleared and its area has enough stars; open challenges glow on the world map. Sound effects are synthesised in the browser with Web Audio. The adaptive music is composed in code with Tone.js: one mood per group of regions, fading between exploring, tension and chases (see `docs/MUSIC.md`). The Quiet Vault and Leafy Crossroads are available immediately; later regions are physically gated. Choose between paired routes. Harder paths rejoin after either route; later chapters retain their progression gates. The original MazeAdventure campaign, shop, upgrades, gauntlet, leaderboard API and database are absent.
 
 Desktop: WASD or arrows, Shift sprint, Q pebble, E burrow, R tongue, F seed, X camouflage, Space look back, G map, Escape pause. Phones use landscape orientation, a left thumbstick and right action buttons. Rotating to portrait pauses a run until resumed. Completion stays inside the playfield.
 
@@ -24,5 +24,5 @@ For private images, use your existing GitHub Container Registry credentials in P
 
 Node 24. Run `npm ci`, `npm run prepare:static`, `npm test`, then `npm start`. The only development dependency is p5; the production server uses Node’s built-in HTTP and filesystem libraries.
 
-The new main-theme direction is mysterious folk adventure. No generated music has been bundled yet. Music and progression notes are in `docs/`.
+The music direction is mysterious folk adventure, written in code rather than shipped as audio files. Music and progression notes are in `docs/`.
 

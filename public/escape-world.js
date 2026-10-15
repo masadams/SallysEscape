@@ -86,6 +86,7 @@
       this.player.moving=Math.hypot(old.x-this.player.x,old.y-this.player.y)>1e-6;this.player.sprinting=Boolean(input.sprint&&this.player.moving);this.motion.update(dt,this);
     }
   }
+  EscapeWorld.chapters=chapters;
   root.EscapeWorld=EscapeWorld;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeWorld};
 })(typeof globalThis!=='undefined'?globalThis:this);

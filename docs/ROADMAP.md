@@ -17,7 +17,9 @@ built, playtested with recorded winning runs, and pushed on its own.
 | Sunbaked Rooftops | Five routes with the **hawk**, shaded awnings and the new **camouflage** action, plus the Hot Plates challenge. |
 | Ant Kingdom | Five routes with **ant columns** and **gecko thieves**, plus the Ant Dash and Sticky Fingers challenges. |
 | First-try bonus | A first-attempt escape earns mint stars and a ✓ badge. |
-| Adaptive music | Manifest-driven stems that fade between explore, tension and chase; see `docs/MUSIC.md`. |
+| Adaptive music | Composed in code with Tone.js: four region moods, with layers that fade between explore, tension and chase; see `docs/MUSIC.md`. |
+| Challenge markers and star gates | Open challenges glow on the map and are announced; each one also needs two stars per route in its area. |
+| Shorter intro cards | Brief, Full or Off; hints fold away unless an area is teaching something new. |
 | Frost Hollow | Five routes with cold rooms, a **warmth** meter, warm stones, sluggish cold-blooded hunters and frost owls, plus the Keep Warm challenge. |
 | Steam Vents | Five routes with **timed steam jets** that block lanes, blow Sally clear and daze hunters, mixed with the hawk, owls and ants, plus the Steam Trap challenge. |
 
