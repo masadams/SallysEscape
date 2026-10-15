@@ -63,6 +63,26 @@ function harness() {
   return {c:context,run,el:element,events,storage,setTime:value=>now=value,tick:fps=>{c.deltaTime=1000/fps;now+=c.deltaTime;c.frameCount++}};
 }
 test('the standalone world enters the real engine and renders the result in its existing playfield',()=>{const h=harness();h.run('showEscapeSelect();startEscape({levelId:"quiet-vault"});draw();escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.finish("won","escaped");draw();');assert.equal(h.run('gameState'),'escapeResult');assert.equal(h.el('game-container').style.display,'block');assert.equal(h.el('escape-result').style.display,'block');assert.equal(h.el('escape-menu-btn').textContent,'Explore the world');assert.equal(h.run('escapeProgress.unlocked("crumbling-hall")'),true);});
+test('arcade resources follow real pebble use, cooldown, depletion and retry on desktop and touch',()=>{
+ const h=harness();h.run('escapeProgress.unlocked=()=>true;startEscape({levelId:"fern-cloister",skipIntro:true});escapeGame.player.facing={x:1,y:0};');
+ const desktop=h.el('escape-decoy-action'),touch=h.el('touch-camo'),total=h.run('escapeGame.decoys');
+ assert.match(desktop.innerHTML,/<svg/);assert.match(desktop.innerHTML,/<kbd>Q<\/kbd>/);
+ desktop.onclick();h.run('updateToolbar();');
+ assert.equal(h.run('escapeGame.decoys'),total-1);assert.equal(desktop.disabled,true);assert.equal(touch.disabled,true);
+ assert.equal((desktop.innerHTML.match(/class="spent"/g)||[]).length,1);assert.match(touch.innerHTML,/<svg/);
+ h.run('escapeGame.elapsed=escapeGame.decoyReadyAt+1;renderEscapeHUD(true);updateToolbar();');assert.equal(desktop.disabled,false);
+ h.run('escapeGame.decoys=0;renderEscapeHUD(true);updateToolbar();');assert.equal(desktop.disabled,true);assert.equal(desktop.style.display,'');assert.equal(touch.disabled,true);
+ assert.equal((desktop.innerHTML.match(/class="spent"/g)||[]).length,total);
+ h.run('startEscape({levelId:"fern-cloister",skipIntro:true});');assert.equal(desktop.disabled,false);assert.doesNotMatch(desktop.innerHTML,/class="spent"/);
+});
+test('tail heart tracks loss and regrowth, unavailable abilities hide, and pausing locks the kit',()=>{
+ const h=harness();h.run('escapeProgress.unlocked=()=>true;startEscape({levelId:"fern-cloister",skipIntro:true});');
+ const tail=h.el('escape-tail');assert.match(tail.innerHTML,/Spare tail/);assert.match(tail.innerHTML,/escape-tail-heart/);
+ h.run('escapeGame.hasTail=false;renderEscapeHUD(true);');assert.match(tail.innerHTML,/Tail lost/);
+ h.run('escapeGame.hasTail=true;renderEscapeHUD(true);');assert.match(tail.innerHTML,/Spare tail/);
+ assert.equal(h.el('escape-seed-action').style.display,'none');assert.equal(h.el('escape-look-action').style.display,'');
+ h.run('togglePause();');assert.equal(h.el('escape-look-action').disabled,true);h.run('togglePause();');assert.equal(h.el('escape-look-action').disabled,false);
+});
 test('the stick clamps diagonal input, rejects a second pointer and releases independently of held sprint',()=>{const h=harness();h.el('movement-stick').getBoundingClientRect=()=>({left:0,top:0,width:100,height:100});h.run('showEscapeSelect();');const stick=h.el('movement-stick'),e={pointerId:3,clientX:100,clientY:100,preventDefault(){}};stick.onpointerdown(e);assert.ok(h.run('Math.abs(Math.hypot(touchStick.x,touchStick.y)-1)<1e-8'));const before=h.run('touchStick.x');stick.onpointerdown({...e,pointerId:4,clientX:0});assert.equal(h.run('touchStick.x'),before);h.run('touchInput.sprint=true;');stick.onpointerup(e);assert.equal(h.run('touchStick.x'),0);assert.equal(h.run('touchInput.sprint'),true);assert.equal(h.run('touchStick.pointer'),null);});
 test('portrait rotation pauses simulation and clears the stick, and landscape preserves the pause until resumed',()=>{const h=harness();h.run('startEscape({levelId:"quiet-vault",skipIntro:true});mobile=true;windowWidth=390;windowHeight=844;touchStick.x=1;');const t=h.run('escapeGame.elapsed');h.run('draw();');assert.equal(h.run('paused'),true);assert.equal(h.run('touchStick.x'),0);assert.equal(h.run('escapeGame.elapsed'),t);h.run('windowWidth=844;windowHeight=390;draw();');assert.equal(h.run('paused'),true);h.run('togglePause();draw();draw();');assert.ok(h.run('escapeGame.elapsed')>t);});
 test('the intro card holds the hunters until a key or movement, and a retry skips it',()=>{const h=harness();h.run('escapeProgress.unlocked=()=>true;startEscape({levelId:"fern-cloister"});');assert.equal(h.run('escapeIntroOpen'),true);assert.equal(h.el('escape-intro').style.display,'block');assert.match(h.el('escape-intro').innerHTML,/Fern Cloister/);assert.match(h.el('escape-intro').innerHTML,/spare tail/);
