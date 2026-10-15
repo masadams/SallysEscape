@@ -361,7 +361,7 @@ function drawEscapeVault(){
   // A charging beetle's lane runs until the first wall, so Sally can see where not to stand.
   if(h.kind==='beetle'&&['windup','charge'].includes(h.state)){let d=0;const dx=Math.cos(h.facing),dy=Math.sin(h.facing),from=h.state==='charge'&&h.chargeFrom?h.chargeFrom:h,limit=h.aim?Math.hypot(h.aim.x-from.x,h.aim.y-from.y)+3-Math.hypot(h.x-from.x,h.y-from.y):18;while(d<limit&&g.fits({x:h.x+dx*(d+.25),y:h.y+dy*(d+.25)},.22))d+=.25;const pulse=h.state==='windup'?.5+.5*Math.sin(g.elapsed*18):1;push();translate(h.x*cell,h.y*cell);rotate(h.facing);noStroke();fill(255,110,60,50+50*pulse);rect(0,-cell*.42,d*cell,cell*.84);fill(255,200,120,40+40*pulse);for(let s=.3;s<d;s+=.6)quad(s*cell,-cell*.42,(s+.25)*cell,-cell*.42,(s+.05)*cell,cell*.42,(s-.2)*cell,cell*.42);stroke(255,150,80,160+80*pulse);strokeWeight(cell*.05);line(0,-cell*.42,d*cell,-cell*.42);line(0,cell*.42,d*cell,cell*.42);pop();}
   if(h.kind==='beetle'&&h.state==='stunned'){noStroke();fill(255,236,150);textSize(cell*.32);for(let i=0;i<3;i++){const a=g.elapsed*5+i*TWO_PI/3;text('✦',(h.x+Math.cos(a)*.38)*cell,(h.y-.55+Math.sin(a)*.12)*cell);}}
-  if(['windup','sting','glimmer','swoop','reveal','lunge','glare'].includes(h.state)&&h.aim&&h.kind!=='beetle'){stroke(255,191,80,180);strokeWeight(cell*.07);line(h.x*cell,h.y*cell,h.aim.x*cell,h.aim.y*cell);noFill();ellipse(h.aim.x*cell,h.aim.y*cell,cell*(h.kind==='scorpion'?1.8:h.kind==='spider'?1.3:.7),cell*(h.kind==='scorpion'?1.8:h.kind==='spider'?1.3:.7));}
+  if(['windup','sting','glimmer','swoop','reveal','lunge','glare','rear'].includes(h.state)&&h.aim&&h.kind!=='beetle'){stroke(255,191,80,180);strokeWeight(cell*.07);line(h.x*cell,h.y*cell,h.aim.x*cell,h.aim.y*cell);noFill();ellipse(h.aim.x*cell,h.aim.y*cell,cell*(h.kind==='scorpion'?1.8:h.kind==='spider'?1.3:.7),cell*(h.kind==='scorpion'?1.8:h.kind==='spider'?1.3:.7));}
   }
   // Clip the artwork to floor tiles, so toes and a turning tail are occluded by
   // masonry. The rig also keeps its centreline and planted feet on open floor.
@@ -372,7 +372,7 @@ function drawEscapeVault(){
   drawingContext.save();drawingContext.beginPath();
   for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.floor(x,y))drawingContext.rect(x*cell+1,y*cell+1,cell-2,cell-2);
   drawingContext.clip();drawingContext.lineCap='round';drawingContext.lineJoin='round';
-  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(h.kind==='millipede'?g.playerSees(h):!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake');});
+  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(h.kind==='millipede'?g.playerSees(h):!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
   drawingContext.save();drawingContext.globalAlpha*=g.player.hidden?.48:1;
   for(const h of g.hunters)if(h.state==='clash'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noFill();stroke(255,193,107,180);strokeWeight(cell*.035);ellipse(h.x*cell,h.y*cell,cell*(.9+Math.sin(g.elapsed*14)*.08),cell*.75);}
   drawEscapeLizard(g.motion.lizard,cell,g.motion.clock,g.player.swimming,!g.hasTail);
@@ -544,20 +544,24 @@ function escapeBodyShape(model,cell){
 function escapeBodyShadow(model,cell){
   push();translate(cell*.035,cell*.05);noStroke();fill(2,9,13,175);escapeBodyShape(model,cell);pop();
 }
-function drawEscapeSnake(model,cell,state,sea=false){
+function drawEscapeSnake(model,cell,state,sea=false,cobra=false){
   const hot=state==='alert'||state==='chase';
   escapeBodyShadow(model,cell);
-  stroke(66,46,36);strokeWeight(cell*.035);fill(sea?65:hot?224:188,sea?171:hot?126:152,sea?187:hot?94:102);escapeBodyShape(model,cell);
+  // The king cobra is near-black with pale bands, and flares its hood when it rears or hunts.
+  if(cobra){const head=model.joints[0],up=['rear','strike','chase','alert'].includes(state);if(up){push();translate(head.x*cell,head.y*cell);rotate(model.headAngle);noStroke();fill(40,36,28);ellipse(-cell*.12,0,cell*.42,cell*(state==='rear'?.86:.66));fill(214,190,96,170);ellipse(-cell*.14,0,cell*.16,cell*(state==='rear'?.5:.36));pop();}
+    stroke(18,16,12);strokeWeight(cell*.035);fill(hot||up?58:44,hot||up?52:40,hot||up?36:30);escapeBodyShape(model,cell);noStroke();
+    for(let i=2;i<model.joints.length-1;i+=2){const p=model.joints[i];push();translate(p.x*cell,p.y*cell);rotate(model.angles[i]);fill(222,204,140,150);ellipse(0,0,cell*.05,model.widths[i]*cell*2);pop();}
+  }else{stroke(66,46,36);strokeWeight(cell*.035);fill(sea?65:hot?224:188,sea?171:hot?126:152,sea?187:hot?94:102);escapeBodyShape(model,cell);}
   // Small dorsal saddles and a light edge suggest scales without losing the
   // silhouette at phone size. The body narrows all the way to the tail tip.
   noStroke();
-  for(let i=2;i<model.joints.length-2;i+=2){
+  for(let i=2;i<model.joints.length-2&&!cobra;i+=2){
     const p=model.joints[i];push();translate(p.x*cell,p.y*cell);rotate(model.angles[i]);
     fill(hot?157:122,hot?78:98,hot?57:66,135);ellipse(0,0,cell*.095,model.widths[i]*cell*1.4);
     fill(236,207,157,120);ellipse(-cell*.025,-model.widths[i]*cell*.55,cell*.06,cell*.04);pop();
   }
   const head=model.joints[0];push();translate(head.x*cell,head.y*cell);rotate(model.headAngle);
-  noStroke();fill(sea?104:hot?236:210,sea?213:hot?143:174,sea?215:hot?105:122);ellipse(cell*.045,0,cell*.49,cell*.36);
+  noStroke();if(cobra)fill(62,56,40);else fill(sea?104:hot?236:210,sea?213:hot?143:174,sea?215:hot?105:122);ellipse(cell*.045,0,cell*.49,cell*.36);
   for(const side of [-1,1]){
     fill(233,205,133);ellipse(cell*.08,side*cell*.125,cell*.11,cell*.082);
     fill(31,27,20);ellipse(cell*.09,side*cell*.125,cell*.027,cell*.07);

@@ -64,7 +64,7 @@
       this.visible=new Set();this.discovered=new Set();this.visibilityAt=-Infinity;this.updateVisibility(true);
       this.motion=new CreatureMotion(this);
     }
-    makeHunter(guard){return {...centre(...guard.spawn),id:guard.id||null,kind:guard.kind||'snake',facing:guard.facing,state:guard.kind==='mimic'?'rooted':'patrol',awareness:0,lastKnown:null,lastObserved:-Infinity,reason:'seen',path:[],routeIndex:0,pauseUntil:0,searchUntil:0,patrol:guard.patrol.map(p=>centre(...p)),aim:null,phaseUntil:0,distanceMoved:0,...(guard.kind==='scorpion'?{reach:guard.reach||1.8,buried:Boolean(guard.buried),offset:guard.offset??(guard.spawn[0]*.7+guard.spawn[1]*.3)%3.8,post:centre(...guard.spawn)}:{})};}
+    makeHunter(guard){return {...centre(...guard.spawn),id:guard.id||null,kind:guard.kind||'snake',facing:guard.facing,state:guard.kind==='mimic'?'rooted':guard.kind==='cobra'?'coiled':'patrol',awareness:0,lastKnown:null,lastObserved:-Infinity,reason:'seen',path:[],routeIndex:0,pauseUntil:0,searchUntil:0,patrol:guard.patrol.map(p=>centre(...p)),aim:null,phaseUntil:0,distanceMoved:0,...(guard.kind==='cobra'?{post:centre(...guard.spawn),reach:guard.reach||2.6}:{}),...(guard.kind==='scorpion'?{reach:guard.reach||1.8,buried:Boolean(guard.buried),offset:guard.offset??(guard.spawn[0]*.7+guard.spawn[1]*.3)%3.8,post:centre(...guard.spawn)}:{})};}
     floor(x,y){return this.grid[y]?.[x]!==undefined && !['#','B','G','P'].includes(this.grid[y][x]);}
     water(p){return this.grid[Math.floor(p.y)]?.[Math.floor(p.x)]==='U';}
     actorFloor(x,y,h){const wet=this.grid[y]?.[x]==='U';return this.floor(x,y)&&(!h||h.kind==='sea-snake'||(h.kind==='fish'?wet:!wet));}
@@ -468,7 +468,7 @@
       this.activateSwitches();this.reactToMaze('enter');this.updateVisibility();
       if(this.decoy&&this.decoy.expires<=this.elapsed)this.decoy=null;
       this.updateRivalries();for(const hunter of this.hunters)this.updateHunter(dt,hunter);this.updateRivalries();
-      this.motion.update(dt,this);
+      this.motion.update(dt,this);this.checkTailTouch();
       if(this.vents.length)this.updateVents();
       if(this.logs.length||this.thorns.length||this.level.crumble)this.updateTraps();if(this.status!=='playing')return;
       this.updateHawk(dt);if(this.status!=='playing')return;
@@ -482,7 +482,7 @@
       const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&distance(p,h)<(h.kind==='beetle'&&h.state==='charge'?.62:.48)&&this.clear(p,h));
       if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
       if(this.elapsed>=this.invulnerableUntil && captor){
-        this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. Try another route through the ruins.':captor.kind==='mimic'?'The plant snapped at its marked spot. Provoke it from a distance or step aside when it opens.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'The guard spotted you. Break sight at a corner or use a pebble.');return;
+        this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. Try another route through the ruins.':captor.kind==='mimic'?'The plant snapped at its marked spot. Provoke it from a distance or step aside when it opens.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'The guard spotted you. Break sight at a corner or use a pebble.');return;
       }
       if(this.challenge?.noChase&&this.alarms>0){this.finish('failed','A guard gave chase. Break sight before it is sure next time.');return;}
       if(this.challenge?.noChill&&this.player.chilled){this.finish('failed','Sally got too cold. Thaw on warm stones before the frost slows her.');return;}
@@ -533,6 +533,7 @@
       if(h.kind==='toad'||h.kind==='spider'){this.updateNestHunter(dt,h);return;}
       if(h.kind==='scorpion'){this.updateScorpion(dt,h);return;}
       if(h.kind==='beetle'){this.updateBeetle(dt,h);return;}
+      if(h.kind==='cobra'&&this.updateCobra(dt,h))return;
       const p=this.player,previousState=h.state;
       // Nearby visible danger overrides a lure; a pebble cannot make it ignore a bite.
       const seen=this.seesPlayer(h),heard=(p.noisy||p.sprinting)&&!p.hidden&&this.audible(h,p,p.sprinting?6:3.5);
@@ -567,6 +568,8 @@
         }
       }
       if(h.state==='chase'&&previousState!=='chase'){this.alarms++;this.events.push('spotted');}
+      // A king cobra hunts a little faster than any snake.
+      if(h.kind==='cobra')speed*=1.18;
       if(target&&speed>0)this.moveHunter(target,speed*dt,h);
     }
     updateRivalries(){
@@ -695,6 +698,41 @@
     }
     // The beetle is a battering ram: it locks a lane toward where Sally is heading,
     // then charges until something stops it, smashing cover and cracked walls.
+    // King cobra: it waits coiled on its post, swaying to watch. On sight it rears (a short
+    // warning), strikes at where Sally is heading, then gives chase like a fast snake. When
+    // it loses her it glides home and coils again. Returns false to hand over to snake logic.
+    // Brushing the back half of a resting snake's body wakes it: it knows exactly where Sally is.
+    checkTailTouch(){
+      const p=this.player;this.hunters.forEach((h,i)=>{
+        if(!['snake','cobra'].includes(h.kind)||['chase','rear','strike','emerge','stunned','steamed','clash'].includes(h.state))return;
+        const joints=this.motion.snakes[i]?.joints;if(!joints||joints.length<4)return;
+        if(!joints.slice(Math.floor(joints.length/2)).some(j=>Math.hypot(j.x-p.x,j.y-p.y)<.32))return;
+        h.awareness=1;h.lastKnown=copy(p);h.lastObserved=this.elapsed;h.reason='touched';h.facing=Math.atan2(p.y-h.y,p.x-h.x);h.path=[];
+        if(h.kind==='cobra'){h.aim=copy(p);h.state='rear';h.phaseUntil=this.elapsed+.45;this.alarms++;this.events.push('hiss');}
+        this.notice('You brushed its tail! It knows where you are.','warning');
+      });
+    }
+    updateCobra(dt,h){
+      const p=this.player;
+      if(h.state==='rear'){if(this.elapsed>=h.phaseUntil){h.state='strike';h.strikeFrom=copy(h);h.phaseUntil=this.elapsed+.4;this.events.push('sting');}return true;}
+      if(h.state==='strike'){
+        const dx=Math.cos(h.facing),dy=Math.sin(h.facing),step=12*dt,next={x:h.x+dx*step,y:h.y+dy*step};
+        if(!this.fits(next,.22,h)||this.elapsed>=h.phaseUntil||distance(h.strikeFrom,next)>h.reach){
+          h.state='chase';h.awareness=1;h.lastKnown=copy(p);h.lastObserved=this.elapsed;h.path=[];return true;}
+        h.x=next.x;h.y=next.y;h.distanceMoved+=step;return true;
+      }
+      if(h.state==='coiled'||h.state==='return'||h.state==='patrol'){
+        if(this.seesPlayer(h)){
+          h.awareness=Math.min(1,h.awareness+dt/.3);h.facing=Math.atan2(p.y-h.y,p.x-h.x);
+          if(h.awareness>=1){h.aim=this.lead(.35);h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='rear';h.phaseUntil=this.elapsed+.45;this.alarms++;this.events.push('hiss');this.notice('The king cobra rears. It strikes, then it hunts.','warning');}
+          return true;
+        }
+        h.awareness=Math.max(0,h.awareness-dt);
+        if(distance(h,h.post)>.12){h.state='return';this.moveHunter(h.post,1.4*dt,h);return true;}
+        h.state='coiled';h.facing+=Math.sin(this.elapsed*1.3+h.post.x)*dt*.9;return true;
+      }
+      return false;
+    }
     updateBeetle(dt,h){
       if(h.state==='windup'){
         if(this.elapsed>=h.phaseUntil){h.state='charge';h.phaseUntil=this.elapsed+2.4;h.chargeFrom=copy(h);this.events.push('charge');}
