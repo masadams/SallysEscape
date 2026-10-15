@@ -1,9 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {EscapeAdventure}=require('../public/escape-engine.js');const {EscapeCatalog}=require('../public/escape-levels.js');
+// Tail rules are checked on a frozen copy of the original Fern Cloister.
+const legacy=require('./fixtures/legacy-levels.json'),fern=()=>new EscapeAdventure({level:legacy['fern-cloister']});
 function ticks(g,seconds,input={}){for(let n=0;n<Math.round(seconds*120);n++)g.advance(1/120,input);}
 // A lone snake bites Sally on an open floor tile of a tail-drop route.
 function bitten(levelId='fern-cloister'){
-  const g=new EscapeAdventure({levelId});const snake=g.hunters.find(h=>h.kind==='snake');g.hunters=[snake];g.hunter=snake;
+  const g=legacy[levelId]?new EscapeAdventure({level:legacy[levelId]}):new EscapeAdventure({levelId});const snake=g.hunters.find(h=>h.kind==='snake');g.hunters=[snake];g.hunter=snake;
   Object.assign(snake,{x:g.player.x+.3,y:g.player.y,state:'chase',awareness:1,lastKnown:{...g.player},lastObserved:0});
   return {g,snake};
 }
@@ -27,16 +29,16 @@ test('a bite on an early route still ends the escape immediately',()=>{
   const g=new EscapeAdventure({levelId:'quiet-vault'});Object.assign(g.hunter,{x:g.player.x+.3,y:g.player.y});ticks(g,1/120);assert.equal(g.status,'caught');assert.equal(g.tailsDropped,0);
 });
 test('a tailless Sally is a little slower and cannot earn the third star',()=>{
-  const a=new EscapeAdventure({levelId:'fern-cloister'}),b=new EscapeAdventure({levelId:'fern-cloister'});a.hunters=[];b.hunters=[];b.hasTail=false;
+  const a=fern(),b=fern();a.hunters=[];b.hunters=[];b.hasTail=false;
   ticks(a,.4,{x:0,y:-1});ticks(b,.4,{x:0,y:-1});const da=Math.abs(a.player.y-a.level.spawn[1]-.5),db=Math.abs(b.player.y-b.level.spawn[1]-.5);assert.ok(db<da&&db>da*.85);
   for(const g of [a,b]){g.hasKey=true;g.treasure=g.totalTreasure;g.finish('won','out');}
   assert.equal(a.result.stars,3);assert.equal(b.result.stars,2);
 });
 test('regrowth bugs only feed a tailless Sally, by foot or by tongue',()=>{
-  const g=new EscapeAdventure({levelId:'fern-cloister'});g.hunters=[];g.regrowthBugs=[{x:g.player.x,y:g.player.y,eaten:false}];
+  const g=fern();g.hunters=[];g.regrowthBugs=[{x:g.player.x,y:g.player.y,eaten:false}];
   ticks(g,.1);assert.equal(g.regrowthBugs[0].eaten,false,'a whole tail leaves the bug alone');
   g.hasTail=false;ticks(g,.05);assert.equal(g.regrowthBugs[0].eaten,true);assert.equal(g.hasTail,true);
-  const t=new EscapeAdventure({levelId:'fern-cloister'});t.hunters=[];t.hasTail=false;t.tongues=1;t.player.facing={x:0,y:-1};t.player.tongueAim=null;
+  const t=fern();t.hunters=[];t.hasTail=false;t.tongues=1;t.player.facing={x:0,y:-1};t.player.tongueAim=null;
   t.regrowthBugs=[{x:t.player.x,y:t.player.y-2,eaten:false}];assert.ok(t.clear(t.player,t.regrowthBugs[0],true));
   assert.equal(t.useTongue(),true);ticks(t,.3);assert.equal(t.hasTail,true);assert.equal(t.regrowthBugs[0].eaten,true);
 });
