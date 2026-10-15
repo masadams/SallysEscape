@@ -110,7 +110,11 @@ Living Labyrinth keeps its living garden (seeds, root doors, vine crossings) and
 - Hungry Greenhouse: a seed vault that opens only while the beetle presses its slab, and cracks that shake off a chase.
 - The Heartwood: a king cobra watching the richest chest, a heart door that shuts behind the key, and a crack as the only way out.
 
-Next: Sun and Sea onward (hermit crab).
+Sun and Sea brings in the hermit crab:
+- The Sunken Caravan: a canyon yard where the snake and the scorpion fight if they meet. Taking the key collapses the arch, so Sally runs home along the rim and slips through a crack only she fits.
+- Tideglass Lagoon: three islands where fish rule the channels, a sea snake takes both water and land, and hermit crabs guard the beaches.
+
+Next: the Shedding Hollow onward.
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).
