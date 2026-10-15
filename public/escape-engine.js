@@ -16,7 +16,8 @@
     constructor(options={}){
       this.challenge=options.challengeId?catalog.EscapeCatalog.challenges.find(c=>c.id===options.challengeId):null;
       if(options.challengeId&&!this.challenge)throw new Error('Unknown Escape challenge');
-      this.level=catalog.EscapeCatalog.levels.find(l=>l.id===(this.challenge?.levelId||options.levelId||'quiet-vault'));
+      // Tests and tools may pass a level object directly; the game uses the catalog.
+      this.level=options.level||catalog.EscapeCatalog.levels.find(l=>l.id===(this.challenge?.levelId||options.levelId||'quiet-vault'));
       if(!this.level)throw new Error('Unknown Escape level');
       this.grid=catalog.escapeGridFor(this.level);this.height=this.grid.length;this.width=this.grid[0].length;
       this.player={...centre(...this.level.spawn),facing:{x:0,y:-1},tongueAim:null,stamina:100,exhausted:false,moving:false,sprinting:false,hidden:false,noisy:false};

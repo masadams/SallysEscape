@@ -4,8 +4,10 @@ const {EscapeProgress}=require('../public/escape-progress.js');
 const {EscapeCatalog}=require('../public/escape-levels.js');
 const {escapeCameraFor}=require('../public/escape-view.js');
 function advance(g,seconds,input={}){for(let n=0;n<Math.ceil(seconds*120);n++)g.advance(1/120,input);}
-function garden(){return new EscapeAdventure({levelId:'switchback-garden'});}
-function beetle(){const g=new EscapeAdventure({levelId:'lantern-courtyard'});g.hunters=[g.hunters[0]];Object.assign(g.hunter,{x:9.5,y:8.5,facing:0});Object.assign(g.player,{x:11.5,y:8.5});return g;}
+// Engine mechanics are checked on frozen copies of the original layouts, so rebuilt routes cannot move them.
+const legacy=require('./fixtures/legacy-levels.json');
+function garden(){return new EscapeAdventure({level:legacy['switchback-garden']});}
+function beetle(){const g=new EscapeAdventure({level:legacy['lantern-courtyard']});g.hunters=[g.hunters[0]];Object.assign(g.hunter,{x:9.5,y:8.5,facing:0});Object.assign(g.player,{x:11.5,y:8.5});return g;}
 test('closed gates block paths, sight and burrowing; a matching switch opens every gate permanently',()=>{
  const g=garden(),gate=g.gates[0];assert.equal(g.route(g.player,g.key).length,0);
  Object.assign(g.player,{x:9.5,y:4.5,facing:{x:1,y:0}});const charges=g.burrows;
