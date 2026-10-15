@@ -1,5 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {EscapeAdventure}=require('../public/escape-engine.js');
+const legacy=require('./fixtures/legacy-levels.json');
 function ticks(g,s,input={}){for(let n=0;n<Math.ceil(s*120);n++)g.advance(1/120,input);}
 // An open arena with no hunters, so only the trap can catch Sally.
 function arena(player=[2,5]){const g=new EscapeAdventure();for(let y=1;y<g.height-1;y++)for(let x=1;x<g.width-1;x++)g.grid[y][x]='.';g.hunters=[];g.key={x:15.5,y:11.5};g.exit={x:1.5,y:11.5};g.loot=[];Object.assign(g.player,{x:player[0]+.5,y:player[1]+.5});return g;}
@@ -23,10 +24,10 @@ test('crumbling floor holds while Sally stands on it and collapses into a gap on
   ticks(g,.6,{x:1});ticks(g,.5);assert.equal(g.grid[5][5],'P');assert.equal(g.floor(5,5),false,'there is no way back');assert.equal(g.status,'playing');
 });
 test('a crumbling bridge carries Sally across once, then falls; a one-use bridge seals after it closes',()=>{
-  const g=new EscapeAdventure({levelId:'firefly-ford'});g.hunters=[];const gate=g.gates[0];gate.crumble=true;g.setGateOpen(gate,true);
+  const g=new EscapeAdventure({level:legacy['firefly-ford']});g.hunters=[];const gate=g.gates[0];gate.crumble=true;g.setGateOpen(gate,true);
   Object.assign(g.player,{x:13.5,y:9.5});ticks(g,.5,{x:1});assert.equal(gate.crossed,true);ticks(g,.5,{x:1});ticks(g,.6);assert.equal(gate.open,false);assert.equal(gate.sealed,true);
   Object.assign(g.player,{x:12.5,y:9.5});ticks(g,.2);assert.equal(gate.open,false,'its plate no longer works');
-  const once=new EscapeAdventure({levelId:'firefly-ford'});once.hunters=[];const bridge=once.gates[0];bridge.once=true;Object.assign(once.player,{x:12.5,y:9.5});ticks(once,.1);assert.equal(bridge.open,true);
+  const once=new EscapeAdventure({level:legacy['firefly-ford']});once.hunters=[];const bridge=once.gates[0];bridge.once=true;Object.assign(once.player,{x:12.5,y:9.5});ticks(once,.1);assert.equal(bridge.open,true);
   Object.assign(once.player,{x:10.5,y:9.5});ticks(once,bridge.duration+1);assert.equal(bridge.open,false);assert.equal(bridge.sealed,true);Object.assign(once.player,{x:12.5,y:9.5});ticks(once,.2);assert.equal(bridge.open,false);
 });
 test('the observatory bridge has a plate on each bank, but rises only once',()=>{
