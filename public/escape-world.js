@@ -17,12 +17,16 @@
   const folk=[['tortoise','Old Moss'],['snail','Pip'],['frog','Reed'],['beetle','Brass'],['tortoise','Gravel'],['frog','Dusty'],['snail','Murk'],['frog','Fern'],['beetle','Glimmer'],['snail','Bramble'],['frog','Coral'],['tortoise','Husk'],['beetle','Wick'],['frog','Tiles'],['beetle','Pincer'],['tortoise','Frostbite'],['snail','Rivet']];
   const npcs=chapters.map((c,i)=>({chapter:i,x:c.x+3,y:c.y+5,kind:folk[i][0],name:folk[i][1]}));
   class EscapeWorld{
-    constructor(unlocked=()=>true,focusId=null,hiddenOpen=()=>false){
+    constructor(unlocked=()=>true,focusId=null,hiddenOpen=()=>false,bonusOpen=()=>false){
       this.width=116;this.height=106;this.chapters=chapters;this.caches=caches;this.signs=signs;this.npcs=npcs;this.found=new Set();this.onCache=null;
       // Golden flies drift in now and then; Sally can chase them down or grab one with her tongue.
       // The Gilded Burrow lies north of the Garden Ruins. It is solid rock until it opens.
       this.hiddenOpen=hiddenOpen;this.hiddenCarved=false;this.terrainVersion=0;
-      this.hiddenNodes=(catalog.hidden||[]).map((level,i)=>({id:level.id,hidden:true,index:i,x:[31,36,41][i],y:[5,3,5][i],name:level.name}));
+      this.hiddenNodes=(catalog.hidden||[]).map((level,i)=>({id:level.id,hidden:true,index:i,x:[31,36,41][i],y:[5,3,5][i],name:level.name})).filter(n=>!catalog.hidden[n.index].bonus);
+      // Bonus escapes are no secret: their grove is always on the map, behind a hedge that opens
+      // once the areas before it are mastered. The Bramble Maze sits north of the Deep Trials.
+      this.bonusOpen=bonusOpen;
+      this.bonusNodes=(catalog.hidden||[]).map((level,i)=>({id:level.id,hidden:true,bonus:level.bonus,index:i,name:level.name})).filter(n=>n.bonus).map((n,k)=>({...n,...[{x:101,y:4,lock:{x:101,y:9},sign:{x:99,y:11}}][k]}));
       this.rng=Math.random;this.fly=null;this.flyAt=10;this.onFly=null;this.lick=null;this.unlocked=unlocked;this.hunters=[];this.elapsed=0;this.target=null;this.accumulator=0;
       const spots=[[-6,3],[-4,-2],[0,-4],[4,-1],[6,4],[0,6]];
       this.nodes=catalog.levels.map((level,index)=>{const chapter=chapters.findIndex(c=>index>=c.start&&index<c.end),c=chapters[chapter],[x,y]=chapter===10&&index===48?[6,5]:spots[index-c.start];return {id:level.id,index,chapter,x:c.x+x,y:c.y+y,name:level.name};});
@@ -34,6 +38,7 @@
       for(const [a,b]of this.paths){const c=chapters[a],d=chapters[b];if(b===10){room(c.x,17,90,19);room(89,18,91,68);room(80,67,90,69);this.gates.push({chapter:b,x:90,y:29,vertical:true});}else if(c.y===d.y){room(Math.min(c.x,d.x),c.y-1,Math.max(c.x,d.x),c.y+1);this.gates.push({chapter:b,x:Math.round((c.x+d.x)/2),y:c.y,vertical:false});}else{room(c.x-1,Math.min(c.y,d.y),c.x+1,Math.max(c.y,d.y));this.gates.push({chapter:b,x:c.x,y:Math.round((c.y+d.y)/2),vertical:true});}}
       // Nodes are always dry, open landing spaces inside their own courtyards.
       for(const n of this.nodes)room(n.x-1,n.y-1,n.x+1,n.y+1);
+      for(const n of this.bonusNodes){room(n.x-6,n.y-3,n.x+6,n.y+3);room(n.lock.x,n.y+4,n.lock.x,n.lock.y+1);for(const [dx,dy] of [[-5,-2],[5,-2],[-5,2],[5,2]])this.grid[n.y+dy][n.x+dx]='L';}
 
       this.refreshRegions();this.tracks=[];
       const track=(a,b,side=false)=>{const from={x:a.x+.5,y:a.y+.5},to={x:b.x+.5,y:b.y+.5},path=this.route(to,from,true);if(path)this.tracks.push({points:[from,...path],side});};
@@ -48,7 +53,7 @@
       this.hiddenCarved=true;this.terrainVersion++;
     }
     regionOpen(i){return Boolean(this.openRegions?.[i]);}
-    floor(x,y){x=Math.floor(x);y=Math.floor(y);if(!['.','L'].includes(this.grid[y]?.[x]))return false;for(const [i,c]of chapters.entries())if(Math.abs(x-c.x)<=8&&Math.abs(y-c.y)<=7&&!this.regionOpen(i))return false;return !this.gates.some(g=>!this.regionOpen(g.chapter)&&(g.vertical?y===g.y&&Math.abs(x-g.x)<=1:x===g.x&&Math.abs(y-g.y)<=1));}
+    floor(x,y){x=Math.floor(x);y=Math.floor(y);if(!['.','L'].includes(this.grid[y]?.[x]))return false;for(const [i,c]of chapters.entries())if(Math.abs(x-c.x)<=8&&Math.abs(y-c.y)<=7&&!this.regionOpen(i))return false;if(this.bonusNodes.some(n=>x===n.lock.x&&y===n.lock.y&&!this.bonusOpen(n.id)))return false;return !this.gates.some(g=>!this.regionOpen(g.chapter)&&(g.vertical?y===g.y&&Math.abs(x-g.x)<=1:x===g.x&&Math.abs(y-g.y)<=1));}
     route(to,from=this.player,ignoreLocks=false){const sx=Math.floor(from.x),sy=Math.floor(from.y),tx=Math.floor(to.x),ty=Math.floor(to.y),queue=[[sx,sy]],previous=new Map([[sx+','+sy,null]]);for(let i=0;i<queue.length;i++){const [x,y]=queue[i];if(x===tx&&y===ty){const out=[];let p=[x,y];while(p){out.unshift({x:p[0]+.5,y:p[1]+.5});p=previous.get(p.join(','));}out.shift();return out;}for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy,k=nx+','+ny;if((ignoreLocks?['.','L'].includes(this.grid[ny]?.[nx]):this.floor(nx,ny))&&!previous.has(k)){previous.set(k,[x,y]);queue.push([nx,ny]);}}}return null;}
     chapterAt(p=this.player){return chapters.reduce((best,c,i)=>Math.hypot(c.x-p.x,c.y-p.y)<Math.hypot(chapters[best].x-p.x,chapters[best].y-p.y)?i:best,0);}
     nearbyNpc(){return this.npcs.find(n=>this.regionOpen(n.chapter)&&Math.hypot(n.x+.5-this.player.x,n.y+.5-this.player.y)<=1.8)||null;}
@@ -73,8 +78,10 @@
       if(Math.hypot(f.x-p.x,f.y-p.y)<.55)this.catchFly();
     }
     nearbyCache(){return this.caches.find(c=>!this.found.has(c.id)&&Math.hypot(c.x+.5-this.player.x,c.y+.5-this.player.y)<=.8)||null;}
-    nearby(){return this.nodes.find(n=>Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5)||(this.hiddenCarved?this.hiddenNodes.find(n=>Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5):null)||null;}
-    enter(){const node=this.nearby();return node?.hidden?'hidden:'+node.id:node&&this.unlocked(node.id)?node.id:null;}
+    nearby(){return this.nodes.find(n=>Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5)||this.bonusNodes.find(n=>Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5)||(this.hiddenCarved?this.hiddenNodes.find(n=>Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5):null)||null;}
+    // The hedge before a bonus grove that is still shut, when Sally stands by it.
+    nearbyBonusLock(){return this.bonusNodes.find(n=>!this.bonusOpen(n.id)&&Math.hypot(n.lock.x+.5-this.player.x,n.lock.y+.5-this.player.y)<=2.5)||null;}
+    enter(){const node=this.nearby();return node?.bonus&&!this.bonusOpen(node.id)?null:node?.hidden?'hidden:'+node.id:node&&this.unlocked(node.id)?node.id:null;}
     walkTo(id){this.refreshRegions();const n=this.nodes.find(n=>n.id===id);if(!n)return false;const route=this.route({x:n.x,y:n.y+1});if(!route)return false;route.push({x:n.x,y:n.y+1});this.target=route;return true;}
     travel(chapter){this.refreshRegions();const c=chapters[chapter];if(!c||!this.regionOpen(chapter))return false;const node=this.nodes.filter(n=>n.chapter===chapter).find(n=>this.unlocked(n.id))||this.nodes[c.start];this.player.x=node.x;this.player.y=node.y+1;this.player.facing={x:0,y:-1};this.target=null;this.accumulator=0;this.motion.resetPlayer(this.player);return true;}
     advance(seconds,input={}){

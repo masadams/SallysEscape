@@ -100,7 +100,7 @@ function renderEscapeAbility(button,kind,label,key,left,total,ready=true,active=
 const ESCAPE_GLOWBUG_CHANCE=.25;
 function startEscape(options={}){
   escapeAbandonRun();
-  if(options.hiddenId?!escapeProgress.hiddenOpen(EscapeWorld.chapters):options.challengeId?!escapeProgress.challengeUnlocked(options.challengeId):!escapeProgress.unlocked(options.levelId||'quiet-vault')){showEscapeSelect();return;}
+  if(options.hiddenId?!escapeProgress.hiddenLevelOpen(options.hiddenId,EscapeWorld.chapters):options.challengeId?!escapeProgress.challengeUnlocked(options.challengeId):!escapeProgress.unlocked(options.levelId||'quiet-vault')){showEscapeSelect();return;}
   // Now and then (about one escape in four, never in a challenge) glow bugs drift about as a bonus.
   if(options.glowbugs===undefined&&!options.challengeId&&Math.random()<ESCAPE_GLOWBUG_CHANCE)options={...options,glowbugs:1+Math.floor(Math.random()*1e6)};
   startRun('escape');escapeGame=new EscapeAdventure(options);escapeResultShown=false;escapeHudAt=-Infinity;
@@ -277,7 +277,7 @@ function tickEscapeMusic(){
   escapeMusic.setState(EscapeMusic.stateFor({screen,game:screen==='game'?escapeGame:null}),millis()/1000);
   // Each region has a style and each escape its own tune; the world map follows the courtyard Sally is standing in.
   const chapters=EscapeWorld.chapters,index=screen==='game'&&escapeGame?EscapeCatalog.levels.indexOf(escapeGame.level):-1,chapter=index>=0?chapters.find(c=>index>=c.start&&index<c.end):screen==='world'&&escapeWorld?chapters[escapeWorld.chapterAt()]:chapters[0];
-  escapeMusic.setStyle(screen==='game'&&escapeGame?.level.hidden?EscapeMusic.styleFor('gilded',EscapeCatalog.hidden.indexOf(escapeGame.level)):EscapeMusic.styleFor(chapter?.theme||'meadow',index>=0&&chapter?index-chapter.start:-1));
+  escapeMusic.setStyle(screen==='game'&&escapeGame?.level.bonus?EscapeMusic.styleFor('hollow',1):escapeGame?.level.hidden?EscapeMusic.styleFor('gilded',EscapeCatalog.hidden.indexOf(escapeGame.level)):EscapeMusic.styleFor(chapter?.theme||'meadow',index>=0&&chapter?index-chapter.start:-1));
 }
 function escapeSound(event,options={}){
   if(isMuted||paused||!audioUnlocked||soundVolume===0||typeof EscapeAudio==='undefined')return;
