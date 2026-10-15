@@ -38,6 +38,9 @@
       // Later routes forgive one catch: Sally sheds her tail as a wriggling decoy.
       this.tailDrop=Boolean(this.level.tailDrop&&!this.challenge);this.hasTail=true;this.tailsDropped=0;this.droppedTail=null;
       this.regrowthBugs=(this.level.regrowth||[]).map(p=>({...centre(...p),eaten:false}));
+      // Bonus glow bugs drift around some escapes (the game rolls for them; tests and recordings
+      // never pass the option, so recorded runs are unchanged). Catching one is a small bonus.
+      this.glowbugs=options.glowbugs?this.makeGlowbugs(options.glowbugs):[];this.glowbugsCaught=0;
       // Rooftop routes: camouflage charges, shaded awnings and a hawk overhead.
       this.camos=this.level.camos||0;this.camoUntil=0;this.camosUsed=0;this.shade=new Set((this.level.shade||[]).map(([x,y])=>x+','+y));
       // Ant Kingdom: marching columns on fixed looping trails, and treasure that can be stolen.
@@ -289,6 +292,7 @@
       if(!this.hasKey)targets.push({kind:'key',point:this.key});
       this.loot.forEach((item,index)=>{if(!item.taken)targets.push({kind:'loot',index,point:item});});
       if(!this.hasTail)this.regrowthBugs.forEach((bug,index)=>{if(!bug.eaten)targets.push({kind:'bug',index,point:bug});});
+      this.glowbugs.forEach((bug,index)=>{if(!bug.caught)targets.push({kind:'glow',index,point:bug});});
       return targets.filter(t=>{const dx=t.point.x-p.x,dy=t.point.y-p.y,forward=dx*d.x+dy*d.y,side=Math.abs(dx*d.y-dy*d.x);return forward>.25&&distance(p,t.point)<=this.tongueRange+1e-9&&side<=.35&&this.clear(p,t.point,true);}).sort((a,b)=>distance(p,a.point)-distance(p,b.point))[0]||null;
     }
     useTongue(){
@@ -398,6 +402,19 @@
         this.alarms++;if(!this.shedTail(null))this.finish('caught','The hawk dropped out of the sun. Shelter under an awning, in leaves, or blend in.');
       }
     }
+    // Three to five bugs on open floor away from the start, chosen from a seed so a run can be replayed.
+    makeGlowbugs(seed){
+      let s=(Math.abs(Math.floor(seed))%2147483646)+1;const rand=()=>(s=s*16807%2147483647)/2147483647,start=centre(...this.level.spawn),spots=[];
+      for(let y=1;y<this.height-1;y++)for(let x=1;x<this.width-1;x++)if(['.','L','N','M'].includes(this.grid[y][x])&&distance(centre(x,y),start)>=4&&distance(centre(x,y),this.exit)>=2)spots.push(centre(x,y));
+      const bugs=[];for(let n=3+Math.floor(rand()*3);n>0&&spots.length;n--){const home=spots.splice(Math.floor(rand()*spots.length),1)[0];bugs.push({home,x:home.x,y:home.y,phase:rand()*Math.PI*2,caught:false});}
+      return bugs;
+    }
+    // Each bug loops lazily inside its own tile, so it never needs a path.
+    updateGlowbugs(){
+      for(const b of this.glowbugs){if(b.caught)continue;const t=this.elapsed*.9+b.phase;b.x=b.home.x+Math.sin(t)*.32;b.y=b.home.y+Math.sin(t*1.7)*.22;}
+      const p=this.player;for(const b of this.glowbugs)if(!b.caught&&distance(p,b)<0.55)this.catchGlowbug(b);
+    }
+    catchGlowbug(b){if(b.caught)return;b.caught=true;this.glowbugsCaught++;const left=this.glowbugs.filter(g=>!g.caught).length;this.notice('Glow bug caught! A little bonus treasure.'+(left?' '+left+' still drifting about.':' That was the last one.'),'glowbug');}
     eatRegrowthBug(bug){
       if(bug.eaten||this.hasTail)return;bug.eaten=true;this.hasTail=true;
       this.notice('Crunch! Sally\'s tail grows back.','regrow');
@@ -406,9 +423,9 @@
       const t=this.tongue;if(!t)return;
       const age=this.elapsed-t.startedAt;
       if(!t.hit&&age>=.14){
-        t.hit=true;const present=t.kind==='key'?!this.hasKey:t.kind==='bug'?!this.regrowthBugs[t.index].eaten&&!this.hasTail:!this.loot[t.index].taken;
+        t.hit=true;const present=t.kind==='key'?!this.hasKey:t.kind==='bug'?!this.regrowthBugs[t.index].eaten&&!this.hasTail:t.kind==='glow'?!this.glowbugs[t.index].caught:!this.loot[t.index].taken;
         if(present&&distance(this.player,t.point)<=this.tongueRange+1e-9&&this.clear(this.player,t.point,true)){
-          t.caught=true;t.kind==='key'?this.collectKey(true):t.kind==='bug'?this.eatRegrowthBug(this.regrowthBugs[t.index]):this.collectLoot(this.loot[t.index]);
+          t.caught=true;t.kind==='key'?this.collectKey(true):t.kind==='bug'?this.eatRegrowthBug(this.regrowthBugs[t.index]):t.kind==='glow'?this.catchGlowbug(this.glowbugs[t.index]):this.collectLoot(this.loot[t.index]);
         }else this.notice('The grab missed. Keep a clear line and stay within reach.');
       }
       if(age>=.34)this.tongue=null;
@@ -482,6 +499,7 @@
       }
       if(this.droppedTail&&this.droppedTail.expires<=this.elapsed)this.droppedTail=null;
       if(!this.hasTail)for(const bug of this.regrowthBugs)if(!bug.eaten&&distance(p,bug)<0.5&&this.clear(p,bug))this.eatRegrowthBug(bug);
+      if(this.glowbugs.length)this.updateGlowbugs();
       if(distance(p,this.exit)<0.55){
         if(this.exitUnlocked()){this.exitHold+=dt;if(this.exitHold>=0.55)this.finish('won','Sally made it out!');}
         else if(this.messageUntil<this.elapsed)this.notice(!this.hasKey?'The hatch needs the golden key.':this.treasure<this.requiredTreasure?'Bring '+(this.requiredTreasure-this.treasure)+' more treasure to the hatch.':'Daze '+(this.challenge.steamTraps-this.steamed)+' more hunters with steam first.');
@@ -851,7 +869,7 @@
       this.status=status;this.notice(message,status);
       this.tongue=null;
       const stars=status==='won'?1+Number(this.treasure>=Math.ceil(this.totalTreasure*.6))+Number(this.alarms===0&&this.hasTail):0;
-      this.result=Object.freeze({status,levelId:this.level.id,routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),blasts:this.blasts,steamed:this.steamed,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,message});
+      this.result=Object.freeze({status,levelId:this.level.id,routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),blasts:this.blasts,steamed:this.steamed,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,glowbugs:this.glowbugsCaught,message});
     }
     drainEvents(){const events=this.events;this.events=[];return events;}
   }

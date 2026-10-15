@@ -69,9 +69,12 @@ function showEscapeSelect(){
   clearTouchInput();suppressHeldKeys();unlockAudio();openEscapeWorld(focus);updateToolbar();window.scrollTo?.(0,0);
 }
 
+const ESCAPE_GLOWBUG_CHANCE=.25;
 function startEscape(options={}){
   escapeAbandonRun();
   if(options.challengeId?!escapeProgress.challengeUnlocked(options.challengeId):!escapeProgress.unlocked(options.levelId||'quiet-vault')){showEscapeSelect();return;}
+  // Now and then (about one escape in four, never in a challenge) glow bugs drift about as a bonus.
+  if(options.glowbugs===undefined&&!options.challengeId&&Math.random()<ESCAPE_GLOWBUG_CHANCE)options={...options,glowbugs:1+Math.floor(Math.random()*1e6)};
   startRun('escape');escapeGame=new EscapeAdventure(options);escapeResultShown=false;escapeHudAt=-Infinity;
   escapeOptions={levelId:escapeGame.level.id,challengeId:escapeGame.challenge?.id||null};
   gameState='escape';escapeLibraryOpen=false;document.getElementById('game-area').classList.remove('escape-world-open');mountEscapeChrome(true);
@@ -156,7 +159,10 @@ function playEscape(){
     let {x,y,sprint}=escapeMovement();
     escapeGame.advance(deltaTime/1000,{x,y,sprint});
   }
-  for(const event of new Set(escapeGame.drainEvents()))escapeSound(event==='treasure'&&escapeGame.message.startsWith('A whole')?'chest':event);
+  const events=escapeGame.drainEvents();
+  // Each glow bug caught counts like a golden fly: a little bonus treasure on the world totals.
+  for(const event of events)if(event==='glowbug')escapeProgress.catchGoldfly();
+  for(const event of new Set(events))escapeSound(event==='treasure'&&escapeGame.message.startsWith('A whole')?'chest':event);
   if(gameState==='escape'&&!paused)escapeFootsteps(escapeGame.player);
   drawEscapeVault();renderEscapeHUD();
   if(escapeGame.status!=='playing' && !escapeResultShown)showEscapeResult();
@@ -205,6 +211,7 @@ function showEscapeResult(){
   // A failed attempt explains the catch; treasure only matters when Sally gets out.
   const best=!r.challengeId&&escapeProgress.data.levels[r.levelId];
   document.getElementById('escape-result-summary').textContent=won?rating+tailNote+' Treasure '+r.treasure+' / '+r.totalTreasure+' · '+r.time.toFixed(1)+'s':r.message+tailNote;
+  if(r.glowbugs)document.getElementById('escape-result-summary').textContent+=' · ✦ '+r.glowbugs+' glow bug'+(r.glowbugs>1?'s':'')+' caught';
   document.getElementById('escape-result-medals').textContent=won?(r.challengeId?'✓ '+escapeGame.challenge.name:'★'.repeat(r.stars)+'☆'.repeat(3-r.stars)+' · ✓ Escape · '+(r.treasure>=Math.ceil(r.totalTreasure*.6)?'✓':'○')+' Collect '+Math.ceil(r.totalTreasure*.6)+'+ treasure · '+(r.alarms===0&&r.hasTail!==false?'✓':'○')+' No alarm'+(r.hasTail===false?' · tail lost':'')+(firstTry?' · ✓ First try bonus':'')):(best?'Your best here: '+escapeRecordSummary(escapeGame.level,best)+'.':'Every attempt teaches a new route.');
   const next=EscapeCatalog.levels[EscapeCatalog.levels.indexOf(escapeGame.level)+1],nextButton=document.getElementById('escape-next-btn');
   // Point at any challenge this win opened, so it is not missed on the map.
@@ -330,6 +337,7 @@ function drawEscapeVault(){
   for(const t of g.antTrails){stroke(150,110,70,70);strokeWeight(cell*.06);for(const p of t.tiles)if(!view.follow||g.visibleTile(Math.floor(p.x),Math.floor(p.y)))point(p.x*cell,p.y*cell);noStroke();for(const a of g.ants(t)){if(view.follow&&!g.visibleTile(Math.floor(a.x),Math.floor(a.y)))continue;push();translate(a.x*cell,a.y*cell);rotate(a.dir);scale(1.45);fill(70,24,18);for(const o of [-.1,0,.1])ellipse(o*cell,0,cell*.11,cell*.09);stroke(70,24,18);strokeWeight(cell*.015);const k=Math.sin(g.elapsed*20+a.x*5)*cell*.03;for(const s of [-1,1])for(const o of [-.06,0,.06])line(o*cell,0,o*cell+k,s*cell*.1);noStroke();pop();}}
   // Regrowth bugs glow brightly only while Sally is missing her tail.
   for(const bug of g.regrowthBugs)if(!bug.eaten)drawEscapeRegrowthBug(bug,cell,g.elapsed,!g.hasTail);
+  for(const bug of g.glowbugs)if(!bug.caught&&(!g.level.explore||g.visibleTile(Math.floor(bug.x),Math.floor(bug.y))))drawEscapeGlowbug(bug,cell,g.elapsed);
   if(g.droppedTail)drawEscapeDroppedTail(g.droppedTail,cell,g.elapsed);
   if(g.decoy){
     noFill();stroke(172,152,255,130);strokeWeight(1);const pulse=(g.elapsed%0.65)/.65;
@@ -560,6 +568,13 @@ function drawEscapeSnake(model,cell,state,sea=false){
     line(cell*.23,0,tip,0);line(tip,0,tip+cell*.04,-cell*.027);line(tip,0,tip+cell*.04,cell*.027);
   }
   pop();
+}
+// A bonus glow bug: a soft golden halo that breathes, a bright body and flickering wings.
+function drawEscapeGlowbug(bug,cell,clock){
+  const pulse=.5+.5*Math.sin(clock*4+bug.phase);push();translate(bug.x*cell,bug.y*cell);noStroke();
+  for(const [r,a] of [[1.1,30],[.7,55],[.4,90]]){fill(255,226,120,a*(.6+pulse*.4));ellipse(0,0,cell*r*(.85+pulse*.15),cell*r*(.85+pulse*.15));}
+  const flap=Math.sin(clock*30+bug.phase)*.5+.5;fill(255,255,240,140);for(const side of [-1,1])ellipse(side*cell*.09,-cell*.04,cell*.12,cell*(.06+flap*.06));
+  fill(255,240,170);ellipse(0,0,cell*.13,cell*.18);fill(255,255,255,200);ellipse(0,cell*.05,cell*.07,cell*.06);pop();
 }
 function drawEscapeRegrowthBug(bug,cell,clock,hungry){
   const pulse=.5+.5*Math.sin(clock*5+bug.x),bob=Math.sin(clock*3+bug.y)*.05;push();translate(bug.x*cell,(bug.y+bob)*cell);noStroke();

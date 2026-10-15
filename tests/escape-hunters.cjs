@@ -83,3 +83,13 @@ test('an owl swoop bends toward Sally, but leaf cover makes it miss',()=>{
   const start={...h.aim};ticks(g,.3,{y:1});assert.ok(h.aim.y>start.y+.3,'the swoop follows her');
   const hide=arena('owl',[2,5],[7,5]);hide.h.state='glare';hide.h.phaseUntil=0;hide.h.aim={x:7.5,y:5.5};hide.h.perch={x:2.5,y:5.5};hide.g.grid[7][7]='L';Object.assign(hide.g.player,{x:7.5,y:7.5});ticks(hide.g,2);assert.equal(hide.g.status,'playing');
 });
+test('bonus glow bugs only appear when the game rolls them, drift inside their tiles, and are caught by touch or tongue',()=>{
+  const plain=new EscapeAdventure({levelId:'quiet-vault'});assert.equal(plain.glowbugs.length,0);
+  const a=new EscapeAdventure({levelId:'quiet-vault',glowbugs:42}),b=new EscapeAdventure({levelId:'quiet-vault',glowbugs:42});
+  assert.ok(a.glowbugs.length>=3&&a.glowbugs.length<=5);assert.deepEqual(a.glowbugs.map(g=>g.home),b.glowbugs.map(g=>g.home),'a seed places the same bugs');
+  const start={x:a.player.x,y:a.player.y};for(const bug of a.glowbugs){assert.ok(Math.hypot(bug.home.x-start.x,bug.home.y-start.y)>=4);assert.ok(a.floor(Math.floor(bug.home.x),Math.floor(bug.home.y)));}
+  a.hunters=[];for(let i=0;i<240;i++)a.advance(1/120,{});for(const bug of a.glowbugs){assert.equal(Math.floor(bug.x),Math.floor(bug.home.x));assert.equal(Math.floor(bug.y),Math.floor(bug.home.y));}
+  const first=a.glowbugs[0];Object.assign(a.player,{x:first.x,y:first.y});a.advance(1/120,{});assert.equal(first.caught,true);assert.equal(a.glowbugsCaught,1);assert.ok(a.drainEvents().includes('glowbug'));
+  const second=a.glowbugs[1];a.tongues=1;Object.assign(a.player,{x:second.x-1.5,y:second.y,facing:{x:1,y:0},tongueAim:null});a.grid[Math.floor(second.y)][Math.floor(second.x-1)]='.';
+  assert.equal(a.useTongue(),true);for(let i=0;i<30;i++)a.advance(1/120,{});assert.equal(second.caught,true);assert.equal(a.glowbugsCaught,2);
+});
