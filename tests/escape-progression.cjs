@@ -43,3 +43,15 @@ test('test mode opens every escape and challenge without changing saved records'
   p.unlockAll=true;assert.equal(p.unlocked(last.id),true);assert.equal(p.challengeUnlocked(c.id),true);assert.equal(p.unlocked('no-such-route'),false);
   assert.deepEqual(p.data.levels,{});p.unlockAll=false;assert.equal(p.unlocked(last.id),false);
 });
+test('a perfect escape is the first attempt with every star and treasure; five perfect areas open the hidden way, and only one quiet line ever hints at it',()=>{
+  const {EscapeWorld}=require('../public/escape-world.js'),chapters=EscapeWorld.chapters,p=new EscapeProgress(null),win=(level,stars,treasure)=>({status:'won',levelId:level.id,routeRevision:level.revision||1,stars,treasure,totalTreasure:level.loot.reduce((n,l)=>n+l[2],0),time:30,alarms:0});
+  p.unlocked=()=>true;const first=EscapeCatalog.levels[0];
+  assert.equal(p.whisper(),false,'no hint before any perfect escape');
+  p.record(win(first,3,9));assert.equal(p.lastPerfect,false,'one treasure short is not perfect');assert.equal(p.data.levels[first.id].firstTry,true);
+  const second=EscapeCatalog.levels[1];p.record(win(second,3,10));assert.equal(p.lastPerfect,true);assert.equal(p.data.levels[second.id].perfect,true);
+  const third=EscapeCatalog.levels[2];p.attempt(third.id);p.record(win(third,3,10));assert.equal(p.lastPerfect,false,'a retry is never perfect');
+  assert.equal(p.whisper(),true);assert.equal(p.whisper(),false,'the hint comes once');
+  assert.equal(p.perfectAreas(chapters),1);assert.equal(p.hiddenOpen(chapters),false);
+  for(const c of chapters.slice(1,5)){const l=EscapeCatalog.levels[c.start];p.record(win(l,3,l.loot.reduce((n,x)=>n+x[2],0)));}
+  assert.equal(p.perfectAreas(chapters),5);assert.equal(p.hiddenOpen(chapters),true);assert.equal(p.totals().perfect,5);
+});

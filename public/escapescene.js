@@ -4,7 +4,7 @@ function escapeUnlockBase(level){if(level.unlockAny)return 'Clear '+level.unlock
 function escapeChallengeLock(challenge){const gate=escapeProgress.challengeGate(challenge.id),level=EscapeCatalog.levels.find(l=>l.id===challenge.levelId);if(!gate||gate.open)return '';if(!gate.cleared)return 'Clear '+level.name+' to unlock.';const area=EscapeWorld.chapters.find(c=>c.start===challenge.starGate.from)?.name||'this area';return 'Earn '+gate.need+'★ in '+area+' to unlock ('+gate.stars+' so far).';}
 function escapeRecordSummary(level,saved,challenge=false){
   if(!saved)return '';
-  return challenge?'✓ Complete · Best '+saved.bestTime.toFixed(1)+'s':'★'.repeat(saved.stars)+'☆'.repeat(3-saved.stars)+' · Best '+saved.bestTime.toFixed(1)+'s'+(saved.firstTry?' · ✓ First try':'');
+  return challenge?'✓ Complete · Best '+saved.bestTime.toFixed(1)+'s':'★'.repeat(saved.stars)+'☆'.repeat(3-saved.stars)+' · Best '+saved.bestTime.toFixed(1)+'s'+(saved.perfect?' · ✦ Perfect':saved.firstTry?' · ✓ First try':'');
 }
 function escapeToolkit(level){return [[level.camos||0,'camouflage'],[level.seeds||0,'seed pod'],[level.tongues||0,'tongue grab'],[level.burrows,'burrow'],[level.pebbles,'pebble']].filter(([n])=>n>0).map(([n,label])=>n+' '+label+(n>1&&label!=='camouflage'?'s':'')).concat(level.requiredTreasure?[level.requiredTreasure+' treasure to escape']:[],level.timeLimit?[level.timeLimit+' second escape']:[],level.tailDrop?['spare tail']:[],level.regrowth?.length?[level.regrowth.length+' regrowth bug'+(level.regrowth.length>1?'s':'')]:[],level.hawk?['hawk overhead']:[],level.antTrails?[level.antTrails.length+' ant column'+(level.antTrails.length>1?'s':'')]:[],level.guards.some(h=>h.kind==='gecko')?['gecko thief']:[],level.cold?['cold rooms']:[],level.vents?[level.vents.length+' steam vents']:[]);}
 let escapeGame=null,escapeIntroOpen=false;
@@ -202,10 +202,10 @@ function renderEscapeHUD(force=false){
 function showEscapeResult(){
   escapeResultShown=true;gameState='escapeResult';clearTouchInput();suppressHeldKeys();
   const r=escapeGame.result,won=r.status==='won';
-  escapeProgress.record(r);const firstTry=won&&!r.challengeId&&escapeProgress.lastFirstTry;document.getElementById('escape-result').classList.toggle('escape-first-try',firstTry);
+  escapeProgress.record(r);const firstTry=won&&!r.challengeId&&escapeProgress.lastFirstTry,perfect=won&&!r.challengeId&&escapeProgress.lastPerfect;document.getElementById('escape-result').classList.toggle('escape-first-try',firstTry&&!perfect);document.getElementById('escape-result').classList.toggle('escape-perfect',perfect);
   document.getElementById('game-area').classList.add('escape-results-open');
   document.getElementById('escape-result-location').textContent=r.levelName;
-  document.getElementById('escape-result-title').textContent=won?(r.challengeId?'Challenge complete!':firstTry?'First try! Sally escaped!':'Sally escaped!'):r.status==='failed'?'Challenge missed':'Nearly… try another route';
+  document.getElementById('escape-result-title').textContent=won?(r.challengeId?'Challenge complete!':perfect?'Perfect escape! First try, every star, every treasure.':firstTry?'First try! Sally escaped!':'Sally escaped!'):r.status==='failed'?'Challenge missed':'Nearly… try another route';
   const rating=r.treasure===r.totalTreasure?'The vault is empty. Legendary escape.':r.treasure>=5?'A brave treasure haul.':r.treasure>0?'A little treasure and a clever escape.':'Safe and sound. Try a treasure detour next time.';
   const tailNote=r.tailsDropped?(r.hasTail?' Sally lost her tail and grew it back.':' Sally left her tail behind.'):'';
   // A failed attempt explains the catch; treasure only matters when Sally gets out.
@@ -219,6 +219,7 @@ function showEscapeResult(){
   const mastered=won&&!r.challengeId?escapeProgress.announceMastery(EscapeWorld.chapters):[];
   document.getElementById('escape-result-challenge').textContent=[opened.length?'⚑ New challenge open: '+openedText+'. Find the glowing flag on the map.':'',...mastered.map(c=>'♛ '+c.name+' mastered! Every star is yours, and Sally can now wear its '+(ESCAPE_SKINS[c.theme]?.name||c.name)+' colours. Change them on the world map.')].filter(Boolean).join(' ');
   if(mastered.length)escapeSound('cache');
+  if(perfect&&escapeProgress.whisper())document.getElementById('escape-result-challenge').textContent+=' ✦ Somewhere beyond the trail, something has noticed you.';
   nextButton.style.display=won&&!r.challengeId?'inline-block':'none';
   nextButton.textContent=next?(next.expedition?'Explore expedition →':'Try next escape →'):'Return to world map';
   nextButton.onclick=next?()=>startEscape({levelId:next.id}):showEscapeSelect;
