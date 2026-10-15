@@ -8752,7 +8752,7 @@
   for(const route of rebuilt){
     const i=levels.findIndex(l=>l.id===route.id);if(i<0)throw new Error('Unknown rebuilt route '+route.id);
     const old=levels[i],keep={};for(const k of ['unlockAfter','unlockChallenges','expedition'])if(old[k]!==undefined)keep[k]=old[k];
-    levels[i]={burrows:0,pebbles:0,...keep,...route,revision:(old.revision||1)+1};
+    levels[i]={burrows:0,pebbles:0,tongues:0,...keep,...route,revision:(old.revision||1)+1};
   }
   for(const level of levels)if(level.map)fromMap(level);
   // Paired expeditions let players choose a route before rejoining the harder path.

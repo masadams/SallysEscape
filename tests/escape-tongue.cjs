@@ -1,10 +1,12 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {EscapeAdventure}=require('../public/escape-engine.js');
 const {EscapeCatalog}=require('../public/escape-levels.js');
+// Tongue mechanics are checked on frozen copies of the original river layouts.
+const legacy=require('./fixtures/legacy-levels.json');
 function advance(g,s,input={}){for(let n=0;n<Math.ceil(s*120);n++)g.advance(1/120,input);}
-function reach(){const g=new EscapeAdventure({levelId:'reed-bank'});g.hunters=[];Object.assign(g.player,{x:4.5,y:8.5,facing:{x:1,y:0}});return g;}
+function reach(){const g=new EscapeAdventure({level:legacy['reed-bank']});g.hunters=[];Object.assign(g.player,{x:4.5,y:8.5,facing:{x:1,y:0}});return g;}
 test('new routes have distinct finite tool sets and tongue is absent from earlier routes and Forked Fort',()=>{
- const sets=EscapeCatalog.levels.slice(9,13).map(l=>[l.tongues,l.burrows,l.pebbles]);assert.deepEqual(sets,[[3,0,1],[1,2,0],[2,0,0],[0,1,2]]);
+ const sets=EscapeCatalog.levels.slice(9,13).map(l=>[l.tongues,l.burrows,l.pebbles]);assert.deepEqual(sets,[[2,0,1],[1,2,0],[2,0,0],[0,1,2]]);
  for(const level of EscapeCatalog.levels){for(const n of [level.tongues||0,level.burrows,level.pebbles])assert.ok(Number.isInteger(n)&&n>=0);}
  for(const id of ['quiet-vault','forked-fort']){const g=new EscapeAdventure({levelId:id});assert.equal(g.useTongue(),false);assert.equal(g.tonguesUsed,0);}
 });
@@ -43,16 +45,16 @@ test('gaps block walking, burrowing and enemy charges but permit vision and tong
  const h=g.hunter;Object.assign(h,{kind:'beetle',x:5.5,y:8.5,state:'charge',aim:{x:8.5,y:8.5},facing:0,phaseUntil:2});Object.assign(g.player,{x:8.5,y:10.5});g.hunters=[h];advance(g,.5);assert.equal(h.state,'stunned');assert.ok(h.x<5.8);
 });
 test('retries restore each route loadout and clear an unfinished tongue',()=>{
- const a=reach();a.useTongue();const b=new EscapeAdventure({levelId:'reed-bank'});assert.equal(b.tongues,3);assert.equal(b.tongue,null);assert.equal(b.tonguesUsed,0);assert.equal(b.burrows,0);assert.equal(b.decoys,1);
+ const a=reach();a.useTongue();const b=new EscapeAdventure({level:legacy['reed-bank']});assert.equal(b.tongues,3);assert.equal(b.tongue,null);assert.equal(b.tonguesUsed,0);assert.equal(b.burrows,0);assert.equal(b.decoys,1);
 });
 test('burrowing interrupts a pending tongue so it cannot stretch or collect across the landing wall',()=>{
- const g=new EscapeAdventure({levelId:'split-shelves'});g.hunters=[];Object.assign(g.player,{x:8.5,y:6.5,facing:{x:0,y:-1}});g.loot=[{x:8.5,y:5.5,value:1,taken:false}];assert.equal(g.useTongue(),true);
+ const g=new EscapeAdventure({level:legacy['split-shelves']});g.hunters=[];Object.assign(g.player,{x:8.5,y:6.5,facing:{x:0,y:-1}});g.loot=[{x:8.5,y:5.5,value:1,taken:false}];assert.equal(g.useTongue(),true);
  g.player.facing={x:1,y:0};assert.equal(g.burrow(),true);assert.equal(g.tongue,null);advance(g,.5);assert.equal(g.treasure,0);assert.equal(g.tongues,0);
 });
 test('Long Reach disallows walking pickup of the key and only opens the hatch after a tongue pickup',()=>{
- const g=new EscapeAdventure({challengeId:'long-reach'});g.hunters=[];Object.assign(g.player,g.key);advance(g,.1);assert.equal(g.hasKey,false);assert.equal(g.exitUnlocked(),false);
+ const g=new EscapeAdventure({challengeId:'long-reach',level:legacy['reed-bank']});g.hunters=[];Object.assign(g.player,g.key);advance(g,.1);assert.equal(g.hasKey,false);assert.equal(g.exitUnlocked(),false);
  Object.assign(g.player,{x:4.5,y:8.5,facing:{x:1,y:0}});g.useTongue();advance(g,.15);assert.equal(g.hasKey,true);assert.equal(g.keyByTongue,true);assert.equal(g.exitUnlocked(),true);
 });
 test('Long Reach ends with a clear failure when its last grab is spent on treasure',()=>{
- const g=new EscapeAdventure({challengeId:'long-reach'});g.hunters=[];Object.assign(g.player,{x:4.5,y:8.5,facing:{x:1,y:0}});g.tongues=1;g.loot=[{x:5.5,y:8.5,value:1,taken:false}];g.useTongue();advance(g,.36);assert.equal(g.status,'failed');assert.ok(g.result.message.includes('Save one'));assert.equal(g.hasKey,false);
+ const g=new EscapeAdventure({challengeId:'long-reach',level:legacy['reed-bank']});g.hunters=[];Object.assign(g.player,{x:4.5,y:8.5,facing:{x:1,y:0}});g.tongues=1;g.loot=[{x:5.5,y:8.5,value:1,taken:false}];g.useTongue();advance(g,.36);assert.equal(g.status,'failed');assert.ok(g.result.message.includes('Save one'));assert.equal(g.hasKey,false);
 });

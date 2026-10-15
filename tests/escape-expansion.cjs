@@ -19,7 +19,9 @@ test('every route has closed borders; static gate puzzles have permanently opena
   for(const p of [g.key,g.exit,...g.loot,...g.hunters,...g.hunters.flatMap(h=>h.patrol)]){
    assert.ok(g.fits(p),'spawn and goals fit inside floor');
    const walkable=Math.hypot(g.player.x-p.x,g.player.y-p.y)<.01||g.route(g.player,p).length>0;
-   assert.ok(walkable||smashable&&open.route(g.player,p).length>0,'no mandatory burrow or unreachable treasure');
+   // A tongue grab reaches three tiles in a straight, clear line from somewhere Sally can stand.
+   const grabbable=level.tongues>0&&[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>[1,2,3].some(d=>{const from={x:Math.floor(p.x)+.5+dx*d,y:Math.floor(p.y)+.5+dy*d};return g.fits(from)&&g.route(g.player,from).length>0&&g.clear(from,p,true);}));
+   assert.ok(walkable||grabbable||smashable&&open.route(g.player,p).length>0,'no mandatory burrow or unreachable treasure');
   }
   assert.equal(g.loot.reduce((n,item)=>n+item.value,0),10);
   for(const h of g.hunters)if(h.patrol.length>1)for(let i=0;i<h.patrol.length;i++)assert.ok(g.route(h.patrol[i],h.patrol[(i+1)%h.patrol.length]).length);
