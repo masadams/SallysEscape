@@ -16,6 +16,10 @@ built, playtested with recorded winning runs, and pushed on its own.
 | Challenge-gated branches | Regions can require completed challenges; the gate shows ⚑ and the count on the map. |
 | Sunbaked Rooftops | Five routes with the **hawk**, shaded awnings and the new **camouflage** action, plus the Hot Plates challenge. |
 | Ant Kingdom | Five routes with **ant columns** and **gecko thieves**, plus the Ant Dash and Sticky Fingers challenges. |
+| First-try bonus | A first-attempt escape earns mint stars and a ✓ badge. |
+| Adaptive music | Manifest-driven stems that fade between explore, tension and chase; see `docs/MUSIC.md`. |
+| Frost Hollow | Five routes with cold rooms, a **warmth** meter, warm stones, sluggish cold-blooded hunters and frost owls, plus the Keep Warm challenge. |
+| Steam Vents | Five routes with **timed steam jets** that block lanes, blow Sally clear and daze hunters, mixed with the hawk, owls and ants, plus the Steam Trap challenge. |
 
 ## Branch map
 
@@ -43,12 +47,12 @@ regions each add two or three challenges so later gates stay reachable.
 - **Gecko thief**: darts in, steals the last treasure Sally picked up and runs for its burrow. Catch it before it gets there to take the treasure back.
 - Underground tunnels, with burrowing as the main tool. Hiding never stops ants; geckos ignore Sally while her pockets are empty.
 
-### 3. Frost Hollow — warm and cold
+### 3. Frost Hollow — warm and cold (done)
 - Opens after Moonwell Keep (Lantern Marsh).
 - Only some rooms are cold, as agreed: cold ground slowly drains a **warmth** meter and slows Sally when it runs low; sun patches and warm stones refill it.
 - Owls return as daytime frost owls; snakes are sluggish in the cold.
 
-### 4. Steam Vents — timed jets
+### 4. Steam Vents — timed jets (done)
 - Opens after the Sunbaked Rooftops finale **and 12 completed challenges**.
 - Vents puff on a rhythm. A jet blocks its lane and can toss hunters back, so timing a jet can save Sally.
 - Mixes the hawk, owls and ant columns learned in earlier branches.

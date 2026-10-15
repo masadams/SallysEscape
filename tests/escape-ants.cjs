@@ -3,7 +3,7 @@ const {EscapeAdventure}=require('../public/escape-engine.js');const {EscapeCatal
 function ticks(g,seconds,input={}){for(let n=0;n<Math.round(seconds*120);n++)g.advance(1/120,input);}
 function ring(){const g=new EscapeAdventure({levelId:'anthill-gate'});g.hunters=[];g.motion.snakes=[];return g;}
 test('the Ant Kingdom branches off Venom Depths behind eight challenges with columns and gecko thieves',()=>{
-  const ants=EscapeCatalog.levels.slice(63);assert.deepEqual(ants.map(l=>l.id),['anthill-gate','sugar-store','marching-tunnels','thieves-gallery','queens-chamber']);
+  const ants=EscapeCatalog.levels.slice(63,68);assert.deepEqual(ants.map(l=>l.id),['anthill-gate','sugar-store','marching-tunnels','thieves-gallery','queens-chamber']);
   assert.equal(ants[0].unlockAfter,'split-jaw');assert.equal(ants[0].unlockChallenges,8);for(const l of ants)assert.ok(l.tailDrop);
   assert.ok(ants.filter(l=>l.antTrails).length>=4);assert.ok(ants.filter(l=>l.guards.some(h=>h.kind==='gecko')).length>=3);
   assert.ok(EscapeCatalog.levels.slice(0,63).every(l=>!l.antTrails&&!l.guards.some(h=>h.kind==='gecko')));
