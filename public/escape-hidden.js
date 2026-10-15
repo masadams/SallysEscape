@@ -1,4 +1,5 @@
-// The Gilded Burrow. Nothing in the game mentions it.
+// The Gilded Burrow, which nothing in the game mentions, and the bonus escapes, which open
+// for mastering areas (every star) and keep their own records.
 (function(root){
   const PI=Math.PI;
   const routes=[
@@ -49,7 +50,29 @@
  "#....#......###.###......#....#",
  "#.L.......#####.#####.......L.#",
  "#K......2.###..X..###.........#",
- "###############################"],gates:[{id:"nook",name:"Hoard door",color:[255,206,90],tiles:[[15,10]]}],reactions:[{id:"hoard-nw",when:"treasure",at:[8,1],spawn:["hoard-nw"],message:"The chest wakes something in the hall.",objective:"Take every treasure."},{id:"hoard-ne",when:"treasure",at:[22,1],spawn:["hoard-ne"],message:"Another chest, another den.",objective:"Take every treasure."},{id:"hoard-key",when:"key",open:["nook"],spawn:["hoard-sw"],message:"The hoard door opens beneath the hall.",objective:"Bring all ten treasure to the hatch."}],reinforcements:[{id:"hoard-nw",spawn:[12,6],facing:0,patrol:[[12,6],[18,6],[18,8],[12,8]]},{id:"hoard-ne",kind:"toad",spawn:[28,2],facing:PI,patrol:[[28,2]]},{id:"hoard-sw",kind:"spider",spawn:[3,10],facing:0,patrol:[[2,10],[8,12]]}],guards:[{kind:"scorpion",spawn:[7,2],facing:PI,patrol:[[7,2]]},{kind:"scorpion",spawn:[23,2],facing:0,patrol:[[23,2]]},{kind:"beetle",spawn:[27,11],facing:PI,patrol:[[22,11],[29,11]]},{spawn:[4,10],facing:0,patrol:[[2,10],[8,10],[8,13],[2,13]]},{kind:"mimic",spawn:[24,13],facing:PI,patrol:[[24,13]]},{kind:"mimic",spawn:[6,1],facing:0,patrol:[[6,1]]}]}
+ "###############################"],gates:[{id:"nook",name:"Hoard door",color:[255,206,90],tiles:[[15,10]]}],reactions:[{id:"hoard-nw",when:"treasure",at:[8,1],spawn:["hoard-nw"],message:"The chest wakes something in the hall.",objective:"Take every treasure."},{id:"hoard-ne",when:"treasure",at:[22,1],spawn:["hoard-ne"],message:"Another chest, another den.",objective:"Take every treasure."},{id:"hoard-key",when:"key",open:["nook"],spawn:["hoard-sw"],message:"The hoard door opens beneath the hall.",objective:"Bring all ten treasure to the hatch."}],reinforcements:[{id:"hoard-nw",spawn:[12,6],facing:0,patrol:[[12,6],[18,6],[18,8],[12,8]]},{id:"hoard-ne",kind:"toad",spawn:[28,2],facing:PI,patrol:[[28,2]]},{id:"hoard-sw",kind:"spider",spawn:[3,10],facing:0,patrol:[[2,10],[8,12]]}],guards:[{kind:"scorpion",spawn:[7,2],facing:PI,patrol:[[7,2]]},{kind:"scorpion",spawn:[23,2],facing:0,patrol:[[23,2]]},{kind:"beetle",spawn:[27,11],facing:PI,patrol:[[22,11],[29,11]]},{spawn:[4,10],facing:0,patrol:[[2,10],[8,10],[8,13],[2,13]]},{kind:"mimic",spawn:[24,13],facing:PI,patrol:[[24,13]]},{kind:"mimic",spawn:[6,1],facing:0,patrol:[[6,1]]}]},
+{id:"bramble-maze",name:"The Bramble Maze",brief:"A true maze of thorny hedges, and something that knows its way around it.",hint:"Find the key in the far corner and come back to the hatch. Dead ends hold treasure, and flytraps. Tangle vines grip you while the snake comes looking.",bonus:{areas:5},pebbles:2,tongues:1,seeds:0,explore:true,sightRadius:4,tailDrop:true,map:[
+ "###################################",
+ "#X..........#.............#...#3.K#",
+ "#.###.#.#####.#########.#.#.#.###.#",
+ "#...#.#.........T...#...#.#.#.....#",
+ "###.#.###########.#.#.###.#.#####.#",
+ "#.....#...#.......#.#.#...#...#...#",
+ "#.#.###.#.#.#####.#.#.#.#.###.#.###",
+ "#.#.....#.........#.#.#.......#.#2#",
+ "#.###.#######.#######.###.#.###.#.#",
+ "#..2#......1#...#.....#...#..T#...#",
+ "#.###.#.#######.#.#####.#.#.#.###.#",
+ "#.....#T......#...#...#.#...#...#.#",
+ "#.###########.###.#.#.#.#####.#.#.#",
+ "#.#.....T.........#...#.#.....#.#.#",
+ "#.#.#########.#####.#.#.#.#####.#.#",
+ "#.#.#.....#...#.....T...#.#.....#.#",
+ "#.#.#.###.###.#.#####.###.###.###.#",
+ "#.#.#.#.....#.#.....#...#...#..1#.#",
+ "#.#.#.#.###.#######.###.###.#####.#",
+ "#@#.......#..............1#.......#",
+ "###################################"],guards:[{spawn:[17,13],facing:0,patrol:[[5,5],[17,9],[29,11],[17,17],[9,15]]},{kind:"millipede",spawn:[13,17],facing:PI,patrol:[[13,17]]},{kind:"flytrap",spawn:[32,1],facing:PI,patrol:[[32,1]]},{kind:"flytrap",spawn:[33,8],facing:-PI/2,patrol:[[33,8]]}]}
   ];
   root.EscapeHidden=routes;
   if(typeof module!=='undefined'&&module.exports)module.exports=routes;

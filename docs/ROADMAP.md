@@ -114,7 +114,18 @@ Sun and Sea brings in the hermit crab:
 - The Sunken Caravan: a canyon yard where the snake and the scorpion fight if they meet. Taking the key collapses the arch, so Sally runs home along the rim and slips through a crack only she fits.
 - Tideglass Lagoon: three islands where fish rule the channels, a sea snake takes both water and land, and hermit crabs guard the beaches.
 
-Next: the Shedding Hollow onward.
+The Shedding Hollow lets Sally spare a tail and regrow it by eating a glowing bug:
+- Shedskin Gully: a beetle's charging lane between two shelves, with cracks to shake off a chase.
+- Thornback Warren: the key vault seals behind Sally; the way out is a slab door that opens only while the beetle presses its heavy plate.
+- Moltwater Steps: a sea snake owns the channel and its causeways, and tangle vines grip the steps.
+- The Old Shedding Tree: a king cobra lies coiled across the heart over the richest chest; taking the key shuts the heart, and cracks are the ways out.
+
+### Bonus escapes
+Bonus escapes sit on the map behind a hedge that opens once the areas before them are mastered (every star, not just a clear). They keep their own records.
+- The Bramble Maze (north of the Deep Trials, opens with the first five areas mastered): a true, dark maze with loops, a hunting snake, tangle vines and flytraps at the dead ends.
+- A mega escape (about five minutes, no checkpoints) will open with the first ten areas mastered.
+
+Next: the Lantern Marsh onward.
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).

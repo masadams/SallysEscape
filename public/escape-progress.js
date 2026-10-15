@@ -58,6 +58,9 @@
     // except one quiet line after the very first perfect escape.
     perfectAreas(chapters){return chapters.filter(c=>catalog.levels.slice(c.start,c.end).some(l=>this.data.levels[l.id]?.perfect)).length;}
     hiddenOpen(chapters){return Boolean(this.unlockAll)||this.perfectAreas(chapters)>=5;}
+    // A bonus escape opens once every escape in the areas before it has all three stars.
+    bonusOpen(id,chapters){const level=(catalog.hidden||[]).find(l=>l.id===id);return Boolean(level?.bonus)&&(Boolean(this.unlockAll)||chapters.slice(0,level.bonus.areas).every(c=>this.mastered(c)));}
+    hiddenLevelOpen(id,chapters){const level=(catalog.hidden||[]).find(l=>l.id===id);return level?.bonus?this.bonusOpen(id,chapters):this.hiddenOpen(chapters);}
     whisper(){this.read();if(this.data.whisper||!catalog.levels.some(l=>this.data.levels[l.id]?.perfect))return false;this.data.whisper=true;this.write();return true;}
     setView(view){if(!['follow','overview'].includes(view))return false;this.read();this.data.view=view;this.write();return true;}
     catchGoldfly(){this.read();this.data.goldflies=Math.min(this.data.goldflies+1,100000);this.write();return this.data.goldflies;}
