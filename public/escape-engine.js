@@ -42,6 +42,9 @@
       // Ant Kingdom: marching columns on fixed looping trails, and treasure that can be stolen.
       this.antTrails=(this.level.antTrails||[]).map(t=>({tiles:expandTrail(t.path),groups:t.groups||3,size:t.size||4,gap:t.gap||5,speed:t.speed||1.6,offset:t.offset||0}));
       this.carried=[];this.thefts=0;this.recoveries=0;this.stolen=0;
+      // Frost Hollow: only marked rooms are cold; warm stones thaw Sally quickly.
+      this.cold=new Set();for(const [x1,y1,x2,y2] of this.level.cold||[])for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)this.cold.add(x+','+y);
+      this.warm=new Set((this.level.warm||[]).map(([x,y])=>x+','+y));this.player.warmth=100;this.player.chilled=false;this.lowestWarmth=100;
       const hawk=this.level.hawk;this.hawk=hawk?{every:hawk.every||8,warn:hawk.warn||1.8,radius:hawk.radius||1.2,speed:hawk.speed||1.5,nextAt:hawk.first||16,state:'circling',shadow:null,strikes:0,dodges:0,lastStrike:null}:null;
       this.requiredTreasure=this.challenge?.allTreasure?this.totalTreasure:this.level.requiredTreasure||0;this.timeLimit=this.challenge?.timeLimit||this.level.timeLimit||null;
       this.message=this.challenge?.brief||this.level.hint;this.messageUntil=7;
@@ -334,6 +337,14 @@
       h.state='patrol';
       if(this.carried.length&&this.elapsed>=(h.cooldown||0)&&!p.hidden&&distance(h,p)<=6&&this.clear(h,p,true)){h.state='dash';this.events.push('skitter');}
     }
+    tileKey(p){return Math.floor(p.x)+','+Math.floor(p.y);}
+    updateWarmth(dt){
+      const p=this.player,key=this.tileKey(p),before=p.warmth;
+      p.warmth=this.warm.has(key)?Math.min(100,p.warmth+45*dt):this.cold.has(key)?Math.max(0,p.warmth-(p.sprinting?14:9)*dt):Math.min(100,p.warmth+6*dt);
+      this.lowestWarmth=Math.min(this.lowestWarmth,p.warmth);
+      if(!p.chilled&&p.warmth<30){p.chilled=true;this.notice('Sally is getting cold and slow! Find a warm stone.','shiver');}
+      else if(p.chilled&&p.warmth>=40){p.chilled=false;if(before<40)this.notice('Warm again. Sally can sprint.');}
+    }
     shaded(p=this.player){return this.shade.has(Math.floor(p.x)+','+Math.floor(p.y));}
     // The hawk circles out of reach, then its shadow drifts after Sally a
     // little slower than she walks, and it dives on wherever the shadow is.
@@ -385,7 +396,8 @@
       if(p.stamina<=0)p.exhausted=true;
       if(p.exhausted&&p.stamina>=25)p.exhausted=false;
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
-      const sprint=Boolean(input.sprint&&!p.exhausted&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',speed=(sprint?4:2.45)*(this.hasTail?1:.9)*(p.webbed?.45:mud?.72:1)*(this.water(p)?.55:1);
+      if(this.cold.size)this.updateWarmth(dt);
+      const sprint=Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',speed=(sprint?4:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72:1)*(this.water(p)?.55:1);
       for(const [axis,direction] of [['x',dx],['y',dy]]){
         const next={...p,[axis]:p[axis]+direction*speed*dt};if(this.fits(next))p[axis]=next[axis];
       }
@@ -416,6 +428,7 @@
         this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. Try another route through the ruins.':captor.kind==='mimic'?'The plant snapped at its marked spot. Provoke it from a distance or step aside when it opens.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'The guard spotted you. Break sight at a corner or use a pebble.');return;
       }
       if(this.challenge?.noChase&&this.alarms>0){this.finish('failed','A guard gave chase. Break sight before it is sure next time.');return;}
+      if(this.challenge?.noChill&&this.player.chilled){this.finish('failed','Sally got too cold. Thaw on warm stones before the frost slows her.');return;}
       if(this.challenge?.noTheft&&this.stolen>0){this.finish('failed','A gecko got away with your treasure. Catch thieves before they reach their burrows.');return;}
       if(this.timeLimit&&this.elapsed>=this.timeLimit){this.finish('failed','Time ran out. Try a shorter route or save a burrow for the return.');return;}
       this.updateTongue();
@@ -714,6 +727,8 @@
     moveHunter(target,budget,h=this.hunter){
       if(this.grid[Math.floor(h.y)]?.[Math.floor(h.x)]==='M')budget*=.72;
       if(h.kind==='sea-snake')budget*=this.water(h)?1.05:.65;
+      // Cold-blooded hunters crawl in the frozen rooms; owls and moths do not mind.
+      if(this.cold.has(this.tileKey(h))&&!['owl','moth'].includes(h.kind))budget*=.6;
       const id=Math.floor(target.x)+','+Math.floor(target.y);
       if(h.targetId!==id || !h.path.length){h.path=this.route(h,target,h);h.targetId=id;}
       while(h.path.length&&budget>0){
@@ -730,7 +745,7 @@
       this.status=status;this.notice(message,status);
       this.tongue=null;
       const stars=status==='won'?1+Number(this.treasure>=Math.ceil(this.totalTreasure*.6))+Number(this.alarms===0&&this.hasTail):0;
-      this.result=Object.freeze({status,levelId:this.level.id,routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,message});
+      this.result=Object.freeze({status,levelId:this.level.id,routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,message});
     }
     drainEvents(){const events=this.events;this.events=[];return events;}
   }

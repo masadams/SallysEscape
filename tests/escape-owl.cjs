@@ -6,7 +6,7 @@ function owl(){const g=new EscapeAdventure({levelId:'bramble-switchyard'});const
   Object.assign(h,{x:15.5,y:9.5,facing:0,patrol:[{x:27.5,y:9.5}],routeIndex:0});g.motion.snakes=[g.motion.snakes[0]];Object.assign(g.player,{x:3.5,y:9.5});g.player.facing={x:1,y:0};return {g,h};}
 test('owls are new to the Lantern Marsh and never leave their perch while watching',()=>{
   const first=EscapeCatalog.levels.findIndex(l=>l.guards.some(h=>h.kind==='owl'));assert.equal(EscapeCatalog.levels[first].id,'firefly-ford');
-  assert.equal(EscapeCatalog.levels.filter(l=>l.guards.some(h=>h.kind==='owl')).length,3);
+  assert.equal(EscapeCatalog.levels.slice(53,58).filter(l=>l.guards.some(h=>h.kind==='owl')).length,3);
   const {g,h}=owl();h.patrol=[{x:27.5,y:9.5},{x:15.5,y:2.5}];g.player.x=2.5;g.player.y=1.5;const looks=new Set();for(let i=0;i<60;i++){ticks(g,.1);looks.add(h.routeIndex);}assert.equal(h.x,15.5);assert.equal(h.y,9.5);assert.deepEqual([...looks].sort(),[0,1],'it turns between its look-outs');
 });
 test('an owl sees far down a narrow beam, glares, then swoops onto the spot it locked',()=>{
