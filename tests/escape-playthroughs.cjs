@@ -22,6 +22,8 @@ for(const recording of recordings)test('recorded legal escape with real guards: 
   for(const gate of g.gates.filter(g=>g.duration)){assert.ok(gate.activations>0,gate.id+' plate used');}
   assert.equal(g.motion.snakes.length,g.hunters.length);
   if(g.level.rivalries)assert.ok(g.clashes>0,'the real guards fought during the escape');
+  if(g.challenge?.noTheft)assert.equal(g.stolen,0);
+  if(g.level.antTrails)assert.ok(g.antTrails.length>0);
   if(g.level.hawk)assert.ok(g.hawk.strikes>0,'the hawk really dived during the escape');
   if(g.level.biome==='lagoon')assert.ok(g.swimDistance>10,'the recorded escape includes real swimming');
 });

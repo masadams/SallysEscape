@@ -6,6 +6,12 @@
   const copy=p=>({x:p.x,y:p.y});
   const centre=(x,y)=>({x:x+0.5,y:y+0.5});
   const directions=[[1,0],[-1,0],[0,1],[0,-1]];
+  // A trail is a closed loop of axis-aligned corners; expand it to every tile centre on the way.
+  function expandTrail(corners){
+    const out=[];for(let i=0;i<corners.length;i++){const [x1,y1]=corners[i],[x2,y2]=corners[(i+1)%corners.length],dx=Math.sign(x2-x1),dy=Math.sign(y2-y1);
+      if(dx&&dy)throw new Error('Ant trails turn only at right angles');for(let x=x1,y=y1;x!==x2||y!==y2;x+=dx,y+=dy)out.push(centre(x,y));}
+    return out;
+  }
   class EscapeAdventure{
     constructor(options={}){
       this.challenge=options.challengeId?catalog.EscapeCatalog.challenges.find(c=>c.id===options.challengeId):null;
@@ -33,6 +39,9 @@
       this.regrowthBugs=(this.level.regrowth||[]).map(p=>({...centre(...p),eaten:false}));
       // Rooftop routes: camouflage charges, shaded awnings and a hawk overhead.
       this.camos=this.level.camos||0;this.camoUntil=0;this.camosUsed=0;this.shade=new Set((this.level.shade||[]).map(([x,y])=>x+','+y));
+      // Ant Kingdom: marching columns on fixed looping trails, and treasure that can be stolen.
+      this.antTrails=(this.level.antTrails||[]).map(t=>({tiles:expandTrail(t.path),groups:t.groups||3,size:t.size||4,gap:t.gap||5,speed:t.speed||1.6,offset:t.offset||0}));
+      this.carried=[];this.thefts=0;this.recoveries=0;this.stolen=0;
       const hawk=this.level.hawk;this.hawk=hawk?{every:hawk.every||8,warn:hawk.warn||1.8,radius:hawk.radius||1.2,speed:hawk.speed||1.5,nextAt:hawk.first||16,state:'circling',shadow:null,strikes:0,dodges:0,lastStrike:null}:null;
       this.requiredTreasure=this.challenge?.allTreasure?this.totalTreasure:this.level.requiredTreasure||0;this.timeLimit=this.challenge?.timeLimit||this.level.timeLimit||null;
       this.message=this.challenge?.brief||this.level.hint;this.messageUntil=7;
@@ -272,7 +281,7 @@
       this.reactToMaze('key');
     }
     collectLoot(item){
-      if(item.taken)return;item.taken=true;this.treasure+=item.value;this.notice(item.value>1?'A whole treasure chest!':'Treasure pocketed.','treasure');this.reactToMaze('treasure',item);
+      if(item.taken)return;item.taken=true;this.treasure+=item.value;this.carried.push(item);this.notice(item.value>1?'A whole treasure chest!':'Treasure pocketed.','treasure');this.reactToMaze('treasure',item);
     }
     shedTail(captor){
       if(!this.tailDrop||!this.hasTail||this.status!=='playing')return false;
@@ -284,7 +293,7 @@
         if(h!==captor&&(distance(h,p)>=6||!this.clear(h,p,true)))continue;
         h.graceUntil=Math.max(h.graceUntil||0,this.elapsed+2.8);
         // Rooted plants, fish and burrowing hunters cannot chase a tail across the floor.
-        if(['mimic','fish','owl'].includes(h.kind)||['emerge','dig','buried','rise','clash'].includes(h.state))continue;
+        if(['mimic','fish','owl','gecko'].includes(h.kind)||['emerge','dig','buried','rise','clash'].includes(h.state))continue;
         h.tailLureUntil=this.elapsed+2.4;h.path=[];h.targetId=null;
       }
       this.notice(this.regrowthBugs.some(b=>!b.eaten)?'Tail dropped! It wriggles as a decoy. Run—then eat a glowing bug to regrow it.':'Tail dropped! It wriggles as a decoy. Run! The next catch is final.','tailDrop');
@@ -295,6 +304,35 @@
       if(!this.camos){this.notice(this.level.camos?'No camouflage left. Find shade or leaves.':'Nothing here to blend into.');return false;}
       if(this.camoUntil>this.elapsed)return false;
       this.camos--;this.camosUsed++;this.camoUntil=this.elapsed+6;this.notice('Sally blends into the ground. Keep still to stay hidden.','camo');return true;
+    }
+    // Every ant in every column, as positions along its looping trail.
+    ants(trail){
+      const n=trail.tiles.length,period=trail.size+trail.gap,head=trail.speed*this.elapsed+trail.offset,out=[];
+      for(let g=0;g<trail.groups;g++)for(let j=0;j<trail.size*2;j++){
+        let s=(head-g*n/trail.groups-j*.5)%n;if(s<0)s+=n;const i=Math.floor(s)%n,f=s-Math.floor(s),a=trail.tiles[i],b=trail.tiles[(i+1)%n];
+        out.push({x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,dir:Math.atan2(b.y-a.y,b.x-a.x)});
+      }
+      return out;
+    }
+    antAt(p,range=.42){for(const t of this.antTrails)for(const a of this.ants(t))if(distance(a,p)<range)return a;return null;}
+    // The gecko thief lurks in its burrow, darts at Sally only while she
+    // carries treasure, steals the last piece and runs home with it.
+    updateGecko(dt,h){
+      const p=this.player,home=h.home||(h.home={x:h.x,y:h.y});
+      if(h.state==='stunned'){if(this.elapsed>=h.phaseUntil)h.state='return';return;}
+      if(h.state==='flee'){
+        if(this.elapsed-h.stoleAt>.35&&distance(h,p)<.55){this.treasure+=h.loot.value;this.carried.push(h.loot);h.loot=null;this.recoveries++;h.state='stunned';h.phaseUntil=this.elapsed+1.5;this.notice('Got it back! The gecko tumbles away.','recover');return;}
+        if(distance(h,home)<.1){this.stolen+=h.loot.value;h.loot=null;h.state='patrol';h.cooldown=this.elapsed+10;this.notice('The gecko vanished down its burrow with your treasure.','lost');return;}
+        this.moveHunter(home,2.7*dt,h);return;
+      }
+      if(h.state==='dash'){
+        if(!this.carried.length||p.hidden||distance(h,p)>8){h.state='return';return;}
+        if(distance(h,p)<.5){const item=this.carried.pop();this.treasure-=item.value;h.loot=item;this.thefts++;h.state='flee';h.stoleAt=this.elapsed;h.path=[];h.targetId=null;this.notice('A gecko snatched your treasure! Catch it before it reaches its burrow.','steal');return;}
+        this.moveHunter(p,3.4*dt,h);return;
+      }
+      if(h.state==='return'){if(distance(h,home)<.1){h.state='patrol';h.cooldown=this.elapsed+6;return;}this.moveHunter(home,2*dt,h);return;}
+      h.state='patrol';
+      if(this.carried.length&&this.elapsed>=(h.cooldown||0)&&!p.hidden&&distance(h,p)<=6&&this.clear(h,p,true)){h.state='dash';this.events.push('skitter');}
     }
     shaded(p=this.player){return this.shade.has(Math.floor(p.x)+','+Math.floor(p.y));}
     // The hawk circles out of reach, then its shadow drifts after Sally a
@@ -367,16 +405,18 @@
       this.updateRivalries();for(const hunter of this.hunters)this.updateHunter(dt,hunter);this.updateRivalries();
       this.motion.update(dt,this);
       this.updateHawk(dt);if(this.status!=='playing')return;
+      if(this.antTrails.length&&this.elapsed>=this.invulnerableUntil&&this.antAt(p)){this.alarms++;if(!this.shedTail(null)){this.finish('caught','The ant column marched right over Sally. Cross in the gaps between groups.');return;}}
       const stinger=this.hunters.find(h=>h.kind==='scorpion'&&h.state==='sting'&&h.aim&&distance(h,h.aim)<=3.25&&distance(p,h.aim)<.65&&this.clear(h,p,true));
       if(this.elapsed>=this.invulnerableUntil&&stinger&&this.shedTail(stinger))return;
       if(this.elapsed>=this.invulnerableUntil&&stinger){this.finish('caught','The scorpion struck the marked ground. Move away when its tail rises.');return;}
       // Capture wins over picking up the key or escaping in the same simulation step.
-      const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&distance(p,h)<.48&&this.clear(p,h));
+      const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&distance(p,h)<.48&&this.clear(p,h));
       if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
       if(this.elapsed>=this.invulnerableUntil && captor){
         this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. Try another route through the ruins.':captor.kind==='mimic'?'The plant snapped at its marked spot. Provoke it from a distance or step aside when it opens.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'The guard spotted you. Break sight at a corner or use a pebble.');return;
       }
       if(this.challenge?.noChase&&this.alarms>0){this.finish('failed','A guard gave chase. Break sight before it is sure next time.');return;}
+      if(this.challenge?.noTheft&&this.stolen>0){this.finish('failed','A gecko got away with your treasure. Catch thieves before they reach their burrows.');return;}
       if(this.timeLimit&&this.elapsed>=this.timeLimit){this.finish('failed','Time ran out. Try a shorter route or save a burrow for the return.');return;}
       this.updateTongue();
       if(this.challenge?.keyByTongue&&!this.hasKey&&this.tongues===0&&!this.tongue){this.finish('failed','The key needs a tongue grab. Save one for it next time.');return;}
@@ -414,6 +454,7 @@
       if(h.kind==='cricket'){this.updateCricket(dt,h);return;}
       if(h.kind==='moth'){this.updateMoth(dt,h);return;}
       if(h.kind==='owl'){this.updateOwl(dt,h);return;}
+      if(h.kind==='gecko'){this.updateGecko(dt,h);return;}
       if(h.kind==='mimic'){this.updateMimic(dt,h);return;}
       if(h.kind==='toad'||h.kind==='spider'){this.updateNestHunter(dt,h);return;}
       if(h.kind==='scorpion'){this.updateScorpion(dt,h);return;}
@@ -689,7 +730,7 @@
       this.status=status;this.notice(message,status);
       this.tongue=null;
       const stars=status==='won'?1+Number(this.treasure>=Math.ceil(this.totalTreasure*.6))+Number(this.alarms===0&&this.hasTail):0;
-      this.result=Object.freeze({status,levelId:this.level.id,routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,hawkDodges:this.hawk?.dodges||0,message});
+      this.result=Object.freeze({status,levelId:this.level.id,routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,message});
     }
     drainEvents(){const events=this.events;this.events=[];return events;}
   }

@@ -7,7 +7,7 @@ const result=(levelId,extra={})=>({status:'won',levelId,challengeId:null,totalTr
 function storage(){const data=new Map();return {getItem:k=>data.get(k),setItem:(k,v)=>data.set(k,v)};}
 
 test('all forty-seven routes have closed borders; static gate puzzles have permanently openable walking routes',()=>{
- assert.equal(EscapeCatalog.levels.length,63);assert.equal(EscapeCatalog.challenges.length,17);
+ assert.equal(EscapeCatalog.levels.length,68);assert.equal(EscapeCatalog.challenges.length,19);
  for(const level of EscapeCatalog.levels){
   const g=new EscapeAdventure({levelId:level.id}),grid=escapeGridFor(level);
   assert.ok(grid[0].every(c=>c==='#')&&grid.at(-1).every(c=>c==='#'));assert.ok(grid.every(row=>row[0]==='#'&&row.at(-1)==='#'));
@@ -17,7 +17,7 @@ test('all forty-seven routes have closed borders; static gate puzzles have perma
    assert.ok(g.fits(p),'spawn and goals fit inside floor');assert.ok((Math.hypot(g.player.x-p.x,g.player.y-p.y)<.01||g.route(g.player,p).length>0),'no mandatory burrow or unreachable treasure');
   }
   assert.equal(g.loot.reduce((n,item)=>n+item.value,0),10);
-  for(const h of g.hunters)for(let i=0;i<h.patrol.length;i++)assert.ok(g.route(h.patrol[i],h.patrol[(i+1)%h.patrol.length]).length);
+  for(const h of g.hunters)if(h.patrol.length>1)for(let i=0;i<h.patrol.length;i++)assert.ok(g.route(h.patrol[i],h.patrol[(i+1)%h.patrol.length]).length);
  }
 });
 test('each route resets its own resources and does not mutate shared definitions',()=>{

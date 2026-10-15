@@ -3,7 +3,7 @@ const {EscapeAdventure}=require('../public/escape-engine.js');const {EscapeCatal
 function ticks(g,seconds,input={}){for(let n=0;n<Math.round(seconds*120);n++)g.advance(1/120,input);}
 function ledge(){const g=new EscapeAdventure({levelId:'sunbaked-ledge'});g.hunters=[];g.motion.snakes=[];g.hawk.nextAt=0;Object.assign(g.player,{x:4.5,y:2.5});return g;}
 test('Sunbaked Rooftops is a five-route branch with a hawk, awnings and camouflage in every route',()=>{
-  const roofs=EscapeCatalog.levels.slice(58);assert.deepEqual(roofs.map(l=>l.id),['sunbaked-ledge','laundry-lines','chimney-run','pigeon-court','weathervane-spire']);
+  const roofs=EscapeCatalog.levels.slice(58,63);assert.deepEqual(roofs.map(l=>l.id),['sunbaked-ledge','laundry-lines','chimney-run','pigeon-court','weathervane-spire']);
   for(const l of roofs){assert.ok(l.hawk&&l.camos>=2&&l.shade.length>=8&&l.tailDrop);assert.ok(l.shade.some(([x,y])=>x===l.spawn[0]&&y===l.spawn[1]),'Sally starts in shade');}
   assert.ok(EscapeCatalog.levels.slice(0,58).every(l=>!l.hawk&&!l.camos));assert.equal(roofs[0].unlockAfter,'canopy-crown');assert.equal(roofs[0].unlockChallenges,4);
 });
