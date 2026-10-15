@@ -1,0 +1,15 @@
+{
+  "about": "Maps a stem pack onto the music engine's layer names. Patterns are case-insensitive substrings matched against WAV file names; loop versions are preferred over one-shots.",
+  "track": "lurking",
+  "match": "find_him",
+  "prefer": "loop",
+  "bpm": null,
+  "beatsPerBar": 4,
+  "layers": {
+    "ambient": "ambient",
+    "mystery": "myster",
+    "intrigue": "intrigue",
+    "danger": "danger",
+    "melodic": "melodic"
+  }
+}

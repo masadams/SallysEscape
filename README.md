@@ -1,14 +1,16 @@
 # Sally’s Escape
 
-A standalone top-down stealth and exploration game: 63 escapes, 17 optional challenges, a walkable maze overworld, limited tools and eleven creature types.
+A standalone top-down stealth and exploration game: 68 escapes, 19 optional challenges, a walkable maze overworld, limited tools and eleven creature types.
 
 Explore themed courtyards and branching passages along a clear main route. The world map shows your best stars under every flag, challenge badges, and lifetime totals for stars, treasure, challenges and hidden caches. Each courtyard hides two glinting treasure caches to find on foot, a friendly villager with tips, and golden flies that Sally can chase down or grab with her tongue (R). Cloud shadows drift across the trail and a slow day–night cycle passes every four minutes.
 
 Early escapes are one-touch: any catch ends the run. From Venom Depths (escape 24) onward Sally can drop her tail once per run; it wriggles as a decoy while she escapes, but a tailless Sally is a little slower and cannot earn the third star. The Shedding Hollow adds glowing regrowth bugs that grow the tail back, and the Lantern Marsh beyond it remixes darkness, timed doors, biting plants and rival hunters, watched over by owls that see far down a narrow beam and swoop onto the spot they lock.
 
-Some branches open in parallel and also need completed challenges: Sunbaked Rooftops opens after Canopy Crown once four challenges are done. A hawk's shadow follows Sally there; awnings, leaves and camouflage (X: stay still to vanish) keep her safe. See `docs/ROADMAP.md` for the regions still to come. Challenges are always one-touch.
+Some branches open in parallel and also need completed challenges: Sunbaked Rooftops opens after Canopy Crown once four challenges are done. A hawk's shadow follows Sally there; awnings, leaves and camouflage (X: stay still to vanish) keep her safe. The Ant Kingdom branches off Venom Depths once eight challenges are done: ant columns march around fixed trails and walk over anything in their way, and gecko thieves dart out to steal the last treasure Sally picked up—chase one down before it reaches its burrow. See `docs/ROADMAP.md` for the regions still to come. Challenges are always one-touch.
 
-Every escape opens with a short intro card (name, hint and tools); the hunters wait until you press a key or move. Sound effects are synthesised in the browser with Web Audio, so no audio files are bundled. The Quiet Vault and Leafy Crossroads are available immediately; later regions are physically gated. Choose between paired routes. Harder paths rejoin after either route; later chapters retain their progression gates. The original MazeAdventure campaign, shop, upgrades, gauntlet, leaderboard API and database are absent.
+Escaping a route on your very first attempt (no catch, no quitting part-way) earns a **First try** badge: its stars turn mint and a ✓ joins the flag on the world map.
+
+Every escape opens with a short intro card (name, hint and tools); the hunters wait until you press a key or move. Sound effects are synthesised in the browser with Web Audio. Adaptive music fades synchronised stems in and out for exploring, tension and chases; see `docs/MUSIC.md` to add the Lurking Layers pack or your own stems. The Quiet Vault and Leafy Crossroads are available immediately; later regions are physically gated. Choose between paired routes. Harder paths rejoin after either route; later chapters retain their progression gates. The original MazeAdventure campaign, shop, upgrades, gauntlet, leaderboard API and database are absent.
 
 Desktop: WASD or arrows, Shift sprint, Q pebble, E burrow, R tongue, F seed, X camouflage, Space look back, G map, Escape pause. Phones use landscape orientation, a left thumbstick and right action buttons. Rotating to portrait pauses a run until resumed. Completion stays inside the playfield.
 

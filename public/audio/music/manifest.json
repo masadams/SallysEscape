@@ -1,0 +1,35 @@
+{
+  "about": "Adaptive music stems. Run `npm run music:build -- <pack folder>` to (re)generate the files and loop length from source WAVs. Replace the pack by pointing scripts/music-sources.json at new stems; the engine reads only this file.",
+  "defaultTrack": "lurking",
+  "chaseHoldSeconds": 2.5,
+  "tracks": {
+    "lurking": {
+      "title": "Find Him — Lurking Layers Music Pack (Imperial Dawn Audio)",
+      "license": "audio/music/LICENSE-lurking-layers.txt",
+      "loopSeconds": null,
+      "layers": {
+        "ambient": ["audio/music/lurking/ambient.ogg", "audio/music/lurking/ambient.m4a"],
+        "mystery": ["audio/music/lurking/mystery.ogg", "audio/music/lurking/mystery.m4a"],
+        "intrigue": ["audio/music/lurking/intrigue.ogg", "audio/music/lurking/intrigue.m4a"],
+        "danger": ["audio/music/lurking/danger.ogg", "audio/music/lurking/danger.m4a"],
+        "melodic": ["audio/music/lurking/melodic.ogg", "audio/music/lurking/melodic.m4a"]
+      }
+    }
+  },
+  "states": {
+    "menu":    { "ambient": 0.7, "melodic": 0.55 },
+    "world":   { "ambient": 0.7, "melodic": 0.7 },
+    "explore": { "ambient": 0.8, "mystery": 0.55 },
+    "tension": { "ambient": 0.6, "mystery": 0.7, "intrigue": 0.75, "danger": 0.25 },
+    "chase":   { "ambient": 0.35, "mystery": 0.3, "intrigue": 0.5, "danger": 1 },
+    "victory": { "ambient": 0.5, "melodic": 0.9 },
+    "caught":  { "ambient": 0.45 }
+  },
+  "fades": {
+    "default": 1.5,
+    "*>chase": 0.35,
+    "chase>*": 3,
+    "*>victory": 0.8,
+    "*>caught": 0.6
+  }
+}

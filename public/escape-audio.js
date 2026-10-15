@@ -74,6 +74,9 @@
     screech:(v)=>{tone(v,{freq:2400,to:1500,dur:.45,type:'sawtooth',gain:.08,wobble:90,wobbleRate:24});tone(v,{freq:1800,to:1200,dur:.35,type:'sine',gain:.12,delay:.08});},
     dive:(v)=>noise(v,{dur:.4,gain:.35,freq:600,to:2400,q:1.2,attack:.2}),
     camo:(v)=>{tone(v,{freq:900,to:520,dur:.35,type:'sine',gain:.18,wobble:40,wobbleRate:16});noise(v,{dur:.3,gain:.08,filter:'highpass',freq:4000,attack:.08});},
+    skitter:(v)=>{for(let i=0;i<5;i++)noise(v,{dur:.03,delay:i*.05,gain:.18,freq:3200+i*200,q:5});},
+    steal:(v)=>{tone(v,{freq:900,to:300,dur:.25,type:'square',gain:.12});noise(v,{dur:.1,gain:.2,freq:2600,q:3});},
+    recover:(v)=>notes(v,[[784,0,.08],[1047,.07,.08],[1319,.14,.2]],{type:'square',gain:.14}),
     click:(v)=>tone(v,{freq:900,to:700,dur:.05,type:'sine',gain:.12})
   };
   function play(ctx,name,volume=.25,options={}){

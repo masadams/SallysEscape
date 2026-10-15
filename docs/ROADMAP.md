@@ -15,6 +15,7 @@ built, playtested with recorded winning runs, and pushed on its own.
 | Sound and intro cards | Synthesised effects for every event; a start card for every escape. |
 | Challenge-gated branches | Regions can require completed challenges; the gate shows ⚑ and the count on the map. |
 | Sunbaked Rooftops | Five routes with the **hawk**, shaded awnings and the new **camouflage** action, plus the Hot Plates challenge. |
+| Ant Kingdom | Five routes with **ant columns** and **gecko thieves**, plus the Ant Dash and Sticky Fingers challenges. |
 
 ## Branch map
 
@@ -36,11 +37,11 @@ regions each add two or three challenges so later gates stay reachable.
 - **Camouflage** (new action, X / Camo button): Sally blends into the ground and stays hidden while she keeps still.
 - Five routes and the Hot Plates challenge. Sally always starts in shade.
 
-### 2. Ant Kingdom — ant columns and the gecko thief
+### 2. Ant Kingdom — ant columns and the gecko thief (done)
 - Opens after Split Jaw (Venom Depths) **and 8 completed challenges**.
 - **Ant column**: a marching line follows a fixed trail in waves. It blocks corridors on a rhythm and catches anything it walks over; it ignores noise and pebbles.
 - **Gecko thief**: darts in, steals the last treasure Sally picked up and runs for its burrow. Catch it before it gets there to take the treasure back.
-- Underground tunnels, with burrowing as the main tool.
+- Underground tunnels, with burrowing as the main tool. Hiding never stops ants; geckos ignore Sally while her pockets are empty.
 
 ### 3. Frost Hollow — warm and cold
 - Opens after Moonwell Keep (Lantern Marsh).

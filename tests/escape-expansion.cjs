@@ -7,7 +7,7 @@ const result=(levelId,extra={})=>({status:'won',levelId,challengeId:null,totalTr
 function storage(){const data=new Map();return {getItem:k=>data.get(k),setItem:(k,v)=>data.set(k,v)};}
 
 test('all forty-seven routes have closed borders; static gate puzzles have permanently openable walking routes',()=>{
- assert.equal(EscapeCatalog.levels.length,63);assert.equal(EscapeCatalog.challenges.length,17);
+ assert.equal(EscapeCatalog.levels.length,68);assert.equal(EscapeCatalog.challenges.length,19);
  for(const level of EscapeCatalog.levels){
   const g=new EscapeAdventure({levelId:level.id}),grid=escapeGridFor(level);
   assert.ok(grid[0].every(c=>c==='#')&&grid.at(-1).every(c=>c==='#'));assert.ok(grid.every(row=>row[0]==='#'&&row.at(-1)==='#'));
@@ -17,7 +17,7 @@ test('all forty-seven routes have closed borders; static gate puzzles have perma
    assert.ok(g.fits(p),'spawn and goals fit inside floor');assert.ok((Math.hypot(g.player.x-p.x,g.player.y-p.y)<.01||g.route(g.player,p).length>0),'no mandatory burrow or unreachable treasure');
   }
   assert.equal(g.loot.reduce((n,item)=>n+item.value,0),10);
-  for(const h of g.hunters)for(let i=0;i<h.patrol.length;i++)assert.ok(g.route(h.patrol[i],h.patrol[(i+1)%h.patrol.length]).length);
+  for(const h of g.hunters)if(h.patrol.length>1)for(let i=0;i<h.patrol.length;i++)assert.ok(g.route(h.patrol[i],h.patrol[(i+1)%h.patrol.length]).length);
  }
 });
 test('each route resets its own resources and does not mutate shared definitions',()=>{
@@ -66,7 +66,7 @@ test('winning unlocks the next route and retains best medals, treasure and time 
  const s=storage(),p=new EscapeProgress(s);assert.equal(p.unlocked('quiet-vault'),true);assert.equal(p.unlocked('leafy-crossroads'),true);
  assert.equal(p.record(result('quiet-vault')),true);assert.equal(p.unlocked('leafy-crossroads'),true);
  p.record(result('quiet-vault',{time:12,stars:1,treasure:0}));const reload=new EscapeProgress(s);
- assert.deepEqual(reload.data.levels['quiet-vault'],{cleared:true,bestTime:8,stars:3,treasure:7,revision:1});
+ assert.deepEqual(reload.data.levels['quiet-vault'],{cleared:true,bestTime:8,stars:3,treasure:7,revision:1,firstTry:true});
 });
 test('failed, locked, unknown and malformed results cannot unlock routes',()=>{
  const p=new EscapeProgress(storage());
@@ -91,7 +91,7 @@ test('separate tabs merge completed routes and never downgrade saved best result
  a.record(result('quiet-vault'));assert.equal(b.record(result('leafy-crossroads',{time:15,stars:1,treasure:1})),true);
  b.record(result('quiet-vault',{time:12,stars:1,treasure:1}));a.record(result('leafy-crossroads',{time:9,stars:3,treasure:10}));
  b.record(result('crumbling-hall'));const saved=new EscapeProgress(s);
- assert.deepEqual(saved.data.levels['quiet-vault'],{cleared:true,bestTime:8,stars:3,treasure:7,revision:1});
- assert.deepEqual(saved.data.levels['leafy-crossroads'],{cleared:true,bestTime:9,stars:3,treasure:10,revision:1});
+ assert.deepEqual(saved.data.levels['quiet-vault'],{cleared:true,bestTime:8,stars:3,treasure:7,revision:1,firstTry:true});
+ assert.deepEqual(saved.data.levels['leafy-crossroads'],{cleared:true,bestTime:9,stars:3,treasure:10,revision:1,firstTry:true});
  assert.equal(saved.unlocked('twin-watch'),true);
 });
