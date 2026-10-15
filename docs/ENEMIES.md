@@ -21,6 +21,7 @@ straight on is rarely enough: change direction, break line of sight, or hide.
 | Owl | Searchlight | Turns between look-outs with a long narrow beam, glares, then swoops; the swoop bends toward Sally. | Hide in leaves or behind cover before it lands. |
 | Hawk | Sky | A shadow follows Sally and dives on a timer. | Shelter under an awning, in leaves, or blend in with camouflage. |
 | Gecko | Thief | Steals the last treasure Sally picked up and runs for its burrow. | Catch it before it gets there. |
+| Angler | Bait | Hides under dark water and dangles a glowing lure that looks like a glow bug. Step close, or reach for it with the tongue, and it lunges at that spot, then sinks for a few seconds before the lure lights again. A pebble landing by the lure springs it too. | Learn the slow bob and the faint line. Walk around the lure, or spring it from afar and pass while it sinks. |
 | Ants | Moving wall | A column marches a fixed loop and catches anything it walks over. | Cross in the gaps between groups. |
 
 ## Traps

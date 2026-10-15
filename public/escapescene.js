@@ -385,7 +385,7 @@ function drawEscapeVault(){
   for(const den of g.pendingSpawns){if(view.follow&&!g.visibleTile(Math.floor(den.x),Math.floor(den.y)))continue;noFill();stroke(231,161,121);strokeWeight(cell*.05);ellipse(den.x*cell,den.y*cell,cell*(.7+Math.sin(g.elapsed*8)*.12),cell*.5);fill(237,177,142);noStroke();textSize(cell*.5);text('!',den.x*cell,(den.y-.5)*cell);}
   for(const h of g.hunters){const ang=h.facing,cone=h.kind==='beetle'?PI/5:PI/3;
   if(view.follow&&!g.visibleTile(Math.floor(h.x),Math.floor(h.y)))continue;
-  if(!g.level.dark&&!['millipede','cricket','moth','mimic'].includes(h.kind)&&['patrol','alert'].includes(h.state)){
+  if(!g.level.dark&&!['millipede','cricket','moth','mimic','angler'].includes(h.kind)&&['patrol','alert'].includes(h.state)){
     noStroke();fill(245,171,105,18);beginShape();vertex(h.x*cell,h.y*cell);
     for(let a=-cone;a<=cone+.01;a+=cone/6){let reach=0;for(let d=.2;d<=4.5;d+=.2){if(!g.clear(h,{x:h.x+Math.cos(ang+a)*d,y:h.y+Math.sin(ang+a)*d},true))break;reach=d;}vertex((h.x+Math.cos(ang+a)*reach)*cell,(h.y+Math.sin(ang+a)*reach)*cell);}endShape(CLOSE);
   }
@@ -408,14 +408,16 @@ function drawEscapeVault(){
   drawingContext.save();drawingContext.beginPath();
   for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.floor(x,y))drawingContext.rect(x*cell+1,y*cell+1,cell-2,cell-2);
   drawingContext.clip();drawingContext.lineCap='round';drawingContext.lineJoin='round';
-  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(h.kind==='millipede'?g.playerSees(h):!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
+  // An angler's lure is a light, so it shows even in the dark; the angler itself only shows when it rises.
+  g.hunters.filter(h=>h.kind==='angler').forEach(h=>drawEscapeAngler(h,cell,g.elapsed));
+  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='angler')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(h.kind==='millipede'?g.playerSees(h):!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
   drawingContext.save();drawingContext.globalAlpha*=g.player.hidden?.48:1;
   for(const h of g.hunters)if(h.state==='clash'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noFill();stroke(255,193,107,180);strokeWeight(cell*.035);ellipse(h.x*cell,h.y*cell,cell*(.9+Math.sin(g.elapsed*14)*.08),cell*.75);}
   drawEscapeLizard(g.motion.lizard,cell,g.motion.clock,g.player.swimming,!g.hasTail);
   drawingContext.restore();drawingContext.restore();
   if(g.player.camo){noFill();stroke(214,190,140,90+60*Math.sin(g.elapsed*6));strokeWeight(cell*.03);ellipse(g.player.x*cell,g.player.y*cell,cell*1.1,cell*1.1);}
   if(g.hawk)drawEscapeHawk(g.hawk,cell,g.elapsed);
-  for(const h of g.hunters)if(h.kind!=='millipede'&&h.state!=='rooted'&&h.state!=='patrol'&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))){fill(h.state==='decoy'?195:255, h.state==='decoy'?182:214, h.state==='decoy'?255:133);noStroke();textSize(cell*.65);text(h.state==='alert'?'?':['chase','windup','charge','sting','leap','glimmer','swoop','reveal','lunge'].includes(h.state)?'!':h.state==='decoy'?'♪':'…',h.x*cell,(h.y-.65)*cell);}
+  for(const h of g.hunters)if(h.kind!=='millipede'&&h.state!=='rooted'&&h.state!=='patrol'&&!(h.kind==='angler'&&h.state!=='snap')&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))){fill(h.state==='decoy'?195:255, h.state==='decoy'?182:214, h.state==='decoy'?255:133);noStroke();textSize(cell*.65);text(h.state==='alert'?'?':['chase','windup','charge','sting','leap','glimmer','swoop','reveal','lunge','snap'].includes(h.state)?'!':h.state==='decoy'?'♪':'…',h.x*cell,(h.y-.65)*cell);}
   if(g.player.noisy&&!g.player.sprinting){noFill();stroke(221,195,149,80);strokeWeight(1);const pulse=(g.elapsed%.6)/.6;ellipse(g.player.x*cell,g.player.y*cell,cell*(.55+pulse),cell*(.55+pulse));}
   // Opaque remembered terrain hides creatures and objects outside current
   // sight. Memory shows layout; it never reports hidden enemy positions.
@@ -616,6 +618,27 @@ function drawEscapeGlowbug(bug,cell,clock){
   for(const [r,a] of [[1.1,30],[.7,55],[.4,90]]){fill(255,226,120,a*(.6+pulse*.4));ellipse(0,0,cell*r*(.85+pulse*.15),cell*r*(.85+pulse*.15));}
   const flap=Math.sin(clock*30+bug.phase)*.5+.5;fill(255,255,240,140);for(const side of [-1,1])ellipse(side*cell*.09,-cell*.04,cell*.12,cell*(.06+flap*.06));
   fill(255,240,170);ellipse(0,0,cell*.13,cell*.18);fill(255,255,255,200);ellipse(0,cell*.05,cell*.07,cell*.06);pop();
+}
+// The lure bobs on a thin line like a lazy glow bug; it never flaps. When it springs, jaws
+// burst from the water at the aim; while it sinks, only ripples are left.
+function drawEscapeAngler(h,cell,clock){
+  push();noStroke();
+  if(h.state==='lurking'){
+    const bob=Math.sin(clock*1.7+h.lure.x)*.07,pulse=.5+.5*Math.sin(clock*2.2+h.lure.y),lx=h.lure.x*cell,ly=(h.lure.y+bob)*cell;
+    stroke(180,230,200,45);strokeWeight(Math.max(1,cell*.015));noFill();bezier(h.x*cell,h.y*cell,h.x*cell,(h.y-.4)*cell,lx,ly+cell*.5,lx,ly);noStroke();
+    for(const [r,a] of [[1.1,28],[.7,50],[.4,85]]){fill(225,240,140,a*(.6+pulse*.4));ellipse(lx,ly,cell*r,cell*r);}
+    fill(245,255,190);ellipse(lx,ly,cell*.15,cell*.15);fill(255,255,255,210);ellipse(lx,ly-cell*.03,cell*.06,cell*.06);
+    fill(10,30,40,70);ellipse(h.x*cell,h.y*cell,cell*.5,cell*.22);
+  }else if(h.state==='snap'&&h.aim){
+    const t=Math.min(1,.4+(clock*8%1)*.2),ax=h.aim.x*cell,ay=h.aim.y*cell;
+    fill(20,40,50,150);ellipse(ax,ay,cell*1.6,cell*1.2);
+    fill(38,56,62);arc(ax,ay,cell*1.2*t,cell*1.3,PI,TWO_PI,CHORD);arc(ax,ay,cell*1.2*t,cell*1.3,0,PI,CHORD);
+    fill(240,240,225);for(let k=-2;k<=2;k++){triangle(ax+k*cell*.12-cell*.05,ay-cell*.05,ax+k*cell*.12+cell*.05,ay-cell*.05,ax+k*cell*.12,ay+cell*.12);triangle(ax+k*cell*.12-cell*.05,ay+cell*.08,ax+k*cell*.12+cell*.05,ay+cell*.08,ax+k*cell*.12,ay-cell*.08);}
+    fill(250,230,120);ellipse(ax-cell*.25,ay-cell*.38,cell*.12,cell*.12);ellipse(ax+cell*.25,ay-cell*.38,cell*.12,cell*.12);
+  }else{
+    noFill();stroke(150,210,220,90);strokeWeight(Math.max(1,cell*.02));const r=(clock*1.5)%1;ellipse(h.x*cell,h.y*cell,cell*(.4+r*.8),cell*(.2+r*.4));
+  }
+  pop();
 }
 function drawEscapeRegrowthBug(bug,cell,clock,hungry){
   const pulse=.5+.5*Math.sin(clock*5+bug.x),bob=Math.sin(clock*3+bug.y)*.05;push();translate(bug.x*cell,(bug.y+bob)*cell);noStroke();

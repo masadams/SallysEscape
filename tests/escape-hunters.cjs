@@ -111,3 +111,26 @@ test('brushing the back half of a resting snake wakes it, while passing well cle
   const tail=g.motion.snakes[0].joints.at(-2);Object.assign(g.player,{x:tail.x,y:tail.y+1.5,facing:{x:0,y:1}});g.advance(.1,{});assert.notEqual(h.reason,'touched');
   Object.assign(g.player,{x:tail.x,y:tail.y});g.advance(1/120,{});assert.equal(h.reason,'touched');assert.equal(h.awareness,1);assert.ok(h.lastKnown);assert.match(g.message,/tail/);
 });
+
+// The angler sits under water at (7,6) with its lure glowing over the floor at (7,4).
+function anglerArena(player){const r=arena('angler',[7,6],player,{lure:[7,4]});r.g.grid[6][7]='~';r.g.hasTail=false;return r;}
+test('walking up to an angler lure springs the angler, which snaps where the lure hung',()=>{
+  const {g,h}=anglerArena([3,4]);assert.equal(h.state,'lurking');
+  for(let i=0;i<120*3&&g.status==='playing';i++)g.advance(1/120,{x:1});
+  assert.equal(g.status,'caught');assert.match(g.result.message,/angler/);
+});
+test('a tongue grab at a lure makes the angler lunge, a quick sidestep survives, and the lure relights later',()=>{
+  const {g,h}=anglerArena([4,4]);g.tongues=1;g.player.facing={x:1,y:0};g.player.tongueAim={x:1,y:0};
+  assert.equal(g.tongueTarget().kind,'lure');assert.ok(g.useTongue());
+  for(let i=0;i<120*.2;i++)g.advance(1/120,{});assert.equal(h.state,'snap');assert.equal(g.alarms,1);
+  for(let i=0;i<120*.6;i++)g.advance(1/120,{y:-1,sprint:true});
+  assert.equal(g.status,'playing');assert.equal(h.state,'sink');
+  ticks(g,3.6);assert.equal(h.state,'lurking');
+});
+test('standing still where the tongue grab started is caught by the lunge',()=>{
+  const {g,h}=anglerArena([4,4]);g.tongues=1;g.player.facing={x:1,y:0};g.player.tongueAim={x:1,y:0};g.useTongue();
+  ticks(g,1);assert.equal(g.status,'caught');assert.equal(h.state,'sink');
+});
+test('a pebble that lands by the lure springs the angler harmlessly',()=>{
+  const {g,h}=anglerArena([3,4]);g.decoy={x:7.3,y:4.6,expires:5};ticks(g,.5);assert.equal(h.state,'sink');assert.equal(g.status,'playing');
+});
