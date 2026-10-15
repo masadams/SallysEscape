@@ -642,25 +642,7 @@
  "#........##2......##....#.....#",
  "#.@....L......##..##.L..#...L.#",
  "#1...........~..........#....X#",
- "###############################"],glowPlants:[[1,1],[16,1],[20,3],[10,4],[28,5],[17,9],[23,9],[2,10],[28,10],[12,13]],dark:true,explore:true,sightRadius:3.5},
-{id:"nightbloom-reach",name:"Nightbloom Reach",brief:"A broken crescent above black water. Every light here wants something from you.",hint:"Each timed bridge has a plate on both banks. The key raises a root down to the shrine; the shrine's chest raises the long bridge home and the span to the hatch, which wants seven treasure.",pebbles:3,tongues:2,requiredTreasure:7,gates:[{id:"ferry-bridge",name:"Ferry bridge",color:[91,225,207],bridge:true,tiles:[[7,13],[8,13],[9,13]],plates:[[6,13],[10,13]],duration:6},{id:"bloom-bridge",name:"Bloom bridge",color:[91,225,207],bridge:true,tiles:[[17,5],[18,5],[19,5]],plates:[[16,5],[20,5]],duration:5},{id:"crown-root",name:"Crown root",color:[177,137,239],bridge:true,tiles:[[23,9],[23,10]]},{id:"long-bridge",name:"Long bridge",color:[177,137,239],bridge:true,tiles:[[17,12],[18,12],[19,12]]},{id:"hatch-span",name:"Hatch span",color:[177,137,239],bridge:true,tiles:[[7,4],[8,4]]}],reactions:[{id:"bloom-key",when:"key",open:["crown-root"],message:"A root uncurls down to the shrine island.",objective:"Take the shrine's chest."},{id:"bloom-shrine",when:"treasure",at:[29,12],open:["long-bridge","hatch-span"],spawn:["shrine-moth"],message:"The shrine wakes. The long bridge and the hatch span rise, and pale wings follow you.",objective:"Cross home and climb to the hatch with seven treasure."}],reinforcements:[{id:"shrine-moth",kind:"moth",spawn:[27,13],facing:PI,patrol:[[21,12],[29,14],[21,14]]}],guards:[{kind:"angler",spawn:[13,10],facing:-PI/2,patrol:[[13,10]],lure:[12,9]},{kind:"angler",spawn:[15,14],facing:-PI/2,patrol:[[15,14]],lure:[14,13]},{kind:"angler",spawn:[25,14],facing:-PI/2,patrol:[[25,14]],lure:[24,12]},{spawn:[13,6],facing:0,patrol:[[9,4],[16,7],[10,8]]},{kind:"moth",spawn:[23,3],facing:PI,patrol:[[21,3],[25,6],[21,7]]},{kind:"toad",spawn:[28,14],facing:PI,patrol:[[28,14]]},{kind:"cricket",spawn:[12,14],facing:0,patrol:[[11,13],[13,15]]},{kind:"spider",spawn:[5,4],facing:PI,patrol:[[4,3],[6,5]]}],map:[
- "#################################",
- "#_______________________________#",
- "#__X..._____________.....L._____#",
- "#__....__......L.___.....K._____#",
- "#__....__....N...___......._____#",
- "#__....__..#..#..___...#..._____#",
- "#__1...__........___......._____#",
- "#________.L......___.L..N.1_____#",
- "#________2.......___......._____#",
- "#___________~~__________________#",
- "#___________~~__________________#",
- "#......___.......___.......N..._#",
- "#.L....___.L....1___..L......3._#",
- "#......___.......___....~~~...._#",
- "#.@..N.___....~~~___....~~~..L._#",
- "#1.....___....~~~___.1..~~~...._#",
- "#################################"],glowPlants:[[4,2],[20,2],[9,3],[16,8],[26,8],[1,11],[16,11],[30,11],[6,15],[20,15]],dark:true,explore:true,sightRadius:3.5}
+ "###############################"],glowPlants:[[1,1],[16,1],[20,3],[10,4],[28,5],[17,9],[23,9],[2,10],[28,10],[12,13]],dark:true,explore:true,sightRadius:3.5}
   ];
   root.EscapeRebuilt=routes;
   if(typeof module!=='undefined'&&module.exports)module.exports=routes;
