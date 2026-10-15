@@ -2,7 +2,7 @@
   const catalog=typeof module!=='undefined'&&module.exports?require('./escape-levels.js').EscapeCatalog:root.EscapeCatalog;
   const KEY='sallys-escape-progress-v1',validTime=n=>Number.isFinite(n)&&n>0&&n<1000000;
   class EscapeProgress{
-    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[]};this.persistent=Boolean(storage);this.read();}
+    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],attempts:{}};this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
     read(){
       let raw,value;
       try{raw=this.storage?.getItem(KEY);this.persistent=Boolean(this.storage);}catch(_){this.persistent=false;return;}
@@ -10,6 +10,8 @@
       if(!value||value.version!==1)return;
       if(['follow','overview'].includes(value.view))this.data.view=value.view;
       // World caches are only ever added; a stale tab cannot forget one.
+      // Failed or abandoned attempts per route; any earlier attempt rules out a first-try bonus.
+      for(const level of catalog.levels){const n=value.attempts?.[level.id];if(Number.isInteger(n)&&n>0&&n>(this.data.attempts[level.id]||0))this.data.attempts[level.id]=Math.min(n,100000);}
       if(Number.isInteger(value.goldflies)&&value.goldflies>this.data.goldflies)this.data.goldflies=Math.min(value.goldflies,100000);
       if(Array.isArray(value.regionsSeen))for(const i of value.regionsSeen)if(Number.isInteger(i)&&i>=0&&i<64&&!this.data.regionsSeen.includes(i))this.data.regionsSeen.push(i);
       if(Array.isArray(value.caches))for(const id of value.caches)if(typeof id==='string'&&/^[a-z]+-(north|south)$/.test(id)&&!this.data.caches.includes(id))this.data.caches.push(id);
@@ -22,7 +24,7 @@
         const old=this.data[kind][item.id],revision=Number.isInteger(saved.revision)&&saved.revision>0?saved.revision:1;
         if(old&&(old.revision||1)>revision)continue;
         const compatible=old&&(old.revision||1)===revision;
-        this.data[kind][item.id]={cleared:true,bestTime:Math.min(compatible?old.bestTime||Infinity:Infinity,saved.bestTime),revision,...(kind==='levels'?{stars:Math.max(compatible?old.stars||0:0,saved.stars),treasure:Math.max(compatible?old.treasure||0:0,saved.treasure)}:{})};
+        this.data[kind][item.id]={cleared:true,bestTime:Math.min(compatible?old.bestTime||Infinity:Infinity,saved.bestTime),revision,...(kind==='levels'?{stars:Math.max(compatible?old.stars||0:0,saved.stars),treasure:Math.max(compatible?old.treasure||0:0,saved.treasure),...((saved.firstTry===true||compatible&&old.firstTry)?{firstTry:true}:{})}:{})};
       }
     }
     challengesCleared(){return catalog.challenges.filter(c=>this.data.challenges[c.id]?.cleared).length;}
@@ -42,10 +44,15 @@
         treasure:levels.reduce((n,{saved})=>n+(saved?.treasure||0),0)+this.data.caches.length*cacheValue+this.data.goldflies*2,goldflies:this.data.goldflies,
         maxTreasure:levels.reduce((n,{level})=>n+level.loot.reduce((t,l)=>t+l[2],0),0),
         cleared:levels.filter(({saved})=>saved?.cleared).length,levels:levels.length,
+        firstTries:levels.filter(({saved})=>saved?.firstTry).length,
         challenges:catalog.challenges.filter(c=>this.data.challenges[c.id]?.cleared).length,maxChallenges:catalog.challenges.length,caches:this.data.caches.length};
     }
     write(){try{this.storage?.setItem(KEY,JSON.stringify(this.data));this.persistent=Boolean(this.storage);}catch(_){this.persistent=false;}}
+    // A run that ends without escaping, or is abandoned part-way, uses up the first try.
+    attempt(levelId){if(!catalog.levels.some(l=>l.id===levelId))return false;this.read();this.data.attempts[levelId]=(this.data.attempts[levelId]||0)+1;this.write();return true;}
     record(result){
+      this.lastFirstTry=false;
+      if(result&&!result.challengeId&&['caught','failed'].includes(result.status))this.attempt(result.levelId);
       if(result?.status!=='won'||!validTime(result.time))return false;
       this.read();
       const level=catalog.levels.find(l=>l.id===result.levelId);if(!level)return false;
@@ -60,7 +67,8 @@
         if(!this.unlocked(level.id)||!Number.isInteger(result.stars)||result.stars<1||result.stars>3||!Number.isInteger(result.treasure)||result.treasure<0||result.treasure>result.totalTreasure)return false;
         const old=this.data.levels[level.id];if(old&&(old.revision||1)>revision)return false;
         const compatible=old&&(old.revision||1)===revision;
-        this.data.levels[level.id]={cleared:true,revision,stars:Math.max(compatible?old.stars||0:0,result.stars),treasure:Math.max(compatible?old.treasure||0:0,result.treasure),bestTime:Math.min(compatible?old.bestTime||Infinity:Infinity,result.time)};
+        const firstTry=!old&&!(this.data.attempts[level.id]>0);this.lastFirstTry=firstTry;
+        this.data.levels[level.id]={cleared:true,revision,stars:Math.max(compatible?old.stars||0:0,result.stars),treasure:Math.max(compatible?old.treasure||0:0,result.treasure),bestTime:Math.min(compatible?old.bestTime||Infinity:Infinity,result.time),...((firstTry||compatible&&old.firstTry)?{firstTry:true}:{})};
       }
       this.write();
       return true;

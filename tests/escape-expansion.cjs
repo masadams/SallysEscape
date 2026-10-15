@@ -66,7 +66,7 @@ test('winning unlocks the next route and retains best medals, treasure and time 
  const s=storage(),p=new EscapeProgress(s);assert.equal(p.unlocked('quiet-vault'),true);assert.equal(p.unlocked('leafy-crossroads'),true);
  assert.equal(p.record(result('quiet-vault')),true);assert.equal(p.unlocked('leafy-crossroads'),true);
  p.record(result('quiet-vault',{time:12,stars:1,treasure:0}));const reload=new EscapeProgress(s);
- assert.deepEqual(reload.data.levels['quiet-vault'],{cleared:true,bestTime:8,stars:3,treasure:7,revision:1});
+ assert.deepEqual(reload.data.levels['quiet-vault'],{cleared:true,bestTime:8,stars:3,treasure:7,revision:1,firstTry:true});
 });
 test('failed, locked, unknown and malformed results cannot unlock routes',()=>{
  const p=new EscapeProgress(storage());
@@ -91,7 +91,7 @@ test('separate tabs merge completed routes and never downgrade saved best result
  a.record(result('quiet-vault'));assert.equal(b.record(result('leafy-crossroads',{time:15,stars:1,treasure:1})),true);
  b.record(result('quiet-vault',{time:12,stars:1,treasure:1}));a.record(result('leafy-crossroads',{time:9,stars:3,treasure:10}));
  b.record(result('crumbling-hall'));const saved=new EscapeProgress(s);
- assert.deepEqual(saved.data.levels['quiet-vault'],{cleared:true,bestTime:8,stars:3,treasure:7,revision:1});
- assert.deepEqual(saved.data.levels['leafy-crossroads'],{cleared:true,bestTime:9,stars:3,treasure:10,revision:1});
+ assert.deepEqual(saved.data.levels['quiet-vault'],{cleared:true,bestTime:8,stars:3,treasure:7,revision:1,firstTry:true});
+ assert.deepEqual(saved.data.levels['leafy-crossroads'],{cleared:true,bestTime:9,stars:3,treasure:10,revision:1,firstTry:true});
  assert.equal(saved.unlocked('twin-watch'),true);
 });

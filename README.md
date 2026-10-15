@@ -8,6 +8,8 @@ Early escapes are one-touch: any catch ends the run. From Venom Depths (escape 2
 
 Some branches open in parallel and also need completed challenges: Sunbaked Rooftops opens after Canopy Crown once four challenges are done. A hawk's shadow follows Sally there; awnings, leaves and camouflage (X: stay still to vanish) keep her safe. The Ant Kingdom branches off Venom Depths once eight challenges are done: ant columns march around fixed trails and walk over anything in their way, and gecko thieves dart out to steal the last treasure Sally picked up—chase one down before it reaches its burrow. See `docs/ROADMAP.md` for the regions still to come. Challenges are always one-touch.
 
+Escaping a route on your very first attempt (no catch, no quitting part-way) earns a **First try** badge: its stars turn mint and a ✓ joins the flag on the world map.
+
 Every escape opens with a short intro card (name, hint and tools); the hunters wait until you press a key or move. Sound effects are synthesised in the browser with Web Audio, so no audio files are bundled. The Quiet Vault and Leafy Crossroads are available immediately; later regions are physically gated. Choose between paired routes. Harder paths rejoin after either route; later chapters retain their progression gates. The original MazeAdventure campaign, shop, upgrades, gauntlet, leaderboard API and database are absent.
 
 Desktop: WASD or arrows, Shift sprint, Q pebble, E burrow, R tongue, F seed, X camouflage, Space look back, G map, Escape pause. Phones use landscape orientation, a left thumbstick and right action buttons. Rotating to portrait pauses a run until resumed. Completion stays inside the playfield.
