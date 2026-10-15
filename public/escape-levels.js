@@ -8776,6 +8776,8 @@
   const hiddenRoutes=typeof module!=='undefined'&&module.exports?require('./escape-hidden.js'):root.EscapeHidden||[];
   const hidden=hiddenRoutes.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,...route,hidden:true,revision:1}));
   const catalog=freeze({levels,challenges,regions,hidden});
-  root.EscapeCatalog=catalog;root.escapeGridFor=gridFor;
-  if(typeof module!=='undefined'&&module.exports)module.exports={EscapeCatalog:catalog,escapeGridFor:gridFor};
+  // Custom levels from the builder go through the same text-map path as every rebuilt route.
+  const buildCustom=route=>freeze(fromMap({burrows:0,pebbles:0,tongues:0,...JSON.parse(JSON.stringify(route)),custom:true,revision:1}));
+  root.EscapeCatalog=catalog;root.escapeGridFor=gridFor;root.escapeBuildCustom=buildCustom;
+  if(typeof module!=='undefined'&&module.exports)module.exports={EscapeCatalog:catalog,escapeGridFor:gridFor,escapeBuildCustom:buildCustom};
 })(typeof globalThis!=='undefined'?globalThis:this);

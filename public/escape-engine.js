@@ -25,7 +25,7 @@
       this.player={...centre(...this.level.spawn),facing:{x:0,y:-1},tongueAim:null,stamina:100,exhausted:false,moving:false,sprinting:false,hidden:false,noisy:false};
       this.hunters=this.level.guards.map(guard=>this.makeHunter(guard));
       this.pendingSpawns=[];this.spawnedReinforcements=new Set();this.webs=[];this.glowTrail=[];this.trailAt=0;
-      this.hunter=this.hunters[0];this.patrol=this.hunter.patrol;
+      this.hunter=this.hunters[0]||null;this.patrol=this.hunter?.patrol||[];
       this.gates=(this.level.gates||[]).map(g=>({...g,open:Boolean(g.initialOpen),sealed:false,closingAt:null,expiresAt:null,pressed:false,warned:false,activations:0,switch:g.switch?centre(...g.switch):null,plates:(g.plates||[]).map(p=>centre(...p)),tiles:g.tiles.map(p=>p.slice())}));
       this.reactionsFired=new Set();this.mazeObjective=null;
       this.wheelAngle=0;this.clashes=0;this.swimDistance=0;
