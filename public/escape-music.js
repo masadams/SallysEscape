@@ -30,7 +30,8 @@
     coast:{mood:'warm',lead:'flute',bpm:90,groove:2},hollow:{mood:'spooky',lead:'ghost',bpm:76,groove:3,transpose:-2},
     lantern:{mood:'spooky',lead:'bell',bpm:82,groove:3,transpose:2},rooftops:{mood:'warm',lead:'melody',bpm:110,groove:1,transpose:2},
     ants:{mood:'desert',lead:'bell',bpm:104,groove:0,transpose:-2},frost:{mood:'frost',lead:'bell',bpm:88,groove:2},
-    vents:{mood:'warm',lead:'pluck',bpm:96,groove:0,transpose:-4}
+    vents:{mood:'warm',lead:'pluck',bpm:96,groove:0,transpose:-4},
+    gilded:{mood:'river',lead:'bell',bpm:92,groove:2,transpose:1}
   };
   const THEME_MOOD=Object.fromEntries(Object.entries(STYLES).map(([theme,style])=>[theme,style.mood]));
   // Every escape in a region gets its own tune and key: the region's style, a new melody seed,

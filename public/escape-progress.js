@@ -2,7 +2,7 @@
   const catalog=typeof module!=='undefined'&&module.exports?require('./escape-levels.js').EscapeCatalog:root.EscapeCatalog;
   const KEY='sallys-escape-progress-v1',validTime=n=>Number.isFinite(n)&&n>0&&n<1000000;
   class EscapeProgress{
-    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],challengesSeen:[],attempts:{},masterySeen:[],skin:'classic',whisper:false};this.lastPerfect=false;this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
+    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],challengesSeen:[],attempts:{},masterySeen:[],skin:'classic',whisper:false,hidden:{}};this.lastPerfect=false;this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
     read(){
       let raw,value;
       try{raw=this.storage?.getItem(KEY);this.persistent=Boolean(this.storage);}catch(_){this.persistent=false;return;}
@@ -18,6 +18,8 @@
       if(Array.isArray(value.masterySeen))for(const t of value.masterySeen)if(typeof t==='string'&&/^[a-z]+$/.test(t)&&!this.data.masterySeen.includes(t))this.data.masterySeen.push(t);
       if(typeof value.skin==='string'&&/^[a-z]+$/.test(value.skin))this.data.skin=value.skin;
       if(value.whisper===true)this.data.whisper=true;
+      for(const level of catalog.hidden||[]){const saved=value.hidden?.[level.id],old=this.data.hidden[level.id];if(!saved||saved.cleared!==true||!validTime(saved.bestTime)||!Number.isInteger(saved.stars)||saved.stars<1||saved.stars>3)continue;
+        this.data.hidden[level.id]={cleared:true,bestTime:Math.min(old?.bestTime||Infinity,saved.bestTime),stars:Math.max(old?.stars||0,saved.stars)};}
       if(Array.isArray(value.caches))for(const id of value.caches)if(typeof id==='string'&&/^[a-z]+-(north|south)$/.test(id)&&!this.data.caches.includes(id))this.data.caches.push(id);
       for(const [kind,entries] of [['levels',catalog.levels],['challenges',catalog.challenges]])for(const item of entries){
         const saved=value[kind]?.[item.id];
@@ -76,8 +78,12 @@
     // A run that ends without escaping, or is abandoned part-way, uses up the first try.
     attempt(levelId){if(!catalog.levels.some(l=>l.id===levelId))return false;this.read();this.data.attempts[levelId]=(this.data.attempts[levelId]||0)+1;this.write();return true;}
     record(result){
-      this.lastFirstTry=false;
+      this.lastFirstTry=false;this.lastPerfect=false;
       if(result&&!result.challengeId&&['caught','failed'].includes(result.status))this.attempt(result.levelId);
+      if(result?.hidden){
+        const level=(catalog.hidden||[]).find(l=>l.id===result.levelId);if(!level||result.status!=='won'||!validTime(result.time)||!Number.isInteger(result.stars)||result.stars<1||result.stars>3)return false;
+        this.read();const old=this.data.hidden[level.id];this.data.hidden[level.id]={cleared:true,bestTime:Math.min(old?.bestTime||Infinity,result.time),stars:Math.max(old?.stars||0,result.stars)};this.write();return true;
+      }
       if(result?.status!=='won'||!validTime(result.time))return false;
       this.read();
       const level=catalog.levels.find(l=>l.id===result.levelId);if(!level)return false;

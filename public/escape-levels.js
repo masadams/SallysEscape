@@ -8771,7 +8771,10 @@
     let routes=0;for(let i=regions[r];i<=index;i++)if(!alternatives.has(i)||i===index)routes++;
     challenge.starGate={from:regions[r],to:regions[r+1],stars:2*routes};
   }
-  const catalog=freeze({levels,challenges,regions});
+  // The Gilded Burrow sits outside the trail: its escapes never count toward stars or unlocks.
+  const hiddenRoutes=typeof module!=='undefined'&&module.exports?require('./escape-hidden.js'):root.EscapeHidden||[];
+  const hidden=hiddenRoutes.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,...route,hidden:true,revision:1}));
+  const catalog=freeze({levels,challenges,regions,hidden});
   root.EscapeCatalog=catalog;root.escapeGridFor=gridFor;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeCatalog:catalog,escapeGridFor:gridFor};
 })(typeof globalThis!=='undefined'?globalThis:this);
