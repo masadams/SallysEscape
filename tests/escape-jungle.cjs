@@ -1,8 +1,10 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {EscapeAdventure}=require('../public/escape-engine.js');const {EscapeCatalog}=require('../public/escape-levels.js');const {EscapeProgress}=require('../public/escape-progress.js');
 const {escapeCameraFor}=require('../public/escape-view.js');
+// Camera and millipede rules are checked on a frozen copy of the original Fern Cloister.
+const legacy=require('./fixtures/legacy-levels.json'),fern=()=>new EscapeAdventure({level:legacy['fern-cloister']});
 test('desktop and phone cameras contain the whole observation radius so a frozen hunter is actually on screen',()=>{
- const g=new EscapeAdventure({levelId:'fern-cloister'}),r=g.level.sightRadius;
+ const g=fern(),r=g.level.sightRadius;
  for(const [width,height]of [[351,247],[800,395]])for(const [x,y]of [[14,12],[1.5,1.5],[26.5,23.5]]){
   Object.assign(g.player,{x,y});const c=escapeCameraFor(g,width,height);
   for(const [dx,dy]of [[r,0],[-r,0],[0,r],[0,-r]]){const px=x+dx,py=y+dy;if(px<0||py<0||px>=g.width||py>=g.height)continue;assert.ok(px*c.cell+c.ox>=0&&px*c.cell+c.ox<=width);assert.ok(py*c.cell+c.oy>=0&&py*c.cell+c.oy<=height);}
@@ -10,7 +12,7 @@ test('desktop and phone cameras contain the whole observation radius so a frozen
 });
 function ticks(g,s,input={},fps=120){for(let i=0;i<Math.ceil(s*fps);i++)g.advance(1/fps,input);}
 function arena(kind='millipede'){
- const g=new EscapeAdventure({levelId:'fern-cloister'});for(let y=1;y<12;y++)for(let x=1;x<27;x++)g.grid[y][x]='.';
+ const g=fern();for(let y=1;y<12;y++)for(let x=1;x<27;x++)g.grid[y][x]='.';
  const h=g.hunter;g.hunters=[h];Object.assign(h,{kind,x:10.5,y:5.5,facing:Math.PI,patrol:[{x:10.5,y:5.5}],awakened:false});Object.assign(g.player,{x:7.5,y:5.5,facing:{x:1,y:0}});g.motion.resetHunter(h);return {g,h};
 }
 test('observing the millipede freezes its position, all segments and every foot phase',()=>{const {g,h}=arena();ticks(g,.1);const body=JSON.stringify(g.motion.snake.joints),position={x:h.x,y:h.y},phase=h.distanceMoved;ticks(g,2);assert.deepEqual({x:h.x,y:h.y},position);assert.equal(JSON.stringify(g.motion.snake.joints),body);assert.equal(h.distanceMoved,phase);assert.equal(h.awakened,true);});

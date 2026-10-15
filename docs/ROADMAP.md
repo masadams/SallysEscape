@@ -70,7 +70,7 @@ Escapes are being redrawn as text maps, region by region, with:
 
 Every rebuilt route keeps its id, bumps its revision, and gets a recorded winning run.
 
-Done so far: Sunny Meadow, Garden Ruins, Reedbanks, Restless Ruins, Deep Trials and Venom Depths (escapes 1–27). In Deep Trials:
+Done so far: Sunny Meadow, Garden Ruins, Reedbanks, Restless Ruins, Deep Trials, Venom Depths, The Waking Maze and Hollow Jungle (escapes 1–37). Recorded runs never rely on the forgiving tail drop. In Deep Trials:
 - Razor Crossing has a one-way crumbling causeway and two snakes passing in a narrow hall.
 - Needle Vault's key hangs over a pit and can only be grabbed from one ledge.
 - Toll of Ash hides mimics among its chests.
@@ -84,7 +84,21 @@ In Venom Depths:
 - In Coiled Catacomb, a vault chest seals the coil and opens a spine passage.
 - In Split Jaw, boulders roll down a canyon between two vaults.
 
-Next: The Waking Maze onward.
+In The Waking Maze, every prize wakes a den:
+- Mire Mouth has a bog of mud causeways and a tongue-grab key.
+- Silk Galleries stacks three dark shelves.
+- Falling Span is a set of platforms over the void, linked by a sprint-only bridge.
+- Echo Fan is a branching cavern.
+- Hungry Observatory has four chambers around a hub.
+
+Hollow Jungle pits Sally against millipedes and crickets in five places:
+- a fern cloister;
+- flooded terraces;
+- a dark root cathedral;
+- a dark quarry ringed by ledges;
+- canopy islands joined by root bridges.
+
+Next: Luminous Depths onward.
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).

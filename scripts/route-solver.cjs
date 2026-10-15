@@ -62,7 +62,8 @@ function extractPlan(Engine,recording){
   flushWait();plan.push({type:'go',x:g.player.x,y:g.player.y,sprint:false});plan.push({type:'finish'});
   return plan;
 }
-const bad=g=>g.status==='caught'||g.status==='failed'||(g.challenge?.noChase&&g.alarms>0);
+// A recorded run never leans on the forgiving tail drop: losing the tail counts as caught.
+const bad=g=>g.status==='caught'||g.status==='failed'||g.tailsDropped>0||(g.challenge?.noChase&&g.alarms>0);
 function frame(g,rec,x,y,sprint){g.advance(1/120,{x,y,sprint});push(rec,{kind:'move',frames:1,x,y,sprint});}
 function wait(g,rec,t){for(let i=0;i<Math.round(t*120)&&g.status==='playing';i++)frame(g,rec,0,0,false);return !bad(g);}
 function go(g,rec,item,sprint){
@@ -135,7 +136,7 @@ if(require.main===module){
   const [mode,arg,hints]=process.argv.slice(2);const fixtures=path.join(__dirname,'../tests/fixtures/escape-playthroughs.json');
   if(mode==='sprint'){console.log(arg,sprintBot(optionsFor(arg)));process.exit(0);}
   // Walks the hint route with no waiting against the real hunters: a route that wins this way is too easy.
-  if(mode==='naive'){let status;try{status=record(EscapeAdventure,optionsFor(arg),hints||'').game.status;}catch(e){status='caught';}console.log(arg,status==='won'?'TOO EASY: the plain route wins':'ok: the plain route '+status);process.exit(0);}
+  if(mode==='naive'){let status;try{const run=record(EscapeAdventure,optionsFor(arg),hints||'').game;status=run.tailsDropped>0&&run.status==='won'?'needed the tail drop':run.status;}catch(e){status='caught';}console.log(arg,status==='won'?'TOO EASY: the plain route wins':'ok: the plain route '+status);process.exit(0);}
   let options,plan;
   if(mode==='solve'){options=optionsFor(arg);const calm=record(Peaceful,options,hints||'');if(calm.game.status!=='won')throw new Error('the hint route does not escape even without hunters: '+calm.game.status);plan=extractPlan(Peaceful,{options,commands:calm.commands});}
   else if(mode==='repair'){const r=require(fixtures)[+arg];options=r.options;plan=extractPlan(process.env.OLD_ENGINE?require(process.env.OLD_ENGINE).EscapeAdventure:Peaceful,r);}
