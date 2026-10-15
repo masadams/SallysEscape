@@ -98,7 +98,13 @@ Hollow Jungle pits Sally against millipedes and crickets in five places:
 - a dark quarry ringed by ledges;
 - canopy islands joined by root bridges.
 
-Next: Luminous Depths onward.
+Luminous Depths stays dark, lit by glow plants, and brings in the angler, whose lure looks just like a glow bug:
+- Glowcap Grotto: a grotto split by a chasm, with a timed bridge.
+- Tideglass Causeway or Pulse Garden: three islands whose swim lanes weave between lures, or hedged beds round a vault whose door will not stay open.
+- Spore Engine: a pump hall with a timed block and a flooded shaft.
+- Nightbloom Reach: a crescent of islands that closes the area.
+
+Next: Living Labyrinth onward (flytrap and tangle vine).
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).

@@ -54,6 +54,7 @@
     maze:(v)=>{tone(v,{freq:70,to:45,dur:.8,type:'sine',gain:.5});noise(v,{dur:.7,gain:.25,filter:'lowpass',freq:260,to:80});},
     seal:(v)=>{tone(v,{freq:95,to:60,dur:.35,type:'square',gain:.15});noise(v,{dur:.15,gain:.3,filter:'lowpass',freq:400});},
     splash:(v)=>noise(v,{dur:.35,gain:.35,freq:1200,to:300,q:.8}),
+    snap:(v)=>{noise(v,{dur:.12,gain:.4,filter:'lowpass',freq:900,q:2});tone(v,{freq:180,to:70,dur:.18,type:'square',gain:.14});},
     tail:(v)=>noise(v,{dur:.12,gain:.2,freq:900,q:3}),
     sting:(v)=>{tone(v,{freq:1400,to:400,dur:.12,type:'sawtooth',gain:.12});noise(v,{dur:.06,gain:.25,freq:4000,q:2});},
     charge:(v)=>{noise(v,{dur:.35,gain:.25,filter:'lowpass',freq:300,to:900});tone(v,{freq:110,to:180,dur:.3,type:'sawtooth',gain:.1});},
