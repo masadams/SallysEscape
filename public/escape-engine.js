@@ -701,10 +701,12 @@
     // King cobra: it waits coiled on its post, swaying to watch. On sight it rears (a short
     // warning), strikes at where Sally is heading, then gives chase like a fast snake. When
     // it loses her it glides home and coils again. Returns false to hand over to snake logic.
-    // Brushing the back half of a resting snake's body wakes it: it knows exactly where Sally is.
+    // Brushing the back half of a resting snake's body (paused, coiled or watching) wakes it: it knows exactly where Sally is.
     checkTailTouch(){
       const p=this.player;this.hunters.forEach((h,i)=>{
         if(!['snake','cobra'].includes(h.kind)||['chase','rear','strike','emerge','stunned','steamed','clash'].includes(h.state))return;
+        // Only a resting snake feels it: a moving tail slides away from Sally.
+        const moved=h.tailCheck&&Math.hypot(h.x-h.tailCheck.x,h.y-h.tailCheck.y)>.002;h.tailCheck={x:h.x,y:h.y};if(moved)return;
         const joints=this.motion.snakes[i]?.joints;if(!joints||joints.length<4)return;
         if(!joints.slice(Math.floor(joints.length/2)).some(j=>Math.hypot(j.x-p.x,j.y-p.y)<.32))return;
         h.awareness=1;h.lastKnown=copy(p);h.lastObserved=this.elapsed;h.reason='touched';h.facing=Math.atan2(p.y-h.y,p.x-h.x);h.path=[];
