@@ -912,7 +912,7 @@
  "#.@..............X...............1#",
  "###################################"],regrowth:[[1,8],[33,8],[10,11]]},
 // Sunbaked Rooftops
-{explore:false,tailDrop:true,id:"sunbaked-ledge",name:"Sunbaked Ledge",brief:"Hot tiles, striped awnings and a shadow in the sky.",hint:"A shadow in the sky means the hawk is circling. Stand under an awning, hide in leaves, or press V to blend in before it dives. Cracked tiles give way once you step off them.",pebbles:2,tongues:1,camos:2,hawk:{every:9,warn:2.2,first:16},guards:[{spawn:[10,2],facing:0,patrol:[[5,2],[19,3]]},{spawn:[18,6],facing:PI,patrol:[[8,6],[26,6]]},{kind:"beetle",spawn:[17,10],facing:PI,patrol:[[9,10],[26,10]]}],map:[
+{explore:false,tailDrop:true,id:"sunbaked-ledge",name:"Sunbaked Ledge",brief:"Hot tiles, striped awnings and a shadow in the sky.",hint:"A shadow in the sky means the hawk is circling. Stand under an awning, hide in leaves, or press V to blend in before it dives. Cracked tiles give way once you step off them.",pebbles:2,tongues:1,camos:2,hawk:{every:9,warn:2.2,first:16},guards:[{spawn:[10,2],facing:0,patrol:[[5,2],[19,3]]},{spawn:[18,6],facing:PI,patrol:[[8,6],[26,6]]},{kind:"beetle",spawn:[23,10],facing:PI,patrol:[[21,11],[27,10]]}],map:[
  "#############################",
  "#1....N..............c.....1#",
  "#....................c.K....#",
