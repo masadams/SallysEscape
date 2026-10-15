@@ -10,6 +10,17 @@ Some branches open in parallel and also need completed challenges: Sunbaked Roof
 
 Escaping a route on your very first attempt (no catch, no quitting part-way) earns a **First try** badge: its stars turn mint and a ✓ joins the flag on the world map.
 
+Every hunter has its own job, so each one changes the route rather than just being dodged. Strikes aim where Sally is heading:
+- **Beetle:** charges down a lane and smashes cracked walls.
+- **Scorpion:** a living trap with a strike ring and a rhythmic tail.
+- **Toad:** fires its tongue down clear lines.
+- **Spider:** leaves tripwire webs.
+- **Cricket:** raises the alarm.
+- **Moth:** lights Sally up.
+- **Mimic:** poses as treasure.
+
+Traps (one-use and crumbling bridges, crumbling floor, rolling logs, thorns) and text-drawn level maps are described in `docs/ENEMIES.md`. `scripts/route-solver.cjs` records winning runs for the test fixtures.
+
 Every escape opens with a short intro card; the hunters wait until you press a key or move. **Cards** in the toolbar switches between Brief (the hint stays folded behind **Show hint [H]** except where an area teaches something new), Full and Off. A challenge opens once its escape is cleared and its area has enough stars; open challenges glow on the world map. Sound effects are synthesised in the browser with Web Audio. The adaptive music is composed in code with Tone.js: one mood per group of regions, fading between exploring, tension and chases (see `docs/MUSIC.md`). The Quiet Vault and Leafy Crossroads are available immediately; later regions are physically gated. Choose between paired routes. Harder paths rejoin after either route; later chapters retain their progression gates. The original MazeAdventure campaign, shop, upgrades, gauntlet, leaderboard API and database are absent.
 
 Desktop: WASD or arrows, Shift sprint, Q pebble, E burrow, R tongue, F seed, X camouflage, Space look back, G map, Escape pause. Phones use landscape orientation, a left thumbstick and right action buttons. Rotating to portrait pauses a run until resumed. Completion stays inside the playfield.

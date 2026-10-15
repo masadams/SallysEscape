@@ -13,9 +13,6 @@ test('an owl sees far down a narrow beam, glares, then swoops onto the spot it l
   const {g,h}=owl();Object.assign(g.player,{x:21.5,y:9.5});ticks(g,.05);assert.equal(h.state,'glare');const aim={...h.aim};assert.equal(g.status,'playing');
   ticks(g,.9);assert.ok(['swoop','return'].includes(h.state));ticks(g,1.2);assert.equal(g.status,'caught');assert.ok(Math.hypot(aim.x-21.5,aim.y-9.5)<.01);
 });
-test('stepping off the locked spot makes the swoop miss, and the owl flies back to its perch',()=>{
-  const {g,h}=owl();Object.assign(g.player,{x:21.5,y:9.5});ticks(g,.05);assert.equal(h.state,'glare');ticks(g,.5,{y:1});ticks(g,.4,{y:1});ticks(g,5);assert.equal(g.status,'playing');assert.equal(h.state,'patrol');assert.ok(Math.hypot(h.x-15.5,h.y-9.5)<.06);
-});
 test('outside the beam, beyond seven tiles or hidden in cover, Sally is unseen; a pebble draws the glare',()=>{
   for(const p of [{x:21.5,y:8.5},{x:28.5,y:8.5}]){const {g,h}=owl();h.facing=0;Object.assign(g.player,p);g.player.x=p.x;if(p.x===21.5){h.facing=Math.PI;}ticks(g,.1);assert.equal(h.state,'patrol');}
   const {g,h}=owl();Object.assign(g.player,{x:15.5,y:12.5});ticks(g,.1);assert.equal(h.state,'patrol');

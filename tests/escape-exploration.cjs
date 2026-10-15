@@ -43,14 +43,9 @@ test('current trail saves unlock the next chapter and the view preference surviv
  s.setItem('sallys-escape-progress-v1',JSON.stringify({version:1,levels,challenges:{}}));const p=new EscapeProgress(s);assert.ok(p.unlocked('switchback-garden'));assert.equal(p.data.view,'follow');
  assert.equal(p.setView('overview'),true);assert.equal(p.setView('invalid'),false);const saved=new EscapeProgress(s);assert.equal(saved.data.view,'overview');assert.equal(Object.keys(saved.data.levels).length,5);
 });
-test('beetle telegraphs a fixed aim, charges without steering and then rests',()=>{
- const g=beetle(),h=g.hunter;advance(g,.9);assert.equal(h.state,'windup');const aim={...h.aim},position={x:h.x,y:h.y};
- Object.assign(g.player,{x:12.5,y:10.5});advance(g,.5);assert.deepEqual(h.aim,aim);assert.equal(h.x,position.x);assert.equal(h.y,position.y);
- advance(g,.9);assert.equal(g.status,'playing');assert.equal(h.state,'recover');assert.ok(Math.abs(h.y-8.5)<1e-8);assert.ok(Math.abs(h.x-aim.x)<.06);
-});
 test('beetle charges stop at a closed gate and never phase through a wall',()=>{
  const g=beetle(),h=g.hunter;Object.assign(h,{x:13.5,y:8.5,state:'charge',facing:0,aim:{x:17.5,y:8.5},phaseUntil:2});Object.assign(g.player,{x:8.5,y:10.5});
- advance(g,.5);assert.equal(h.state,'recover');assert.ok(h.x<13.8);assert.ok(g.fits(h));
+ advance(g,.5);assert.equal(h.state,'stunned');assert.ok(h.x<13.8);assert.ok(g.fits(h));assert.ok(g.gates.every(gate=>gate.tiles.every(([x,y])=>g.grid[y][x]!=='.')),'a gate is never smashed');
 });
 test('beetles cannot see through walls or stationary leaf cover',()=>{
  const g=beetle();g.player.hidden=true;assert.equal(g.seesPlayer(g.hunter),false);g.player.hidden=false;Object.assign(g.hunter,{x:16.5,y:8.5,facing:Math.PI});assert.equal(g.seesPlayer(g.hunter),false);

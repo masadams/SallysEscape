@@ -40,7 +40,7 @@ test('moving beyond reach or behind a wall cancels the contact instead of collec
 test('gaps block walking, burrowing and enemy charges but permit vision and tongue',()=>{
  const g=reach();assert.equal(g.floor(6,8),false);assert.equal(g.fits({x:6.5,y:8.5}),false);assert.ok(g.lineVisible(g.player,g.key));
  Object.assign(g.player,{x:5.5,y:8.5});g.burrows=1;assert.equal(g.burrow(),false);assert.equal(g.burrows,1);
- const h=g.hunter;Object.assign(h,{kind:'beetle',x:5.5,y:8.5,state:'charge',aim:{x:8.5,y:8.5},facing:0,phaseUntil:2});Object.assign(g.player,{x:8.5,y:10.5});g.hunters=[h];advance(g,.5);assert.equal(h.state,'recover');assert.ok(h.x<5.8);
+ const h=g.hunter;Object.assign(h,{kind:'beetle',x:5.5,y:8.5,state:'charge',aim:{x:8.5,y:8.5},facing:0,phaseUntil:2});Object.assign(g.player,{x:8.5,y:10.5});g.hunters=[h];advance(g,.5);assert.equal(h.state,'stunned');assert.ok(h.x<5.8);
 });
 test('retries restore each route loadout and clear an unfinished tongue',()=>{
  const a=reach();a.useTongue();const b=new EscapeAdventure({levelId:'reed-bank'});assert.equal(b.tongues,3);assert.equal(b.tongue,null);assert.equal(b.tonguesUsed,0);assert.equal(b.burrows,0);assert.equal(b.decoys,1);

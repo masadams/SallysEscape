@@ -61,7 +61,7 @@
     if(!game)return 'world';
     if(game.status==='won')return 'victory';
     if(game.status&&game.status!=='playing')return 'caught';
-    const chasing=['chase','charge','sting','leap','swoop','lunge','dash','flee'],wary=['alert','search','windup','glimmer','glare','reveal','decoy'];
+    const chasing=['chase','charge','sting','leap','swoop','lunge','dash','flee','rush','tongue'],wary=['alert','search','windup','glimmer','glare','reveal','decoy','raise'];
     const hunters=game.hunters||[];
     if(hunters.some(h=>chasing.includes(h.state))||game.hawk&&game.hawk.state==='dive'||game.droppedTail)return 'chase';
     if(hunters.some(h=>wary.includes(h.state))||game.hawk&&game.hawk.state==='stalk'||game.player?.chilled)return 'tension';
