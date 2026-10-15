@@ -6,7 +6,7 @@
 //   node scripts/route-solver.cjs naive <levelId> "<hints>"              does the plain hint route win unaided?
 //
 // Hints are space separated: gX,Y walks the engine's own route to tile X,Y (gX,Y! sprints),
-// wN waits N seconds, and pebble/burrow/tongue/seed/camo use a tool. A hint run is first
+// wN waits N seconds, fX,Y faces a direction (f0,1 is down), and pebble/burrow/tongue/seed/camo use a tool. A hint run is first
 // recorded with every hunter and timed trap removed, then a search adds waits and sprint
 // changes wherever the real hunters would catch Sally, keeping whatever gets furthest.
 const path=require('path');
@@ -34,6 +34,7 @@ function record(Engine,options,hints){
   for(const c of hints.split(/\s+/).filter(Boolean)){
     if(g.status!=='playing')break;
     if(/^w[0-9.]+$/.test(c)){move(0,0,false,Math.round(+c.slice(1)*120));continue;}
+    if(/^f-?[01],-?[01]$/.test(c)){const [fx,fy]=c.slice(1).split(',').map(Number);move(fx,fy,false,1);continue;} // Face a direction with one frame of input.
     if(c.startsWith('g')){const [tx,ty]=c.slice(1).replace('!','').split(',').map(Number),sprint=c.endsWith('!');
       for(const pt of g.route(g.player,{x:tx+.5,y:ty+.5})||[]){let n=0;while(Math.hypot(pt.x-g.player.x,pt.y-g.player.y)>.06&&n++<400&&g.status==='playing'){const dx=pt.x-g.player.x,dy=pt.y-g.player.y,L=Math.hypot(dx,dy),step=(sprint?4:2.45)/120,s=L<step?L/step:1;move(+(dx/L*s).toFixed(4),+(dy/L*s).toFixed(4),sprint,1);}}
       continue;}
