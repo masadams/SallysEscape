@@ -80,6 +80,8 @@
     shiver:(v)=>{noise(v,{dur:.5,gain:.12,freq:5000,q:3,attack:.05});tone(v,{freq:1200,to:900,dur:.4,type:'sine',gain:.1,wobble:60,wobbleRate:20});},
     hiss:(v)=>noise(v,{dur:.7,gain:.08,filter:'highpass',freq:3500,attack:.3}),
     steam:(v)=>{noise(v,{dur:1.1,gain:.32,filter:'bandpass',freq:1800,to:900,q:.6,attack:.05});noise(v,{dur:.25,gain:.25,filter:'lowpass',freq:300});},
+    chirp:(v)=>{for(let i=0;i<6;i++)tone(v,{freq:4200,to:3900,dur:.04,delay:i*.07,type:'sine',gain:.16});},
+    smash:(v)=>{noise(v,{dur:.45,gain:.45,filter:'lowpass',freq:900,to:150});tone(v,{freq:120,to:50,dur:.35,type:'square',gain:.18});for(let i=0;i<4;i++)noise(v,{dur:.05,delay:.08+i*.06,gain:.15,freq:2200-i*300,q:4});},
     click:(v)=>tone(v,{freq:900,to:700,dur:.05,type:'sine',gain:.12})
   };
   function play(ctx,name,volume=.25,options={}){

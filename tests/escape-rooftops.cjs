@@ -7,9 +7,9 @@ test('Sunbaked Rooftops is a five-route branch with a hawk, awnings and camoufla
   for(const l of roofs){assert.ok(l.hawk&&l.camos>=2&&l.shade.length>=8&&l.tailDrop);assert.ok(l.shade.some(([x,y])=>x===l.spawn[0]&&y===l.spawn[1]),'Sally starts in shade');}
   assert.ok(EscapeCatalog.levels.slice(0,58).every(l=>!l.hawk&&!l.camos));assert.equal(roofs[0].unlockAfter,'canopy-crown');assert.equal(roofs[0].unlockChallenges,4);
 });
-test('the hawk shadow drifts after Sally more slowly than she walks, so standing in the open is punished and walking away is not',()=>{
+test('the hawk shadow keeps pace with a walking Sally, so standing or strolling in the open is punished and a sprint escapes',()=>{
   const still=ledge();still.tailDrop=false;ticks(still,.05);assert.equal(still.hawk.state,'stalk');ticks(still,3);assert.equal(still.status,'caught');assert.match(still.message,/hawk/);
-  const walker=ledge();Object.assign(walker.player,{x:3.5,y:7.5});ticks(walker,.05);ticks(walker,3,{x:1});assert.equal(walker.status,'playing');assert.equal(walker.hawk.dodges,1);assert.ok(walker.hawk.nextAt>walker.elapsed);
+  const runner=ledge();Object.assign(runner.player,{x:3.5,y:7.5});ticks(runner,.05);ticks(runner,3,{x:1,sprint:true});assert.equal(runner.status,'playing');assert.equal(runner.hawk.dodges,1);const walker=runner;assert.ok(walker.hawk.nextAt>walker.elapsed);
 });
 test('awnings, leaves and camouflage all keep a still Sally safe, and the hawk can cost the spare tail',()=>{
   const shaded=ledge();Object.assign(shaded.player,{x:1.5,y:2.5});ticks(shaded,3);assert.equal(shaded.status,'playing');assert.equal(shaded.hawk.dodges,1);

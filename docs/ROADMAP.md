@@ -19,6 +19,9 @@ built, playtested with recorded winning runs, and pushed on its own.
 | First-try bonus | A first-attempt escape earns mint stars and a ✓ badge. |
 | Adaptive music | Composed in code with Tone.js: four region moods, with layers that fade between explore, tension and chase; see `docs/MUSIC.md`. |
 | Challenge markers and star gates | Open challenges glow on the map and are announced; each one also needs two stars per route in its area. |
+| Enemy rebuild | Every hunter has its own job: beetle battering ram, scorpion strike ring, toad sniper, spider tripwires, cricket alarm, moth lantern and mimic chests. Strikes aim where Sally is heading. See `docs/ENEMIES.md`. |
+| Trap toolkit | One-use and crumbling bridges, crumbling floor, rolling logs and thorns, ready for the level rebuild. |
+| World map polish | Region colours blend across borders, walls read as solid forest and rock, and terrain is cached so the map draws about ten times faster. |
 | Shorter intro cards | Brief, Full or Off; hints fold away unless an area is teaching something new. |
 | Frost Hollow | Five routes with cold rooms, a **warmth** meter, warm stones, sluggish cold-blooded hunters and frost owls, plus the Keep Warm challenge. |
 | Steam Vents | Five routes with **timed steam jets** that block lanes, blow Sally clear and daze hunters, mixed with the hawk, owls and ants, plus the Steam Trap challenge. |
@@ -58,6 +61,14 @@ regions each add two or three challenges so later gates stay reachable.
 - Opens after the Sunbaked Rooftops finale **and 12 completed challenges**.
 - Vents puff on a rhythm. A jet blocks its lane and can toss hunters back, so timing a jet can save Sally.
 - Mixes the hawk, owls and ant columns learned in earlier branches.
+
+### Level rebuild (in progress)
+Escapes are being redrawn as text maps, region by region, with:
+- **Varied shapes:** L-rooms, crossroads, rings, pillar halls, staircases, switchbacks and islands.
+- **Hidden-map fog** only where it suits the place.
+- **The trap toolkit,** used where it makes a route harder.
+
+Every rebuilt route keeps its id, bumps its revision, and gets a recorded winning run.
 
 ### Later
 - A **Home** region and ending once the branches above are done.

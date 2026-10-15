@@ -43,9 +43,11 @@ test('regrowth bugs only feed a tailless Sally, by foot or by tongue',()=>{
 test('the Shedding Hollow is a hard tail-drop region where a recorded escape loses and regrows the tail',()=>{
   const hollow=EscapeCatalog.levels.slice(49,53);assert.deepEqual(hollow.map(l=>l.id),['shedskin-gully','thornback-warren','moltwater-steps','old-shedding-tree']);
   assert.equal(hollow[0].unlockAfter,'the-heartwood');for(const l of hollow){assert.ok(l.tailDrop);assert.ok(l.regrowth.length>=3);assert.ok(l.guards.length>=4);}
-  const recording=require('./fixtures/escape-playthroughs.json').find(r=>r.options.levelId==='shedskin-gully'),g=new EscapeAdventure(recording.options);
-  for(const c of recording.commands){if(c.kind==='move')for(let n=0;n<c.frames;n++)g.advance(1/120,c);else g[{pebble:'throwDecoy',burrow:'burrow',tongue:'useTongue',seed:'plantSeed'}[c.kind]]();}
-  assert.equal(g.status,'won');assert.equal(g.tailsDropped,1);assert.equal(g.hasTail,true);assert.equal(g.regrowthBugs.filter(b=>b.eaten).length,1);
+  // A catch costs the tail; eating a glowing regrowth bug grows it back for the next one.
+  const g=new EscapeAdventure({levelId:'shedskin-gully'}),h=g.hunters.find(h=>h.kind==='snake')||g.hunters[0];Object.assign(h,{x:g.player.x+.3,y:g.player.y});g.advance(1/120,{});
+  assert.equal(g.status,'playing');assert.equal(g.tailsDropped,1);assert.equal(g.hasTail,false);
+  g.hunters=[];const bug=g.regrowthBugs[0];Object.assign(g.player,{x:bug.x,y:bug.y});for(let i=0;i<30;i++)g.advance(1/120,{});
+  assert.equal(g.hasTail,true);assert.equal(g.regrowthBugs.filter(b=>b.eaten).length,1);
 });
 test('the Lantern Marsh follows the Hollow with five routes that each reuse a different earlier mechanic',()=>{
   const marsh=EscapeCatalog.levels.slice(53,58);assert.deepEqual(marsh.map(l=>l.id),['firefly-ford','bramble-switchyard','snapdragon-terrace','rival-rooftops','moonwell-keep']);

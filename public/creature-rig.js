@@ -34,7 +34,7 @@
       }
     }
     update(head){
-      const travelled=distance(this.head,head);this.head=copy(head);
+      const travelled=distance(this.head,head);this.head=copy(head);this.cumulative=null;
       if(distance(head,this.points[0])>.022)this.points.unshift(copy(head));
       let length=distance(head,this.points[0]);
       for(let i=1;i<this.points.length;i++){
@@ -43,14 +43,14 @@
       }
       return travelled;
     }
+    // Cumulative lengths are cached between updates, so a pose samples the
+    // spine with a binary search instead of walking it once per joint.
     sample(behind){
-      let a=this.head;
-      for(const b of this.points){
-        const length=distance(a,b);
-        if(length>1e-8&&behind<=length)return mix(a,b,behind/length);
-        behind-=length;a=b;
-      }
-      return copy(a);
+      if(!this.cumulative){const c=[0];let a=this.head;for(const b of this.points){c.push(c.at(-1)+distance(a,b));a=b;}this.cumulative=c;}
+      const c=this.cumulative,n=this.points.length;let lo=0,hi=n;
+      while(lo<hi){const mid=(lo+hi)>>1;if(c[mid+1]<behind)lo=mid+1;else hi=mid;}
+      for(let i=lo;i<n;i++){const length=c[i+1]-c[i];if(length>1e-8&&behind-c[i]<=length)return mix(i?this.points[i-1]:this.head,this.points[i],(behind-c[i])/length);}
+      return copy(n?this.points[n-1]:this.head);
     }
   }
   // Exact two-bone IK keeps the elbow bent instead of interpolating an entire

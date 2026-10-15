@@ -79,6 +79,61 @@ function renderEscapeWorldHUD(){
 function playEscapeWorld(){
   if(!escapeWorld||escapeLibraryOpen)return;if(!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){escapeWorld.advance(deltaTime/1000,escapeMovement());escapeFootsteps(escapeWorld.player);}drawEscapeWorld();renderEscapeWorldHUD();
 }
+// Per-tile floor and wall colours, averaged over nearby regions so borders blend over a few tiles.
+let escapeWorldShadeCache=null;
+function escapeWorldShades(w,palettes){
+  if(escapeWorldShadeCache?.world===w)return escapeWorldShadeCache.shades;
+  const theme=Array.from({length:w.height},(_,y)=>Array.from({length:w.width},(_,x)=>palettes[w.chapters[w.chapterAt({x,y})].theme])),R=3;
+  const shades=theme.map((row,y)=>row.map((_,x)=>{const sum=[[0,0,0],[0,0,0]];let n=0;
+    for(let dy=-R;dy<=R;dy++)for(let dx=-R;dx<=R;dx++){const p=theme[y+dy]?.[x+dx];if(!p)continue;const wgt=1/(1+dx*dx+dy*dy);n+=wgt;for(let k=0;k<2;k++)for(let c=0;c<3;c++)sum[k][c]+=p[k][c]*wgt;}
+    return sum.map(c=>c.map(v=>Math.round(v/n)));}));
+  escapeWorldShadeCache={world:w,shades};return shades;
+}
+// Ground, tracks and walls never change, so they are drawn once into 16-tile chunks and reused.
+const ESCAPE_CHUNK=16;let escapeWorldChunks={key:null,map:new Map()};
+function escapeWorldTerrain(w,palettes,cell,x1,x2,y1,y2){
+  const key=cell;if(escapeWorldChunks.key!==key||escapeWorldChunks.world!==w)escapeWorldChunks={key,world:w,map:new Map()};
+  for(let cy=Math.floor(y1/ESCAPE_CHUNK);cy<=Math.floor(y2/ESCAPE_CHUNK);cy++)for(let cx=Math.floor(x1/ESCAPE_CHUNK);cx<=Math.floor(x2/ESCAPE_CHUNK);cx++){
+    const id=cx+','+cy;let chunk=escapeWorldChunks.map.get(id);
+    if(!chunk){chunk=createGraphics(ESCAPE_CHUNK*cell,ESCAPE_CHUNK*cell);chunk.pixelDensity(1);chunk.push();chunk.translate(-cx*ESCAPE_CHUNK*cell,-cy*ESCAPE_CHUNK*cell);
+      // Neighbouring tiles are drawn too, so crowns that overhang a chunk edge match on both sides.
+      drawEscapeWorldTerrain(chunk,w,palettes,cell,Math.max(0,cx*ESCAPE_CHUNK-1),Math.min(w.width-1,cx*ESCAPE_CHUNK+ESCAPE_CHUNK),Math.max(0,cy*ESCAPE_CHUNK-1),Math.min(w.height-1,cy*ESCAPE_CHUNK+ESCAPE_CHUNK));chunk.pop();
+      escapeWorldChunks.map.set(id,chunk);
+      if(escapeWorldChunks.map.size>36){const [oldest,g]=escapeWorldChunks.map.entries().next().value;g.remove();escapeWorldChunks.map.delete(oldest);}
+    }else{escapeWorldChunks.map.delete(id);escapeWorldChunks.map.set(id,chunk);}
+    image(chunk,cx*ESCAPE_CHUNK*cell,cy*ESCAPE_CHUNK*cell);
+  }
+}
+function drawEscapeWorldTerrain(d,w,palettes,cell,x1,x2,y1,y2){
+  const shades=escapeWorldShades(w,palettes);
+  // The grid defines collision, but the overworld reads as continuous terrain.
+  // Region colours are blended across borders once and cached, so areas fade into each other.
+  for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++){const c=w.chapters[w.chapterAt({x,y})],p=palettes[c.theme],tile=w.grid[y][x],floor=['.','L'].includes(tile);d.noStroke();d.fill(...shades[y][x][floor?0:1]);d.rect(x*cell,y*cell,cell+1,cell+1);
+    if(tile==='P'){d.fill(39,113,132);d.rect(x*cell,y*cell,cell+1,cell+1);d.stroke(126,193,182,130);d.strokeWeight(cell*.04);d.line((x+.15)*cell,(y+.4)*cell,(x+.82)*cell,(y+.4)*cell);}
+    if(floor&&(x*13+y*7)%9===0){d.stroke(...p[2],75);d.strokeWeight(cell*.045);d.line((x+.25)*cell,(y+.7)*cell,(x+.31)*cell,(y+.54)*cell);d.line((x+.45)*cell,(y+.71)*cell,(x+.42)*cell,(y+.58)*cell);}
+  }
+  // A winding track gives the main route a readable direction through open spaces.
+  for(const track of w.tracks){for(const [color,weight]of track.side?[[[157,174,117,140],.28]]:[[[45,65,45,75],.78],[[206,187,131,210],.58]]){d.noFill();d.stroke(...color);d.strokeWeight(cell*weight);d.beginShape();const first=track.points[0],last=track.points.at(-1);d.curveVertex(first.x*cell,first.y*cell);for(const p of track.points)d.curveVertex(p.x*cell,p.y*cell);d.curveVertex(last.x*cell,last.y*cell);d.endShape();}}
+  // Border trees, dune rocks and ruined masonry echo the level art without tiling the whole map.
+  for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++){const tile=w.grid[y][x],c=w.chapters[w.chapterAt({x,y})],p=palettes[c.theme];
+    if(tile==='#'){
+      // Walls read as solid masses: a full feature along clearing edges, a continuous canopy or rock face inside.
+      const edge=[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>['.','L'].includes(w.grid[y+dy]?.[x+dx])),px=(x+.5)*cell,py=(y+.5)*cell,hash=(x*73+y*151)%17,base=shades[y][x][1];d.noStroke();
+      if(['ruins','quarry','ants','vents'].includes(c.theme)){
+        if(edge){d.fill(7,26,19,60);d.rect(px-cell*.48,py-cell*.2,cell*.96,cell*.72,cell*.14);d.fill(...p[2]);d.rect(px-cell*.46,py-cell*.44,cell*.92,cell*.78,cell*.14);d.fill(255,255,255,40);d.rect(px-cell*.4,py-cell*.4,cell*.8,cell*.08,cell*.04);d.stroke(...p[1],150);d.strokeWeight(cell*.035);if(hash%3)d.line(px-cell*.2,py-cell*.05,px+cell*.25,py-cell*.05);else d.line(px,py-cell*.4,px,py+cell*.3);}
+        else{d.fill(base[0]-10,base[1]-10,base[2]-10);if(hash%4===0)d.ellipse(px+(hash%5-2)*cell*.08,py,cell*.3,cell*.2);}
+      }else if(['desert','coast','rooftops'].includes(c.theme)){
+        if(edge||hash%5===0){d.fill(7,26,19,45);d.ellipse(px,py+cell*.25,cell*.9,cell*.35);d.fill(...p[2]);d.ellipse(px,py,cell*.95,cell*.6);if(hash%2){d.stroke(99,132,76);d.strokeWeight(cell*.08);d.line(px,py,px,py-cell*.42);d.line(px,py-cell*.2,px+cell*.15,py-cell*.32);}}
+        else{d.fill(base[0]+8,base[1]+6,base[2]+4,120);d.ellipse(px,py,cell*1.1,cell*.5);}
+      }else{
+        // Each crown is nudged and sized by a hash of its tile, so the canopy never reads as a grid.
+        const r=(edge?1:1.3)*(.88+(hash%5)*.06),jx=((hash%7)-3)*cell*.07,jy=((hash*3%7)-3)*cell*.06,cx=px+jx,cy=py+jy,tone=(hash%3-1)*9;
+        d.fill(0,0,0,edge?50:28);d.ellipse(cx+cell*.06,cy+cell*.14,cell*r,cell*r*.9);d.fill(p[1][0]+tone,p[1][1]+tone,p[1][2]+tone);d.ellipse(cx,cy-cell*.06,cell*r,cell*r*.95);
+        d.fill(...p[2],edge?70:30);d.ellipse(cx-cell*.18*r,cy-cell*.24*r,cell*.55*r,cell*.48*r);if(hash%6===0){d.fill(...p[2],45);d.ellipse(cx+cell*.2,cy+cell*.05,cell*.3,cell*.26);}
+      }
+    }else if(tile==='L'){d.noStroke();d.fill(46,110,67,200);for(const [dx,dy]of [[.3,.4],[.65,.3],[.5,.65]])d.ellipse((x+dx)*cell,(y+dy)*cell,cell*.5,cell*.45);}
+  }
+}
 function drawEscapeWorld(){
   const w=escapeWorld,cell=width<600?23:30,clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),cx=clamp(w.player.x,width/(2*cell),w.width-width/(2*cell)),cy=clamp(w.player.y,(height-90)/(2*cell),w.height-(height-90)/(2*cell)),ox=width/2-cx*cell,oy=(width<600?height*.42:(height+30)/2)-cy*cell;
   const bounds=document.getElementById('game-container').getBoundingClientRect?.()||{left:0,top:0,width,height},panels=[...document.querySelectorAll('.world-heading,.world-route,.world-guide,.world-touch #movement-stick,.world-touch .direction-pad,.world-touch .ability-pad')].map(p=>p.getBoundingClientRect());
@@ -87,21 +142,7 @@ function drawEscapeWorld(){
   const palettes={meadow:[[134,168,106],[51,86,65],[175,190,130]],garden:[[114,153,102],[50,83,63],[161,177,123]],river:[[103,156,127],[43,90,81],[150,182,139]],ruins:[[123,147,111],[73,94,82],[171,177,139]],quarry:[[155,138,104],[99,91,75],[192,173,132]],desert:[[201,162,99],[135,112,73],[232,193,125]],marsh:[[99,141,109],[40,81,72],[143,164,120]],jungle:[[77,125,91],[27,74,54],[122,153,94]],glow:[[38,77,82],[18,44,52],[96,168,151]],orchard:[[126,153,93],[56,93,53],[180,185,119]],coast:[[179,176,121],[56,118,110],[221,201,143]],hollow:[[128,104,112],[58,40,56],[176,140,150]],lantern:[[70,104,104],[24,52,58],[120,170,150]],rooftops:[[196,150,108],[132,78,56],[226,190,140]],ants:[[150,112,76],[78,52,34],[190,150,104]],frost:[[196,214,226],[96,124,146],[236,244,250]],vents:[[150,120,100],[86,60,50],[196,160,130]]};
   background(37,66,54);push();translate(ox,oy);
   const x1=Math.max(0,Math.floor(-ox/cell)),x2=Math.min(w.width-1,Math.ceil((width-ox)/cell)),y1=Math.max(0,Math.floor(-oy/cell)),y2=Math.min(w.height-1,Math.ceil((height-oy)/cell));
-  // The grid defines collision, but the overworld reads as continuous terrain.
-  for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++){const c=w.chapters[w.chapterAt({x,y})],p=palettes[c.theme],tile=w.grid[y][x],floor=['.','L'].includes(tile);noStroke();fill(...p[floor?0:1]);rect(x*cell,y*cell,cell+1,cell+1);
-    if(tile==='P'){fill(39,113,132);rect(x*cell,y*cell,cell+1,cell+1);stroke(126,193,182,130);strokeWeight(cell*.04);line((x+.15)*cell,(y+.4)*cell,(x+.82)*cell,(y+.4)*cell);}
-    if(floor&&(x*13+y*7)%9===0){stroke(...p[2],75);strokeWeight(cell*.045);line((x+.25)*cell,(y+.7)*cell,(x+.31)*cell,(y+.54)*cell);line((x+.45)*cell,(y+.71)*cell,(x+.42)*cell,(y+.58)*cell);}
-  }
-  // A winding track gives the main route a readable direction through open spaces.
-  for(const track of w.tracks){for(const [color,weight]of track.side?[[[157,174,117,140],.28]]:[[[45,65,45,75],.78],[[206,187,131,210],.58]]){noFill();stroke(...color);strokeWeight(cell*weight);beginShape();const first=track.points[0],last=track.points.at(-1);curveVertex(first.x*cell,first.y*cell);for(const p of track.points)curveVertex(p.x*cell,p.y*cell);curveVertex(last.x*cell,last.y*cell);endShape();}}
-  // Border trees, dune rocks and ruined masonry echo the level art without tiling the whole map.
-  for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++){const tile=w.grid[y][x],c=w.chapters[w.chapterAt({x,y})],p=palettes[c.theme];
-    if(tile==='#'){const edge=[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>['.','L'].includes(w.grid[y+dy]?.[x+dx]));if(!edge&&(x*7+y*11)%3!==0)continue;const px=(x+.5)*cell,py=(y+.5)*cell;noStroke();fill(7,26,19,65);ellipse(px,py+cell*.29,cell*.9,cell*.4);
-      if(['ruins','quarry','ants','vents'].includes(c.theme)){fill(...p[2]);rect(px-cell*.4,py-cell*.35,cell*.8,cell*.65,cell*.12);stroke(...p[1]);strokeWeight(cell*.04);line(px-cell*.25,py-cell*.2,px+cell*.25,py-cell*.2);}
-      else if(['desert','coast','rooftops'].includes(c.theme)){fill(...p[2]);ellipse(px,py,cell*.85,cell*.5);stroke(99,132,76);strokeWeight(cell*.09);line(px,py,px,py-cell*.45);}
-      else{fill(...p[1]);ellipse(px,py-cell*.12,cell*.98,cell*.95);fill(...p[2],60);ellipse(px-cell*.17,py-cell*.29,cell*.55,cell*.5);}
-    }else if(tile==='L'){noStroke();fill(46,110,67,200);for(const [dx,dy]of [[.3,.4],[.65,.3],[.5,.65]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.5,cell*.45);}
-  }
+  escapeWorldTerrain(w,palettes,cell,x1,x2,y1,y2);
   for(const gate of w.gates){if(w.regionOpen(gate.chapter))continue;const x=gate.x+.5,y=gate.y+.5;stroke(224,187,99);strokeWeight(cell*.1);for(const d of [-1.2,-.8,-.4,0,.4,.8,1.2]){if(gate.vertical)line((x+d)*cell,(y-.32)*cell,(x+d)*cell,(y+.32)*cell);else line((x-.32)*cell,(y+d)*cell,(x+.32)*cell,(y+d)*cell);}noStroke();fill(245,223,151);textAlign(CENTER,CENTER);const need=EscapeCatalog.levels[w.chapters[gate.chapter].start]?.unlockChallenges;textSize(cell*(need?.42:.34));text(need?'⚑'+need:'◇',x*cell,y*cell);}
   for(const sign of w.signs)if(w.regionOpen(sign.chapter))drawEscapeWorldSign(sign,w.chapters[sign.chapter],escapeRegionStars(sign.chapter),cell);
   for(const cache of w.caches)if(w.regionOpen(cache.chapter))drawEscapeWorldCache(cache,w.found.has(cache.id),cell,w.elapsed,Math.hypot(cache.x+.5-w.player.x,cache.y+.5-w.player.y));
