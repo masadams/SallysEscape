@@ -199,7 +199,9 @@ function showEscapeResult(){
   const next=EscapeCatalog.levels[EscapeCatalog.levels.indexOf(escapeGame.level)+1],nextButton=document.getElementById('escape-next-btn');
   // Point at any challenge this win opened, so it is not missed on the map.
   const opened=won?escapeProgress.announceChallenges():[],openedText=opened.map(c=>c.name+(c.levelId===r.levelId?'':' ('+EscapeCatalog.levels.find(l=>l.id===c.levelId).name+')')).join(', ');
-  document.getElementById('escape-result-challenge').textContent=opened.length?'⚑ New challenge open: '+openedText+'. Find the glowing flag on the map.':'';
+  const mastered=won&&!r.challengeId?escapeProgress.announceMastery(EscapeWorld.chapters):[];
+  document.getElementById('escape-result-challenge').textContent=[opened.length?'⚑ New challenge open: '+openedText+'. Find the glowing flag on the map.':'',...mastered.map(c=>'♛ '+c.name+' mastered! Every star is yours, and Sally can now wear its '+(ESCAPE_SKINS[c.theme]?.name||c.name)+' colours. Change them on the world map.')].filter(Boolean).join(' ');
+  if(mastered.length)escapeSound('cache');
   nextButton.style.display=won&&!r.challengeId?'inline-block':'none';
   nextButton.textContent=next?(next.expedition?'Explore expedition →':'Try next escape →'):'Return to world map';
   nextButton.onclick=next?()=>startEscape({levelId:next.id}):showEscapeSelect;
@@ -219,9 +221,9 @@ function tickEscapeMusic(){
   escapeMusic.setVolume((paused?.35:1)*.6,isMuted||!musicOn);
   const screen=gameState==='start'?'menu':gameState==='escapeSelect'?'world':'game';
   escapeMusic.setState(EscapeMusic.stateFor({screen,game:screen==='game'?escapeGame:null}),millis()/1000);
-  // Each region has a mood; the world map follows the courtyard Sally is standing in.
+  // Each region has a style and each escape its own tune; the world map follows the courtyard Sally is standing in.
   const chapters=EscapeWorld.chapters,index=screen==='game'&&escapeGame?EscapeCatalog.levels.indexOf(escapeGame.level):-1,chapter=index>=0?chapters.find(c=>index>=c.start&&index<c.end):screen==='world'&&escapeWorld?chapters[escapeWorld.chapterAt()]:chapters[0];
-  escapeMusic.setMood(EscapeMusic.THEME_MOOD[chapter?.theme]||'meadow');
+  escapeMusic.setStyle(EscapeMusic.styleFor(chapter?.theme||'meadow',index>=0&&chapter?index-chapter.start:-1));
 }
 function escapeSound(event,options={}){
   if(isMuted||paused||!audioUnlocked||soundVolume===0||typeof EscapeAudio==='undefined')return;
@@ -561,45 +563,76 @@ function drawEscapeDroppedTail(tail,cell,clock){
     for(let i=0;i<=7;i++){const t=i/7,wiggle=Math.sin(age*18-t*5)*.16*(1-t*.3);curveVertex((tail.x-.35+t*.7)*cell,(tail.y+wiggle)*cell);if(i===0||i===7)curveVertex((tail.x-.35+t*.7)*cell,(tail.y+wiggle)*cell);}endShape();}
   noStroke();fill(255,214,140,120*life);textSize(cell*.42);text('!',tail.x*cell,(tail.y-.45)*cell);
 }
+// Sally's colours. Classic green is always hers; every area mastered (all stars) adds its own.
+const ESCAPE_SKINS={
+  classic:{name:'Classic green',body:[108,194,119],dark:[22,66,43],light:[192,229,146],spot:[43,120,66]},
+  meadow:{name:'Buttercup',body:[214,196,92],dark:[92,72,22],light:[250,238,170],spot:[168,128,40]},
+  garden:{name:'Moss and rose',body:[122,168,102],dark:[48,70,40],light:[236,170,184],spot:[190,92,118]},
+  river:{name:'River blue',body:[92,170,198],dark:[22,58,78],light:[190,232,240],spot:[40,110,150]},
+  ruins:{name:'Old stone',body:[160,156,140],dark:[60,56,50],light:[214,208,186],spot:[108,98,84]},
+  quarry:{name:'Granite',body:[132,138,150],dark:[40,44,54],light:[200,204,214],spot:[84,90,104]},
+  desert:{name:'Sandstorm',body:[218,170,108],dark:[100,62,28],light:[246,222,170],spot:[176,106,52]},
+  marsh:{name:'Bog bloom',body:[112,150,82],dark:[44,58,30],light:[214,186,226],spot:[132,94,150]},
+  jungle:{name:'Poison dart',body:[56,170,220],dark:[14,40,70],light:[250,220,80],spot:[12,22,40]},
+  glow:{name:'Glowworm',body:[62,92,120],dark:[16,26,40],light:[150,255,226],spot:[90,230,200]},
+  orchard:{name:'Apple',body:[200,78,72],dark:[86,24,24],light:[250,196,150],spot:[130,170,70]},
+  coast:{name:'Coral reef',body:[240,140,120],dark:[100,46,40],light:[255,226,200],spot:[60,170,180]},
+  hollow:{name:'Shed skin',body:[200,190,170],dark:[96,84,70],light:[246,240,226],spot:[150,136,116]},
+  lantern:{name:'Lantern glow',body:[236,170,70],dark:[96,54,16],light:[255,236,160],spot:[190,100,40]},
+  rooftops:{name:'Terracotta',body:[196,110,76],dark:[86,40,26],light:[240,196,160],spot:[150,70,46]},
+  ants:{name:'Fire ant',body:[188,58,42],dark:[64,16,12],light:[244,150,96],spot:[40,20,18]},
+  frost:{name:'Snowdrift',body:[214,232,246],dark:[70,96,124],light:[255,255,255],spot:[140,180,214]},
+  vents:{name:'Ember',body:[70,62,64],dark:[20,16,18],light:[255,150,70],spot:[240,96,40]}
+};
+// Mix toward white (amount>0) or black (amount<0).
+const escapeShade=(c,amount)=>c.map(v=>Math.round(amount>0?v+(255-v)*amount:v*(1+amount)));
+let escapeSkinCache={id:null,palette:null};
+function escapeSkinPalette(){
+  const id=typeof escapeProgress!=='undefined'&&typeof EscapeWorld!=='undefined'?escapeProgress.skin(EscapeWorld.chapters):'classic';
+  if(escapeSkinCache.id===id)return escapeSkinCache.palette;const k=ESCAPE_SKINS[id]||ESCAPE_SKINS.classic;
+  const palette={body:k.body,dark:k.dark,light:k.light,spot:k.spot,leg:escapeShade(k.body,-.13),elbow:escapeShade(k.body,.12),head:escapeShade(k.body,.06),patch:escapeShade(k.light,-.02),toe:escapeShade(k.body,.15),toeLift:escapeShade(k.body,.35),nostril:escapeShade(k.spot,-.1)};
+  escapeSkinCache={id,palette};return palette;
+}
 function drawEscapeLizard(model,cell,clock,swimming=false,tailless=false){
+  const skin=escapeSkinPalette();
   // A tailless Sally keeps her body and a short stump; the rig itself is unchanged.
   if(tailless)model={...model,joints:model.joints.slice(0,9),angles:model.angles.slice(0,9),widths:model.widths.slice(0,8).concat([model.widths[8]*.55])};
-  if(swimming){const p=model.joints[0];noFill();stroke(151,232,223,110);strokeWeight(cell*.035);ellipse(p.x*cell,p.y*cell,cell*.9,cell*.6);for(const side of [-1,1]){const q=model.joints[4],a=model.angles[4]+side*PI/2;stroke(94,179,111);strokeWeight(cell*.065);line(q.x*cell,q.y*cell,(q.x+Math.cos(a)*.15-Math.cos(model.angles[4])*.16)*cell,(q.y+Math.sin(a)*.15-Math.sin(model.angles[4])*.16)*cell);}}
+  if(swimming){const p=model.joints[0];noFill();stroke(151,232,223,110);strokeWeight(cell*.035);ellipse(p.x*cell,p.y*cell,cell*.9,cell*.6);for(const side of [-1,1]){const q=model.joints[4],a=model.angles[4]+side*PI/2;stroke(...skin.leg);strokeWeight(cell*.065);line(q.x*cell,q.y*cell,(q.x+Math.cos(a)*.15-Math.cos(model.angles[4])*.16)*cell,(q.y+Math.sin(a)*.15-Math.sin(model.angles[4])*.16)*cell);}}
   escapeBodyShadow(model,cell);
   for(const leg of swimming?[]:model.legs){
     const r=leg.root,e={x:leg.elbow.x,y:leg.elbow.y-leg.lift*.02},f={x:leg.foot.x,y:leg.foot.y-leg.lift*.045};
     noStroke();fill(3,12,15,leg.lift>.25?75:130);ellipse(leg.foot.x*cell,leg.foot.y*cell,cell*.085,cell*.035);
-    noFill();stroke(19,48,37);strokeWeight(cell*.082);
+    noFill();stroke(...skin.dark);strokeWeight(cell*.082);
     bezier(r.x*cell,r.y*cell,e.x*cell,e.y*cell,e.x*cell,e.y*cell,f.x*cell,f.y*cell);
-    stroke(94,179,111);strokeWeight(cell*.052);
+    stroke(...skin.leg);strokeWeight(cell*.052);
     bezier(r.x*cell,r.y*cell,e.x*cell,e.y*cell,e.x*cell,e.y*cell,f.x*cell,f.y*cell);
-    noStroke();fill(126,204,135);ellipse(e.x*cell,e.y*cell,cell*.055,cell*.055);
+    noStroke();fill(...skin.elbow);ellipse(e.x*cell,e.y*cell,cell*.055,cell*.055);
     // The lifting toes brighten and tuck slightly during the swing phase.
-    stroke(leg.lift>.25?165:133,leg.lift>.25?225:203,leg.lift>.25?162:132);strokeWeight(cell*.02);
+    stroke(...(leg.lift>.25?skin.toeLift:skin.toe));strokeWeight(cell*.02);
     const heading=leg.footAngle;
     for(const spread of [-.55,0,.55]){
       const a=heading+spread,length=.07*(1-leg.lift*.3);
       line(f.x*cell,f.y*cell,(f.x+Math.cos(a)*length)*cell,(f.y+Math.sin(a)*length)*cell);
     }
   }
-  stroke(22,66,43);strokeWeight(cell*.03);fill(108,194,119);escapeBodyShape(model,cell);
+  stroke(...skin.dark);strokeWeight(cell*.03);fill(...skin.body);escapeBodyShape(model,cell);
   // A dorsal stripe follows the articulated shoulders, hips and long tail.
-  noFill();stroke(192,229,146,180);strokeWeight(cell*.035);beginShape();
+  noFill();stroke(...skin.light,180);strokeWeight(cell*.035);beginShape();
   for(const p of model.joints.slice(0,tailless?8:10))curveVertex(p.x*cell,p.y*cell);endShape();
-  noStroke();fill(43,120,66,150);
+  noStroke();fill(...skin.spot,150);
   for(let i=2;i<8;i++)for(const side of [-1,1]){
     const p=model.joints[i],a=model.angles[i]+side*Math.PI/2,r=model.widths[i]*.55;
     ellipse((p.x+Math.cos(a)*r)*cell,(p.y+Math.sin(a)*r)*cell,cell*.045,cell*.037);
   }
   const head=model.joints[0];push();translate(head.x*cell,head.y*cell);rotate(model.headAngle);
-  fill(125,208,132);ellipse(cell*.015,0,cell*.37,cell*.27);
+  fill(...skin.head);ellipse(cell*.015,0,cell*.37,cell*.27);
   const blinkTime=clock%5.3,blink=blinkTime>5.12?Math.sin((blinkTime-5.12)/.18*Math.PI):0;
   for(const side of [-1,1]){
-    fill(193,225,143);ellipse(cell*.02,side*cell*.124,cell*.12,cell*.087);
+    fill(...skin.patch);ellipse(cell*.02,side*cell*.124,cell*.12,cell*.087);
     fill(237,229,166);ellipse(cell*.035,side*cell*.124,cell*.075,cell*.065*(1-blink*.93));
     fill(20,49,31);ellipse(cell*.049,side*cell*.124,cell*.027,cell*.054*(1-blink*.93));
     if(blink<.7){fill(245,255,218);ellipse(cell*.035,side*cell*.134,cell*.018,cell*.018);}
-    fill(44,100,55);ellipse(cell*.155,side*cell*.035,cell*.017,cell*.015);
+    fill(...skin.nostril);ellipse(cell*.155,side*cell*.035,cell*.017,cell*.015);
   }
   pop();
 }

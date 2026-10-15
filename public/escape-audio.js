@@ -39,7 +39,8 @@
     caught:(v)=>{tone(v,{freq:330,to:92,dur:.55,type:'sawtooth',gain:.18});noise(v,{dur:.25,gain:.3,filter:'lowpass',freq:300});},
     failed:(v)=>notes(v,[[392,0,.18],[311,.18,.35]],{gain:.35}),
     warning:(v)=>notes(v,[[520,0,.07],[640,.09,.1]],{type:'sine',gain:.3}),
-    spotted:(v)=>{notes(v,[[880,0,.08],[1175,.08,.14]],{type:'square',gain:.18});noise(v,{dur:.08,gain:.12,freq:3000});},
+    // Being spotted must cut through the music: a thump, a two-note alarm and a long hiss.
+    spotted:(v)=>{tone(v,{freq:140,to:55,dur:.25,type:'sine',gain:.55});notes(v,[[880,0,.09],[1245,.09,.18]],{type:'square',gain:.2});noise(v,{dur:.45,delay:.04,gain:.22,filter:'highpass',freq:3800,attack:.03});},
     lost:(v)=>tone(v,{freq:620,to:390,dur:.35,type:'sine',gain:.3}),
     decoy:(v)=>{noise(v,{dur:.04,gain:.35,freq:2600,q:4});noise(v,{dur:.03,delay:.13,gain:.22,freq:2900,q:4});noise(v,{dur:.025,delay:.22,gain:.12,freq:3100,q:4});},
     distracted:(v)=>tone(v,{freq:700,to:760,dur:.18,type:'sine',gain:.25}),
@@ -84,10 +85,43 @@
     smash:(v)=>{noise(v,{dur:.45,gain:.45,filter:'lowpass',freq:900,to:150});tone(v,{freq:120,to:50,dur:.35,type:'square',gain:.18});for(let i=0;i<4;i++)noise(v,{dur:.05,delay:.08+i*.06,gain:.15,freq:2200-i*300,q:4});},
     click:(v)=>tone(v,{freq:900,to:700,dur:.05,type:'sine',gain:.12})
   };
+  // Each recipe is rendered once to a buffer offline and replayed from then on: one buffer
+  // source instead of a fresh graph of oscillators, filters and LFOs per sound. Footsteps and
+  // other noisy sounds keep three takes and a slight pitch drift so repeats never sound stamped.
+  const VARIED=new Set(['step','paddle','tail','rustle','skitter','scrape','splash','flutter','clash']);
+  const cache=new Map(),rendering=new Set(),lastPlayed=new Map(),active=[];
+  const MAX_VOICES=14,REPEAT_GAP=.045;
+  const keyFor=(name,o)=>name+(o.sprint?':s':'')+(o.alt?':a':'');
+  function render(ctx,name,options,key){
+    const Offline=root.OfflineAudioContext||root.webkitOfflineAudioContext;if(!Offline||rendering.has(key))return;rendering.add(key);
+    const takes=VARIED.has(name)?3:1,length=Math.ceil(ctx.sampleRate*1.6),buffers=[];
+    const one=i=>{const off=new Offline(1,length,ctx.sampleRate),saved=[context,master,noiseBuffer];
+      try{context=off;master=off.createGain();master.connect(off.destination);noiseBuffer=saved[2];recipes[name](1,options);}finally{[context,master,noiseBuffer]=saved;}
+      return off.startRendering().then(buffer=>{buffers[i]=trim(buffer);});};
+    Promise.all([...Array(takes)].map((_,i)=>one(i))).then(()=>cache.set(key,buffers)).catch(()=>{}).finally(()=>rendering.delete(key));
+  }
+  // Cut the silent tail so short sounds free their voice quickly.
+  function trim(buffer){const data=buffer.getChannelData(0);let end=data.length;while(end>1&&Math.abs(data[end-1])<1e-4)end--;
+    const out=new AudioBuffer({length:Math.max(1,end),numberOfChannels:1,sampleRate:buffer.sampleRate});out.copyToChannel(data.subarray(0,Math.max(1,end)),0);return out;}
+  function replay(ctx,buffers,volume,varied){
+    const src=ctx.createBufferSource(),amp=ctx.createGain();src.buffer=buffers[Math.floor(Math.random()*buffers.length)];
+    if(varied)src.playbackRate.value=.94+Math.random()*.12;amp.gain.value=volume;src.connect(amp);amp.connect(master);src.start();
+    const voice={src,ends:ctx.currentTime+src.buffer.duration};active.push(voice);src.onended=()=>{src.disconnect();amp.disconnect();const i=active.indexOf(voice);if(i>=0)active.splice(i,1);};
+  }
   function play(ctx,name,volume=.25,options={}){
     const recipe=recipes[name];if(!recipe||!ctx||volume<=0)return false;
-    try{setup(ctx);recipe(Math.min(1,volume*1.6),options);return true;}catch(_){return false;}
+    try{
+      setup(ctx);const key=keyFor(name,options),now=ctx.currentTime;
+      // The same sound twice in a few milliseconds only adds volume and clipping.
+      if(now-(lastPlayed.get(key)??-1)<REPEAT_GAP)return false;lastPlayed.set(key,now);
+      // Too many voices at once: footsteps give way first, then the oldest sound stops.
+      for(let i=active.length-1;i>=0;i--)if(active[i].ends<now)active.splice(i,1);
+      if(active.length>=MAX_VOICES){if(name==='step'||name==='paddle')return false;const oldest=active.shift();try{oldest.src?.stop();}catch(_){}}
+      const level=Math.min(1,volume*1.6),buffers=cache.get(key);
+      if(buffers&&ctx.createBufferSource)replay(ctx,buffers,level,VARIED.has(name));else{recipe(level,options);active.push({src:null,ends:now+.6});render(ctx,name,options,key);}
+      return true;
+    }catch(_){return false;}
   }
-  root.EscapeAudio={play,recipes:Object.keys(recipes)};
+  root.EscapeAudio={play,recipes:Object.keys(recipes),cached:()=>cache.size,reset:()=>{cache.clear();lastPlayed.clear();active.length=0;}};
   if(typeof module!=='undefined'&&module.exports)module.exports=root.EscapeAudio;
 })(typeof globalThis!=='undefined'?globalThis:this);
