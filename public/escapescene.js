@@ -194,6 +194,17 @@ function showEscapeResult(){
   document.getElementById('escape-menu-btn').onclick=showEscapeSelect;document.getElementById('escape-menu-btn').textContent='Explore the world';document.getElementById('escape-menu-btn').className=won?'escape-primary':'escape-secondary';
   (won&&!r.challengeId?nextButton:document.getElementById('escape-retry-btn')).focus();renderEscapeHUD(true);
 }
+// Adaptive music boots after the first user gesture and then follows the game every frame.
+function startEscapeMusic(context){
+  if(typeof EscapeMusic==='undefined'||escapeMusic)return;escapeMusic=new EscapeMusic();
+  escapeMusic.load(context).then(ok=>{if(ok)escapeMusic.start();});
+}
+function tickEscapeMusic(){
+  if(!escapeMusic)return;
+  escapeMusic.setVolume((paused?.35:1)*.6,isMuted||!musicOn);
+  const screen=gameState==='start'?'menu':gameState==='escapeSelect'?'world':'game';
+  escapeMusic.setState(EscapeMusic.stateFor({screen,game:screen==='game'?escapeGame:null}),millis()/1000);
+}
 function escapeSound(event,options={}){
   if(isMuted||paused||!audioUnlocked||soundVolume===0||typeof EscapeAudio==='undefined')return;
   try{EscapeAudio.play(getAudioContext(),event,soundVolume,options);}catch(_){/* Audio feedback remains optional. */}
