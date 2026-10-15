@@ -244,6 +244,8 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 @media (max-height:430px){ #escape-intro { padding:12px 16px; } #escape-intro h2 { font-size:1.1rem; margin:3px 0 4px; } .escape-intro-brief,.escape-intro-hint { font-size:.78rem; margin-bottom:5px; } }
 #escape-result.escape-first-try { border-color:#78ecbe; box-shadow:0 0 0 2px #78ecbe55, 0 18px 50px #000a; }
 #escape-result.escape-first-try #escape-result-title { color:#9ff5d0; }
+#escape-result.escape-perfect { border-color:#ffd25a; box-shadow:0 0 0 2px #ffd25a66, 0 0 40px #ffd25a33, 0 18px 50px #000a; }
+#escape-result.escape-perfect #escape-result-title { color:#ffe08a; }
 #escape-warmth { height:7px; margin:3px 0 4px; border-radius:4px; background:rgba(255,255,255,.14); overflow:hidden; }
 #escape-warmth-fill { display:block; height:100%; width:100%; border-radius:4px; background:#ffb36b; transition:width .1s linear; }
 /* Open challenges that have not been beaten yet glow so they are easy to spot. */

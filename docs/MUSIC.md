@@ -27,7 +27,7 @@ AudioContext, so they share one clock.
 | `melody` | The region's lead (marimba, pluck, bell or flute), with a soft arpeggio in the second half of each phrase |
 | `perc` | Shaker: straight, with a backbeat rim, or swung |
 | `tension` | Tremolo strings and a heartbeat |
-| `chase` | Kick and snare, a driving ostinato and short stabs |
+| `chase` | A driving kick, sixteenth hats, a snare backbeat with a ghost note, an ostinato on the chord root, short stabs, and a tom fill into every fourth bar |
 
 ## States
 
@@ -60,9 +60,12 @@ silences both music and effects.
 | `marsh` | E phrygian |
 | `desert` | D phrygian dominant |
 | `frost` | B minor, open and suspended |
+| `spooky` | Diminished and augmented chords that never settle |
 
 `STYLES` gives each region (by theme) a mood, a lead (`melody` marimba,
-`pluck`, `bell` or `flute`), a tempo and a groove. `styleFor(theme, n)` gives
+`pluck`, `bell`, `flute` or the wavering `ghost`), a tempo and a groove
+(straight, backbeat, swung, or sparse for the spooky Shedding Hollow and
+Lantern Marsh). `styleFor(theme, n)` gives
 escape `n` of that region its own melody seed, a key shift and a rotated
 groove and tempo, so no two escapes in a region share a tune; `n = -1` is the
 region's theme on the world map.

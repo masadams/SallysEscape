@@ -2,7 +2,7 @@
   const catalog=typeof module!=='undefined'&&module.exports?require('./escape-levels.js').EscapeCatalog:root.EscapeCatalog;
   const KEY='sallys-escape-progress-v1',validTime=n=>Number.isFinite(n)&&n>0&&n<1000000;
   class EscapeProgress{
-    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],challengesSeen:[],attempts:{},masterySeen:[],skin:'classic'};this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
+    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],challengesSeen:[],attempts:{},masterySeen:[],skin:'classic',whisper:false,hidden:{}};this.lastPerfect=false;this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
     read(){
       let raw,value;
       try{raw=this.storage?.getItem(KEY);this.persistent=Boolean(this.storage);}catch(_){this.persistent=false;return;}
@@ -17,6 +17,9 @@
       if(Array.isArray(value.challengesSeen))for(const id of value.challengesSeen)if(catalog.challenges.some(c=>c.id===id)&&!this.data.challengesSeen.includes(id))this.data.challengesSeen.push(id);
       if(Array.isArray(value.masterySeen))for(const t of value.masterySeen)if(typeof t==='string'&&/^[a-z]+$/.test(t)&&!this.data.masterySeen.includes(t))this.data.masterySeen.push(t);
       if(typeof value.skin==='string'&&/^[a-z]+$/.test(value.skin))this.data.skin=value.skin;
+      if(value.whisper===true)this.data.whisper=true;
+      for(const level of catalog.hidden||[]){const saved=value.hidden?.[level.id],old=this.data.hidden[level.id];if(!saved||saved.cleared!==true||!validTime(saved.bestTime)||!Number.isInteger(saved.stars)||saved.stars<1||saved.stars>3)continue;
+        this.data.hidden[level.id]={cleared:true,bestTime:Math.min(old?.bestTime||Infinity,saved.bestTime),stars:Math.max(old?.stars||0,saved.stars)};}
       if(Array.isArray(value.caches))for(const id of value.caches)if(typeof id==='string'&&/^[a-z]+-(north|south)$/.test(id)&&!this.data.caches.includes(id))this.data.caches.push(id);
       for(const [kind,entries] of [['levels',catalog.levels],['challenges',catalog.challenges]])for(const item of entries){
         const saved=value[kind]?.[item.id];
@@ -27,7 +30,7 @@
         const old=this.data[kind][item.id],revision=Number.isInteger(saved.revision)&&saved.revision>0?saved.revision:1;
         if(old&&(old.revision||1)>revision)continue;
         const compatible=old&&(old.revision||1)===revision;
-        this.data[kind][item.id]={cleared:true,bestTime:Math.min(compatible?old.bestTime||Infinity:Infinity,saved.bestTime),revision,...(kind==='levels'?{stars:Math.max(compatible?old.stars||0:0,saved.stars),treasure:Math.max(compatible?old.treasure||0:0,saved.treasure),...((saved.firstTry===true||compatible&&old.firstTry)?{firstTry:true}:{})}:{})};
+        this.data[kind][item.id]={cleared:true,bestTime:Math.min(compatible?old.bestTime||Infinity:Infinity,saved.bestTime),revision,...(kind==='levels'?{stars:Math.max(compatible?old.stars||0:0,saved.stars),treasure:Math.max(compatible?old.treasure||0:0,saved.treasure),...((saved.firstTry===true||compatible&&old.firstTry)?{firstTry:true}:{}),...((saved.perfect===true&&saved.firstTry===true||compatible&&old.perfect)?{perfect:true}:{})}:{})};
       }
     }
     challengesCleared(){return catalog.challenges.filter(c=>this.data.challenges[c.id]?.cleared).length;}
@@ -51,6 +54,11 @@
     setSkin(theme,chapters){if(!this.skins(chapters).includes(theme))return false;this.read();this.data.skin=theme;this.write();return true;}
     // Mastered areas never announced before; announcing marks them seen.
     announceMastery(chapters){this.read();const fresh=chapters.filter(c=>this.mastered(c)&&!this.data.masterySeen.includes(c.theme));if(fresh.length){this.data.masterySeen.push(...fresh.map(c=>c.theme));this.write();}return fresh;}
+    // Areas holding at least one perfect escape. Five of them open something; nothing says so,
+    // except one quiet line after the very first perfect escape.
+    perfectAreas(chapters){return chapters.filter(c=>catalog.levels.slice(c.start,c.end).some(l=>this.data.levels[l.id]?.perfect)).length;}
+    hiddenOpen(chapters){return Boolean(this.unlockAll)||this.perfectAreas(chapters)>=5;}
+    whisper(){this.read();if(this.data.whisper||!catalog.levels.some(l=>this.data.levels[l.id]?.perfect))return false;this.data.whisper=true;this.write();return true;}
     setView(view){if(!['follow','overview'].includes(view))return false;this.read();this.data.view=view;this.write();return true;}
     catchGoldfly(){this.read();this.data.goldflies=Math.min(this.data.goldflies+1,100000);this.write();return this.data.goldflies;}
     // Returns the regions that are open now but were never announced before.
@@ -63,15 +71,19 @@
         treasure:levels.reduce((n,{saved})=>n+(saved?.treasure||0),0)+this.data.caches.length*cacheValue+this.data.goldflies*2,goldflies:this.data.goldflies,
         maxTreasure:levels.reduce((n,{level})=>n+level.loot.reduce((t,l)=>t+l[2],0),0),
         cleared:levels.filter(({saved})=>saved?.cleared).length,levels:levels.length,
-        firstTries:levels.filter(({saved})=>saved?.firstTry).length,
+        firstTries:levels.filter(({saved})=>saved?.firstTry).length,perfect:levels.filter(({saved})=>saved?.perfect).length,
         challenges:catalog.challenges.filter(c=>this.data.challenges[c.id]?.cleared).length,maxChallenges:catalog.challenges.length,caches:this.data.caches.length,mastered:this.data.masterySeen.length};
     }
     write(){try{this.storage?.setItem(KEY,JSON.stringify(this.data));this.persistent=Boolean(this.storage);}catch(_){this.persistent=false;}}
     // A run that ends without escaping, or is abandoned part-way, uses up the first try.
     attempt(levelId){if(!catalog.levels.some(l=>l.id===levelId))return false;this.read();this.data.attempts[levelId]=(this.data.attempts[levelId]||0)+1;this.write();return true;}
     record(result){
-      this.lastFirstTry=false;
+      this.lastFirstTry=false;this.lastPerfect=false;
       if(result&&!result.challengeId&&['caught','failed'].includes(result.status))this.attempt(result.levelId);
+      if(result?.hidden){
+        const level=(catalog.hidden||[]).find(l=>l.id===result.levelId);if(!level||result.status!=='won'||!validTime(result.time)||!Number.isInteger(result.stars)||result.stars<1||result.stars>3)return false;
+        this.read();const old=this.data.hidden[level.id];this.data.hidden[level.id]={cleared:true,bestTime:Math.min(old?.bestTime||Infinity,result.time),stars:Math.max(old?.stars||0,result.stars)};this.write();return true;
+      }
       if(result?.status!=='won'||!validTime(result.time))return false;
       this.read();
       const level=catalog.levels.find(l=>l.id===result.levelId);if(!level)return false;
@@ -87,7 +99,9 @@
         const old=this.data.levels[level.id];if(old&&(old.revision||1)>revision)return false;
         const compatible=old&&(old.revision||1)===revision;
         const firstTry=!old&&!(this.data.attempts[level.id]>0);this.lastFirstTry=firstTry;
-        this.data.levels[level.id]={cleared:true,revision,stars:Math.max(compatible?old.stars||0:0,result.stars),treasure:Math.max(compatible?old.treasure||0:0,result.treasure),bestTime:Math.min(compatible?old.bestTime||Infinity:Infinity,result.time),...((firstTry||compatible&&old.firstTry)?{firstTry:true}:{})};
+        // A perfect escape: the very first attempt, all three stars and every treasure.
+        const perfect=firstTry&&result.stars===3&&result.treasure===total;this.lastPerfect=perfect;
+        this.data.levels[level.id]={cleared:true,revision,stars:Math.max(compatible?old.stars||0:0,result.stars),treasure:Math.max(compatible?old.treasure||0:0,result.treasure),bestTime:Math.min(compatible?old.bestTime||Infinity:Infinity,result.time),...((firstTry||compatible&&old.firstTry)?{firstTry:true}:{}),...((perfect||compatible&&old.perfect)?{perfect:true}:{})};
       }
       this.write();
       return true;

@@ -48,7 +48,7 @@ function mountEscapeChrome(active){
 }
 function openEscapeWorld(focusId){
   escapeLibraryOpen=false;escapeWorldHudSignature='';
-  if(!escapeWorld)escapeWorld=new EscapeWorld(id=>escapeProgress.unlocked(id),focusId);
+  if(!escapeWorld)escapeWorld=new EscapeWorld(id=>escapeProgress.unlocked(id),focusId,()=>escapeProgress.hiddenOpen(EscapeWorld.chapters));
   else if(focusId){const node=escapeWorld.nodes.find(n=>n.id===focusId);if(node){escapeWorld.player.x=node.x;escapeWorld.player.y=node.y+1;escapeWorld.target=null;escapeWorld.motion.resetPlayer(escapeWorld.player);}}
   escapeWorld.found=new Set(escapeProgress.data.caches);escapeWorld.onCache=escapeWorldFoundCache;escapeWorld.onFly=escapeWorldCaughtFly;
   escapeWorld.refreshRegions();document.getElementById('escape-select').style.display='none';document.getElementById('game-container').style.display='block';
@@ -65,9 +65,17 @@ function openEscapeLibrary(){
   escapeLibraryOpen=true;clearTouchInput();suppressHeldKeys();document.getElementById('game-area').classList.remove('escape-world-open');
   document.getElementById('game-container').style.display='none';document.getElementById('escape-select').style.display='block';document.getElementById('world-list-back').focus();updateToolbar();
 }
-function enterEscapeWorld(){const id=escapeWorld?.enter();if(id)startEscape({levelId:id});}
+function enterEscapeWorld(){const id=escapeWorld?.enter();if(id?.startsWith('hidden:'))startEscape({hiddenId:id.slice(7)});else if(id)startEscape({levelId:id});}
+// The Gilded Burrow's three escapes, shown only to those who found it.
+function renderEscapeHiddenHUD(node){
+  const level=EscapeCatalog.hidden[node.index],saved=escapeProgress.data.hidden[level.id],signature='hidden:'+node.id+':'+(saved?.bestTime||'');if(signature===escapeWorldHudSignature)return;escapeWorldHudSignature=signature;
+  document.getElementById('world-region-name').textContent='The Gilded Burrow';document.getElementById('world-route-number').textContent='THE GILDED BURROW · '+(node.index+1)+' OF 3';
+  document.getElementById('world-route-name').textContent=level.name;document.getElementById('world-route-brief').textContent=level.brief;
+  document.getElementById('world-route-best').textContent=saved?'★'.repeat(saved.stars)+'☆'.repeat(3-saved.stars)+' · Best '+saved.bestTime.toFixed(1)+'s':'Few have come this far.';
+  document.getElementById('world-route-challenge').textContent='';document.getElementById('world-challenge').style.display='none';
+}
 function renderEscapeWorldHUD(){
-  const w=escapeWorld,c=w.chapters[w.chapterAt()]||w.chapters[0],node=w.nearby(),level=node&&EscapeCatalog.levels[node.index],saved=node&&escapeProgress.data.levels[node.id],unlocked=node&&escapeProgress.unlocked(node.id);
+  const w=escapeWorld,c=w.chapters[w.chapterAt()]||w.chapters[0],node=w.nearby();if(node?.hidden){renderEscapeHiddenHUD(node);return;}const level=node&&EscapeCatalog.levels[node.index],saved=node&&escapeProgress.data.levels[node.id],unlocked=node&&escapeProgress.unlocked(node.id);
   const toast=document.getElementById('world-toast');if(toast&&millis()>escapeWorldToastUntil){const ci=w.chapters.indexOf(c),here=w.caches.filter(k=>k.chapter===ci),found=here.filter(k=>w.found.has(k.id)).length;toast.textContent=found<here.length?'Treasure caches hidden in '+c.name+': '+found+' / '+here.length+' found.':'Every cache in '+c.name+' found.';}
   const challenge=node&&EscapeCatalog.challenges.find(ch=>ch.levelId===node.id),challengeSaved=challenge&&escapeProgress.data.challenges[challenge.id];
   const signature=JSON.stringify([c.name,node?.id,saved?.bestTime,saved?.revision,unlocked,challengeSaved?.bestTime]);if(signature===escapeWorldHudSignature)return;escapeWorldHudSignature=signature;
@@ -97,7 +105,7 @@ function escapeWorldShades(w,palettes){
 // Ground, tracks and walls never change, so they are drawn once into 16-tile chunks and reused.
 const ESCAPE_CHUNK=16;let escapeWorldChunks={key:null,map:new Map()};
 function escapeWorldTerrain(w,palettes,cell,x1,x2,y1,y2){
-  const key=cell;if(escapeWorldChunks.key!==key||escapeWorldChunks.world!==w)escapeWorldChunks={key,world:w,map:new Map()};
+  const key=cell+':'+w.terrainVersion;if(escapeWorldChunks.key!==key||escapeWorldChunks.world!==w)escapeWorldChunks={key,world:w,map:new Map()};
   for(let cy=Math.floor(y1/ESCAPE_CHUNK);cy<=Math.floor(y2/ESCAPE_CHUNK);cy++)for(let cx=Math.floor(x1/ESCAPE_CHUNK);cx<=Math.floor(x2/ESCAPE_CHUNK);cx++){
     const id=cx+','+cy;let chunk=escapeWorldChunks.map.get(id);
     if(!chunk){chunk=createGraphics(ESCAPE_CHUNK*cell,ESCAPE_CHUNK*cell);chunk.pixelDensity(1);chunk.push();chunk.translate(-cx*ESCAPE_CHUNK*cell,-cy*ESCAPE_CHUNK*cell);
@@ -152,13 +160,15 @@ function drawEscapeWorld(){
   for(const sign of w.signs)if(w.regionOpen(sign.chapter))drawEscapeWorldSign(sign,w.chapters[sign.chapter],escapeRegionStars(sign.chapter),cell);
   for(const cache of w.caches)if(w.regionOpen(cache.chapter))drawEscapeWorldCache(cache,w.found.has(cache.id),cell,w.elapsed,Math.hypot(cache.x+.5-w.player.x,cache.y+.5-w.player.y));
   for(const n of w.nodes){const x=n.x*cell,y=n.y*cell,saved=escapeProgress.data.levels[n.id],unlocked=escapeProgress.unlocked(n.id);noStroke();fill(48,82,62,75);ellipse(x,y+cell*.35,cell*1.5,cell*.55);fill(unlocked?189:139,unlocked?202:156,unlocked?142:131);rect(x-cell*.65,y-cell*.65,cell*1.3,cell*1.3,cell*.22);fill(unlocked?55:100,unlocked?99:117,unlocked?70:99);rect(x-cell*.38,y-cell*.45,cell*.76,cell*.95,cell*.35);stroke(101,110,79);strokeWeight(cell*.045);line(x+cell*.5,y+cell*.3,x+cell*.5,y-cell*.7);noStroke();fill(...(saved?[70,147,90]:unlocked?[221,139,69]:[118,134,115]));triangle(x+cell*.5,y-cell*.7,x+cell*1.05,y-cell*.48,x+cell*.5,y-cell*.26);
-    if(saved){textSize(cell*.36);textAlign(CENTER,CENTER);noStroke();const lit=saved.firstTry?[120,236,190]:[255,214,92];for(let i=0;i<3;i++){fill(...(i<saved.stars?lit:[40,58,46,160]));text('★',x+(i-1)*cell*.36,y+cell*1.02);}if(saved.firstTry){fill(120,236,190);ellipse(x+cell*.72,y+cell*.62,cell*.36,cell*.36);fill(20,60,44);textSize(cell*.26);text('✓',x+cell*.72,y+cell*.63);}}
+    if(saved){textSize(cell*.36);textAlign(CENTER,CENTER);noStroke();const lit=saved.perfect?[255,196,40]:saved.firstTry?[120,236,190]:[255,214,92];if(saved.perfect){const fx=x+cell*.75,fy=y-cell*.95;stroke(110,70,10);strokeWeight(cell*.05);line(fx,fy,fx,fy+cell*.6);noStroke();fill(255,206,60);triangle(fx,fy,fx+cell*.42,fy+cell*.13,fx,fy+cell*.26);fill(255,240,170,120);ellipse(fx+cell*.12,fy+cell*.12,cell*.5,cell*.5);}for(let i=0;i<3;i++){fill(...(i<saved.stars?lit:[40,58,46,160]));text('★',x+(i-1)*cell*.36,y+cell*1.02);}if(saved.firstTry){fill(120,236,190);ellipse(x+cell*.72,y+cell*.62,cell*.36,cell*.36);fill(20,60,44);textSize(cell*.26);text('✓',x+cell*.72,y+cell*.63);}}
     const challenge=EscapeCatalog.challenges.find(c=>c.levelId===n.id);if(challenge){const done=escapeProgress.data.challenges[challenge.id]?.cleared,gate=escapeProgress.challengeGate(challenge.id),open=gate.open,bx=x-cell*.72,by=y-cell*.7;noStroke();
       // An open, unbeaten challenge pulses so it is easy to spot from across the map.
       if(open&&!done){const pulse=(sin(w.elapsed*4)+1)/2,fy=by-cell*.25-pulse*cell*.12;fill(255,214,92,60+pulse*90);ellipse(bx,fy,cell*(.95+pulse*.4),cell*(.95+pulse*.4));fill(255,226,120);stroke(120,60,10);strokeWeight(cell*.05);ellipse(bx,fy,cell*.72,cell*.72);noStroke();fill(120,60,10);textSize(cell*.44);text('⚑',bx,fy+cell*.02);fill(226,74,60);ellipse(bx+cell*.36,fy-cell*.32,cell*.32,cell*.32);fill(255);textSize(cell*.26);text('!',bx+cell*.36,fy-cell*.31);}
       else{fill(...(done?[255,205,86]:[120,132,118]));ellipse(bx,by,cell*.42,cell*.42);fill(...(done?[110,70,20]:[55,70,60]));textSize(cell*.26);text('⚑',bx,by+cell*.01);if(!done&&gate.cleared){const label=gate.stars+'/'+gate.need+'★';textSize(cell*.28);fill(30,48,38,210);rect(bx-textWidth(label)/2-cell*.08,by-cell*.62,textWidth(label)+cell*.16,cell*.34,cell*.1);fill(255,236,170);text(label,bx,by-cell*.45);}}}
     const button=document.getElementById('world-node-'+n.id),sx=x+ox,sy=y+oy,px=bounds.left+sx/width*bounds.width,py=bounds.top+sy/height*bounds.height,covered=panels.some(p=>px+20>p.left&&px-20<p.right&&py+20>p.top&&py-20<p.bottom);button.style.display=!covered&&sx>=30&&sx<=width-30&&sy>=30&&sy<=height-30?'block':'none';button.style.left=sx/width*100+'%';button.style.top=sy/height*100+'%';button.className='world-node '+(saved?'world-cleared':unlocked?'world-available':'world-locked');button.setAttribute('aria-label',(n.index+1)+' · '+n.name+(saved?' · cleared':unlocked?' · available':' · locked'));
   }
+  if(w.hiddenCarved)for(const n of w.hiddenNodes){const x=n.x*cell,y=n.y*cell,saved=escapeProgress.data.hidden[n.id],pulse=(sin(w.elapsed*2+n.index)+1)/2;noStroke();fill(255,206,90,40+pulse*50);ellipse(x,y,cell*(1.8+pulse*.3),cell*(1.8+pulse*.3));fill(120,86,24);rect(x-cell*.5,y-cell*.5,cell,cell,cell*.2);fill(255,214,100);rect(x-cell*.38,y-cell*.38,cell*.76,cell*.76,cell*.16);fill(90,60,10);textAlign(CENTER,CENTER);textSize(cell*.42);text('✦',x,y);
+    if(saved){textSize(cell*.36);for(let i=0;i<3;i++){fill(...(i<saved.stars?[255,196,40]:[40,58,46,160]));text('★',x+(i-1)*cell*.36,y+cell*1.02);}}}
   for(const npc of w.npcs)if(w.regionOpen(npc.chapter))drawEscapeWorldNpc(npc,cell,w.elapsed);
   if(w.lick){const head=w.motion.lizard.joints[0];stroke(232,110,140);strokeWeight(cell*.08);line(head.x*cell,head.y*cell,w.lick.x*cell,w.lick.y*cell);}
   drawEscapeLizard(w.motion.lizard,cell,w.motion.clock);

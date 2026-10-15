@@ -133,7 +133,7 @@
  gates:[{id:'blue',name:'Blue',color:[106,195,236],switch:[8,5],tiles:[[18,3]]},{id:'amber',name:'Amber',color:[239,181,83],switch:[17,6],tiles:[[10,8]]}],
  thorns:[{tiles:[[8,9],[9,9]],period:2.6,up:1.1}],
  guards:[{spawn:[17,1],facing:PI,patrol:[[7,1],[17,1],[17,5],[7,5]]},{kind:'beetle',spawn:[20,6],facing:PI,patrol:[[2,6],[20,6],[20,7],[2,7]]}]},
-{id:'buried-observatory',name:'Buried Observatory',brief:'One bridge, one plate, one chance.',hint:'The plate raises the bridge once. Cross, take the key and get back before it falls, or brave the long way round.',
+{id:'buried-observatory',name:'Buried Observatory',brief:'One bridge, a plate on each bank, one chance.',hint:'A plate on either bank raises the bridge, but only once. Cross early and come back the long way, or go round and save the bridge for a fast return.',
  pebbles:2,map:[
  '#########################',
  '#....N.....#K#.....2....#',
@@ -146,7 +146,7 @@
  '#.@....N.......3........#',
  '#X..L...........N.....1.#',
  '#########################'],
- gates:[{id:'span',name:'Observatory',color:[105,208,185],bridge:true,duration:7,once:true,plates:[[8,7]],tiles:[[8,5],[8,6]]}],
+ gates:[{id:'span',name:'Observatory',color:[105,208,185],bridge:true,duration:7,once:true,plates:[[8,7],[8,4]],tiles:[[8,5],[8,6]]}],
  guards:[{spawn:[20,3],facing:PI,patrol:[[1,3],[22,3],[22,4],[1,4]]},{kind:'beetle',spawn:[23,2],facing:PI,patrol:[[16,2],[23,2]]},{spawn:[23,8],facing:PI,patrol:[[13,7],[23,7],[23,9],[13,9]]}]},
 {id:'reed-bank',name:'Reed Bank',brief:'The key sits on a reed islet in deep water. Two fords cross the river.',hint:'Face the islet from the bank and press R to grab the key. Swim the shallows at either end; it is slow going.',
  tongues:2,pebbles:1,explore:false,map:[

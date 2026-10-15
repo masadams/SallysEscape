@@ -17,9 +17,12 @@
   const folk=[['tortoise','Old Moss'],['snail','Pip'],['frog','Reed'],['beetle','Brass'],['tortoise','Gravel'],['frog','Dusty'],['snail','Murk'],['frog','Fern'],['beetle','Glimmer'],['snail','Bramble'],['frog','Coral'],['tortoise','Husk'],['beetle','Wick'],['frog','Tiles'],['beetle','Pincer'],['tortoise','Frostbite'],['snail','Rivet']];
   const npcs=chapters.map((c,i)=>({chapter:i,x:c.x+3,y:c.y+5,kind:folk[i][0],name:folk[i][1]}));
   class EscapeWorld{
-    constructor(unlocked=()=>true,focusId=null){
+    constructor(unlocked=()=>true,focusId=null,hiddenOpen=()=>false){
       this.width=116;this.height=106;this.chapters=chapters;this.caches=caches;this.signs=signs;this.npcs=npcs;this.found=new Set();this.onCache=null;
       // Golden flies drift in now and then; Sally can chase them down or grab one with her tongue.
+      // The Gilded Burrow lies north of the Garden Ruins. It is solid rock until it opens.
+      this.hiddenOpen=hiddenOpen;this.hiddenCarved=false;this.terrainVersion=0;
+      this.hiddenNodes=(catalog.hidden||[]).map((level,i)=>({id:level.id,hidden:true,index:i,x:[31,36,41][i],y:[5,3,5][i],name:level.name}));
       this.rng=Math.random;this.fly=null;this.flyAt=10;this.onFly=null;this.lick=null;this.unlocked=unlocked;this.hunters=[];this.elapsed=0;this.target=null;this.accumulator=0;
       const spots=[[-6,3],[-4,-2],[0,-4],[4,-1],[6,4],[0,6]];
       this.nodes=catalog.levels.map((level,index)=>{const chapter=chapters.findIndex(c=>index>=c.start&&index<c.end),c=chapters[chapter],[x,y]=chapter===10&&index===48?[6,5]:spots[index-c.start];return {id:level.id,index,chapter,x:c.x+x,y:c.y+y,name:level.name};});
@@ -38,7 +41,12 @@
       for(const [a,b]of this.paths)track(this.nodes[chapters[a].end-1],this.nodes[chapters[b].start],b===10||b===13||b===14||b===16);
       this.motion=new Motion(this);
     }
-    refreshRegions(){this.openRegions=this.chapters.map((_,i)=>this.nodes.some(n=>n.chapter===i&&this.unlocked(n.id)));}
+    refreshRegions(){this.openRegions=this.chapters.map((_,i)=>this.nodes.some(n=>n.chapter===i&&this.unlocked(n.id)));if(!this.hiddenCarved&&this.hiddenNodes.length&&this.hiddenOpen())this.carveHidden();}
+    carveHidden(){
+      const room=(x1,y1,x2,y2)=>{for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)this.grid[y][x]='.';};
+      room(28,1,44,8);room(35,9,37,10);for(const [x,y] of [[29,2],[43,2],[29,7],[43,7]])this.grid[y][x]='L';
+      this.hiddenCarved=true;this.terrainVersion++;
+    }
     regionOpen(i){return Boolean(this.openRegions?.[i]);}
     floor(x,y){x=Math.floor(x);y=Math.floor(y);if(!['.','L'].includes(this.grid[y]?.[x]))return false;for(const [i,c]of chapters.entries())if(Math.abs(x-c.x)<=8&&Math.abs(y-c.y)<=7&&!this.regionOpen(i))return false;return !this.gates.some(g=>!this.regionOpen(g.chapter)&&(g.vertical?y===g.y&&Math.abs(x-g.x)<=1:x===g.x&&Math.abs(y-g.y)<=1));}
     route(to,from=this.player,ignoreLocks=false){const sx=Math.floor(from.x),sy=Math.floor(from.y),tx=Math.floor(to.x),ty=Math.floor(to.y),queue=[[sx,sy]],previous=new Map([[sx+','+sy,null]]);for(let i=0;i<queue.length;i++){const [x,y]=queue[i];if(x===tx&&y===ty){const out=[];let p=[x,y];while(p){out.unshift({x:p[0]+.5,y:p[1]+.5});p=previous.get(p.join(','));}out.shift();return out;}for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy,k=nx+','+ny;if((ignoreLocks?['.','L'].includes(this.grid[ny]?.[nx]):this.floor(nx,ny))&&!previous.has(k)){previous.set(k,[x,y]);queue.push([nx,ny]);}}}return null;}
@@ -65,8 +73,8 @@
       if(Math.hypot(f.x-p.x,f.y-p.y)<.55)this.catchFly();
     }
     nearbyCache(){return this.caches.find(c=>!this.found.has(c.id)&&Math.hypot(c.x+.5-this.player.x,c.y+.5-this.player.y)<=.8)||null;}
-    nearby(){return this.nodes.find(n=>Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5)||null;}
-    enter(){const node=this.nearby();return node&&this.unlocked(node.id)?node.id:null;}
+    nearby(){return this.nodes.find(n=>Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5)||(this.hiddenCarved?this.hiddenNodes.find(n=>Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5):null)||null;}
+    enter(){const node=this.nearby();return node?.hidden?'hidden:'+node.id:node&&this.unlocked(node.id)?node.id:null;}
     walkTo(id){this.refreshRegions();const n=this.nodes.find(n=>n.id===id);if(!n)return false;const route=this.route({x:n.x,y:n.y+1});if(!route)return false;route.push({x:n.x,y:n.y+1});this.target=route;return true;}
     travel(chapter){this.refreshRegions();const c=chapters[chapter];if(!c||!this.regionOpen(chapter))return false;const node=this.nodes.filter(n=>n.chapter===chapter).find(n=>this.unlocked(n.id))||this.nodes[c.start];this.player.x=node.x;this.player.y=node.y+1;this.player.facing={x:0,y:-1};this.target=null;this.accumulator=0;this.motion.resetPlayer(this.player);return true;}
     advance(seconds,input={}){

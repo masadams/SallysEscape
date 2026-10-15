@@ -83,3 +83,31 @@ test('an owl swoop bends toward Sally, but leaf cover makes it miss',()=>{
   const start={...h.aim};ticks(g,.3,{y:1});assert.ok(h.aim.y>start.y+.3,'the swoop follows her');
   const hide=arena('owl',[2,5],[7,5]);hide.h.state='glare';hide.h.phaseUntil=0;hide.h.aim={x:7.5,y:5.5};hide.h.perch={x:2.5,y:5.5};hide.g.grid[7][7]='L';Object.assign(hide.g.player,{x:7.5,y:7.5});ticks(hide.g,2);assert.equal(hide.g.status,'playing');
 });
+test('bonus glow bugs only appear when the game rolls them, drift inside their tiles, and are caught by touch or tongue',()=>{
+  const plain=new EscapeAdventure({levelId:'quiet-vault'});assert.equal(plain.glowbugs.length,0);
+  const a=new EscapeAdventure({levelId:'quiet-vault',glowbugs:42}),b=new EscapeAdventure({levelId:'quiet-vault',glowbugs:42});
+  assert.ok(a.glowbugs.length>=3&&a.glowbugs.length<=5);assert.deepEqual(a.glowbugs.map(g=>g.home),b.glowbugs.map(g=>g.home),'a seed places the same bugs');
+  const start={x:a.player.x,y:a.player.y};for(const bug of a.glowbugs){assert.ok(Math.hypot(bug.home.x-start.x,bug.home.y-start.y)>=4);assert.ok(a.floor(Math.floor(bug.home.x),Math.floor(bug.home.y)));}
+  a.hunters=[];for(let i=0;i<240;i++)a.advance(1/120,{});for(const bug of a.glowbugs){assert.equal(Math.floor(bug.x),Math.floor(bug.home.x));assert.equal(Math.floor(bug.y),Math.floor(bug.home.y));}
+  const first=a.glowbugs[0];Object.assign(a.player,{x:first.x,y:first.y});a.advance(1/120,{});assert.equal(first.caught,true);assert.equal(a.glowbugsCaught,1);assert.ok(a.drainEvents().includes('glowbug'));
+  const second=a.glowbugs[1];a.tongues=1;Object.assign(a.player,{x:second.x-1.5,y:second.y,facing:{x:1,y:0},tongueAim:null});a.grid[Math.floor(second.y)][Math.floor(second.x-1)]='.';
+  assert.equal(a.useTongue(),true);for(let i=0;i<30;i++)a.advance(1/120,{});assert.equal(second.caught,true);assert.equal(a.glowbugsCaught,2);
+});
+function cobraArena(){const g=new EscapeAdventure();for(let y=2;y<=7;y++)for(let x=2;x<=13;x++)g.grid[y][x]='.';const h=g.hunter;Object.assign(h,g.makeHunter({kind:'cobra',spawn:[4,4],facing:0,patrol:[[4,4]]}));g.hunters=[h];g.motion.resetHunter(h,0);Object.assign(g.player,{x:7.5,y:4.5});return {g,h};}
+test('the king cobra waits coiled, rears on sight, strikes along its aim, and a sidestep during the rear survives',()=>{
+  const {g,h}=cobraArena();assert.equal(h.state,'coiled');const states=new Set();for(let i=0;i<240&&g.status==='playing';i++){g.advance(1/120,{});states.add(h.state);}
+  assert.ok(states.has('rear')&&states.has('strike'));assert.equal(g.status,'caught');assert.match(g.result.message,/king cobra/);
+  const d=cobraArena();for(let i=0;i<120*3&&d.g.status==='playing';i++){if(d.h.state==='rear'||d.h.state==='strike')d.g.advance(1/120,{y:1,sprint:true});else d.g.advance(1/120,{});if(d.h.state==='chase')break;}
+  assert.equal(d.g.status,'playing','a sidestep while it rears dodges the strike');assert.equal(d.h.state,'chase','then it hunts');assert.equal(d.g.alarms,1);
+});
+test('a king cobra chases faster than a snake, then glides home and coils when it loses Sally',()=>{
+  const run=kind=>{const {g,h}=cobraArena();h.kind=kind;g.player.hidden=true;g.grid[4][7]='L';Object.assign(g.player,{x:7.5,y:4.5});Object.assign(h,{state:'chase',awareness:1,lastKnown:{x:12.5,y:4.5},lastObserved:g.elapsed});const x=h.x;g.advance(.5,{});return h.x-x;};
+  assert.ok(run('cobra')>run('snake')*1.12,'faster than a snake');
+  const {g,h}=cobraArena();Object.assign(h,{state:'chase',awareness:1,lastKnown:{x:9.5,y:2.5},lastObserved:g.elapsed});
+  g.player.hidden=true;Object.assign(g.player,{x:2.5,y:7.5});g.grid[7][2]='L';for(let i=0;i<120*20;i++)g.advance(1/120,{});assert.equal(h.state,'coiled');assert.ok(Math.hypot(h.x-h.post.x,h.y-h.post.y)<.2);
+});
+test('brushing the back half of a resting snake wakes it, while passing well clear does not',()=>{
+  const g=new EscapeAdventure();for(let y=2;y<=7;y++)for(let x=2;x<=13;x++)g.grid[y][x]='.';const h=g.hunter;g.hunters=[h];Object.assign(h,{x:10.5,y:4.5,facing:0,patrol:[{x:10.5,y:4.5}],pauseUntil:1000,state:'patrol'});g.motion.resetHunter(h,0);
+  const tail=g.motion.snakes[0].joints.at(-2);Object.assign(g.player,{x:tail.x,y:tail.y+1.5,facing:{x:0,y:1}});g.advance(.1,{});assert.notEqual(h.reason,'touched');
+  Object.assign(g.player,{x:tail.x,y:tail.y});g.advance(1/120,{});assert.equal(h.reason,'touched');assert.equal(h.awareness,1);assert.ok(h.lastKnown);assert.match(g.message,/tail/);
+});

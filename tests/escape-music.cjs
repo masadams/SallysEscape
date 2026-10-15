@@ -25,7 +25,7 @@ test('every mood has a four-bar progression and a melody that stays in its scale
 });
 test('the score keeps time: chords on the bar, a walking bass on the beat, drums on a fixed pattern',()=>{
   const bar=[...Array(16)].map((_,s)=>events('sneaky',16+s)),at=(layer,voice)=>bar.map((e,s)=>e.some(x=>x.layer===layer&&x.voice===voice)?s:-1).filter(s=>s>=0);
-  assert.deepEqual(at('pad','pad'),[0]);assert.deepEqual(at('bass','bass'),[0,4,8,12]);assert.deepEqual(at('chase','kick'),[0,6,8]);assert.deepEqual(at('chase','snare'),[4,12]);
+  assert.deepEqual(at('pad','pad'),[0]);assert.deepEqual(at('bass','bass'),[0,4,8,12]);assert.deepEqual(at('chase','kick'),[0,3,6,8,11,14]);assert.deepEqual(at('chase','snare'),[4,12,15]);assert.equal(at('chase','hat').length,16);
   const chord=bar[0].find(e=>e.voice==='pad').notes,second=MOODS.sneaky.chords[1].map(midi);assert.deepEqual(chord,second,'step 16 is the second chord');
   for(let step=0;step<256;step++)for(const e of events('dark',step)){assert.ok(LAYERS.includes(e.layer));assert.ok(e.vel>0&&e.vel<=1);}
 });
@@ -76,4 +76,10 @@ test('a new escape style waits for the phrase, then takes its own tempo',async()
   const {T,transport}=fakeTone(),m=new EscapeMusic({Tone:T});await m.load({});m.setState('explore',0);m.start();transport.repeat(0);
   assert.equal(m.setStyle(styleFor('frost',2)),true);assert.equal(m.setStyle(styleFor('frost',2)),false,'same style is a no-op');assert.equal(m.mood,'meadow');
   while(m.step%16!==0)transport.repeat(0);transport.repeat(0);assert.equal(m.mood,'frost');assert.equal(transport.bpm.value,styleFor('frost',2).bpm);
+});
+test('every fourth bar of a chase ends in a tom fill, and spooky regions play sparse and unsettled',()=>{
+  const fillBar=[...Array(16)].map((_,s)=>events('meadow',48+s));assert.deepEqual(fillBar.map((e,s)=>e.some(x=>x.voice==='tom')?s:-1).filter(s=>s>=0),[12,13,14,15]);assert.ok(!fillBar[12].some(x=>x.voice==='kick'));
+  assert.equal(STYLES.hollow.mood,'spooky');assert.equal(STYLES.lantern.mood,'spooky');for(let i=0;i<5;i++)assert.equal(styleFor('hollow',i).groove,3);
+  const sparse=[...Array(16)].map((_,s)=>events('spooky',s,{groove:3}));assert.deepEqual(sparse.map((e,s)=>e.some(x=>x.voice==='bass')?s:-1).filter(s=>s>=0),[0,8]);
+  const chord=events('spooky',0).find(e=>e.voice==='pad').notes,steps=chord.slice(1).map((n,i)=>n-chord[i]);assert.deepEqual(steps,[3,3],'a diminished chord');
 });

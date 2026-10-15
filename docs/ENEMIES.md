@@ -8,7 +8,8 @@ straight on is rarely enough: change direction, break line of sight, or hide.
 
 | Hunter | Job | What it does | How to beat it |
 | --- | --- | --- | --- |
-| Snake | Chaser | Patrols, spots Sally, then chases, searches and gives up. | Break sight at a corner, use leaves, or throw a pebble. |
+| Snake | Chaser | Patrols, spots Sally, then chases, searches and gives up. Brushing the back half of a resting snake (paused, coiled or watching) wakes it; a moving tail slides away. | Break sight at a corner, use leaves, or throw a pebble. Never step on a still snake's tail. |
+| King cobra | Striker and hunter | Waits coiled on its post, swaying to watch. On sight it rears (a short warning line), strikes along where Sally is heading, then chases faster than any snake. When it loses her it glides home and coils again. | Sidestep the moment it rears, then break its sight at once. Never pass in front of its post. |
 | Beetle | Battering ram | Locks a lane toward where Sally is heading (shown as a striped lane), then charges up to three tiles past its aim. A charge flattens leaf cover and smashes cracked walls open for everyone. It is dazed for a moment after hitting a wall. | Step out of the lane; never stand at the end of a long corridor. Lure it into a cracked wall to open a shortcut. |
 | Scorpion | Living trap | Guards a ring around itself (always shown). Its tail rises and falls on a rhythm; with the tail up, anything entering the ring is stung where it is heading. Noise keeps the tail up. A buried scorpion shows only a sand mound until Sally is close. | Cross the ring while the tail is down and change direction if it strikes. Leaves inside the ring still hide Sally. |
 | Toad | Sniper | Fires its tongue down any clear straight line toward Sally, up to five tiles. | Break its line of sight behind pillars, walls or leaves. |

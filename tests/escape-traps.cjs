@@ -29,3 +29,9 @@ test('a crumbling bridge carries Sally across once, then falls; a one-use bridge
   const once=new EscapeAdventure({levelId:'firefly-ford'});once.hunters=[];const bridge=once.gates[0];bridge.once=true;Object.assign(once.player,{x:12.5,y:9.5});ticks(once,.1);assert.equal(bridge.open,true);
   Object.assign(once.player,{x:10.5,y:9.5});ticks(once,bridge.duration+1);assert.equal(bridge.open,false);assert.equal(bridge.sealed,true);Object.assign(once.player,{x:12.5,y:9.5});ticks(once,.2);assert.equal(bridge.open,false);
 });
+test('the observatory bridge has a plate on each bank, but rises only once',()=>{
+  const g=new EscapeAdventure({levelId:'buried-observatory'});g.hunters=[];const gate=g.gates.find(x=>x.id==='span');assert.equal(gate.plates.length,2);
+  Object.assign(g.player,gate.plates[1]);for(let i=0;i<12;i++)g.advance(1/120,{});assert.equal(gate.open,true,'the north plate raises it');
+  Object.assign(g.player,{x:gate.plates[1].x,y:gate.plates[1].y-1.5});for(let i=0;i<120*9;i++)g.advance(1/120,{});assert.equal(gate.open,false);assert.equal(gate.sealed,true);
+  Object.assign(g.player,gate.plates[0]);for(let i=0;i<12;i++)g.advance(1/120,{});assert.equal(gate.open,false,'the other plate cannot raise it again');
+});
