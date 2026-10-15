@@ -125,7 +125,14 @@ Bonus escapes sit on the map behind a hedge that opens once the areas before the
 - The Bramble Maze (north of the Deep Trials, opens with the first five areas mastered): a true, dark maze with loops, a hunting snake, tangle vines and flytraps at the dead ends.
 - A mega escape (about five minutes, no checkpoints) will open with the first ten areas mastered.
 
-Next: the Lantern Marsh onward.
+The Lantern Marsh brings owls, whose beams sweep the yards from their look-outs:
+- Firefly Ford: a dark black river with a plank ford, moths that follow glowing footprints, and an owl on the far bank.
+- Bramble Switchyard: three bramble doors held open by plates on both sides, under an owl's sweep.
+- Snapdragon Terrace: flytraps guard the stairs and mimics hide among the treasure; the key turns which stair is open.
+- Rival Rooftops: two rival pairs share the roof roads, and an owl watches it all.
+- Moonwell Keep: a king cobra lies across the moonwell, the inner door opens only under the beetle's weight, and cracks let Sally slip the chase home.
+
+Next: Sunbaked Rooftops onward.
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).
