@@ -8700,7 +8700,7 @@
     {id:'treasure-sweep',name:'Treasure Sweep',levelId:'crumbling-hall',brief:'Bring every piece of treasure to the hatch.',allTreasure:true},
     {id:'quick-getaway',name:'Quick Getaway',levelId:'moonlit-escape',brief:'Get the key and reach the hatch within 45 seconds.',timeLimit:45},
     {id:'garden-dash',name:'Garden Dash',levelId:'switchback-garden',brief:'Open the blue gates, grab the key and escape within 60 seconds.',timeLimit:60},
-    {id:'deep-sweep',name:'Deep Sweep',levelId:'buried-observatory',brief:'Solve both gates and bring every treasure out of the ruins.',allTreasure:true},
+    {id:'deep-sweep',name:'Deep Sweep',levelId:'buried-observatory',brief:'Bring every treasure out of the observatory. The bridge rises only once.',allTreasure:true},
     {id:'long-reach',name:'Long Reach',levelId:'reed-bank',brief:'Use a tongue grab for the key. Save at least one grab for it.',keyByTongue:true},
     {id:'pocket-change',name:'Pocket Change',levelId:'split-shelves',brief:'Gather every treasure with one tongue grab and two burrows.',allTreasure:true},
     {id:'greeds-price',name:'Greed’s Price',levelId:'greedy-gallery',brief:'Empty the gallery and escape after both of its reversals.',allTreasure:true},
@@ -8745,6 +8745,14 @@
     level.spawn=one('@');level.key=one('K');level.exit=one('X');
     level.loot=[];rows.forEach((row,y)=>[...row].forEach((ch,x)=>{if(/[1-5]/.test(ch))level.loot.push([x,y,Number(ch)]);}));
     return level;
+  }
+  // Rebuilt routes replace the originals by id. They keep their place on the trail and
+  // their unlock rules, and a bumped revision retires any old record for that route.
+  const rebuilt=typeof module!=='undefined'&&module.exports?require('./escape-rebuilt.js'):root.EscapeRebuilt||[];
+  for(const route of rebuilt){
+    const i=levels.findIndex(l=>l.id===route.id);if(i<0)throw new Error('Unknown rebuilt route '+route.id);
+    const old=levels[i],keep={};for(const k of ['unlockAfter','unlockChallenges','expedition'])if(old[k]!==undefined)keep[k]=old[k];
+    levels[i]={burrows:0,pebbles:0,...keep,...route,revision:(old.revision||1)+1};
   }
   for(const level of levels)if(level.map)fromMap(level);
   // Paired expeditions let players choose a route before rejoining the harder path.

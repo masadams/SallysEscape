@@ -3,6 +3,7 @@
 //   node scripts/route-solver.cjs solve <levelId|challenge:id> "<hints>"   new route from hints
 //   node scripts/route-solver.cjs repair <fixture index>                  re-record after a rules change
 //   node scripts/route-solver.cjs sprint <levelId>                        does a straight sprint win?
+//   node scripts/route-solver.cjs naive <levelId> "<hints>"              does the plain hint route win unaided?
 //
 // Hints are space separated: gX,Y walks the engine's own route to tile X,Y (gX,Y! sprints),
 // wN waits N seconds, and pebble/burrow/tongue/seed/camo use a tool. A hint run is first
@@ -132,6 +133,8 @@ module.exports={clone,record,extractPlan,search,verify,sprintBot,Peaceful};
 if(require.main===module){
   const [mode,arg,hints]=process.argv.slice(2);const fixtures=path.join(__dirname,'../tests/fixtures/escape-playthroughs.json');
   if(mode==='sprint'){console.log(arg,sprintBot(optionsFor(arg)));process.exit(0);}
+  // Walks the hint route with no waiting against the real hunters: a route that wins this way is too easy.
+  if(mode==='naive'){let status;try{status=record(EscapeAdventure,optionsFor(arg),hints||'').game.status;}catch(e){status='caught';}console.log(arg,status==='won'?'TOO EASY: the plain route wins':'ok: the plain route '+status);process.exit(0);}
   let options,plan;
   if(mode==='solve'){options=optionsFor(arg);const calm=record(Peaceful,options,hints||'');if(calm.game.status!=='won')throw new Error('the hint route does not escape even without hunters: '+calm.game.status);plan=extractPlan(Peaceful,{options,commands:calm.commands});}
   else if(mode==='repair'){const r=require(fixtures)[+arg];options=r.options;plan=extractPlan(process.env.OLD_ENGINE?require(process.env.OLD_ENGINE).EscapeAdventure:Peaceful,r);}

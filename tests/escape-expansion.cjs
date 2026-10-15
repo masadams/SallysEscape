@@ -6,43 +6,48 @@ function advance(g,seconds,input={}){for(let n=0;n<Math.ceil(seconds*120);n++)g.
 const result=(levelId,extra={})=>({status:'won',levelId,challengeId:null,totalTreasure:10,treasure:7,stars:3,time:8,...extra});
 function storage(){const data=new Map();return {getItem:k=>data.get(k),setItem:(k,v)=>data.set(k,v)};}
 
-test('all forty-seven routes have closed borders; static gate puzzles have permanently openable walking routes',()=>{
+test('every route has closed borders; static gate puzzles have permanently openable walking routes',()=>{
  assert.equal(EscapeCatalog.levels.length,78);assert.equal(EscapeCatalog.challenges.length,21);
  for(const level of EscapeCatalog.levels){
   const g=new EscapeAdventure({levelId:level.id}),grid=escapeGridFor(level);
   assert.ok(grid[0].every(c=>c==='#')&&grid.at(-1).every(c=>c==='#'));assert.ok(grid.every(row=>row[0]==='#'&&row.at(-1)==='#'));
   if(level.reactions||level.gates?.some(g=>g.duration))continue; // Stateful reversals have a separate walking-state graph check.
   while(g.gates.some(gate=>!gate.open)){const gate=g.gates.find(gate=>!gate.open&&g.route(g.player,gate.switch).length);assert.ok(gate,'each puzzle has a reachable next switch');Object.assign(g.player,gate.switch);g.activateSwitches();}
+  // A cracked wall may stand in the way only when the route can be opened twice over:
+  // two burrows (in and back out) or a beetle that can smash it.
+  const cracked=g.grid.map(row=>row.map(c=>c==='B'?'.':c)),smashable=level.burrows>=2||level.guards.some(h=>h.kind==='beetle'),open=new EscapeAdventure({levelId:level.id});open.grid=cracked;open.gates=g.gates;
   for(const p of [g.key,g.exit,...g.loot,...g.hunters,...g.hunters.flatMap(h=>h.patrol)]){
-   assert.ok(g.fits(p),'spawn and goals fit inside floor');assert.ok((Math.hypot(g.player.x-p.x,g.player.y-p.y)<.01||g.route(g.player,p).length>0),'no mandatory burrow or unreachable treasure');
+   assert.ok(g.fits(p),'spawn and goals fit inside floor');
+   const walkable=Math.hypot(g.player.x-p.x,g.player.y-p.y)<.01||g.route(g.player,p).length>0;
+   assert.ok(walkable||smashable&&open.route(g.player,p).length>0,'no mandatory burrow or unreachable treasure');
   }
   assert.equal(g.loot.reduce((n,item)=>n+item.value,0),10);
   for(const h of g.hunters)if(h.patrol.length>1)for(let i=0;i<h.patrol.length;i++)assert.ok(g.route(h.patrol[i],h.patrol[(i+1)%h.patrol.length]).length);
  }
 });
 test('each route resets its own resources and does not mutate shared definitions',()=>{
- const a=new EscapeAdventure({levelId:'crumbling-hall'});assert.equal(a.burrows,1);a.grid[2][6]='.';a.decoys=0;a.loot[0].taken=true;
- const b=new EscapeAdventure({levelId:'crumbling-hall'});assert.equal(b.grid[2][6],'B');assert.equal(b.decoys,2);assert.equal(b.loot[0].taken,false);
+ const a=new EscapeAdventure({levelId:'quiet-vault'});assert.equal(a.burrows,1);a.grid[2][6]='.';a.decoys=0;a.loot[0].taken=true;
+ const b=new EscapeAdventure({levelId:'quiet-vault'});assert.equal(b.grid[2][6],'B');assert.equal(b.decoys,1);assert.equal(b.loot[0].taken,false);
  assert.throws(()=>new EscapeAdventure({levelId:'unknown'}));assert.throws(()=>new EscapeAdventure({challengeId:'unknown'}));assert.ok(Object.isFrozen(EscapeCatalog.levels[0].rooms));
 });
 test('two guards keep independent perception, paths and animation poses',()=>{
  const g=new EscapeAdventure({levelId:'twin-watch'}),first=g.hunters[0],second=g.hunters[1];
  assert.equal(g.motion.snakes.length,2);assert.notEqual(g.motion.snakes[0].trail,g.motion.snakes[1].trail);
- g.player.x=11.5;g.player.y=4.5;second.facing=Math.PI;
+ g.player.x=14.5;g.player.y=5.5;second.facing=Math.PI;
  const before=JSON.stringify(first);g.updateHunter(.1,second);
- assert.equal(second.state,'alert');assert.equal(JSON.stringify(first),before);assert.deepEqual(second.lastKnown,{x:11.5,y:4.5});
+ assert.equal(second.state,'alert');assert.equal(JSON.stringify(first),before);assert.deepEqual(second.lastKnown,{x:14.5,y:5.5});
 });
 test('capture by the second guard ends the attempt',()=>{
  const g=new EscapeAdventure({levelId:'twin-watch'});Object.assign(g.hunters[1],{x:g.player.x,y:g.player.y});advance(g,.02);
  assert.equal(g.status,'caught');assert.equal(g.result.levelId,'twin-watch');
 });
 test('walking on gravel is audible, stopping is quiet, and sprint hearing remains stronger',()=>{
- const g=new EscapeAdventure({levelId:'crumbling-hall'});Object.assign(g.player,{x:6.5,y:7.5});Object.assign(g.hunter,{x:7.5,y:6.5,facing:0});
+ const g=new EscapeAdventure({levelId:'crumbling-hall'});Object.assign(g.player,{x:6.4,y:11.5});Object.assign(g.hunter,{x:8.5,y:11.5,facing:0});
  g.advance(1/120,{x:1});assert.equal(g.player.noisy,true);assert.equal(g.player.sprinting,false);assert.equal(g.hunter.reason,'heard');
  g.advance(1/120);assert.equal(g.player.noisy,false);
 });
 test('Ghost Run allows a warning but ends when a guard gives chase',()=>{
- const g=new EscapeAdventure({challengeId:'ghost-run'});Object.assign(g.player,{x:8.5,y:2.5});g.hunter.facing=Math.PI;
+ const g=new EscapeAdventure({challengeId:'ghost-run'});Object.assign(g.player,{x:8.5,y:7.5});Object.assign(g.hunter,{x:11.5,y:8.5,facing:Math.PI});g.hunters[1].x=11.5;g.hunters[1].y=1.5;
  advance(g,.3);assert.equal(g.status,'playing');assert.equal(g.hunter.state,'alert');advance(g,.6);
  assert.equal(g.status,'failed');assert.equal(g.alarms,1);assert.equal(g.result.stars,0);
 });
@@ -66,7 +71,7 @@ test('winning unlocks the next route and retains best medals, treasure and time 
  const s=storage(),p=new EscapeProgress(s);assert.equal(p.unlocked('quiet-vault'),true);assert.equal(p.unlocked('leafy-crossroads'),true);
  assert.equal(p.record(result('quiet-vault')),true);assert.equal(p.unlocked('leafy-crossroads'),true);
  p.record(result('quiet-vault',{time:12,stars:1,treasure:0}));const reload=new EscapeProgress(s);
- assert.deepEqual(reload.data.levels['quiet-vault'],{cleared:true,bestTime:8,stars:3,treasure:7,revision:1,firstTry:true});
+ assert.deepEqual(reload.data.levels['quiet-vault'],{cleared:true,bestTime:8,stars:3,treasure:7,revision:2,firstTry:true});
 });
 test('failed, locked, unknown and malformed results cannot unlock routes',()=>{
  const p=new EscapeProgress(storage());
@@ -91,7 +96,7 @@ test('separate tabs merge completed routes and never downgrade saved best result
  a.record(result('quiet-vault'));assert.equal(b.record(result('leafy-crossroads',{time:15,stars:1,treasure:1})),true);
  b.record(result('quiet-vault',{time:12,stars:1,treasure:1}));a.record(result('leafy-crossroads',{time:9,stars:3,treasure:10}));
  b.record(result('crumbling-hall'));const saved=new EscapeProgress(s);
- assert.deepEqual(saved.data.levels['quiet-vault'],{cleared:true,bestTime:8,stars:3,treasure:7,revision:1,firstTry:true});
- assert.deepEqual(saved.data.levels['leafy-crossroads'],{cleared:true,bestTime:9,stars:3,treasure:10,revision:1,firstTry:true});
+ assert.deepEqual(saved.data.levels['quiet-vault'],{cleared:true,bestTime:8,stars:3,treasure:7,revision:2,firstTry:true});
+ assert.deepEqual(saved.data.levels['leafy-crossroads'],{cleared:true,bestTime:9,stars:3,treasure:10,revision:2,firstTry:true});
  assert.equal(saved.unlocked('twin-watch'),true);
 });
