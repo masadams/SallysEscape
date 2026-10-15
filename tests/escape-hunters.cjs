@@ -170,3 +170,19 @@ test('a heavy plate ignores Sally and opens only under a beetle, for its duratio
   Object.assign(g.player,{x:6.5,y:4.5});Object.assign(h,{x:3.5,y:8.5});g.activateSwitches();assert.equal(g.gates[0].open,true,'the beetle presses it');
   Object.assign(h,{x:12.5,y:10.5});g.updateHunter=()=>{};ticks(g,5);assert.equal(g.gates[0].open,false,'and it closes again');
 });
+
+test('a hermit crab peeks out when Sally comes close, then scuttles along its lane to pinch her',()=>{
+  const {g,h}=arena('crab',[8,6],[8,9],{axis:'x',range:3});assert.equal(h.state,'shell');
+  // Sally walks up past the crab's lane; it waits, peeks, then cuts across.
+  Object.assign(g.player,{x:10.5,y:8.5});const states=new Set();
+  for(let i=0;i<120*2.5&&g.status==='playing';i++){g.advance(1/120,{y:-1});states.add(h.state);}
+  assert.ok(states.has('peek')&&states.has('scuttle'));assert.equal(g.status,'caught');assert.match(g.result.message,/hermit crab/);
+  assert.ok(Math.abs(h.y-6.5)<1e-9,'it never leaves its lane');
+});
+test('a pebble sends a hermit crab back into its shell, and a hidden Sally never wakes it',()=>{
+  const {g,h}=arena('crab',[8,6],[3,9],{axis:'x',range:3});g.decoy={x:8.5,y:7.5,expires:4};ticks(g,.1);assert.equal(h.state,'hide');
+  Object.assign(g.player,{x:8.5,y:7.5});ticks(g,1);assert.equal(g.status,'playing','tucked in, it cannot pinch');
+  const b=arena('crab',[8,6],[3,9],{axis:'x',range:3});b.g.grid[7][9]='L';Object.assign(b.g.player,{x:9.5,y:7.5});ticks(b.g,1);assert.equal(b.h.state,'shell');
+  const c=arena('crab',[8,6],[3,9],{axis:'x',range:3});Object.assign(c.g.player,{x:9.5,y:7.5});ticks(c.g,.3);assert.equal(c.h.state,'peek');ticks(c.g,.25,{x:1,sprint:true});
+  for(let i=0;i<120*4&&c.g.status==='playing';i++)c.g.advance(1/120,{y:1,sprint:true});assert.equal(c.g.status,'playing');ticks(c.g,5);assert.equal(c.h.state,'shell');assert.ok(Math.abs(c.h.x-8.5)<.06,'and walks home');
+});

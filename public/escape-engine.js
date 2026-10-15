@@ -68,7 +68,7 @@
       this.visible=new Set();this.discovered=new Set();this.visibilityAt=-Infinity;this.updateVisibility(true);
       this.motion=new CreatureMotion(this);
     }
-    makeHunter(guard){return {...centre(...guard.spawn),id:guard.id||null,kind:guard.kind||'snake',facing:guard.facing,state:guard.kind==='mimic'?'rooted':guard.kind==='cobra'?'coiled':guard.kind==='angler'?'lurking':guard.kind==='flytrap'?'open':'patrol',awareness:0,lastKnown:null,lastObserved:-Infinity,reason:'seen',path:[],routeIndex:0,pauseUntil:0,searchUntil:0,patrol:guard.patrol.map(p=>centre(...p)),aim:null,phaseUntil:0,distanceMoved:0,...(guard.kind==='cobra'?{post:centre(...guard.spawn),reach:guard.reach||2.6}:{}),...(guard.kind==='angler'?{lure:centre(...(guard.lure||guard.spawn))}:{}),...(guard.kind==='scorpion'?{reach:guard.reach||1.8,buried:Boolean(guard.buried),offset:guard.offset??(guard.spawn[0]*.7+guard.spawn[1]*.3)%3.8,post:centre(...guard.spawn)}:{})};}
+    makeHunter(guard){return {...centre(...guard.spawn),id:guard.id||null,kind:guard.kind||'snake',facing:guard.facing,state:guard.kind==='mimic'?'rooted':guard.kind==='cobra'?'coiled':guard.kind==='angler'?'lurking':guard.kind==='flytrap'?'open':guard.kind==='crab'?'shell':'patrol',awareness:0,lastKnown:null,lastObserved:-Infinity,reason:'seen',path:[],routeIndex:0,pauseUntil:0,searchUntil:0,patrol:guard.patrol.map(p=>centre(...p)),aim:null,phaseUntil:0,distanceMoved:0,...(guard.kind==='cobra'?{post:centre(...guard.spawn),reach:guard.reach||2.6}:{}),...(guard.kind==='angler'?{lure:centre(...(guard.lure||guard.spawn))}:{}),...(guard.kind==='crab'?{home:centre(...guard.spawn),axis:guard.axis||'x',range:guard.range||3}:{}),...(guard.kind==='scorpion'?{reach:guard.reach||1.8,buried:Boolean(guard.buried),offset:guard.offset??(guard.spawn[0]*.7+guard.spawn[1]*.3)%3.8,post:centre(...guard.spawn)}:{})};}
     floor(x,y){return this.grid[y]?.[x]!==undefined && !['#','B','G','P'].includes(this.grid[y][x]);}
     water(p){return this.grid[Math.floor(p.y)]?.[Math.floor(p.x)]==='U';}
     // A crack (Y; S in text maps) is wide enough for Sally only: no hunter can squeeze through or see into it.
@@ -329,7 +329,7 @@
         if(h!==captor&&(distance(h,p)>=6||!this.clear(h,p,true)))continue;
         h.graceUntil=Math.max(h.graceUntil||0,this.elapsed+2.8);
         // Rooted plants, fish and burrowing hunters cannot chase a tail across the floor.
-        if(['mimic','fish','angler','flytrap','owl','gecko'].includes(h.kind)||['emerge','dig','buried','rise','clash'].includes(h.state))continue;
+        if(['mimic','fish','angler','flytrap','crab','owl','gecko'].includes(h.kind)||['emerge','dig','buried','rise','clash'].includes(h.state))continue;
         h.tailLureUntil=this.elapsed+2.4;h.path=[];h.targetId=null;
       }
       this.notice(this.regrowthBugs.some(b=>!b.eaten)?'Tail dropped! It wriggles as a decoy. Run—then eat a glowing bug to regrow it.':'Tail dropped! It wriggles as a decoy. Run! The next catch is final.','tailDrop');
@@ -491,10 +491,10 @@
       if(this.elapsed>=this.invulnerableUntil&&stinger&&this.shedTail(stinger))return;
       if(this.elapsed>=this.invulnerableUntil&&stinger){this.finish('caught','The scorpion struck. Cross its ring while the tail is down, or change direction when it strikes.');return;}
       // Capture wins over picking up the key or escaping in the same simulation step.
-      const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='angler'&&h.kind!=='flytrap'&&distance(p,h)<(h.kind==='beetle'&&h.state==='charge'?.62:.48)&&this.clear(p,h));
+      const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='angler'&&h.kind!=='flytrap'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(h.kind==='beetle'&&h.state==='charge'?.62:.48)&&this.clear(p,h));
       if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
       if(this.elapsed>=this.invulnerableUntil && captor){
-        this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. Try another route through the ruins.':captor.kind==='mimic'?'The plant snapped at its marked spot. Provoke it from a distance or step aside when it opens.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'The guard spotted you. Break sight at a corner or use a pebble.');return;
+        this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. Try another route through the ruins.':captor.kind==='mimic'?'The plant snapped at its marked spot. Provoke it from a distance or step aside when it opens.':captor.kind==='crab'?'A hermit crab scuttled out and pinched Sally. Pass its lane while it is tucked in, or send it back into its shell with a pebble.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'The guard spotted you. Break sight at a corner or use a pebble.');return;
       }
       if(this.challenge?.noChase&&this.alarms>0){this.finish('failed','A guard gave chase. Break sight before it is sure next time.');return;}
       if(this.challenge?.noChill&&this.player.chilled){this.finish('failed','Sally got too cold. Thaw on warm stones before the frost slows her.');return;}
@@ -548,6 +548,7 @@
       if(h.kind==='cobra'&&this.updateCobra(dt,h))return;
       if(h.kind==='angler'){this.updateAngler(dt,h);return;}
       if(h.kind==='flytrap'){this.updateFlytrap(dt,h);return;}
+      if(h.kind==='crab'){this.updateCrab(dt,h);return;}
       const p=this.player,previousState=h.state;
       // Nearby visible danger overrides a lure; a pebble cannot make it ignore a bite.
       const seen=this.seesPlayer(h),heard=(p.noisy||p.sprinting)&&!p.hidden&&this.audible(h,p,p.sprinting?6:3.5);
@@ -616,6 +617,25 @@
         return;
       }
       if(h.state==='sink'&&this.elapsed>=h.phaseUntil)h.state='lurking';
+    }
+    // Hermit crab: hides in its shell until Sally comes close, peeks out, then scuttles sideways
+    // along its beach lane to cut her off and pinch. A pebble landing by it sends it back into
+    // its shell for a while. It never leaves its lane.
+    updateCrab(dt,h){
+      const p=this.player,a=h.axis,b=a==='x'?'y':'x',lo=h.home[a]-h.range,hi=h.home[a]+h.range;
+      const slide=(to,speed)=>{const d=Math.max(lo,Math.min(hi,to))-h[a],step=Math.sign(d)*Math.min(Math.abs(d),speed*dt),next={...copy(h),[a]:h[a]+step};if(step&&this.fits(next,.22,h)){h[a]=next[a];h.distanceMoved+=Math.abs(step);return true;}return false;};
+      if(this.decoy&&this.decoy.expires!==h.lastLure&&distance(h,this.decoy)<1.5){h.lastLure=this.decoy.expires;h.state='hide';h.phaseUntil=this.elapsed+3;h.aim=null;this.events.push('scrape');return;}
+      if(h.state==='hide'){if(this.elapsed>=h.phaseUntil)h.state='return';return;}
+      if(h.state==='peek'){if(this.elapsed>=h.phaseUntil){h.state='scuttle';h.phaseUntil=this.elapsed+1.3;this.alarms++;this.events.push('skitter');}return;}
+      if(h.state==='scuttle'){
+        const lead=this.lead(.3),aim=Math.max(lo,Math.min(hi,lead[a]));h.facing=a==='x'?(aim>=h.x?0:Math.PI):(aim>=h.y?Math.PI/2:-Math.PI/2);
+        if(!slide(aim,4.6)&&Math.abs(aim-h[a])<.05||this.elapsed>=h.phaseUntil){h.state='tired';h.phaseUntil=this.elapsed+1.6;}
+        return;
+      }
+      if(h.state==='tired'){if(this.elapsed>=h.phaseUntil)h.state='return';return;}
+      if(h.state==='return'){if(!slide(h.home[a],1.2)||Math.abs(h[a]-h.home[a])<.05)h.state='shell';return;}
+      // In its shell: wake only for Sally in plain sight close by, roughly level with its lane.
+      if(!p.hidden&&distance(h,p)<=3&&Math.abs(p[b]-h[b])<=2.2&&this.clear(h,p,true)){h.state='peek';h.phaseUntil=this.elapsed+.35;this.events.push('rustle');}
     }
     // Flytrap: rooted and always shown. Anything that comes within reach (or a pebble that lands
     // there) makes it snap where Sally is heading; then it chews for a while and is harmless.

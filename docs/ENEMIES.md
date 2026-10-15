@@ -23,6 +23,7 @@ straight on is rarely enough: change direction, break line of sight, or hide.
 | Gecko | Thief | Steals the last treasure Sally picked up and runs for its burrow. | Catch it before it gets there. |
 | Angler | Bait | Hides under dark water and dangles a glowing lure that looks like a glow bug. Step close, or reach for it with the tongue, and it lunges at that spot, then sinks for a few seconds before the lure lights again. A pebble landing by the lure springs it too. | Learn the slow bob and the faint line. Walk around the lure, or spring it from afar and pass while it sinks. |
 | Flytrap | Rooted biter | Stands on its stem with its reach always marked. Anything that comes within reach, or a pebble landing there, makes it snap where Sally is heading; then it chews for a couple of seconds and is harmless. | Feed it a pebble and pass while it chews, or keep out of its ring. |
+| Hermit crab | Lane guard | Sits in its shell like any other on the beach. When Sally comes close in plain sight it peeks out, then scuttles sideways along its lane to cut her off and pinch. It never leaves its lane. A pebble landing by it sends it back into its shell for a few seconds. | Cross its lane at a sprint, while it is tucked in, or hidden; or toss a pebble first. |
 | Ants | Moving wall | A column marches a fixed loop and catches anything it walks over. | Cross in the gaps between groups. |
 
 ## Traps
