@@ -70,7 +70,7 @@ Escapes are being redrawn as text maps, region by region, with:
 
 Every rebuilt route keeps its id, bumps its revision, and gets a recorded winning run.
 
-Done so far: Sunny Meadow, Garden Ruins, Reedbanks, Restless Ruins and Deep Trials (escapes 1–23). In Deep Trials:
+Done so far: Sunny Meadow, Garden Ruins, Reedbanks, Restless Ruins, Deep Trials and Venom Depths (escapes 1–27). In Deep Trials:
 - Razor Crossing has a one-way crumbling causeway and two snakes passing in a narrow hall.
 - Needle Vault's key hangs over a pit and can only be grabbed from one ledge.
 - Toll of Ash hides mimics among its chests.
@@ -78,7 +78,13 @@ Done so far: Sunny Meadow, Garden Ruins, Reedbanks, Restless Ruins and Deep Tria
 - Last Light chains three plate bridges against a 50-second clock.
 - Crown of Thorns rings a throne room with thorns.
 
-Next: Venom Depths onward.
+In Venom Depths:
+- Sting Stair is a switchback climb with scorpions at every turn.
+- In Broken Delta, a tongue-grab key drops the north bridges and raises south fords.
+- In Coiled Catacomb, a vault chest seals the coil and opens a spine passage.
+- In Split Jaw, boulders roll down a canyon between two vaults.
+
+Next: The Waking Maze onward.
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).

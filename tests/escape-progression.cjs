@@ -37,3 +37,9 @@ test('every star in an area masters it once, and lends Sally its colours to wear
   assert.equal(p.setSkin('meadow',chapters),true);assert.equal(p.skin(chapters),'meadow');assert.equal(new EscapeProgress({getItem:()=>raw,setItem(){}}).skin(chapters),'meadow','the choice is saved');
   assert.equal(p.totals().mastered,1);
 });
+test('test mode opens every escape and challenge without changing saved records',()=>{
+  const p=new EscapeProgress(null),last=EscapeCatalog.levels.at(-1),c=EscapeCatalog.challenges.at(-1);
+  assert.equal(p.unlocked(last.id),false);assert.equal(p.challengeUnlocked(c.id),false);
+  p.unlockAll=true;assert.equal(p.unlocked(last.id),true);assert.equal(p.challengeUnlocked(c.id),true);assert.equal(p.unlocked('no-such-route'),false);
+  assert.deepEqual(p.data.levels,{});p.unlockAll=false;assert.equal(p.unlocked(last.id),false);
+});

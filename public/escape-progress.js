@@ -31,13 +31,14 @@
       }
     }
     challengesCleared(){return catalog.challenges.filter(c=>this.data.challenges[c.id]?.cleared).length;}
-    unlocked(id){const index=catalog.levels.findIndex(l=>l.id===id);if(index<0)return false;
+    // Test mode (unlockAll) opens every escape and challenge without touching saved records.
+    unlocked(id){const index=catalog.levels.findIndex(l=>l.id===id);if(index<0)return false;if(this.unlockAll)return true;
       // Some branches also wait for a number of completed challenges.
       if(catalog.levels[index].unlockChallenges&&!this.data.levels[id]?.cleared&&this.challengesCleared()<catalog.levels[index].unlockChallenges)return false;const prerequisite=catalog.levels[index].unlockAfter||catalog.levels[index-1]?.id;return index===0||index===1||Boolean(this.data.levels[id]?.cleared)||(catalog.levels[index].unlockAny?catalog.levels[index].unlockAny.some(id=>this.data.levels[id]?.cleared):Boolean(prerequisite&&this.data.levels[prerequisite]?.cleared));}
     // A challenge opens once its escape is cleared and its area has enough stars.
     challengeGate(id){const c=catalog.challenges.find(c=>c.id===id);if(!c)return null;const gate=c.starGate||{from:0,to:0,stars:0};
       const stars=catalog.levels.slice(gate.from,gate.to).reduce((n,l)=>n+(this.data.levels[l.id]?.stars||0),0);
-      return {cleared:Boolean(this.data.levels[c.levelId]?.cleared),stars,need:gate.stars,open:Boolean(this.data.levels[c.levelId]?.cleared)&&stars>=gate.stars};}
+      return {cleared:Boolean(this.data.levels[c.levelId]?.cleared),stars,need:gate.stars,open:Boolean(this.unlockAll)||Boolean(this.data.levels[c.levelId]?.cleared)&&stars>=gate.stars};}
     challengeUnlocked(id){return Boolean(this.challengeGate(id)?.open);}
     // Challenges that are open but have never been announced; announcing marks them seen.
     announceChallenges(){this.read();const fresh=catalog.challenges.filter(c=>this.challengeUnlocked(c.id)&&!this.data.challengesSeen.includes(c.id)&&!this.data.challenges[c.id]?.cleared);if(fresh.length){this.data.challengesSeen.push(...fresh.map(c=>c.id));this.write();}return fresh;}
