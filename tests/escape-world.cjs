@@ -29,3 +29,7 @@ test('the Gilded Burrow stays solid rock until five perfect areas, then opens no
   open=true;w.refreshRegions();assert.equal(w.hiddenCarved,true);assert.ok(w.terrainVersion>0);assert.equal(w.floor(36.5,9.5),true);
   assert.ok(w.route({x:36.5,y:3.5},{x:36.5,y:18.5}),'a path leads up from the Garden Ruins');assert.equal(w.nearby().id,EscapeCatalog.hidden[1].id);assert.equal(w.enter(),'hidden:'+EscapeCatalog.hidden[1].id);
 });
+test('every hidden escape has a recorded winning run',()=>{
+  const {EscapeCatalog}=require('../public/escape-levels.js'),recs=require('./fixtures/escape-playthroughs.json');
+  for(const l of EscapeCatalog.hidden)assert.ok(recs.some(r=>r.options.hiddenId===l.id),l.id);
+});
