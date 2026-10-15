@@ -104,7 +104,13 @@ Luminous Depths stays dark, lit by glow plants, and brings in the angler, whose 
 - Spore Engine: a pump hall with a timed block and a flooded shaft.
 - Nightbloom Reach: a crescent of islands that closes the area. Its new layout is drawn but still needs a recorded winning run, so the old layout stays live for now (on the fix list).
 
-Next: Living Labyrinth onward (flytrap and tangle vine).
+Living Labyrinth keeps its living garden (seeds, root doors, vine crossings) and adds the flytrap, the tangle vine, Sally-only cracks and a heavy plate only a beetle can press:
+- Sleeping Orchard: tree rows along a stream, root doors that swap when the key is taken, and a seed-grown crossing.
+- False Garden or Rootwheel Ruins: hedged beds whose chest shifts the doors, with flytraps fed by pebbles; or a living wheel that turns which root arms are open.
+- Hungry Greenhouse: a seed vault that opens only while the beetle presses its slab, and cracks that shake off a chase.
+- The Heartwood: a king cobra watching the richest chest, a heart door that shuts behind the key, and a crack as the only way out.
+
+Next: Sun and Sea onward (hermit crab).
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).

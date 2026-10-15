@@ -25,7 +25,8 @@ function clone(value,memo=new Map()){
 }
 // The same rules with nothing hunting Sally: used to lay out a route from hints.
 class Peaceful extends EscapeAdventure{
-  constructor(options){super(options);this.hunters=[];this.hawk=null;this.antTrails=[];this.logs=[];this.thorns=[];}
+  // With no beetle about, a heavy plate's door simply stands open; the search then waits for the real one.
+  constructor(options){super(options);this.hunters=[];this.hawk=null;this.antTrails=[];this.logs=[];this.thorns=[];for(const gate of this.gates)if(gate.heavy){gate.heavy=false;gate.duration=0;this.setGateOpen(gate,true);}}
   updateEmergences(){this.pendingSpawns=[];}
 }
 function push(rec,cmd){const last=rec.at(-1);if(cmd.kind==='move'&&last&&last.kind==='move'&&last.x===cmd.x&&last.y===cmd.y&&last.sprint===cmd.sprint)last.frames+=cmd.frames;else rec.push({...cmd});}

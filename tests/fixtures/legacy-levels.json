@@ -15626,5 +15626,2604 @@
    }
   ],
   "tailDrop": true
+ },
+ "sleeping-orchard": {
+  "living": true,
+  "explore": true,
+  "sightRadius": 5,
+  "burrows": 0,
+  "pebbles": 2,
+  "tongues": 1,
+  "seeds": 3,
+  "cracks": [],
+  "cover": [
+   [
+    6,
+    16
+   ],
+   [
+    9,
+    4
+   ],
+   [
+    18,
+    8
+   ],
+   [
+    23,
+    14
+   ]
+  ],
+  "gravel": [],
+  "shrubs": [
+   [
+    5,
+    10
+   ],
+   [
+    7,
+    22
+   ],
+   [
+    14,
+    12
+   ],
+   [
+    19,
+    15
+   ],
+   [
+    26,
+    18
+   ]
+  ],
+  "seedCrossings": [
+   {
+    "id": "orchard-vine",
+    "banks": [
+     [
+      15,
+      22
+     ],
+     [
+      17,
+      22
+     ]
+    ],
+    "tiles": [
+     [
+      16,
+      22
+     ]
+    ]
+   }
+  ],
+  "id": "sleeping-orchard",
+  "name": "Sleeping Orchard",
+  "brief": "The orchard is waking. Grow cover, brace a root door, or weave a vine crossing.",
+  "hint": "C plants a seed: face an open doorway to brace it, or plant on bare ground for cover. Marked banks grow vines.",
+  "width": 31,
+  "height": 27,
+  "rooms": [
+   [
+    1,
+    18,
+    8,
+    25
+   ],
+   [
+    4,
+    5,
+    7,
+    18
+   ],
+   [
+    4,
+    2,
+    28,
+    5
+   ],
+   [
+    24,
+    5,
+    28,
+    24
+   ],
+   [
+    8,
+    21,
+    24,
+    24
+   ],
+   [
+    10,
+    9,
+    20,
+    17
+   ],
+   [
+    7,
+    12,
+    10,
+    15
+   ],
+   [
+    17,
+    5,
+    20,
+    9
+   ],
+   [
+    20,
+    13,
+    24,
+    16
+   ]
+  ],
+  "gaps": [
+   [
+    16,
+    21
+   ],
+   [
+    16,
+    22
+   ],
+   [
+    16,
+    23
+   ]
+  ],
+  "spawn": [
+   3,
+   23
+  ],
+  "key": [
+   25,
+   4
+  ],
+  "exit": [
+   25,
+   23
+  ],
+  "gates": [
+   {
+    "id": "old-key-stair",
+    "name": "old key stair",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      24,
+      7
+     ],
+     [
+      25,
+      7
+     ],
+     [
+      26,
+      7
+     ],
+     [
+      27,
+      7
+     ],
+     [
+      28,
+      7
+     ]
+    ],
+    "initialOpen": true
+   },
+   {
+    "id": "middle-root",
+    "name": "middle root",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      22,
+      13
+     ],
+     [
+      22,
+      14
+     ],
+     [
+      22,
+      15
+     ],
+     [
+      22,
+      16
+     ]
+    ],
+    "initialOpen": false
+   }
+  ],
+  "loot": [
+   [
+    5,
+    23,
+    1
+   ],
+   [
+    6,
+    12,
+    1
+   ],
+   [
+    11,
+    3,
+    1
+   ],
+   [
+    25,
+    4,
+    1
+   ],
+   [
+    26,
+    20,
+    1
+   ],
+   [
+    13,
+    12,
+    3
+   ],
+   [
+    19,
+    23,
+    1
+   ],
+   [
+    18,
+    9,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "kind": "mimic",
+    "spawn": [
+     15,
+     13
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      15,
+      13
+     ]
+    ]
+   },
+   {
+    "kind": "mimic",
+    "spawn": [
+     26,
+     15
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      26,
+      15
+     ]
+    ]
+   },
+   {
+    "kind": "snake",
+    "spawn": [
+     13,
+     4
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      11,
+      3
+     ],
+     [
+      13,
+      3
+     ],
+     [
+      13,
+      4
+     ],
+     [
+      11,
+      4
+     ]
+    ]
+   }
+  ],
+  "reactions": [
+   {
+    "id": "orchard-key",
+    "when": "key",
+    "close": [
+     "old-key-stair"
+    ],
+    "open": [
+     "middle-root"
+    ],
+    "message": "The upper stair coils shut. A root draws back in the middle orchard.",
+    "objective": "Take the central orchard around the closing stair—or brace an opening before it closes."
+   }
+  ],
+  "tailDrop": true
+ },
+ "false-garden": {
+  "living": true,
+  "explore": true,
+  "sightRadius": 5,
+  "burrows": 0,
+  "pebbles": 2,
+  "tongues": 1,
+  "seeds": 3,
+  "cracks": [],
+  "cover": [
+   [
+    3,
+    26
+   ],
+   [
+    7,
+    16
+   ],
+   [
+    10,
+    4
+   ],
+   [
+    17,
+    10
+   ],
+   [
+    24,
+    13
+   ],
+   [
+    31,
+    19
+   ]
+  ],
+  "gravel": [],
+  "shrubs": [
+   [
+    7,
+    8
+   ],
+   [
+    12,
+    4
+   ],
+   [
+    23,
+    4
+   ],
+   [
+    10,
+    18
+   ],
+   [
+    23,
+    17
+   ],
+   [
+    30,
+    11
+   ],
+   [
+    19,
+    27
+   ]
+  ],
+  "seedCrossings": [],
+  "id": "false-garden",
+  "name": "False Garden",
+  "brief": "Some plants twitch. Others stand perfectly still. Two prizes rearrange the hedges.",
+  "hint": "A pebble can stir a suspicious plant from a safe distance. Watch for a moving shadow.",
+  "width": 35,
+  "height": 31,
+  "rooms": [
+   [
+    1,
+    21,
+    9,
+    28
+   ],
+   [
+    5,
+    3,
+    8,
+    21
+   ],
+   [
+    8,
+    2,
+    31,
+    5
+   ],
+   [
+    28,
+    5,
+    32,
+    27
+   ],
+   [
+    9,
+    25,
+    28,
+    28
+   ],
+   [
+    9,
+    16,
+    25,
+    20
+   ],
+   [
+    13,
+    8,
+    17,
+    16
+   ],
+   [
+    17,
+    8,
+    28,
+    11
+   ],
+   [
+    9,
+    12,
+    13,
+    15
+   ],
+   [
+    21,
+    11,
+    25,
+    25
+   ],
+   [
+    8,
+    18,
+    9,
+    22
+   ]
+  ],
+  "spawn": [
+   3,
+   26
+  ],
+  "key": [
+   30,
+   3
+  ],
+  "exit": [
+   29,
+   26
+  ],
+  "gates": [
+   {
+    "id": "garden-entry",
+    "name": "garden entry",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      10,
+      16
+     ],
+     [
+      10,
+      17
+     ],
+     [
+      10,
+      18
+     ],
+     [
+      10,
+      19
+     ],
+     [
+      10,
+      20
+     ]
+    ],
+    "initialOpen": true
+   },
+   {
+    "id": "north-hedge",
+    "name": "north hedge",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      19,
+      2
+     ],
+     [
+      19,
+      3
+     ],
+     [
+      19,
+      4
+     ],
+     [
+      19,
+      5
+     ]
+    ],
+    "initialOpen": false
+   },
+   {
+    "id": "key-descent",
+    "name": "key descent",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      28,
+      13
+     ],
+     [
+      29,
+      13
+     ],
+     [
+      30,
+      13
+     ],
+     [
+      31,
+      13
+     ],
+     [
+      32,
+      13
+     ]
+    ],
+    "initialOpen": false
+   },
+   {
+    "id": "west-loop",
+    "name": "west loop",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      13,
+      11
+     ],
+     [
+      14,
+      11
+     ],
+     [
+      15,
+      11
+     ],
+     [
+      16,
+      11
+     ],
+     [
+      17,
+      11
+     ]
+    ],
+    "initialOpen": false
+   }
+  ],
+  "loot": [
+   [
+    6,
+    26,
+    1
+   ],
+   [
+    7,
+    12,
+    1
+   ],
+   [
+    15,
+    17,
+    3
+   ],
+   [
+    15,
+    9,
+    1
+   ],
+   [
+    24,
+    3,
+    1
+   ],
+   [
+    30,
+    3,
+    1
+   ],
+   [
+    30,
+    23,
+    1
+   ],
+   [
+    18,
+    27,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "kind": "mimic",
+    "spawn": [
+     8,
+     19
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      8,
+      19
+     ]
+    ]
+   },
+   {
+    "kind": "mimic",
+    "spawn": [
+     17,
+     17
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      17,
+      17
+     ]
+    ]
+   },
+   {
+    "kind": "mimic",
+    "spawn": [
+     24,
+     9
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      24,
+      9
+     ]
+    ]
+   },
+   {
+    "kind": "mimic",
+    "spawn": [
+     30,
+     20
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      30,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "spider",
+    "spawn": [
+     15,
+     4
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      13,
+      3
+     ],
+     [
+      15,
+      3
+     ],
+     [
+      15,
+      4
+     ],
+     [
+      13,
+      4
+     ]
+    ]
+   }
+  ],
+  "reactions": [
+   {
+    "id": "false-entry",
+    "when": "enter",
+    "region": [
+     13,
+     16,
+     18,
+     20
+    ],
+    "close": [
+     "garden-entry"
+    ],
+    "open": [
+     "west-loop"
+    ],
+    "message": "The entrance thickens behind you. A western hedge parts above the chest.",
+    "objective": "Find the central chest to release the north hedge."
+   },
+   {
+    "id": "false-chest",
+    "when": "treasure",
+    "at": [
+     15,
+     17
+    ],
+    "open": [
+     "north-hedge"
+    ],
+    "message": "The chest loosens the northern hedge. Leaves twitch near the path.",
+    "objective": "Follow the northern hedge to the key."
+   },
+   {
+    "id": "false-key",
+    "when": "key",
+    "open": [
+     "key-descent"
+    ],
+    "message": "The key releases the eastern descent through the garden.",
+    "objective": "Take the eastern descent to the hatch."
+   }
+  ],
+  "tailDrop": true
+ },
+ "rootwheel-ruins": {
+  "living": true,
+  "explore": true,
+  "sightRadius": 5,
+  "burrows": 0,
+  "pebbles": 2,
+  "tongues": 1,
+  "seeds": 2,
+  "cracks": [],
+  "cover": [
+   [
+    4,
+    17
+   ],
+   [
+    13,
+    17
+   ],
+   [
+    19,
+    13
+   ],
+   [
+    21,
+    7
+   ],
+   [
+    30,
+    5
+   ],
+   [
+    34,
+    11
+   ],
+   [
+    30,
+    26
+   ],
+   [
+    19,
+    28
+   ],
+   [
+    8,
+    26
+   ]
+  ],
+  "gravel": [],
+  "shrubs": [
+   [
+    7,
+    15
+   ],
+   [
+    18,
+    17
+   ],
+   [
+    22,
+    19
+   ],
+   [
+    24,
+    4
+   ],
+   [
+    33,
+    15
+   ],
+   [
+    20,
+    26
+   ]
+  ],
+  "seedCrossings": [],
+  "id": "rootwheel-ruins",
+  "name": "Rootwheel Ruins",
+  "brief": "A living wheel changes which chamber its root passages reach.",
+  "hint": "The wheel turns as you reach its chambers. Alternate roots open before the old ones close.",
+  "width": 41,
+  "height": 33,
+  "rooms": [
+   [
+    1,
+    12,
+    8,
+    22
+   ],
+   [
+    8,
+    15,
+    16,
+    18
+   ],
+   [
+    16,
+    12,
+    24,
+    21
+   ],
+   [
+    18,
+    2,
+    22,
+    12
+   ],
+   [
+    14,
+    1,
+    26,
+    6
+   ],
+   [
+    24,
+    15,
+    34,
+    18
+   ],
+   [
+    32,
+    11,
+    38,
+    22
+   ],
+   [
+    18,
+    21,
+    22,
+    29
+   ],
+   [
+    11,
+    27,
+    30,
+    30
+   ],
+   [
+    3,
+    23,
+    11,
+    30
+   ],
+   [
+    5,
+    20,
+    8,
+    23
+   ],
+   [
+    26,
+    3,
+    35,
+    6
+   ],
+   [
+    33,
+    6,
+    36,
+    11
+   ],
+   [
+    30,
+    22,
+    35,
+    29
+   ]
+  ],
+  "spawn": [
+   4,
+   17
+  ],
+  "key": [
+   36,
+   16
+  ],
+  "exit": [
+   5,
+   27
+  ],
+  "rootWheel": [
+   20,
+   17
+  ],
+  "gates": [
+   {
+    "id": "west-arm",
+    "name": "west arm",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      12,
+      15
+     ],
+     [
+      12,
+      16
+     ],
+     [
+      12,
+      17
+     ],
+     [
+      12,
+      18
+     ]
+    ],
+    "initialOpen": true
+   },
+   {
+    "id": "north-arm",
+    "name": "north arm",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      18,
+      9
+     ],
+     [
+      19,
+      9
+     ],
+     [
+      20,
+      9
+     ],
+     [
+      21,
+      9
+     ],
+     [
+      22,
+      9
+     ]
+    ],
+    "initialOpen": false
+   },
+   {
+    "id": "east-arm",
+    "name": "east arm",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      28,
+      15
+     ],
+     [
+      28,
+      16
+     ],
+     [
+      28,
+      17
+     ],
+     [
+      28,
+      18
+     ]
+    ],
+    "initialOpen": true
+   },
+   {
+    "id": "south-arm",
+    "name": "south arm",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      18,
+      24
+     ],
+     [
+      19,
+      24
+     ],
+     [
+      20,
+      24
+     ],
+     [
+      21,
+      24
+     ],
+     [
+      22,
+      24
+     ]
+    ],
+    "initialOpen": false,
+    "switch": [
+     19,
+     28
+    ]
+   },
+   {
+    "id": "upper-return",
+    "name": "upper return",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      29,
+      3
+     ],
+     [
+      29,
+      4
+     ],
+     [
+      29,
+      5
+     ],
+     [
+      29,
+      6
+     ]
+    ],
+    "initialOpen": false
+   },
+   {
+    "id": "low-return",
+    "name": "low return",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      30,
+      25
+     ],
+     [
+      31,
+      25
+     ],
+     [
+      32,
+      25
+     ],
+     [
+      33,
+      25
+     ],
+     [
+      34,
+      25
+     ],
+     [
+      35,
+      25
+     ]
+    ],
+    "initialOpen": false
+   }
+  ],
+  "loot": [
+   [
+    5,
+    17,
+    1
+   ],
+   [
+    19,
+    4,
+    3
+   ],
+   [
+    24,
+    3,
+    1
+   ],
+   [
+    20,
+    16,
+    1
+   ],
+   [
+    36,
+    16,
+    1
+   ],
+   [
+    34,
+    20,
+    1
+   ],
+   [
+    20,
+    28,
+    1
+   ],
+   [
+    7,
+    27,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "kind": "mimic",
+    "spawn": [
+     19,
+     19
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      19,
+      19
+     ]
+    ]
+   },
+   {
+    "kind": "mimic",
+    "spawn": [
+     22,
+     4
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      22,
+      4
+     ]
+    ]
+   },
+   {
+    "kind": "mimic",
+    "spawn": [
+     34,
+     17
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      34,
+      17
+     ]
+    ]
+   },
+   {
+    "kind": "toad",
+    "spawn": [
+     19,
+     28
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      19,
+      27
+     ],
+     [
+      20,
+      27
+     ],
+     [
+      20,
+      28
+     ],
+     [
+      19,
+      28
+     ]
+    ]
+   }
+  ],
+  "reactions": [
+   {
+    "id": "wheel-entry",
+    "when": "enter",
+    "region": [
+     17,
+     13,
+     23,
+     20
+    ],
+    "close": [
+     "west-arm"
+    ],
+    "open": [
+     "north-arm"
+    ],
+    "message": "The wheel turns north. The western arm folds behind you.",
+    "objective": "Reach the northern chest for another turn."
+   },
+   {
+    "id": "wheel-chest",
+    "when": "treasure",
+    "at": [
+     19,
+     4
+    ],
+    "close": [
+     "north-arm"
+    ],
+    "open": [
+     "south-arm",
+     "upper-return"
+    ],
+    "message": "The wheel turns south. A high return opens beyond the northern chamber.",
+    "objective": "Take the high return to the eastern key."
+   },
+   {
+    "id": "wheel-key",
+    "when": "key",
+    "close": [
+     "east-arm"
+    ],
+    "open": [
+     "low-return",
+     "south-arm"
+    ],
+    "message": "The eastern arm curls shut. The low return unfurls beneath it.",
+    "objective": "Take the eastern low return, then the southern roots to the western hatch."
+   }
+  ],
+  "unlockAny": [
+   "sleeping-orchard"
+  ],
+  "tailDrop": true
+ },
+ "hungry-greenhouse": {
+  "living": true,
+  "explore": true,
+  "sightRadius": 5,
+  "burrows": 0,
+  "pebbles": 3,
+  "tongues": 1,
+  "seeds": 3,
+  "cracks": [],
+  "cover": [
+   [
+    3,
+    27
+   ],
+   [
+    7,
+    19
+   ],
+   [
+    13,
+    4
+   ],
+   [
+    18,
+    7
+   ],
+   [
+    29,
+    4
+   ],
+   [
+    34,
+    15
+   ],
+   [
+    28,
+    28
+   ],
+   [
+    12,
+    23
+   ]
+  ],
+  "gravel": [],
+  "shrubs": [
+   [
+    7,
+    11
+   ],
+   [
+    16,
+    4
+   ],
+   [
+    14,
+    13
+   ],
+   [
+    18,
+    20
+   ],
+   [
+    24,
+    16
+   ],
+   [
+    34,
+    22
+   ],
+   [
+    17,
+    29
+   ]
+  ],
+  "seedCrossings": [
+   {
+    "id": "glasshouse-vine",
+    "banks": [
+     [
+      23,
+      21
+     ],
+     [
+      25,
+      21
+     ]
+    ],
+    "tiles": [
+     [
+      24,
+      21
+     ]
+    ]
+   }
+  ],
+  "id": "hungry-greenhouse",
+  "name": "Hungry Greenhouse",
+  "brief": "The vault feeds on treasure. Every valuable detour wakes another root.",
+  "hint": "Taking the central chest reshapes the glasshouse paths. Keep a seed for a doorway worth saving.",
+  "width": 39,
+  "height": 33,
+  "rooms": [
+   [
+    1,
+    23,
+    9,
+    30
+   ],
+   [
+    5,
+    4,
+    8,
+    23
+   ],
+   [
+    8,
+    2,
+    34,
+    5
+   ],
+   [
+    31,
+    5,
+    35,
+    27
+   ],
+   [
+    9,
+    27,
+    31,
+    30
+   ],
+   [
+    10,
+    11,
+    19,
+    15
+   ],
+   [
+    8,
+    13,
+    10,
+    16
+   ],
+   [
+    16,
+    5,
+    19,
+    11
+   ],
+   [
+    19,
+    12,
+    31,
+    15
+   ],
+   [
+    21,
+    15,
+    25,
+    27
+   ],
+   [
+    11,
+    18,
+    21,
+    21
+   ],
+   [
+    11,
+    21,
+    14,
+    27
+   ],
+   [
+    25,
+    20,
+    31,
+    23
+   ]
+  ],
+  "gaps": [
+   [
+    24,
+    20
+   ],
+   [
+    24,
+    21
+   ],
+   [
+    24,
+    22
+   ],
+   [
+    24,
+    23
+   ]
+  ],
+  "spawn": [
+   3,
+   27
+  ],
+  "key": [
+   33,
+   3
+  ],
+  "exit": [
+   22,
+   28
+  ],
+  "gates": [
+   {
+    "id": "glass-entry",
+    "name": "glass entry",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      9,
+      13
+     ],
+     [
+      9,
+      14
+     ],
+     [
+      9,
+      15
+     ],
+     [
+      9,
+      16
+     ]
+    ],
+    "initialOpen": true
+   },
+   {
+    "id": "upper-vault",
+    "name": "upper vault",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      26,
+      2
+     ],
+     [
+      26,
+      3
+     ],
+     [
+      26,
+      4
+     ],
+     [
+      26,
+      5
+     ]
+    ],
+    "initialOpen": false
+   },
+   {
+    "id": "central-return",
+    "name": "central return",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      22,
+      12
+     ],
+     [
+      22,
+      13
+     ],
+     [
+      22,
+      14
+     ],
+     [
+      22,
+      15
+     ]
+    ],
+    "initialOpen": false
+   },
+   {
+    "id": "old-descent",
+    "name": "old descent",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      31,
+      10
+     ],
+     [
+      32,
+      10
+     ],
+     [
+      33,
+      10
+     ],
+     [
+      34,
+      10
+     ],
+     [
+      35,
+      10
+     ]
+    ],
+    "initialOpen": true
+   },
+   {
+    "id": "low-crossing",
+    "name": "low crossing",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      31,
+      24
+     ],
+     [
+      32,
+      24
+     ],
+     [
+      33,
+      24
+     ],
+     [
+      34,
+      24
+     ],
+     [
+      35,
+      24
+     ]
+    ],
+    "initialOpen": false
+   }
+  ],
+  "loot": [
+   [
+    6,
+    27,
+    1
+   ],
+   [
+    7,
+    7,
+    1
+   ],
+   [
+    17,
+    12,
+    3
+   ],
+   [
+    22,
+    3,
+    1
+   ],
+   [
+    33,
+    3,
+    1
+   ],
+   [
+    34,
+    25,
+    1
+   ],
+   [
+    22,
+    28,
+    1
+   ],
+   [
+    13,
+    20,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "kind": "mimic",
+    "spawn": [
+     7,
+     15
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      7,
+      15
+     ]
+    ]
+   },
+   {
+    "kind": "mimic",
+    "spawn": [
+     16,
+     13
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      16,
+      13
+     ]
+    ]
+   },
+   {
+    "kind": "mimic",
+    "spawn": [
+     30,
+     4
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      30,
+      4
+     ]
+    ]
+   },
+   {
+    "kind": "mimic",
+    "spawn": [
+     23,
+     19
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      23,
+      19
+     ]
+    ]
+   },
+   {
+    "kind": "mimic",
+    "spawn": [
+     33,
+     19
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      33,
+      19
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     12,
+     28
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      10,
+      28
+     ],
+     [
+      12,
+      28
+     ],
+     [
+      12,
+      29
+     ],
+     [
+      10,
+      29
+     ]
+    ]
+   }
+  ],
+  "reactions": [
+   {
+    "id": "greenhouse-chest",
+    "when": "treasure",
+    "at": [
+     17,
+     12
+    ],
+    "close": [
+     "glass-entry"
+    ],
+    "open": [
+     "upper-vault",
+     "central-return"
+    ],
+    "spawn": [
+     "glass-mimic"
+    ],
+    "message": "The chest feeds the roots. The entrance closes, and two northern paths part.",
+    "objective": "Take the northern vault to the key."
+   },
+   {
+    "id": "greenhouse-key",
+    "when": "key",
+    "close": [
+     "old-descent"
+    ],
+    "open": [
+     "low-crossing"
+    ],
+    "message": "Roots claim the old descent. The lower crossing opens beneath the glass.",
+    "objective": "Return through the central glasshouse or brace the descending root."
+   }
+  ],
+  "reinforcements": [
+   {
+    "kind": "mimic",
+    "spawn": [
+     12,
+     14
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      12,
+      14
+     ]
+    ],
+    "id": "glass-mimic"
+   }
+  ],
+  "unlockAny": [
+   "false-garden",
+   "rootwheel-ruins"
+  ],
+  "tailDrop": true
+ },
+ "the-heartwood": {
+  "living": true,
+  "explore": true,
+  "sightRadius": 5,
+  "burrows": 0,
+  "pebbles": 3,
+  "tongues": 2,
+  "seeds": 4,
+  "cracks": [],
+  "cover": [
+   [
+    5,
+    29
+   ],
+   [
+    8,
+    19
+   ],
+   [
+    11,
+    5
+   ],
+   [
+    21,
+    10
+   ],
+   [
+    31,
+    5
+   ],
+   [
+    36,
+    14
+   ],
+   [
+    32,
+    24
+   ],
+   [
+    22,
+    30
+   ],
+   [
+    15,
+    25
+   ]
+  ],
+  "gravel": [],
+  "shrubs": [
+   [
+    8,
+    11
+   ],
+   [
+    12,
+    3
+   ],
+   [
+    20,
+    18
+   ],
+   [
+    27,
+    5
+   ],
+   [
+    35,
+    9
+   ],
+   [
+    27,
+    27
+   ],
+   [
+    14,
+    30
+   ]
+  ],
+  "seedCrossings": [
+   {
+    "id": "heart-vine",
+    "banks": [
+     [
+      22,
+      30
+     ],
+     [
+      24,
+      30
+     ]
+    ],
+    "tiles": [
+     [
+      23,
+      30
+     ]
+    ]
+   }
+  ],
+  "id": "the-heartwood",
+  "name": "The Heartwood",
+  "brief": "The heart of the ruin closes around you. Choose which openings deserve your seeds.",
+  "hint": "The western chest opens the crown. The lower offering releases the final hatch path.",
+  "width": 43,
+  "height": 35,
+  "requiredTreasure": 6,
+  "rooms": [
+   [
+    1,
+    24,
+    10,
+    32
+   ],
+   [
+    6,
+    6,
+    9,
+    24
+   ],
+   [
+    5,
+    2,
+    14,
+    6
+   ],
+   [
+    14,
+    3,
+    35,
+    6
+   ],
+   [
+    32,
+    2,
+    39,
+    10
+   ],
+   [
+    34,
+    10,
+    38,
+    28
+   ],
+   [
+    24,
+    25,
+    35,
+    30
+   ],
+   [
+    15,
+    28,
+    24,
+    32
+   ],
+   [
+    10,
+    29,
+    15,
+    32
+   ],
+   [
+    10,
+    16,
+    22,
+    20
+   ],
+   [
+    9,
+    16,
+    10,
+    20
+   ],
+   [
+    18,
+    6,
+    22,
+    16
+   ],
+   [
+    22,
+    17,
+    34,
+    20
+   ],
+   [
+    25,
+    20,
+    28,
+    25
+   ],
+   [
+    12,
+    22,
+    18,
+    28
+   ],
+   [
+    28,
+    22,
+    34,
+    24
+   ]
+  ],
+  "gaps": [
+   [
+    19,
+    3
+   ],
+   [
+    19,
+    4
+   ],
+   [
+    19,
+    5
+   ],
+   [
+    19,
+    6
+   ],
+   [
+    23,
+    29
+   ],
+   [
+    23,
+    30
+   ]
+  ],
+  "spawn": [
+   5,
+   29
+  ],
+  "key": [
+   36,
+   4
+  ],
+  "exit": [
+   18,
+   30
+  ],
+  "gates": [
+   {
+    "id": "heart-entry",
+    "name": "heart entry",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      12,
+      16
+     ],
+     [
+      12,
+      17
+     ],
+     [
+      12,
+      18
+     ],
+     [
+      12,
+      19
+     ],
+     [
+      12,
+      20
+     ]
+    ],
+    "initialOpen": true
+   },
+   {
+    "id": "crown-root",
+    "name": "crown root",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      19,
+      3
+     ],
+     [
+      19,
+      4
+     ],
+     [
+      19,
+      5
+     ],
+     [
+      19,
+      6
+     ]
+    ],
+    "initialOpen": false
+   },
+   {
+    "id": "heart-loop",
+    "name": "heart loop",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      18,
+      12
+     ],
+     [
+      19,
+      12
+     ],
+     [
+      20,
+      12
+     ],
+     [
+      21,
+      12
+     ],
+     [
+      22,
+      12
+     ]
+    ],
+    "initialOpen": false
+   },
+   {
+    "id": "old-crown",
+    "name": "old crown",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      34,
+      12
+     ],
+     [
+      35,
+      12
+     ],
+     [
+      36,
+      12
+     ],
+     [
+      37,
+      12
+     ],
+     [
+      38,
+      12
+     ]
+    ],
+    "initialOpen": true
+   },
+   {
+    "id": "east-descent",
+    "name": "east descent",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      34,
+      23
+     ],
+     [
+      35,
+      23
+     ],
+     [
+      36,
+      23
+     ],
+     [
+      37,
+      23
+     ],
+     [
+      38,
+      23
+     ]
+    ],
+    "initialOpen": false
+   },
+   {
+    "id": "last-return",
+    "name": "last return",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      30,
+      25
+     ],
+     [
+      30,
+      26
+     ],
+     [
+      30,
+      27
+     ],
+     [
+      30,
+      28
+     ],
+     [
+      30,
+      29
+     ],
+     [
+      30,
+      30
+     ]
+    ],
+    "initialOpen": true
+   },
+   {
+    "id": "hatch-root",
+    "name": "hatch root",
+    "color": [
+     159,
+     200,
+     106
+    ],
+    "root": true,
+    "tiles": [
+     [
+      20,
+      28
+     ],
+     [
+      20,
+      29
+     ],
+     [
+      20,
+      30
+     ],
+     [
+      20,
+      31
+     ],
+     [
+      20,
+      32
+     ]
+    ],
+    "initialOpen": false
+   }
+  ],
+  "loot": [
+   [
+    5,
+    29,
+    1
+   ],
+   [
+    10,
+    4,
+    3
+   ],
+   [
+    36,
+    4,
+    1
+   ],
+   [
+    32,
+    27,
+    3
+   ],
+   [
+    18,
+    18,
+    1
+   ],
+   [
+    18,
+    30,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "kind": "mimic",
+    "spawn": [
+     8,
+     16
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      8,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "mimic",
+    "spawn": [
+     13,
+     4
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      13,
+      4
+     ]
+    ]
+   },
+   {
+    "kind": "mimic",
+    "spawn": [
+     26,
+     4
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      26,
+      4
+     ]
+    ]
+   },
+   {
+    "kind": "scorpion",
+    "spawn": [
+     36,
+     8
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      35,
+      7
+     ],
+     [
+      36,
+      7
+     ],
+     [
+      36,
+      8
+     ],
+     [
+      35,
+      8
+     ]
+    ]
+   },
+   {
+    "kind": "mimic",
+    "spawn": [
+     36,
+     18
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      36,
+      18
+     ]
+    ]
+   },
+   {
+    "kind": "mimic",
+    "spawn": [
+     25,
+     29
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      25,
+      29
+     ]
+    ]
+   },
+   {
+    "kind": "spider",
+    "spawn": [
+     17,
+     30
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      16,
+      29
+     ],
+     [
+      17,
+      29
+     ],
+     [
+      17,
+      30
+     ],
+     [
+      16,
+      30
+     ]
+    ]
+   }
+  ],
+  "reactions": [
+   {
+    "id": "heart-offering",
+    "when": "treasure",
+    "at": [
+     10,
+     4
+    ],
+    "close": [
+     "heart-entry"
+    ],
+    "open": [
+     "crown-root",
+     "heart-loop"
+    ],
+    "message": "The western offering feeds the heart. Its entry closes as the crown unfolds.",
+    "objective": "Reach the crown key. Save a seed for a passage you want to hold."
+   },
+   {
+    "id": "heart-key",
+    "when": "key",
+    "close": [
+     "old-crown"
+    ],
+    "open": [
+     "east-descent"
+    ],
+    "spawn": [
+     "heart-mimic"
+    ],
+    "message": "The high crown draws shut. Roots unfurl into an eastern descent.",
+    "objective": "Find the lower offering to release the hatch."
+   },
+   {
+    "id": "heart-last",
+    "when": "treasure",
+    "at": [
+     32,
+     27
+    ],
+    "close": [
+     "last-return"
+    ],
+    "open": [
+     "hatch-root"
+    ],
+    "message": "The final offering seals the old return and opens the heartwood hatch path.",
+    "objective": "Bring six treasure through the southern root loop to the hatch."
+   }
+  ],
+  "reinforcements": [
+   {
+    "kind": "mimic",
+    "spawn": [
+     36,
+     11
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      36,
+      11
+     ]
+    ],
+    "id": "heart-mimic"
+   }
+  ],
+  "tailDrop": true
  }
 }

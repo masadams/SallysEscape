@@ -134,3 +134,39 @@ test('standing still where the tongue grab started is caught by the lunge',()=>{
 test('a pebble that lands by the lure springs the angler harmlessly',()=>{
   const {g,h}=anglerArena([3,4]);g.decoy={x:7.3,y:4.6,expires:5};ticks(g,.5);assert.equal(h.state,'sink');assert.equal(g.status,'playing');
 });
+
+test('a flytrap snaps where Sally is heading when she comes within reach, then chews and lets her pass',()=>{
+  const {g,h}=arena('flytrap',[7,4],[3,4]);assert.equal(h.state,'open');
+  for(let i=0;i<120*3&&g.status==='playing';i++)g.advance(1/120,{x:1});assert.equal(g.status,'caught');assert.match(g.result.message,/flytrap/);
+  const b=arena('flytrap',[7,4],[3,4]);b.g.decoy={x:7.5,y:5.5,expires:5};ticks(b.g,.5);assert.equal(b.h.state,'chew');
+  for(let i=0;i<120*1.5&&b.g.status==='playing';i++)b.g.advance(1/120,{x:1,sprint:true});assert.equal(b.g.status,'playing');assert.ok(b.g.player.x>8);
+});
+function vineArena(){const r=arena('snake',[12,8],[3,4]);r.g.vines=[{x:5,y:4,key:'5,4',readyAt:0,holding:false}];r.h.facing=Math.PI;r.h.pauseUntil=100;return r;}
+test('a tangle vine holds Sally for a moment and lets her go when nothing sees her',()=>{
+  const {g,h}=vineArena();Object.assign(h,{x:12.5,y:9.5,facing:0});
+  ticks(g,.9,{x:1});assert.ok(g.heldBy);const x=g.player.x;ticks(g,1,{x:1});assert.equal(g.player.x,x,'held still');
+  ticks(g,.8,{x:1});assert.equal(g.heldBy,null);assert.ok(g.player.x>x+.5);assert.equal(g.status,'playing');
+  // It withers for a while, so stepping back across it is safe at once.
+  ticks(g,.6,{x:-1});assert.equal(g.heldBy,null);
+});
+test('a hunter that sees Sally in a vine catches her; a spare tail tears her free instead',()=>{
+  // A snake resting on its post three tiles past the vine, looking straight at it.
+  const watched=()=>{const r=arena('snake',[8,4],[3,4]);r.h.facing=Math.PI;r.g.player.hidden=true;r.g.vines=[{x:5,y:4,key:'5,4',readyAt:0,holding:false}];return r;};
+  const {g}=watched();g.hasTail=false;Object.assign(g.player,{x:5.5,y:4.5});ticks(g,.05);assert.equal(g.status,'caught');assert.match(g.result.message,/vine/);
+  const b=watched();b.g.tailDrop=true;b.g.hasTail=true;Object.assign(b.g.player,{x:5.5,y:4.5});ticks(b.g,.05);assert.equal(b.g.heldBy,null);assert.equal(b.g.tailsDropped,1);
+});
+
+test('a crack lets Sally slip through a wall, but a chasing snake can neither follow nor see into it',()=>{
+  const {g,h}=arena('snake',[3,4],[6,4]);for(let y=1;y<g.height-1;y++)g.grid[y][8]='#';g.grid[4][8]='Y';
+  assert.ok(g.fits({x:8.5,y:4.5}),'Sally fits');assert.ok(!g.fits({x:8.5,y:4.5},.22,h),'the snake does not');
+  assert.deepEqual(g.route(h,{x:10.5,y:4.5},h),[]);Object.assign(g.player,{x:8.5,y:4.5});assert.ok(!g.clear(h,g.player,true),'no sight into the crack');
+  Object.assign(g.player,{x:6.5,y:4.5});Object.assign(h,{state:'chase',awareness:1,lastKnown:copyOf(g.player),lastObserved:0,pauseUntil:0});
+  ticks(g,1.6,{x:1});assert.equal(g.status,'playing');assert.ok(g.player.x>9,'Sally is through');assert.ok(h.x<8,'the snake stays behind the wall');
+});
+function copyOf(p){return {x:p.x,y:p.y};}
+test('a heavy plate ignores Sally and opens only under a beetle, for its duration',()=>{
+  const {g,h}=arena('beetle',[3,8],[6,4]);g.gates=[{id:'slab',name:'Slab door',heavy:true,plates:[{x:3.5,y:8.5}],tiles:[[10,4]],duration:4,open:false,sealed:false,activations:0,expiresAt:null,closingAt:null,color:[1,2,3]}];g.grid[4][10]='G';
+  Object.assign(g.player,{x:3.5,y:8.5});Object.assign(h,{x:12.5,y:10.5});g.activateSwitches();assert.equal(g.gates[0].open,false,'Sally is too light');
+  Object.assign(g.player,{x:6.5,y:4.5});Object.assign(h,{x:3.5,y:8.5});g.activateSwitches();assert.equal(g.gates[0].open,true,'the beetle presses it');
+  Object.assign(h,{x:12.5,y:10.5});g.updateHunter=()=>{};ticks(g,5);assert.equal(g.gates[0].open,false,'and it closes again');
+});
