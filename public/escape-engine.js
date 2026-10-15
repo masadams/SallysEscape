@@ -4,6 +4,8 @@
   const catalog=typeof module!=='undefined'&&module.exports?require('./escape-levels.js'):{EscapeCatalog:root.EscapeCatalog,escapeGridFor:root.escapeGridFor};
   const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   const copy=p=>({x:p.x,y:p.y});
+  // Hunters heavy enough to press a heavy plate.
+  const HEAVY=new Set(['beetle']);
   const centre=(x,y)=>({x:x+0.5,y:y+0.5});
   const directions=[[1,0],[-1,0],[0,1],[0,-1]];
   // A trail is a closed loop of axis-aligned corners; expand it to every tile centre on the way.
@@ -69,8 +71,9 @@
     makeHunter(guard){return {...centre(...guard.spawn),id:guard.id||null,kind:guard.kind||'snake',facing:guard.facing,state:guard.kind==='mimic'?'rooted':guard.kind==='cobra'?'coiled':guard.kind==='angler'?'lurking':guard.kind==='flytrap'?'open':'patrol',awareness:0,lastKnown:null,lastObserved:-Infinity,reason:'seen',path:[],routeIndex:0,pauseUntil:0,searchUntil:0,patrol:guard.patrol.map(p=>centre(...p)),aim:null,phaseUntil:0,distanceMoved:0,...(guard.kind==='cobra'?{post:centre(...guard.spawn),reach:guard.reach||2.6}:{}),...(guard.kind==='angler'?{lure:centre(...(guard.lure||guard.spawn))}:{}),...(guard.kind==='scorpion'?{reach:guard.reach||1.8,buried:Boolean(guard.buried),offset:guard.offset??(guard.spawn[0]*.7+guard.spawn[1]*.3)%3.8,post:centre(...guard.spawn)}:{})};}
     floor(x,y){return this.grid[y]?.[x]!==undefined && !['#','B','G','P'].includes(this.grid[y][x]);}
     water(p){return this.grid[Math.floor(p.y)]?.[Math.floor(p.x)]==='U';}
-    actorFloor(x,y,h){const wet=this.grid[y]?.[x]==='U';return this.floor(x,y)&&(!h||h.kind==='sea-snake'||(h.kind==='fish'?wet:!wet));}
-    sightFloor(x,y){return this.floor(x,y)||this.grid[y]?.[x]==='P';}
+    // A crack (S) is wide enough for Sally only: no hunter can squeeze through or see into it.
+    actorFloor(x,y,h){const wet=this.grid[y]?.[x]==='U';if(h&&this.grid[y]?.[x]==='S')return false;return this.floor(x,y)&&(!h||h.kind==='sea-snake'||(h.kind==='fish'?wet:!wet));}
+    sightFloor(x,y){const c=this.grid[y]?.[x];return c!=='S'&&(this.floor(x,y)||c==='P');}
     visibleTile(x,y){return !this.level.explore||this.visible.has(x+','+y);}
     lineVisible(a,b){
       // A blocking wall itself is visible; tiles beyond it are not. Do not
@@ -139,10 +142,11 @@
     }
     activateSwitches(){
       for(const gate of this.gates){
-        const pressed=[...(gate.switch?[gate.switch]:[]),...gate.plates].some(p=>distance(this.player,p)<.4);
+        // A heavy plate ignores Sally; only a big hunter's weight (a beetle on its rounds) presses it.
+        const pressed=gate.heavy?this.hunters.some(h=>HEAVY.has(h.kind)&&gate.plates.some(p=>distance(h,p)<.45)):[...(gate.switch?[gate.switch]:[]),...gate.plates].some(p=>distance(this.player,p)<.4);
         if(gate.duration){
           if(pressed&&!gate.sealed){
-            if(!gate.pressed){gate.activations++;this.notice(gate.name+' '+(gate.bridge?'bridge':'gate')+' lasts '+gate.duration+' seconds after you leave the plate.','plate');}
+            if(!gate.pressed){gate.activations++;this.notice(gate.heavy?'Something heavy presses the plate. '+gate.name+' opens for '+gate.duration+' seconds.':gate.name+' '+(gate.bridge?'bridge':'gate')+' lasts '+gate.duration+' seconds after you leave the plate.','plate');}
             this.setGateOpen(gate,true);gate.expiresAt=this.elapsed+gate.duration;gate.closingAt=null;gate.warned=false;
           }gate.pressed=pressed;continue;
         }

@@ -311,6 +311,8 @@ function drawEscapeVault(){
     const tile=g.grid[y][x],floor=g.floor(x,y);
     noStroke();fill(...palette[floor?0:1]);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*0.12);
     if(!floor){stroke(...palette[2]);strokeWeight(1);line((x+.15)*cell,(y+.12)*cell,(x+.85)*cell,(y+.12)*cell);}
+    // A crack: drawn as wall with a dark, jagged slit only Sally fits through.
+    if(tile==='S'){noStroke();fill(...palette[1]);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*0.12);fill(6,10,12);beginShape();for(const [dx,dy] of [[.42,0],[.56,.22],[.48,.45],[.6,.7],[.52,1],[.42,1],[.46,.7],[.36,.45],[.46,.22],[.36,0]])vertex((x+dx)*cell,(y+dy)*cell);endShape(CLOSE);}
     if(tile==='B'){
       stroke(93,151,160);strokeWeight(1.3);line((x+0.3)*cell,(y+0.2)*cell,(x+0.6)*cell,(y+0.55)*cell);line((x+0.6)*cell,(y+0.55)*cell,(x+0.35)*cell,(y+0.8)*cell);
     }
@@ -335,7 +337,9 @@ function drawEscapeVault(){
   for(const gate of g.gates){
     const s=gate.switch,label=gate.closingAt!==null?'!':gate.duration&&gate.open?String(Math.max(0,Math.ceil(gate.expiresAt-g.elapsed))):gate.sealed?'×':gate.open?'✓':s?gate.id==='blue'?'B':'A':'◇',gateColor=gate.sealed?[230,137,148]:gate.color;
     if(s){stroke(...gateColor);strokeWeight(cell*.05);fill(...gateColor,gate.open?70:160);rect((s.x-.3)*cell,(s.y-.3)*cell,cell*.6,cell*.6,cell*.1);fill(15,35,40);noStroke();textSize(cell*.36);text(label,s.x*cell,s.y*cell);}
-    for(const plate of gate.plates){noStroke();fill(...gateColor,gate.pressed?230:100);ellipse(plate.x*cell,plate.y*cell,cell*.65,cell*.45);noFill();stroke(...gateColor);strokeWeight(cell*.035);ellipse(plate.x*cell,plate.y*cell,cell*.5,cell*.32);}
+    for(const plate of gate.plates){noStroke();fill(...gateColor,gate.pressed?230:100);ellipse(plate.x*cell,plate.y*cell,cell*.65,cell*.45);noFill();stroke(...gateColor);strokeWeight(cell*.035);ellipse(plate.x*cell,plate.y*cell,cell*.5,cell*.32);
+      // A heavy plate is a stone slab with a beetle mark: only a big hunter's weight presses it.
+      if(gate.heavy){noStroke();fill(70,62,50,220);rect((plate.x-.38)*cell,(plate.y-.28)*cell,cell*.76,cell*.56,cell*.08);fill(...gateColor,gate.pressed?255:150);ellipse(plate.x*cell,plate.y*cell,cell*.22,cell*.3);stroke(...gateColor);strokeWeight(cell*.03);line((plate.x-.15)*cell,(plate.y-.12)*cell,(plate.x+.15)*cell,(plate.y+.12)*cell);line((plate.x+.15)*cell,(plate.y-.12)*cell,(plate.x-.15)*cell,(plate.y+.12)*cell);}}
     for(const [x,y] of gate.tiles){if(gate.root){stroke(gate.bracedUntil>g.elapsed?186:94,gate.bracedUntil>g.elapsed?224:132,73);strokeWeight(cell*(gate.open?.055:.13));for(const offset of [.25,.55,.8])bezier((x+offset)*cell,y*cell,(x+offset-.2)*cell,(y+.3)*cell,(x+offset+.2)*cell,(y+.7)*cell,(x+offset)*cell,(y+1)*cell);if(gate.closingAt!==null){fill(242,207,116);noStroke();textSize(cell*.4);text(gate.bracedUntil>g.elapsed?Math.ceil(gate.bracedUntil-g.elapsed):'!',(x+.5)*cell,(y+.5)*cell);}continue;}if(gate.bridge){if(gate.open){stroke(gate.warned?239:151,gate.warned?174:117,73);strokeWeight(cell*.12);for(const dy of [.2,.4,.6,.8])line((x+.1)*cell,(y+dy)*cell,(x+.9)*cell,(y+dy)*cell);stroke(...gateColor);strokeWeight(cell*.035);line((x+.1)*cell,y*cell,(x+.1)*cell,(y+1)*cell);line((x+.9)*cell,y*cell,(x+.9)*cell,(y+1)*cell);noStroke();fill(232,239,200);textSize(cell*.27);text(label,(x+.5)*cell,(y+.5)*cell);}continue;}stroke(...gateColor);strokeWeight(cell*.075);for(const dx of [.25,.5,.75])line((x+dx)*cell,(y+.12)*cell,(x+dx)*cell,(y+.88)*cell);noStroke();fill(...palette[0]);rect((x+.16)*cell,(y+.23)*cell,cell*.68,cell*.54);fill(...gateColor);textSize(cell*.32);text(label,(x+.5)*cell,(y+.5)*cell);}
   }
   for(const [x,y]of g.level.shrubs||[])if(!view.follow||g.visibleTile(x,y))drawEscapeMimic({x:x+.5,y:y+.5,state:'rooted',facing:PI,distanceMoved:0},cell,g.elapsed,true);
