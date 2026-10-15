@@ -72,7 +72,7 @@
  "#.#.#.#.....#.#.....#...#...#..1#.#",
  "#.#.#.#.###.#######.###.###.#####.#",
  "#@#.......#..............1#.......#",
- "###################################"],guards:[{spawn:[17,13],facing:0,patrol:[[5,5],[17,9],[29,11],[17,17],[9,15]]},{kind:"millipede",spawn:[21,9],facing:PI,patrol:[[21,9]]},{kind:"flytrap",spawn:[32,1],facing:PI,patrol:[[32,1]]},{kind:"flytrap",spawn:[33,8],facing:-PI/2,patrol:[[33,8]]}]}
+ "###################################"],guards:[{spawn:[17,13],facing:0,patrol:[[5,5],[17,9],[29,11],[17,17],[9,15]]},{kind:"millipede",spawn:[13,17],facing:PI,patrol:[[13,17]]},{kind:"flytrap",spawn:[32,1],facing:PI,patrol:[[32,1]]},{kind:"flytrap",spawn:[33,8],facing:-PI/2,patrol:[[33,8]]}]}
   ];
   root.EscapeHidden=routes;
   if(typeof module!=='undefined'&&module.exports)module.exports=routes;
