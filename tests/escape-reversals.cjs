@@ -3,14 +3,16 @@ const {EscapeAdventure}=require('../public/escape-engine.js');
 const {EscapeCatalog,escapeGridFor}=require('../public/escape-levels.js');
 const {EscapeProgress}=require('../public/escape-progress.js');
 const later=EscapeCatalog.levels.filter(l=>l.reactions);
-function game(id='backlash-hall'){return new EscapeAdventure({levelId:id});}
+// Reversal rules are checked on frozen copies of the original ruins, so rebuilt routes cannot move them.
+const legacy=require('./fixtures/legacy-levels.json');
+function game(id='backlash-hall'){return new EscapeAdventure(legacy[id]?{level:legacy[id]}:{levelId:id});}
 function advance(g,s,input={}){for(let n=0;n<Math.ceil(s*120);n++)g.advance(1/120,input);}
 function openBlue(g){Object.assign(g.player,g.gates.find(g=>g.id==='blue').switch);g.activateSwitches();}
 
 test('the maze only reacts in later chapters, with increasing enemy pressure',()=>{
  assert.equal(later.length,44);assert.ok(EscapeCatalog.levels.slice(0,13).every(l=>!l.reactions));
  assert.deepEqual(EscapeCatalog.levels.slice(13,17).map(l=>l.guards.length),[3,3,4,4]);assert.equal(EscapeCatalog.levels.length,78);assert.equal(EscapeCatalog.challenges.length,21);
- for(const level of later){const g=game(level.id);for(const p of [g.player,g.key,g.exit,...g.loot,...g.hunters,...g.hunters.flatMap(h=>h.patrol)])assert.ok(g.fits(p),level.id+' valid placement');
+ for(const level of later){const g=new EscapeAdventure({levelId:level.id});for(const p of [g.player,g.key,g.exit,...g.loot,...g.hunters,...g.hunters.flatMap(h=>h.patrol)])assert.ok(g.fits(p),level.id+' valid placement');
   for(const r of level.reactions){assert.ok(r.message&&r.objective);for(const id of [...r.close||[],...r.open||[]])assert.ok(g.gates.find(g=>g.id===id));}
  }
 });
@@ -60,12 +62,12 @@ test('old thirteen-route saves unlock the harder chapter without a wipe',()=>{
 // handlers. Possible burrow landings add entry states, but only walking edges
 // prove escape safety. The recordings separately cover enemies and timing.
 function walkingGraph(level){
- const base=game(level.id),start={x:level.spawn[0],y:level.spawn[1],open:base.gates.reduce((n,g,i)=>n|(g.open?1<<i:0),0),sealed:0,key:false,fired:0,chest:false},nodes=[],edges=[],ids=new Map(),goals=[];
+ const base=new EscapeAdventure({levelId:level.id}),start={x:level.spawn[0],y:level.spawn[1],open:base.gates.reduce((n,g,i)=>n|(g.open?1<<i:0),0),sealed:0,key:false,fired:0,chest:false},nodes=[],edges=[],ids=new Map(),goals=[];
  const signature=n=>[n.x,n.y,n.open,n.sealed,+n.key,n.fired,+n.chest].join(','),reactions=level.reactions||[],completeReactions=EscapeCatalog.levels.indexOf(level)>=17;
  function add(n){const id=signature(n);if(ids.has(id))return ids.get(id);const i=nodes.length;ids.set(id,i);nodes.push(n);edges.push([]);return i;}
  function apply(n){const g=Object.create(EscapeAdventure.prototype);Object.assign(g,{...base,player:{...base.player,x:n.x+.5,y:n.y+.5},hunters:[],pendingSpawns:[],spawnedReinforcements:new Set(),grid:escapeGridFor(level),gates:base.gates.map((gate,i)=>({...gate,open:Boolean(n.open&(1<<i)),sealed:Boolean(n.sealed&(1<<i)),closingAt:null})),hasKey:n.key,reactionsFired:new Set(reactions.filter((r,i)=>n.fired&(1<<i)).map(r=>r.id)),events:[],elapsed:10,updateVisibility(){}});
   for(const gate of g.gates)for(const [x,y] of gate.tiles)g.grid[y][x]=gate.bridge?(gate.open?'W':'P'):gate.open?'g':'G';g.activateSwitches();g.reactToMaze('enter');
-  if(!g.hasKey&&n.x===level.key[0]&&n.y===level.key[1])g.collectKey();
+  if(!g.hasKey&&(n.grab||n.x===level.key[0]&&n.y===level.key[1]))g.collectKey();delete n.grab;
   let taken=Number(n.chest);reactions.forEach((r,i)=>{if(r.when==='treasure'&&n.x===r.at[0]&&n.y===r.at[1]&&!(taken&(1<<i))){taken|=1<<i;g.reactToMaze('treasure',{x:n.x+.5,y:n.y+.5});}});
   g.elapsed+=1;g.updateClosingGates();return {g,n:{...n,key:g.hasKey,chest:taken,open:g.gates.reduce((v,gate,i)=>v|(gate.open?1<<i:0),0),sealed:g.gates.reduce((v,gate,i)=>v|(gate.sealed?1<<i:0),0),fired:reactions.reduce((v,r,i)=>v|(g.reactionsFired.has(r.id)?1<<i:0),0)}};
  }
@@ -81,6 +83,8 @@ function walkingGraph(level){
    for(const bed of level.seedCrossings||[])for(let k=0;k<bed.banks.length;k++)if(n.x===bed.banks[k][0]&&n.y===bed.banks[k][1]){const [x,y]=bed.banks[1-k];add(apply({...n,x,y}).n);}
    for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){let x=n.x+dx,y=n.y+dy;const gate=g.gates.find(q=>q.root&&q.sealed&&q.tiles.some(([gx,gy])=>gx===x&&gy===y));if(!gate)continue;let count=0;while(gate.tiles.some(([gx,gy])=>gx===x&&gy===y)&&count++<8){x+=dx;y+=dy;}if(g.floor(x,y))add(apply({...n,x,y}).n);}
   }
+  // A tongue grab takes the key from up to three tiles away in a straight line.
+  if(level.tongues&&!n.key)for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])for(let d=1;d<=3;d++){const x=n.x+dx*d,y=n.y+dy*d,c=g.grid[y]?.[x];if(c===undefined||c==='#'||c==='B'||c==='G')break;if(x===level.key[0]&&y===level.key[1]){const j=add(apply({...n,grab:true}).n);edges[j].push(i);break;}}
   if(level.burrows)for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const wx=n.x+dx,wy=n.y+dy,x=n.x+2*dx,y=n.y+2*dy;if(wx<=0||wy<=0||wx>=g.width-1||wy>=g.height-1||!['#','B'].includes(g.grid[wy]?.[wx])||!g.fits({x:x+.5,y:y+.5}))continue;add(apply({...n,x,y}).n);}
  }
  const safe=new Set(goals),queue=[...goals];for(let i=0;i<queue.length;i++)for(const p of edges[queue[i]])if(!safe.has(p)){safe.add(p);queue.push(p);}

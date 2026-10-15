@@ -2,7 +2,7 @@
   const catalog=typeof module!=='undefined'&&module.exports?require('./escape-levels.js').EscapeCatalog:root.EscapeCatalog;
   const KEY='sallys-escape-progress-v1',validTime=n=>Number.isFinite(n)&&n>0&&n<1000000;
   class EscapeProgress{
-    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],challengesSeen:[],attempts:{}};this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
+    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],challengesSeen:[],attempts:{},masterySeen:[],skin:'classic'};this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
     read(){
       let raw,value;
       try{raw=this.storage?.getItem(KEY);this.persistent=Boolean(this.storage);}catch(_){this.persistent=false;return;}
@@ -15,6 +15,8 @@
       if(Number.isInteger(value.goldflies)&&value.goldflies>this.data.goldflies)this.data.goldflies=Math.min(value.goldflies,100000);
       if(Array.isArray(value.regionsSeen))for(const i of value.regionsSeen)if(Number.isInteger(i)&&i>=0&&i<64&&!this.data.regionsSeen.includes(i))this.data.regionsSeen.push(i);
       if(Array.isArray(value.challengesSeen))for(const id of value.challengesSeen)if(catalog.challenges.some(c=>c.id===id)&&!this.data.challengesSeen.includes(id))this.data.challengesSeen.push(id);
+      if(Array.isArray(value.masterySeen))for(const t of value.masterySeen)if(typeof t==='string'&&/^[a-z]+$/.test(t)&&!this.data.masterySeen.includes(t))this.data.masterySeen.push(t);
+      if(typeof value.skin==='string'&&/^[a-z]+$/.test(value.skin))this.data.skin=value.skin;
       if(Array.isArray(value.caches))for(const id of value.caches)if(typeof id==='string'&&/^[a-z]+-(north|south)$/.test(id)&&!this.data.caches.includes(id))this.data.caches.push(id);
       for(const [kind,entries] of [['levels',catalog.levels],['challenges',catalog.challenges]])for(const item of entries){
         const saved=value[kind]?.[item.id];
@@ -39,6 +41,15 @@
     challengeUnlocked(id){return Boolean(this.challengeGate(id)?.open);}
     // Challenges that are open but have never been announced; announcing marks them seen.
     announceChallenges(){this.read();const fresh=catalog.challenges.filter(c=>this.challengeUnlocked(c.id)&&!this.data.challengesSeen.includes(c.id)&&!this.data.challenges[c.id]?.cleared);if(fresh.length){this.data.challengesSeen.push(...fresh.map(c=>c.id));this.write();}return fresh;}
+    // An area is mastered when every escape in it has all three stars. Each mastered area
+    // gives Sally its colours to wear.
+    mastered(chapter){return chapter.end>chapter.start&&catalog.levels.slice(chapter.start,chapter.end).every(l=>this.data.levels[l.id]?.stars===3);}
+    areaStars(chapter){const levels=catalog.levels.slice(chapter.start,chapter.end);return {stars:levels.reduce((n,l)=>n+(this.data.levels[l.id]?.stars||0),0),max:levels.length*3};}
+    skins(chapters){return ['classic',...chapters.filter(c=>this.mastered(c)).map(c=>c.theme)];}
+    skin(chapters){const owned=this.skins(chapters);return owned.includes(this.data.skin)?this.data.skin:'classic';}
+    setSkin(theme,chapters){if(!this.skins(chapters).includes(theme))return false;this.read();this.data.skin=theme;this.write();return true;}
+    // Mastered areas never announced before; announcing marks them seen.
+    announceMastery(chapters){this.read();const fresh=chapters.filter(c=>this.mastered(c)&&!this.data.masterySeen.includes(c.theme));if(fresh.length){this.data.masterySeen.push(...fresh.map(c=>c.theme));this.write();}return fresh;}
     setView(view){if(!['follow','overview'].includes(view))return false;this.read();this.data.view=view;this.write();return true;}
     catchGoldfly(){this.read();this.data.goldflies=Math.min(this.data.goldflies+1,100000);this.write();return this.data.goldflies;}
     // Returns the regions that are open now but were never announced before.
@@ -52,7 +63,7 @@
         maxTreasure:levels.reduce((n,{level})=>n+level.loot.reduce((t,l)=>t+l[2],0),0),
         cleared:levels.filter(({saved})=>saved?.cleared).length,levels:levels.length,
         firstTries:levels.filter(({saved})=>saved?.firstTry).length,
-        challenges:catalog.challenges.filter(c=>this.data.challenges[c.id]?.cleared).length,maxChallenges:catalog.challenges.length,caches:this.data.caches.length};
+        challenges:catalog.challenges.filter(c=>this.data.challenges[c.id]?.cleared).length,maxChallenges:catalog.challenges.length,caches:this.data.caches.length,mastered:this.data.masterySeen.length};
     }
     write(){try{this.storage?.setItem(KEY,JSON.stringify(this.data));this.persistent=Boolean(this.storage);}catch(_){this.persistent=false;}}
     // A run that ends without escaping, or is abandoned part-way, uses up the first try.

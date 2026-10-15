@@ -3264,5 +3264,4004 @@
    "split-shelves",
    "stillwater-vault"
   ]
+ },
+ "backlash-hall": {
+  "id": "backlash-hall",
+  "name": "Backlash Hall",
+  "brief": "The ruins start pushing back. Bringing a key home may need a different route.",
+  "hint": "Open blue to reach the key. Listen when the old mechanisms stir.",
+  "width": 25,
+  "height": 19,
+  "explore": true,
+  "rooms": [
+   [
+    1,
+    1,
+    8,
+    6
+   ],
+   [
+    16,
+    1,
+    23,
+    6
+   ],
+   [
+    1,
+    12,
+    8,
+    17
+   ],
+   [
+    16,
+    12,
+    23,
+    17
+   ],
+   [
+    8,
+    3,
+    16,
+    3
+   ],
+   [
+    8,
+    14,
+    16,
+    14
+   ],
+   [
+    4,
+    6,
+    4,
+    12
+   ],
+   [
+    20,
+    6,
+    20,
+    12
+   ]
+  ],
+  "cracks": [],
+  "cover": [
+   [
+    4,
+    7
+   ],
+   [
+    8,
+    3
+   ],
+   [
+    18,
+    3
+   ],
+   [
+    20,
+    6
+   ],
+   [
+    20,
+    12
+   ],
+   [
+    8,
+    15
+   ]
+  ],
+  "gravel": [
+   [
+    20,
+    9
+   ]
+  ],
+  "spawn": [
+   3,
+   15
+  ],
+  "exit": [
+   3,
+   15
+  ],
+  "key": [
+   21,
+   3
+  ],
+  "burrows": 0,
+  "pebbles": 3,
+  "tongues": 2,
+  "gates": [
+   {
+    "id": "blue",
+    "name": "Blue",
+    "color": [
+     106,
+     195,
+     236
+    ],
+    "switch": [
+     3,
+     3
+    ],
+    "tiles": [
+     [
+      12,
+      3
+     ]
+    ]
+   },
+   {
+    "id": "return",
+    "name": "South passage",
+    "color": [
+     150,
+     220,
+     166
+    ],
+    "tiles": [
+     [
+      12,
+      14
+     ]
+    ]
+   }
+  ],
+  "reactions": [
+   {
+    "id": "key-reversal",
+    "when": "key",
+    "close": [
+     "blue"
+    ],
+    "open": [
+     "return"
+    ],
+    "message": "Stone grinds behind you. Blue is sealing; the south passage has opened.",
+    "objective": "The entrance is sealed. Return through the south passage."
+   }
+  ],
+  "loot": [
+   [
+    2,
+    2,
+    1
+   ],
+   [
+    7,
+    5,
+    1
+   ],
+   [
+    17,
+    2,
+    1
+   ],
+   [
+    22,
+    4,
+    3
+   ],
+   [
+    3,
+    16,
+    1
+   ],
+   [
+    7,
+    16,
+    1
+   ],
+   [
+    17,
+    16,
+    1
+   ],
+   [
+    22,
+    13,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "spawn": [
+     6,
+     2
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      2,
+      2
+     ],
+     [
+      6,
+      2
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      2,
+      5
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     22,
+     5
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      17,
+      2
+     ],
+     [
+      22,
+      2
+     ],
+     [
+      22,
+      5
+     ],
+     [
+      17,
+      5
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     22,
+     16
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      17,
+      13
+     ],
+     [
+      22,
+      13
+     ],
+     [
+      22,
+      16
+     ],
+     [
+      17,
+      16
+     ]
+    ]
+   }
+  ]
+ },
+ "false-refuge": {
+  "id": "false-refuge",
+  "name": "False Refuge",
+  "brief": "A quiet chamber, a closing entrance. Look for another way through.",
+  "hint": "Blue opens the middle chamber. Leave room to dodge its beetle.",
+  "width": 25,
+  "height": 19,
+  "explore": true,
+  "rooms": [
+   [
+    1,
+    1,
+    7,
+    6
+   ],
+   [
+    1,
+    12,
+    7,
+    17
+   ],
+   [
+    18,
+    1,
+    23,
+    6
+   ],
+   [
+    18,
+    12,
+    23,
+    17
+   ],
+   [
+    4,
+    6,
+    4,
+    12
+   ],
+   [
+    20,
+    6,
+    20,
+    12
+   ],
+   [
+    10,
+    7,
+    14,
+    11
+   ],
+   [
+    4,
+    9,
+    10,
+    9
+   ],
+   [
+    14,
+    9,
+    20,
+    9
+   ],
+   [
+    4,
+    3,
+    20,
+    3
+   ],
+   [
+    4,
+    14,
+    20,
+    14
+   ],
+   [
+    7,
+    11,
+    8,
+    11
+   ],
+   [
+    7,
+    11,
+    7,
+    12
+   ]
+  ],
+  "cracks": [
+   [
+    9,
+    11
+   ]
+  ],
+  "cover": [
+   [
+    4,
+    7
+   ],
+   [
+    11,
+    9
+   ],
+   [
+    14,
+    8
+   ],
+   [
+    20,
+    6
+   ],
+   [
+    7,
+    14
+   ]
+  ],
+  "gravel": [
+   [
+    20,
+    10
+   ]
+  ],
+  "gaps": [],
+  "spawn": [
+   3,
+   15
+  ],
+  "exit": [
+   3,
+   3
+  ],
+  "key": [
+   21,
+   3
+  ],
+  "burrows": 1,
+  "pebbles": 2,
+  "tongues": 2,
+  "gates": [
+   {
+    "id": "blue",
+    "name": "Blue",
+    "color": [
+     106,
+     195,
+     236
+    ],
+    "switch": [
+     3,
+     13
+    ],
+    "tiles": [
+     [
+      8,
+      9
+     ]
+    ]
+   },
+   {
+    "id": "amber",
+    "name": "Amber",
+    "color": [
+     239,
+     181,
+     83
+    ],
+    "switch": [
+     12,
+     9
+    ],
+    "tiles": [
+     [
+      16,
+      9
+     ]
+    ]
+   },
+   {
+    "id": "return",
+    "name": "North passage",
+    "color": [
+     150,
+     220,
+     166
+    ],
+    "tiles": [
+     [
+      12,
+      3
+     ]
+    ]
+   },
+   {
+    "id": "south",
+    "name": "South passage",
+    "color": [
+     150,
+     220,
+     166
+    ],
+    "tiles": [
+     [
+      12,
+      14
+     ]
+    ]
+   }
+  ],
+  "reactions": [
+   {
+    "id": "chamber-seal",
+    "when": "enter",
+    "region": [
+     11,
+     7,
+     14,
+     11
+    ],
+    "requiresOpen": [
+     "blue"
+    ],
+    "close": [
+     "blue"
+    ],
+    "open": [
+     "south"
+    ],
+    "message": "The entrance is sealing. Amber leads onward; a south passage has opened.",
+    "objective": "Blue is sealed. Find the amber switch in this chamber.",
+    "untilGate": "amber"
+   },
+   {
+    "id": "key-return",
+    "when": "key",
+    "open": [
+     "return"
+    ],
+    "message": "The key releases the north passage. Blue stays sealed.",
+    "objective": "The north passage is open. Reach the hatch in the west."
+   }
+  ],
+  "loot": [
+   [
+    2,
+    2,
+    1
+   ],
+   [
+    6,
+    5,
+    1
+   ],
+   [
+    11,
+    8,
+    1
+   ],
+   [
+    13,
+    10,
+    3
+   ],
+   [
+    19,
+    2,
+    1
+   ],
+   [
+    22,
+    5,
+    1
+   ],
+   [
+    6,
+    16,
+    1
+   ],
+   [
+    22,
+    16,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "kind": "beetle",
+    "spawn": [
+     13,
+     10
+    ],
+    "facing": -1.5707963267948966,
+    "patrol": [
+     [
+      11,
+      8
+     ],
+     [
+      13,
+      8
+     ],
+     [
+      13,
+      10
+     ],
+     [
+      11,
+      10
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     22,
+     5
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      19,
+      2
+     ],
+     [
+      22,
+      2
+     ],
+     [
+      22,
+      5
+     ],
+     [
+      19,
+      5
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     6,
+     2
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      2,
+      2
+     ],
+     [
+      6,
+      2
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      2,
+      5
+     ]
+    ]
+   }
+  ]
+ },
+ "greedy-gallery": {
+  "id": "greedy-gallery",
+  "name": "Greedy Gallery",
+  "brief": "A tempting chest and a maze with its own plans. Is the detour worth it?",
+  "hint": "Blue leads into the gallery. A chest can change more than your treasure count.",
+  "width": 29,
+  "height": 21,
+  "explore": true,
+  "rooms": [
+   [
+    1,
+    1,
+    8,
+    7
+   ],
+   [
+    1,
+    13,
+    8,
+    19
+   ],
+   [
+    20,
+    1,
+    27,
+    3
+   ],
+   [
+    20,
+    6,
+    27,
+    7
+   ],
+   [
+    20,
+    3,
+    22,
+    6
+   ],
+   [
+    25,
+    3,
+    27,
+    6
+   ],
+   [
+    20,
+    13,
+    27,
+    19
+   ],
+   [
+    4,
+    7,
+    4,
+    13
+   ],
+   [
+    24,
+    7,
+    24,
+    13
+   ],
+   [
+    8,
+    4,
+    20,
+    4
+   ],
+   [
+    8,
+    16,
+    20,
+    16
+   ],
+   [
+    11,
+    8,
+    17,
+    12
+   ],
+   [
+    4,
+    10,
+    11,
+    10
+   ],
+   [
+    17,
+    10,
+    24,
+    10
+   ]
+  ],
+  "cracks": [],
+  "cover": [
+   [
+    4,
+    8
+   ],
+   [
+    11,
+    10
+   ],
+   [
+    17,
+    10
+   ],
+   [
+    20,
+    7
+   ],
+   [
+    21,
+    3
+   ],
+   [
+    24,
+    7
+   ],
+   [
+    24,
+    13
+   ],
+   [
+    8,
+    16
+   ]
+  ],
+  "gravel": [
+   [
+    24,
+    11
+   ],
+   [
+    22,
+    16
+   ]
+  ],
+  "spawn": [
+   3,
+   16
+  ],
+  "exit": [
+   3,
+   16
+  ],
+  "key": [
+   24,
+   3
+  ],
+  "burrows": 0,
+  "pebbles": 3,
+  "tongues": 1,
+  "gates": [
+   {
+    "id": "blue",
+    "name": "Blue",
+    "color": [
+     106,
+     195,
+     236
+    ],
+    "switch": [
+     3,
+     3
+    ],
+    "tiles": [
+     [
+      14,
+      4
+     ],
+     [
+      8,
+      10
+     ]
+    ]
+   },
+   {
+    "id": "amber",
+    "name": "Amber",
+    "color": [
+     239,
+     181,
+     83
+    ],
+    "switch": [
+     14,
+     10
+    ],
+    "tiles": [
+     [
+      20,
+      10
+     ]
+    ]
+   },
+   {
+    "id": "return",
+    "name": "South passage",
+    "color": [
+     150,
+     220,
+     166
+    ],
+    "tiles": [
+     [
+      14,
+      16
+     ]
+    ]
+   }
+  ],
+  "reactions": [
+   {
+    "id": "chest-trap",
+    "when": "treasure",
+    "at": [
+     15,
+     10
+    ],
+    "close": [
+     "blue"
+    ],
+    "open": [
+     "amber"
+    ],
+    "message": "The chest clicks. Blue is sealing; an amber way east has opened.",
+    "objective": "The gallery entrance is sealed. Take the amber passage east."
+   },
+   {
+    "id": "key-reversal",
+    "when": "key",
+    "close": [
+     "blue"
+    ],
+    "open": [
+     "return"
+    ],
+    "message": "The key seals blue and releases the south passage. Find the new way home.",
+    "objective": "Return through the south passage. Blue will not reopen."
+   }
+  ],
+  "loot": [
+   [
+    2,
+    2,
+    1
+   ],
+   [
+    7,
+    6,
+    1
+   ],
+   [
+    12,
+    9,
+    1
+   ],
+   [
+    15,
+    10,
+    3
+   ],
+   [
+    22,
+    2,
+    1
+   ],
+   [
+    26,
+    6,
+    1
+   ],
+   [
+    7,
+    18,
+    1
+   ],
+   [
+    26,
+    18,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "spawn": [
+     6,
+     2
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      2,
+      2
+     ],
+     [
+      6,
+      2
+     ],
+     [
+      6,
+      6
+     ],
+     [
+      2,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     16,
+     11
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      12,
+      9
+     ],
+     [
+      16,
+      9
+     ],
+     [
+      16,
+      11
+     ],
+     [
+      12,
+      11
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     26,
+     6
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      22,
+      2
+     ],
+     [
+      26,
+      2
+     ],
+     [
+      26,
+      6
+     ],
+     [
+      22,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     26,
+     18
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      22,
+      14
+     ],
+     [
+      26,
+      14
+     ],
+     [
+      26,
+      18
+     ],
+     [
+      22,
+      18
+     ]
+    ]
+   }
+  ],
+  "unlockAny": [
+   "backlash-hall"
+  ]
+ },
+ "turning-citadel": {
+  "id": "turning-citadel",
+  "name": "Turning Citadel",
+  "brief": "Two reversals. Four patrols. The way in will not be the way out.",
+  "hint": "Open blue and take the key. Look for lit passages when the citadel changes.",
+  "width": 29,
+  "height": 23,
+  "explore": true,
+  "rooms": [
+   [
+    1,
+    1,
+    9,
+    7
+   ],
+   [
+    19,
+    1,
+    27,
+    7
+   ],
+   [
+    1,
+    15,
+    9,
+    21
+   ],
+   [
+    19,
+    15,
+    27,
+    21
+   ],
+   [
+    9,
+    4,
+    19,
+    4
+   ],
+   [
+    9,
+    18,
+    19,
+    18
+   ],
+   [
+    5,
+    7,
+    5,
+    15
+   ],
+   [
+    23,
+    7,
+    23,
+    15
+   ],
+   [
+    12,
+    9,
+    16,
+    13
+   ],
+   [
+    5,
+    11,
+    12,
+    11
+   ],
+   [
+    16,
+    11,
+    23,
+    11
+   ],
+   [
+    11,
+    16,
+    13,
+    16
+   ],
+   [
+    13,
+    16,
+    13,
+    18
+   ]
+  ],
+  "cracks": [
+   [
+    10,
+    16
+   ]
+  ],
+  "cover": [
+   [
+    5,
+    8
+   ],
+   [
+    9,
+    4
+   ],
+   [
+    21,
+    3
+   ],
+   [
+    23,
+    7
+   ],
+   [
+    24,
+    6
+   ],
+   [
+    16,
+    11
+   ],
+   [
+    12,
+    11
+   ],
+   [
+    9,
+    16
+   ],
+   [
+    23,
+    15
+   ]
+  ],
+  "gravel": [
+   [
+    23,
+    10
+   ],
+   [
+    22,
+    18
+   ]
+  ],
+  "spawn": [
+   3,
+   18
+  ],
+  "exit": [
+   24,
+   19
+  ],
+  "key": [
+   24,
+   3
+  ],
+  "burrows": 1,
+  "pebbles": 3,
+  "tongues": 1,
+  "gates": [
+   {
+    "id": "blue",
+    "name": "Blue",
+    "color": [
+     106,
+     195,
+     236
+    ],
+    "switch": [
+     3,
+     3
+    ],
+    "tiles": [
+     [
+      14,
+      4
+     ]
+    ]
+   },
+   {
+    "id": "descent",
+    "name": "Inner passage",
+    "color": [
+     201,
+     161,
+     230
+    ],
+    "tiles": [
+     [
+      23,
+      8
+     ],
+     [
+      19,
+      11
+     ]
+    ]
+   },
+   {
+    "id": "escape",
+    "name": "West passage",
+    "color": [
+     150,
+     220,
+     166
+    ],
+    "tiles": [
+     [
+      8,
+      11
+     ]
+    ]
+   },
+   {
+    "id": "amber",
+    "name": "Amber",
+    "color": [
+     239,
+     181,
+     83
+    ],
+    "switch": [
+     14,
+     12
+    ],
+    "tiles": [
+     [
+      14,
+      18
+     ],
+     [
+      23,
+      14
+     ]
+    ]
+   }
+  ],
+  "reactions": [
+   {
+    "id": "key-descent",
+    "when": "key",
+    "close": [
+     "blue"
+    ],
+    "open": [
+     "descent"
+    ],
+    "message": "Blue is sealing. The inner passage has opened below the key room.",
+    "objective": "Follow the inner passage into the central chamber."
+   },
+   {
+    "id": "inner-reversal",
+    "when": "enter",
+    "region": [
+     12,
+     9,
+     16,
+     13
+    ],
+    "requiresKey": true,
+    "close": [
+     "descent"
+    ],
+    "open": [
+     "escape"
+    ],
+    "message": "The inner passage is sealing. West is open; amber unlocks the final crossing.",
+    "objective": "Leave west. Amber opens the southern crossing."
+   }
+  ],
+  "loot": [
+   [
+    2,
+    2,
+    1
+   ],
+   [
+    8,
+    6,
+    1
+   ],
+   [
+    20,
+    2,
+    1
+   ],
+   [
+    26,
+    6,
+    3
+   ],
+   [
+    13,
+    10,
+    1
+   ],
+   [
+    7,
+    20,
+    1
+   ],
+   [
+    20,
+    20,
+    1
+   ],
+   [
+    26,
+    18,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "spawn": [
+     7,
+     2
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      2,
+      2
+     ],
+     [
+      7,
+      2
+     ],
+     [
+      7,
+      6
+     ],
+     [
+      2,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     26,
+     6
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      20,
+      2
+     ],
+     [
+      26,
+      2
+     ],
+     [
+      26,
+      6
+     ],
+     [
+      20,
+      6
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     15,
+     10
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      13,
+      10
+     ],
+     [
+      15,
+      10
+     ],
+     [
+      15,
+      12
+     ],
+     [
+      13,
+      12
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     26,
+     20
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      20,
+      16
+     ],
+     [
+      26,
+      16
+     ],
+     [
+      26,
+      20
+     ],
+     [
+      20,
+      20
+     ]
+    ]
+   }
+  ],
+  "unlockAny": [
+   "false-refuge",
+   "greedy-gallery"
+  ]
+ },
+ "razor-crossing": {
+  "id": "razor-crossing",
+  "name": "Razor Crossing",
+  "brief": "One pebble. Two snakes share the key room. Make the opening count.",
+  "hint": "The stone divider breaks sight. Save your pebble for the two key-room patrols.",
+  "width": 29,
+  "height": 23,
+  "explore": true,
+  "rooms": [
+   [
+    1,
+    1,
+    9,
+    7
+   ],
+   [
+    19,
+    1,
+    27,
+    3
+   ],
+   [
+    19,
+    6,
+    27,
+    7
+   ],
+   [
+    19,
+    3,
+    21,
+    6
+   ],
+   [
+    25,
+    3,
+    27,
+    6
+   ],
+   [
+    1,
+    15,
+    9,
+    21
+   ],
+   [
+    19,
+    15,
+    27,
+    21
+   ],
+   [
+    9,
+    4,
+    19,
+    4
+   ],
+   [
+    9,
+    18,
+    19,
+    18
+   ],
+   [
+    5,
+    7,
+    5,
+    15
+   ],
+   [
+    23,
+    7,
+    23,
+    15
+   ],
+   [
+    12,
+    9,
+    16,
+    13
+   ],
+   [
+    5,
+    11,
+    12,
+    11
+   ],
+   [
+    16,
+    11,
+    23,
+    11
+   ],
+   [
+    11,
+    16,
+    13,
+    16
+   ],
+   [
+    13,
+    16,
+    13,
+    18
+   ]
+  ],
+  "cracks": [
+   [
+    10,
+    16
+   ]
+  ],
+  "cover": [
+   [
+    5,
+    8
+   ],
+   [
+    9,
+    4
+   ],
+   [
+    21,
+    3
+   ],
+   [
+    16,
+    11
+   ],
+   [
+    14,
+    11
+   ],
+   [
+    9,
+    16
+   ],
+   [
+    23,
+    15
+   ]
+  ],
+  "gravel": [
+   [
+    23,
+    10
+   ],
+   [
+    22,
+    18
+   ]
+  ],
+  "spawn": [
+   3,
+   18
+  ],
+  "exit": [
+   24,
+   19
+  ],
+  "key": [
+   24,
+   3
+  ],
+  "burrows": 1,
+  "pebbles": 1,
+  "tongues": 0,
+  "gates": [
+   {
+    "id": "blue",
+    "name": "Blue",
+    "color": [
+     106,
+     195,
+     236
+    ],
+    "switch": [
+     3,
+     3
+    ],
+    "tiles": [
+     [
+      14,
+      4
+     ]
+    ]
+   },
+   {
+    "id": "descent",
+    "name": "Inner passage",
+    "color": [
+     201,
+     161,
+     230
+    ],
+    "tiles": [
+     [
+      23,
+      8
+     ]
+    ]
+   },
+   {
+    "id": "amber",
+    "name": "Amber",
+    "color": [
+     239,
+     181,
+     83
+    ],
+    "switch": [
+     14,
+     11
+    ],
+    "tiles": [
+     [
+      14,
+      18
+     ],
+     [
+      23,
+      14
+     ]
+    ]
+   }
+  ],
+  "reactions": [
+   {
+    "id": "key-reversal",
+    "when": "key",
+    "close": [
+     "blue"
+    ],
+    "open": [
+     "descent"
+    ],
+    "message": "Blue is sealing. Take the inner passage and find amber.",
+    "objective": "Find amber in the centre, then cross the southern bridge."
+   }
+  ],
+  "loot": [
+   [
+    2,
+    2,
+    1
+   ],
+   [
+    8,
+    6,
+    1
+   ],
+   [
+    20,
+    2,
+    1
+   ],
+   [
+    26,
+    6,
+    3
+   ],
+   [
+    13,
+    10,
+    1
+   ],
+   [
+    7,
+    20,
+    1
+   ],
+   [
+    20,
+    20,
+    1
+   ],
+   [
+    26,
+    18,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "spawn": [
+     7,
+     2
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      2,
+      2
+     ],
+     [
+      7,
+      2
+     ],
+     [
+      7,
+      6
+     ],
+     [
+      2,
+      6
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     26,
+     6
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      20,
+      2
+     ],
+     [
+      26,
+      2
+     ],
+     [
+      26,
+      6
+     ],
+     [
+      20,
+      6
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     23,
+     2
+    ],
+    "facing": 0,
+    "patrol": [
+     [
+      25,
+      2
+     ],
+     [
+      25,
+      6
+     ],
+     [
+      21,
+      6
+     ],
+     [
+      21,
+      2
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     15,
+     10
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      13,
+      10
+     ],
+     [
+      15,
+      10
+     ],
+     [
+      15,
+      12
+     ],
+     [
+      13,
+      12
+     ]
+    ]
+   }
+  ]
+ },
+ "needle-vault": {
+  "id": "needle-vault",
+  "name": "Needle Vault",
+  "brief": "One tongue grab, no decoys. A guarded vault below the stream.",
+  "hint": "Reach the north bank. Spend your only grab on the key, or brave the vault.",
+  "width": 33,
+  "height": 25,
+  "explore": true,
+  "sightRadius": 5.5,
+  "rooms": [
+   [
+    1,
+    1,
+    10,
+    7
+   ],
+   [
+    22,
+    1,
+    31,
+    7
+   ],
+   [
+    1,
+    17,
+    10,
+    23
+   ],
+   [
+    22,
+    17,
+    31,
+    23
+   ],
+   [
+    10,
+    4,
+    22,
+    4
+   ],
+   [
+    10,
+    20,
+    22,
+    20
+   ],
+   [
+    5,
+    7,
+    5,
+    17
+   ],
+   [
+    27,
+    7,
+    27,
+    17
+   ],
+   [
+    13,
+    10,
+    19,
+    14
+   ],
+   [
+    5,
+    12,
+    13,
+    12
+   ],
+   [
+    19,
+    12,
+    27,
+    12
+   ],
+   [
+    16,
+    4,
+    16,
+    10
+   ],
+   [
+    16,
+    14,
+    16,
+    20
+   ]
+  ],
+  "cracks": [],
+  "cover": [
+   [
+    5,
+    8
+   ],
+   [
+    10,
+    4
+   ],
+   [
+    16,
+    8
+   ],
+   [
+    13,
+    12
+   ],
+   [
+    19,
+    12
+   ],
+   [
+    27,
+    17
+   ]
+  ],
+  "gravel": [
+   [
+    27,
+    10
+   ]
+  ],
+  "gaps": [
+   [
+    16,
+    9
+   ]
+  ],
+  "spawn": [
+   3,
+   21
+  ],
+  "exit": [
+   29,
+   21
+  ],
+  "key": [
+   16,
+   11
+  ],
+  "burrows": 0,
+  "pebbles": 0,
+  "tongues": 1,
+  "gates": [
+   {
+    "id": "blue",
+    "name": "Blue",
+    "color": [
+     106,
+     195,
+     236
+    ],
+    "switch": [
+     3,
+     3
+    ],
+    "tiles": [
+     [
+      10,
+      12
+     ],
+     [
+      22,
+      12
+     ]
+    ]
+   },
+   {
+    "id": "south",
+    "name": "Vault descent",
+    "color": [
+     150,
+     220,
+     166
+    ],
+    "tiles": [
+     [
+      16,
+      16
+     ]
+    ]
+   }
+  ],
+  "reactions": [
+   {
+    "id": "vault-seal",
+    "when": "key",
+    "close": [
+     "blue"
+    ],
+    "open": [
+     "south"
+    ],
+    "message": "The vault doors are sealing. A passage has opened beneath the chamber.",
+    "objective": "The vault descent is open. Reach the eastern hatch."
+   }
+  ],
+  "loot": [
+   [
+    2,
+    2,
+    1
+   ],
+   [
+    9,
+    6,
+    1
+   ],
+   [
+    24,
+    2,
+    1
+   ],
+   [
+    30,
+    6,
+    1
+   ],
+   [
+    14,
+    11,
+    1
+   ],
+   [
+    18,
+    13,
+    3
+   ],
+   [
+    8,
+    22,
+    1
+   ],
+   [
+    30,
+    22,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "spawn": [
+     8,
+     2
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      2,
+      2
+     ],
+     [
+      8,
+      2
+     ],
+     [
+      8,
+      6
+     ],
+     [
+      2,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     29,
+     6
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      24,
+      2
+     ],
+     [
+      29,
+      2
+     ],
+     [
+      29,
+      6
+     ],
+     [
+      24,
+      6
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     18,
+     13
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      14,
+      11
+     ],
+     [
+      18,
+      11
+     ],
+     [
+      18,
+      13
+     ],
+     [
+      14,
+      13
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     14,
+     13
+    ],
+    "facing": 0,
+    "patrol": [
+     [
+      14,
+      11
+     ],
+     [
+      18,
+      11
+     ],
+     [
+      18,
+      13
+     ],
+     [
+      14,
+      13
+     ]
+    ]
+   }
+  ]
+ },
+ "toll-of-ash": {
+  "id": "toll-of-ash",
+  "name": "Toll of Ash",
+  "brief": "The hatch demands four treasure. Five enemies make every detour a decision.",
+  "hint": "The hatch needs the key and four treasure. A chest is worth three.",
+  "width": 33,
+  "height": 25,
+  "explore": true,
+  "requiredTreasure": 4,
+  "rooms": [
+   [
+    1,
+    1,
+    9,
+    7
+   ],
+   [
+    13,
+    1,
+    19,
+    7
+   ],
+   [
+    23,
+    1,
+    31,
+    7
+   ],
+   [
+    1,
+    17,
+    9,
+    23
+   ],
+   [
+    13,
+    17,
+    19,
+    23
+   ],
+   [
+    23,
+    17,
+    31,
+    23
+   ],
+   [
+    9,
+    4,
+    13,
+    4
+   ],
+   [
+    19,
+    4,
+    23,
+    4
+   ],
+   [
+    5,
+    7,
+    5,
+    17
+   ],
+   [
+    16,
+    7,
+    16,
+    17
+   ],
+   [
+    27,
+    7,
+    27,
+    17
+   ],
+   [
+    5,
+    12,
+    27,
+    12
+   ],
+   [
+    9,
+    20,
+    13,
+    20
+   ],
+   [
+    19,
+    20,
+    23,
+    20
+   ]
+  ],
+  "cracks": [],
+  "cover": [
+   [
+    5,
+    8
+   ],
+   [
+    9,
+    4
+   ],
+   [
+    18,
+    3
+   ],
+   [
+    19,
+    4
+   ],
+   [
+    27,
+    7
+   ],
+   [
+    27,
+    17
+   ]
+  ],
+  "gravel": [
+   [
+    16,
+    10
+   ],
+   [
+    27,
+    10
+   ],
+   [
+    25,
+    20
+   ]
+  ],
+  "spawn": [
+   3,
+   21
+  ],
+  "exit": [
+   29,
+   21
+  ],
+  "key": [
+   29,
+   3
+  ],
+  "burrows": 0,
+  "pebbles": 2,
+  "tongues": 1,
+  "gates": [
+   {
+    "id": "blue",
+    "name": "Blue",
+    "color": [
+     106,
+     195,
+     236
+    ],
+    "switch": [
+     3,
+     3
+    ],
+    "tiles": [
+     [
+      11,
+      4
+     ],
+     [
+      16,
+      8
+     ],
+     [
+      11,
+      12
+     ]
+    ]
+   },
+   {
+    "id": "amber",
+    "name": "Amber",
+    "color": [
+     239,
+     181,
+     83
+    ],
+    "switch": [
+     16,
+     3
+    ],
+    "tiles": [
+     [
+      21,
+      4
+     ],
+     [
+      27,
+      8
+     ],
+     [
+      21,
+      12
+     ],
+     [
+      21,
+      20
+     ]
+    ]
+   }
+  ],
+  "loot": [
+   [
+    2,
+    2,
+    1
+   ],
+   [
+    8,
+    6,
+    1
+   ],
+   [
+    14,
+    2,
+    1
+   ],
+   [
+    18,
+    6,
+    3
+   ],
+   [
+    26,
+    2,
+    1
+   ],
+   [
+    30,
+    6,
+    1
+   ],
+   [
+    8,
+    21,
+    1
+   ],
+   [
+    26,
+    21,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "spawn": [
+     7,
+     2
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      2,
+      2
+     ],
+     [
+      7,
+      2
+     ],
+     [
+      7,
+      6
+     ],
+     [
+      2,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     18,
+     6
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      14,
+      2
+     ],
+     [
+      18,
+      2
+     ],
+     [
+      18,
+      6
+     ],
+     [
+      14,
+      6
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     30,
+     6
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      25,
+      2
+     ],
+     [
+      30,
+      2
+     ],
+     [
+      30,
+      6
+     ],
+     [
+      25,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     25,
+     2
+    ],
+    "facing": 0,
+    "patrol": [
+     [
+      25,
+      2
+     ],
+     [
+      30,
+      2
+     ],
+     [
+      30,
+      6
+     ],
+     [
+      25,
+      6
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     29,
+     22
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      24,
+      19
+     ],
+     [
+      30,
+      19
+     ],
+     [
+      30,
+      22
+     ],
+     [
+      24,
+      22
+     ]
+    ]
+   }
+  ],
+  "unlockAny": [
+   "razor-crossing"
+  ]
+ },
+ "threefold-keep": {
+  "id": "threefold-keep",
+  "name": "Threefold Keep",
+  "brief": "Three reversals. Five enemies. The last door answers to a chest.",
+  "hint": "The key opens the descent. Watch for new paths after each reversal.",
+  "width": 33,
+  "height": 25,
+  "explore": true,
+  "sightRadius": 5,
+  "rooms": [
+   [
+    1,
+    1,
+    10,
+    7
+   ],
+   [
+    22,
+    1,
+    31,
+    3
+   ],
+   [
+    22,
+    6,
+    31,
+    7
+   ],
+   [
+    22,
+    3,
+    24,
+    6
+   ],
+   [
+    28,
+    3,
+    31,
+    6
+   ],
+   [
+    1,
+    17,
+    10,
+    23
+   ],
+   [
+    22,
+    17,
+    31,
+    23
+   ],
+   [
+    10,
+    4,
+    22,
+    4
+   ],
+   [
+    10,
+    20,
+    22,
+    20
+   ],
+   [
+    5,
+    7,
+    5,
+    17
+   ],
+   [
+    27,
+    7,
+    27,
+    17
+   ],
+   [
+    13,
+    10,
+    19,
+    14
+   ],
+   [
+    5,
+    12,
+    13,
+    12
+   ],
+   [
+    19,
+    12,
+    27,
+    12
+   ],
+   [
+    16,
+    14,
+    16,
+    20
+   ]
+  ],
+  "cracks": [],
+  "cover": [
+   [
+    5,
+    8
+   ],
+   [
+    10,
+    4
+   ],
+   [
+    24,
+    3
+   ],
+   [
+    19,
+    12
+   ],
+   [
+    17,
+    14
+   ],
+   [
+    27,
+    17
+   ]
+  ],
+  "gravel": [
+   [
+    27,
+    10
+   ],
+   [
+    25,
+    20
+   ]
+  ],
+  "spawn": [
+   3,
+   21
+  ],
+  "exit": [
+   28,
+   21
+  ],
+  "key": [
+   28,
+   3
+  ],
+  "burrows": 0,
+  "pebbles": 2,
+  "tongues": 1,
+  "gates": [
+   {
+    "id": "blue",
+    "name": "Blue",
+    "color": [
+     106,
+     195,
+     236
+    ],
+    "switch": [
+     3,
+     3
+    ],
+    "tiles": [
+     [
+      16,
+      4
+     ]
+    ]
+   },
+   {
+    "id": "descent",
+    "name": "Inner passage",
+    "color": [
+     201,
+     161,
+     230
+    ],
+    "tiles": [
+     [
+      27,
+      8
+     ],
+     [
+      22,
+      12
+     ]
+    ]
+   },
+   {
+    "id": "west",
+    "name": "West passage",
+    "color": [
+     150,
+     220,
+     166
+    ],
+    "tiles": [
+     [
+      10,
+      12
+     ]
+    ]
+   },
+   {
+    "id": "escape",
+    "name": "Vault descent",
+    "color": [
+     150,
+     220,
+     166
+    ],
+    "tiles": [
+     [
+      16,
+      16
+     ]
+    ]
+   },
+   {
+    "id": "final",
+    "name": "Final crossing",
+    "color": [
+     239,
+     181,
+     83
+    ],
+    "tiles": [
+     [
+      16,
+      20
+     ],
+     [
+      27,
+      16
+     ]
+    ]
+   }
+  ],
+  "reactions": [
+   {
+    "id": "key-descent",
+    "when": "key",
+    "close": [
+     "blue"
+    ],
+    "open": [
+     "descent"
+    ],
+    "message": "Blue is sealing. The inner passage has opened.",
+    "objective": "Follow the inner passage into the central vault."
+   },
+   {
+    "id": "inner-seal",
+    "when": "enter",
+    "region": [
+     18,
+     10,
+     19,
+     14
+    ],
+    "requiresKey": true,
+    "close": [
+     "descent"
+    ],
+    "open": [
+     "west"
+    ],
+    "message": "The inner passage is sealing. West is open, but the chest holds the final mechanism.",
+    "objective": "Find the chest in this vault. It releases the final crossing."
+   },
+   {
+    "id": "chest-release",
+    "when": "treasure",
+    "at": [
+     14,
+     12
+    ],
+    "close": [
+     "west"
+    ],
+    "open": [
+     "escape",
+     "final"
+    ],
+    "message": "The chest seals west. The vault descent and final crossing are open.",
+    "objective": "Descend from the vault, then cross east to the hatch."
+   }
+  ],
+  "loot": [
+   [
+    2,
+    2,
+    1
+   ],
+   [
+    9,
+    6,
+    1
+   ],
+   [
+    24,
+    2,
+    1
+   ],
+   [
+    30,
+    6,
+    1
+   ],
+   [
+    14,
+    12,
+    3
+   ],
+   [
+    18,
+    13,
+    1
+   ],
+   [
+    8,
+    22,
+    1
+   ],
+   [
+    30,
+    22,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "spawn": [
+     8,
+     2
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      2,
+      2
+     ],
+     [
+      8,
+      2
+     ],
+     [
+      8,
+      6
+     ],
+     [
+      2,
+      6
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     30,
+     6
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      23,
+      2
+     ],
+     [
+      30,
+      2
+     ],
+     [
+      30,
+      6
+     ],
+     [
+      23,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     18,
+     13
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      15,
+      11
+     ],
+     [
+      18,
+      11
+     ],
+     [
+      18,
+      13
+     ],
+     [
+      15,
+      13
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     14,
+     11
+    ],
+    "facing": 0,
+    "patrol": [
+     [
+      14,
+      11
+     ],
+     [
+      17,
+      11
+     ],
+     [
+      17,
+      13
+     ],
+     [
+      14,
+      13
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     30,
+     22
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      24,
+      18
+     ],
+     [
+      30,
+      18
+     ],
+     [
+      30,
+      22
+     ],
+     [
+      24,
+      22
+     ]
+    ]
+   }
+  ],
+  "unlockAny": [
+   "needle-vault",
+   "toll-of-ash"
+  ]
+ },
+ "last-light": {
+  "id": "last-light",
+  "name": "Last Light",
+  "brief": "Fifty seconds. Five patrols. The key changes the return route.",
+  "hint": "Find a switch route to the key. Save your grab and keep the clock in mind.",
+  "width": 33,
+  "height": 25,
+  "explore": true,
+  "sightRadius": 5,
+  "timeLimit": 50,
+  "rooms": [
+   [
+    1,
+    1,
+    10,
+    6
+   ],
+   [
+    22,
+    1,
+    31,
+    6
+   ],
+   [
+    1,
+    10,
+    10,
+    15
+   ],
+   [
+    22,
+    10,
+    31,
+    15
+   ],
+   [
+    1,
+    19,
+    10,
+    23
+   ],
+   [
+    22,
+    19,
+    31,
+    23
+   ],
+   [
+    10,
+    3,
+    22,
+    3
+   ],
+   [
+    10,
+    12,
+    22,
+    12
+   ],
+   [
+    10,
+    21,
+    22,
+    21
+   ],
+   [
+    5,
+    6,
+    5,
+    10
+   ],
+   [
+    27,
+    6,
+    27,
+    10
+   ],
+   [
+    5,
+    15,
+    5,
+    19
+   ],
+   [
+    27,
+    15,
+    27,
+    19
+   ],
+   [
+    13,
+    8,
+    19,
+    16
+   ]
+  ],
+  "cracks": [],
+  "cover": [
+   [
+    5,
+    9
+   ],
+   [
+    10,
+    3
+   ],
+   [
+    13,
+    12
+   ],
+   [
+    19,
+    12
+   ],
+   [
+    28,
+    6
+   ],
+   [
+    27,
+    19
+   ]
+  ],
+  "gravel": [
+   [
+    5,
+    16
+   ],
+   [
+    27,
+    8
+   ]
+  ],
+  "spawn": [
+   3,
+   21
+  ],
+  "exit": [
+   29,
+   21
+  ],
+  "key": [
+   28,
+   3
+  ],
+  "burrows": 0,
+  "pebbles": 1,
+  "tongues": 1,
+  "gates": [
+   {
+    "id": "blue",
+    "name": "Blue",
+    "color": [
+     106,
+     195,
+     236
+    ],
+    "switch": [
+     3,
+     3
+    ],
+    "tiles": [
+     [
+      16,
+      3
+     ]
+    ]
+   },
+   {
+    "id": "amber",
+    "name": "Amber",
+    "color": [
+     239,
+     181,
+     83
+    ],
+    "switch": [
+     16,
+     12
+    ],
+    "tiles": [
+     [
+      20,
+      12
+     ],
+     [
+      27,
+      17
+     ]
+    ]
+   },
+   {
+    "id": "return",
+    "name": "South passage",
+    "color": [
+     150,
+     220,
+     166
+    ],
+    "tiles": [
+     [
+      16,
+      21
+     ]
+    ]
+   }
+  ],
+  "reactions": [
+   {
+    "id": "key-reversal",
+    "when": "key",
+    "close": [
+     "blue"
+    ],
+    "open": [
+     "return",
+     "amber"
+    ],
+    "message": "Blue is sealing. Amber and south are open; the clock is still running.",
+    "objective": "Return south and reach the eastern hatch before the light fades."
+   }
+  ],
+  "loot": [
+   [
+    2,
+    2,
+    1
+   ],
+   [
+    9,
+    5,
+    1
+   ],
+   [
+    24,
+    2,
+    1
+   ],
+   [
+    30,
+    5,
+    1
+   ],
+   [
+    14,
+    9,
+    1
+   ],
+   [
+    18,
+    15,
+    3
+   ],
+   [
+    8,
+    22,
+    1
+   ],
+   [
+    30,
+    22,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "spawn": [
+     8,
+     2
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      2,
+      2
+     ],
+     [
+      8,
+      2
+     ],
+     [
+      8,
+      5
+     ],
+     [
+      2,
+      5
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     29,
+     5
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      24,
+      2
+     ],
+     [
+      29,
+      2
+     ],
+     [
+      29,
+      5
+     ],
+     [
+      24,
+      5
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     18,
+     15
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      14,
+      9
+     ],
+     [
+      18,
+      9
+     ],
+     [
+      18,
+      15
+     ],
+     [
+      14,
+      15
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     29,
+     14
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      24,
+      11
+     ],
+     [
+      29,
+      11
+     ],
+     [
+      29,
+      14
+     ],
+     [
+      24,
+      14
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     8,
+     14
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      2,
+      11
+     ],
+     [
+      8,
+      11
+     ],
+     [
+      8,
+      14
+     ],
+     [
+      2,
+      14
+     ]
+    ]
+   }
+  ]
+ },
+ "crown-of-thorns": {
+  "id": "crown-of-thorns",
+  "name": "Crown of Thorns",
+  "brief": "Six enemies, three reversals, and a hatch that demands six treasure.",
+  "hint": "Amber releases the descent. The central chest is worth the risk.",
+  "width": 35,
+  "height": 27,
+  "explore": true,
+  "sightRadius": 5,
+  "requiredTreasure": 6,
+  "rooms": [
+   [
+    1,
+    1,
+    10,
+    7
+   ],
+   [
+    14,
+    1,
+    20,
+    7
+   ],
+   [
+    24,
+    1,
+    33,
+    3
+   ],
+   [
+    24,
+    6,
+    33,
+    7
+   ],
+   [
+    24,
+    3,
+    27,
+    6
+   ],
+   [
+    30,
+    3,
+    33,
+    6
+   ],
+   [
+    1,
+    19,
+    10,
+    25
+   ],
+   [
+    14,
+    19,
+    20,
+    25
+   ],
+   [
+    24,
+    19,
+    33,
+    25
+   ],
+   [
+    6,
+    7,
+    6,
+    19
+   ],
+   [
+    17,
+    7,
+    17,
+    19
+   ],
+   [
+    29,
+    7,
+    29,
+    19
+   ],
+   [
+    10,
+    4,
+    14,
+    4
+   ],
+   [
+    20,
+    4,
+    24,
+    4
+   ],
+   [
+    10,
+    22,
+    14,
+    22
+   ],
+   [
+    20,
+    22,
+    24,
+    22
+   ],
+   [
+    6,
+    13,
+    29,
+    13
+   ],
+   [
+    14,
+    10,
+    20,
+    16
+   ],
+   [
+    22,
+    24,
+    24,
+    24
+   ]
+  ],
+  "cracks": [
+   [
+    21,
+    24
+   ]
+  ],
+  "cover": [
+   [
+    6,
+    8
+   ],
+   [
+    10,
+    4
+   ],
+   [
+    18,
+    3
+   ],
+   [
+    17,
+    7
+   ],
+   [
+    27,
+    3
+   ],
+   [
+    20,
+    13
+   ],
+   [
+    14,
+    15
+   ],
+   [
+    29,
+    19
+   ],
+   [
+    20,
+    24
+   ]
+  ],
+  "gravel": [
+   [
+    29,
+    10
+   ],
+   [
+    17,
+    18
+   ],
+   [
+    27,
+    22
+   ]
+  ],
+  "spawn": [
+   3,
+   22
+  ],
+  "exit": [
+   31,
+   23
+  ],
+  "key": [
+   30,
+   3
+  ],
+  "burrows": 1,
+  "pebbles": 2,
+  "tongues": 0,
+  "gates": [
+   {
+    "id": "blue",
+    "name": "Blue",
+    "color": [
+     106,
+     195,
+     236
+    ],
+    "switch": [
+     3,
+     3
+    ],
+    "tiles": [
+     [
+      12,
+      4
+     ]
+    ]
+   },
+   {
+    "id": "amber",
+    "name": "Amber",
+    "color": [
+     239,
+     181,
+     83
+    ],
+    "switch": [
+     17,
+     3
+    ],
+    "tiles": [
+     [
+      22,
+      4
+     ],
+     [
+      29,
+      8
+     ],
+     [
+      22,
+      13
+     ]
+    ]
+   },
+   {
+    "id": "drop",
+    "name": "Inner descent",
+    "color": [
+     201,
+     161,
+     230
+    ],
+    "tiles": [
+     [
+      17,
+      8
+     ]
+    ]
+   },
+   {
+    "id": "west",
+    "name": "West passage",
+    "color": [
+     150,
+     220,
+     166
+    ],
+    "tiles": [
+     [
+      12,
+      13
+     ]
+    ]
+   },
+   {
+    "id": "southwest",
+    "name": "West bridge",
+    "color": [
+     150,
+     220,
+     166
+    ],
+    "tiles": [
+     [
+      12,
+      22
+     ]
+    ]
+   },
+   {
+    "id": "southeast",
+    "name": "East bridge",
+    "color": [
+     150,
+     220,
+     166
+    ],
+    "tiles": [
+     [
+      22,
+      22
+     ]
+    ]
+   },
+   {
+    "id": "right-return",
+    "name": "Eastern stair",
+    "color": [
+     150,
+     220,
+     166
+    ],
+    "tiles": [
+     [
+      29,
+      17
+     ]
+    ]
+   }
+  ],
+  "reactions": [
+   {
+    "id": "amber-reversal",
+    "when": "enter",
+    "region": [
+     16,
+     3,
+     18,
+     3
+    ],
+    "requiresOpen": [
+     "amber"
+    ],
+    "close": [
+     "blue"
+    ],
+    "open": [
+     "drop",
+     "right-return"
+    ],
+    "message": "Blue is sealing. Amber releases the descent and eastern stair.",
+    "objective": "Take the descent or amber route. The hatch needs six treasure."
+   },
+   {
+    "id": "key-return",
+    "when": "key",
+    "open": [
+     "southeast"
+    ],
+    "message": "The key releases the east bridge. Treasure is still the price of escape.",
+    "objective": "The east bridge is open. Bring six treasure to the eastern hatch."
+   },
+   {
+    "id": "chest-reversal",
+    "when": "treasure",
+    "at": [
+     17,
+     12
+    ],
+    "close": [
+     "drop"
+    ],
+    "open": [
+     "west",
+     "southwest"
+    ],
+    "message": "The chest seals the descent and opens the western passages.",
+    "objective": "Use the western passages and east bridge. The hatch needs six treasure."
+   }
+  ],
+  "loot": [
+   [
+    2,
+    2,
+    1
+   ],
+   [
+    18,
+    6,
+    1
+   ],
+   [
+    26,
+    7,
+    1
+   ],
+   [
+    32,
+    6,
+    1
+   ],
+   [
+    17,
+    12,
+    3
+   ],
+   [
+    8,
+    24,
+    1
+   ],
+   [
+    18,
+    24,
+    1
+   ],
+   [
+    31,
+    24,
+    1
+   ]
+  ],
+  "guards": [
+   {
+    "spawn": [
+     8,
+     2
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      2,
+      2
+     ],
+     [
+      8,
+      2
+     ],
+     [
+      8,
+      6
+     ],
+     [
+      2,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     19,
+     6
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      15,
+      2
+     ],
+     [
+      19,
+      2
+     ],
+     [
+      19,
+      6
+     ],
+     [
+      15,
+      6
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     32,
+     6
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      25,
+      2
+     ],
+     [
+      32,
+      2
+     ],
+     [
+      32,
+      6
+     ],
+     [
+      25,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     26,
+     6
+    ],
+    "facing": 0,
+    "patrol": [
+     [
+      26,
+      2
+     ],
+     [
+      31,
+      2
+     ],
+     [
+      31,
+      6
+     ],
+     [
+      26,
+      6
+     ]
+    ]
+   },
+   {
+    "spawn": [
+     19,
+     14
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      15,
+      11
+     ],
+     [
+      19,
+      11
+     ],
+     [
+      19,
+      14
+     ],
+     [
+      15,
+      14
+     ]
+    ]
+   },
+   {
+    "kind": "beetle",
+    "spawn": [
+     32,
+     24
+    ],
+    "facing": 3.141592653589793,
+    "patrol": [
+     [
+      25,
+      20
+     ],
+     [
+      32,
+      20
+     ],
+     [
+      32,
+      24
+     ],
+     [
+      25,
+      24
+     ]
+    ]
+   }
+  ]
  }
 }

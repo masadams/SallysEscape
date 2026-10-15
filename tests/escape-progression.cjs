@@ -26,3 +26,14 @@ test('a first-attempt escape earns the first-try badge; a catch or an earlier at
   assert.equal(p.attempt('crumbling-hall'),true);assert.equal(p.record(won('crumbling-hall')),true);assert.equal(p.lastFirstTry,false,'an abandoned attempt counts');
   p.data.levels['crumbling-hall']={cleared:true};p.record({status:'failed',levelId:'quiet-vault',challengeId:'ghost-run',totalTreasure:10,treasure:0,stars:0,time:5});assert.equal(p.data.attempts['quiet-vault'],undefined,'challenges never use up a first try');
   const fresh=new EscapeProgress(store);assert.equal(fresh.data.levels['quiet-vault'].firstTry,true);assert.equal(fresh.data.attempts['leafy-crossroads'],1);assert.equal(fresh.totals().firstTries,1);});
+test('every star in an area masters it once, and lends Sally its colours to wear',()=>{
+  const {EscapeWorld}=require('../public/escape-world.js'),chapters=EscapeWorld.chapters,meadow=chapters[0];let raw=null;
+  const levels=Object.fromEntries(EscapeCatalog.levels.slice(meadow.start,meadow.end).map(l=>[l.id,{cleared:true,bestTime:20,stars:3,treasure:6,revision:l.revision||1}]));
+  levels[EscapeCatalog.levels[meadow.start].id].stars=2;
+  const p=new EscapeProgress({getItem:()=>raw||JSON.stringify({version:1,levels}),setItem:(k,v)=>{raw=v;}});
+  assert.equal(p.mastered(meadow),false);assert.deepEqual(p.skins(chapters),['classic']);assert.equal(p.setSkin('meadow',chapters),false,'unearned colours stay locked');assert.deepEqual(p.announceMastery(chapters),[]);
+  const data=JSON.parse(raw||JSON.stringify({version:1,levels}));data.levels[EscapeCatalog.levels[meadow.start].id].stars=3;raw=JSON.stringify(data);p.read();
+  assert.equal(p.mastered(meadow),true);assert.deepEqual(p.announceMastery(chapters).map(c=>c.theme),['meadow']);assert.deepEqual(p.announceMastery(chapters),[],'announced once');
+  assert.equal(p.setSkin('meadow',chapters),true);assert.equal(p.skin(chapters),'meadow');assert.equal(new EscapeProgress({getItem:()=>raw,setItem(){}}).skin(chapters),'meadow','the choice is saved');
+  assert.equal(p.totals().mastered,1);
+});
