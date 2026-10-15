@@ -8728,7 +8728,7 @@
     for(const [kind,tiles] of [['B',level.cracks],['L',level.cover],['N',level.gravel]])for(const [x,y] of tiles)grid[y][x]=kind;
     for(const [x,y] of level.gaps||[])grid[y][x]='P';
     for(const [x,y] of level.crumble||[])grid[y][x]='c';
-    for(const [x,y] of level.slits||[])grid[y][x]='S';
+    for(const [x,y] of level.slits||[])grid[y][x]='Y';
     for(const [x,y] of level.water||[])if(grid[y][x]==='.')grid[y][x]='U';
     for(const gate of level.gates||[]){for(const [x,y] of gate.tiles)grid[y][x]=gate.bridge?(gate.initialOpen?'W':'P'):gate.initialOpen?'g':'G';if(gate.switch){const [x,y]=gate.switch;if(grid[y][x]!=='L')grid[y][x]='S';}for(const [x,y]of gate.plates||[])if(grid[y][x]!=='L')grid[y][x]='S';}
     return grid;

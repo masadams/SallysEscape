@@ -312,7 +312,7 @@ function drawEscapeVault(){
     noStroke();fill(...palette[floor?0:1]);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*0.12);
     if(!floor){stroke(...palette[2]);strokeWeight(1);line((x+.15)*cell,(y+.12)*cell,(x+.85)*cell,(y+.12)*cell);}
     // A crack: drawn as wall with a dark, jagged slit only Sally fits through.
-    if(tile==='S'){noStroke();fill(...palette[1]);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*0.12);fill(6,10,12);beginShape();for(const [dx,dy] of [[.42,0],[.56,.22],[.48,.45],[.6,.7],[.52,1],[.42,1],[.46,.7],[.36,.45],[.46,.22],[.36,0]])vertex((x+dx)*cell,(y+dy)*cell);endShape(CLOSE);}
+    if(tile==='Y'){noStroke();fill(...palette[1]);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*0.12);fill(6,10,12);beginShape();for(const [dx,dy] of [[.42,0],[.56,.22],[.48,.45],[.6,.7],[.52,1],[.42,1],[.46,.7],[.36,.45],[.46,.22],[.36,0]])vertex((x+dx)*cell,(y+dy)*cell);endShape(CLOSE);}
     if(tile==='B'){
       stroke(93,151,160);strokeWeight(1.3);line((x+0.3)*cell,(y+0.2)*cell,(x+0.6)*cell,(y+0.55)*cell);line((x+0.6)*cell,(y+0.55)*cell,(x+0.35)*cell,(y+0.8)*cell);
     }

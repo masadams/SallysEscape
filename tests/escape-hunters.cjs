@@ -157,7 +157,7 @@ test('a hunter that sees Sally in a vine catches her; a spare tail tears her fre
 });
 
 test('a crack lets Sally slip through a wall, but a chasing snake can neither follow nor see into it',()=>{
-  const {g,h}=arena('snake',[3,4],[6,4]);for(let y=1;y<g.height-1;y++)g.grid[y][8]='#';g.grid[4][8]='S';
+  const {g,h}=arena('snake',[3,4],[6,4]);for(let y=1;y<g.height-1;y++)g.grid[y][8]='#';g.grid[4][8]='Y';
   assert.ok(g.fits({x:8.5,y:4.5}),'Sally fits');assert.ok(!g.fits({x:8.5,y:4.5},.22,h),'the snake does not');
   assert.deepEqual(g.route(h,{x:10.5,y:4.5},h),[]);Object.assign(g.player,{x:8.5,y:4.5});assert.ok(!g.clear(h,g.player,true),'no sight into the crack');
   Object.assign(g.player,{x:6.5,y:4.5});Object.assign(h,{state:'chase',awareness:1,lastKnown:copyOf(g.player),lastObserved:0,pauseUntil:0});

@@ -71,9 +71,9 @@
     makeHunter(guard){return {...centre(...guard.spawn),id:guard.id||null,kind:guard.kind||'snake',facing:guard.facing,state:guard.kind==='mimic'?'rooted':guard.kind==='cobra'?'coiled':guard.kind==='angler'?'lurking':guard.kind==='flytrap'?'open':'patrol',awareness:0,lastKnown:null,lastObserved:-Infinity,reason:'seen',path:[],routeIndex:0,pauseUntil:0,searchUntil:0,patrol:guard.patrol.map(p=>centre(...p)),aim:null,phaseUntil:0,distanceMoved:0,...(guard.kind==='cobra'?{post:centre(...guard.spawn),reach:guard.reach||2.6}:{}),...(guard.kind==='angler'?{lure:centre(...(guard.lure||guard.spawn))}:{}),...(guard.kind==='scorpion'?{reach:guard.reach||1.8,buried:Boolean(guard.buried),offset:guard.offset??(guard.spawn[0]*.7+guard.spawn[1]*.3)%3.8,post:centre(...guard.spawn)}:{})};}
     floor(x,y){return this.grid[y]?.[x]!==undefined && !['#','B','G','P'].includes(this.grid[y][x]);}
     water(p){return this.grid[Math.floor(p.y)]?.[Math.floor(p.x)]==='U';}
-    // A crack (S) is wide enough for Sally only: no hunter can squeeze through or see into it.
-    actorFloor(x,y,h){const wet=this.grid[y]?.[x]==='U';if(h&&this.grid[y]?.[x]==='S')return false;return this.floor(x,y)&&(!h||h.kind==='sea-snake'||(h.kind==='fish'?wet:!wet));}
-    sightFloor(x,y){const c=this.grid[y]?.[x];return c!=='S'&&(this.floor(x,y)||c==='P');}
+    // A crack (Y; S in text maps) is wide enough for Sally only: no hunter can squeeze through or see into it.
+    actorFloor(x,y,h){const wet=this.grid[y]?.[x]==='U';if(h&&this.grid[y]?.[x]==='Y')return false;return this.floor(x,y)&&(!h||h.kind==='sea-snake'||(h.kind==='fish'?wet:!wet));}
+    sightFloor(x,y){const c=this.grid[y]?.[x];return c!=='Y'&&(this.floor(x,y)||c==='P');}
     visibleTile(x,y){return !this.level.explore||this.visible.has(x+','+y);}
     lineVisible(a,b){
       // A blocking wall itself is visible; tiles beyond it are not. Do not
