@@ -19,6 +19,7 @@ built, playtested with recorded winning runs, and pushed on its own.
 | First-try bonus | A first-attempt escape earns mint stars and a ✓ badge. |
 | Adaptive music | Manifest-driven stems that fade between explore, tension and chase; see `docs/MUSIC.md`. |
 | Frost Hollow | Five routes with cold rooms, a **warmth** meter, warm stones, sluggish cold-blooded hunters and frost owls, plus the Keep Warm challenge. |
+| Steam Vents | Five routes with **timed steam jets** that block lanes, blow Sally clear and daze hunters, mixed with the hawk, owls and ants, plus the Steam Trap challenge. |
 
 ## Branch map
 
@@ -51,7 +52,7 @@ regions each add two or three challenges so later gates stay reachable.
 - Only some rooms are cold, as agreed: cold ground slowly drains a **warmth** meter and slows Sally when it runs low; sun patches and warm stones refill it.
 - Owls return as daytime frost owls; snakes are sluggish in the cold.
 
-### 4. Steam Vents — timed jets
+### 4. Steam Vents — timed jets (done)
 - Opens after the Sunbaked Rooftops finale **and 12 completed challenges**.
 - Vents puff on a rhythm. A jet blocks its lane and can toss hunters back, so timing a jet can save Sally.
 - Mixes the hawk, owls and ant columns learned in earlier branches.

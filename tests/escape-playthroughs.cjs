@@ -23,6 +23,8 @@ for(const recording of recordings)test('recorded legal escape with real guards: 
   assert.equal(g.motion.snakes.length,g.hunters.length);
   if(g.level.rivalries)assert.ok(g.clashes>0,'the real guards fought during the escape');
   if(g.challenge?.noTheft)assert.equal(g.stolen,0);
+  if(g.challenge?.steamTraps)assert.ok(g.steamed>=g.challenge.steamTraps);
+  if(g.level.vents)assert.ok(g.vents.length>0);
   if(g.challenge?.noChill)assert.ok(g.lowestWarmth>=30);
   if(g.level.cold)assert.ok(g.lowestWarmth<100,'the recorded escape crossed the cold');
   if(g.level.antTrails)assert.ok(g.antTrails.length>0);

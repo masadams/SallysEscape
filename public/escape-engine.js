@@ -44,7 +44,11 @@
       this.carried=[];this.thefts=0;this.recoveries=0;this.stolen=0;
       // Frost Hollow: only marked rooms are cold; warm stones thaw Sally quickly.
       this.cold=new Set();for(const [x1,y1,x2,y2] of this.level.cold||[])for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)this.cold.add(x+','+y);
-      this.warm=new Set((this.level.warm||[]).map(([x,y])=>x+','+y));this.player.warmth=100;this.player.chilled=false;this.lowestWarmth=100;
+      this.warm=new Set((this.level.warm||[]).map(([x,y])=>x+','+y));
+      // Steam Vents: wall vents fire jets down a lane on a fixed rhythm.
+      this.vents=(this.level.vents||[]).map(v=>{const [dx,dy]=v.dir,tiles=[];for(let i=1;i<=(v.length||4);i++){const x=v.at[0]+dx*i,y=v.at[1]+dy*i;if(!this.floor(x,y))break;tiles.push([x,y]);}
+        return {...v,tiles,keys:new Set(tiles.map(([x,y])=>x+','+y)),period:v.period||5,on:v.on||1.6,offset:v.offset||0,warn:v.warn||.9,active:false,warning:false};});
+      this.blasts=0;this.steamed=0;this.player.warmth=100;this.player.chilled=false;this.lowestWarmth=100;
       const hawk=this.level.hawk;this.hawk=hawk?{every:hawk.every||8,warn:hawk.warn||1.8,radius:hawk.radius||1.2,speed:hawk.speed||1.5,nextAt:hawk.first||16,state:'circling',shadow:null,strikes:0,dodges:0,lastStrike:null}:null;
       this.requiredTreasure=this.challenge?.allTreasure?this.totalTreasure:this.level.requiredTreasure||0;this.timeLimit=this.challenge?.timeLimit||this.level.timeLimit||null;
       this.message=this.challenge?.brief||this.level.hint;this.messageUntil=7;
@@ -337,6 +341,21 @@
       h.state='patrol';
       if(this.carried.length&&this.elapsed>=(h.cooldown||0)&&!p.hidden&&distance(h,p)<=6&&this.clear(h,p,true)){h.state='dash';this.events.push('skitter');}
     }
+    ventPhase(v,t=this.elapsed){const phase=((t+v.offset)%v.period+v.period)%v.period;return {active:phase>=v.period-v.on,warning:phase>=v.period-v.on-v.warn&&phase<v.period-v.on};}
+    inJet(p){const key=this.tileKey(p);return this.vents.some(v=>v.active&&v.keys.has(key));}
+    // Move an actor out of a jet: past its far end if that is open, otherwise to one side.
+    blowClear(v,a,actor=null){
+      const [dx,dy]=v.dir,[ex,ey]=v.tiles.at(-1),key=this.tileKey(a),[ax,ay]=key.split(',').map(Number);
+      for(const [x,y] of [[ex+dx,ey+dy],[ax+dy,ay+dx],[ax-dy,ay-dx],[ax+dy*2,ay+dx*2],[ax-dy*2,ay-dx*2]]){const p=centre(x,y);if(this.fits(p,.22,actor)&&!v.keys.has(x+','+y)){a.x=p.x;a.y=p.y;return true;}}
+      return false;
+    }
+    updateVents(){
+      const p=this.player;
+      for(const v of this.vents){const {active,warning}=this.ventPhase(v);if(warning&&!v.warning&&distance(p,centre(...v.at))<9)this.events.push('hiss');if(active&&!v.active&&distance(p,centre(...v.at))<9)this.events.push('steam');v.active=active;v.warning=warning;if(!active)continue;
+        if(v.keys.has(this.tileKey(p))&&this.blowClear(v,p)){this.blasts++;p.stamina=Math.max(0,p.stamina-35);this.motion.resetPlayer(p);this.notice('Scalding steam! Sally is blown clear.','steam');}
+        this.hunters.forEach((h,i)=>{if(!v.keys.has(this.tileKey(h))||h.state==='steamed'||['owl','moth','fish'].includes(h.kind))return;this.blowClear(v,h,h);this.motion.resetHunter?.(h,i);h.state='steamed';h.phaseUntil=this.elapsed+2.5;h.path=[];h.targetId=null;h.aim=null;h.awareness=0;h.lastKnown=null;this.steamed++;this.notice('The steam blasts a hunter aside. It is dazed!','steam');});
+      }
+    }
     tileKey(p){return Math.floor(p.x)+','+Math.floor(p.y);}
     updateWarmth(dt){
       const p=this.player,key=this.tileKey(p),before=p.warmth;
@@ -399,7 +418,7 @@
       if(this.cold.size)this.updateWarmth(dt);
       const sprint=Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',speed=(sprint?4:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72:1)*(this.water(p)?.55:1);
       for(const [axis,direction] of [['x',dx],['y',dy]]){
-        const next={...p,[axis]:p[axis]+direction*speed*dt};if(this.fits(next))p[axis]=next[axis];
+        const next={...p,[axis]:p[axis]+direction*speed*dt};if(this.fits(next)&&!(this.vents.length&&this.inJet(next)&&!this.inJet(p)))p[axis]=next[axis];
       }
       p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);if(p.swimming&&!this.water(old))this.events.push('splash');p.moving=distance(old,p)>0.0001;p.sprinting=sprint&&p.moving;
       p.stamina=Math.max(0,Math.min(100,p.stamina+(p.sprinting?-24:18)*dt));
@@ -416,13 +435,14 @@
       if(this.decoy&&this.decoy.expires<=this.elapsed)this.decoy=null;
       this.updateRivalries();for(const hunter of this.hunters)this.updateHunter(dt,hunter);this.updateRivalries();
       this.motion.update(dt,this);
+      if(this.vents.length)this.updateVents();
       this.updateHawk(dt);if(this.status!=='playing')return;
       if(this.antTrails.length&&this.elapsed>=this.invulnerableUntil&&this.antAt(p)){this.alarms++;if(!this.shedTail(null)){this.finish('caught','The ant column marched right over Sally. Cross in the gaps between groups.');return;}}
       const stinger=this.hunters.find(h=>h.kind==='scorpion'&&h.state==='sting'&&h.aim&&distance(h,h.aim)<=3.25&&distance(p,h.aim)<.65&&this.clear(h,p,true));
       if(this.elapsed>=this.invulnerableUntil&&stinger&&this.shedTail(stinger))return;
       if(this.elapsed>=this.invulnerableUntil&&stinger){this.finish('caught','The scorpion struck the marked ground. Move away when its tail rises.');return;}
       // Capture wins over picking up the key or escaping in the same simulation step.
-      const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&distance(p,h)<.48&&this.clear(p,h));
+      const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash','steamed'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&distance(p,h)<.48&&this.clear(p,h));
       if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
       if(this.elapsed>=this.invulnerableUntil && captor){
         this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. Try another route through the ruins.':captor.kind==='mimic'?'The plant snapped at its marked spot. Provoke it from a distance or step aside when it opens.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'The guard spotted you. Break sight at a corner or use a pebble.');return;
@@ -444,10 +464,10 @@
       if(!this.hasTail)for(const bug of this.regrowthBugs)if(!bug.eaten&&distance(p,bug)<0.5&&this.clear(p,bug))this.eatRegrowthBug(bug);
       if(distance(p,this.exit)<0.55){
         if(this.exitUnlocked()){this.exitHold+=dt;if(this.exitHold>=0.55)this.finish('won','Sally made it out!');}
-        else if(this.messageUntil<this.elapsed)this.notice(this.hasKey?'Bring '+(this.requiredTreasure-this.treasure)+' more treasure to the hatch.':'The hatch needs the golden key.');
+        else if(this.messageUntil<this.elapsed)this.notice(!this.hasKey?'The hatch needs the golden key.':this.treasure<this.requiredTreasure?'Bring '+(this.requiredTreasure-this.treasure)+' more treasure to the hatch.':'Daze '+(this.challenge.steamTraps-this.steamed)+' more hunters with steam first.');
       }else this.exitHold=0;
     }
-    exitUnlocked(){return this.hasKey&&this.treasure>=this.requiredTreasure&&(!this.challenge?.keyByTongue||this.keyByTongue);}
+    exitUnlocked(){return this.hasKey&&this.treasure>=this.requiredTreasure&&(!this.challenge?.keyByTongue||this.keyByTongue)&&(!this.challenge?.steamTraps||this.steamed>=this.challenge.steamTraps);}
     seesPlayer(h=this.hunter){
       const p=this.player,d=distance(p,h);
       if(p.hidden||d>4.5||!this.clear(h,p,true))return false;
@@ -456,6 +476,7 @@
       return d<1 || Math.abs(difference)<(h.kind==='beetle'?Math.PI/5:Math.PI/3);
     }
     updateHunter(dt,h=this.hunter){
+      if(h.state==='steamed'){if(this.elapsed>=h.phaseUntil){h.state=h.kind==='mimic'?'rooted':'patrol';h.graceUntil=this.elapsed+.5;}return;}
       if(h.tailLureUntil){
         if(this.elapsed<h.tailLureUntil&&this.droppedTail){h.state='decoy';h.awareness=0;h.lastKnown=null;h.aim=null;if(distance(h,this.droppedTail)>.3)this.moveHunter(this.droppedTail,1.3*dt,h);return;}
         h.tailLureUntil=0;h.state=h.kind==='mimic'?'rooted':'patrol';h.path=[];h.targetId=null;h.aim=null;h.awareness=0;h.lastKnown=null;h.graceUntil=Math.max(h.graceUntil||0,this.elapsed+.4);
@@ -512,7 +533,7 @@
       if(!this.active())return;
       // Only authored rivals clash. Armed strikes keep their original targets;
       // neither walls nor another fight can silently cancel their warning.
-      const free=h=>!['clash','emerge','windup','charge','sting','leap','lunge','reveal','glimmer','swoop','dig','buried','rise'].includes(h.state)&&this.elapsed>=(h.rivalReadyAt||0);
+      const free=h=>!['clash','steamed','emerge','windup','charge','sting','leap','lunge','reveal','glimmer','swoop','dig','buried','rise'].includes(h.state)&&this.elapsed>=(h.rivalReadyAt||0);
       for(const [a,b] of this.level.rivalries||[]){
         const first=this.hunters.find(h=>h.id===a),second=this.hunters.find(h=>h.id===b);
         if(!first||!second||!free(first)||!free(second)||distance(first,second)>1.35||!this.clear(first,second))continue;
@@ -745,7 +766,7 @@
       this.status=status;this.notice(message,status);
       this.tongue=null;
       const stars=status==='won'?1+Number(this.treasure>=Math.ceil(this.totalTreasure*.6))+Number(this.alarms===0&&this.hasTail):0;
-      this.result=Object.freeze({status,levelId:this.level.id,routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,message});
+      this.result=Object.freeze({status,levelId:this.level.id,routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),blasts:this.blasts,steamed:this.steamed,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,message});
     }
     drainEvents(){const events=this.events;this.events=[];return events;}
   }

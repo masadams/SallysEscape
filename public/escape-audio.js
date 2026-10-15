@@ -78,6 +78,8 @@
     steal:(v)=>{tone(v,{freq:900,to:300,dur:.25,type:'square',gain:.12});noise(v,{dur:.1,gain:.2,freq:2600,q:3});},
     recover:(v)=>notes(v,[[784,0,.08],[1047,.07,.08],[1319,.14,.2]],{type:'square',gain:.14}),
     shiver:(v)=>{noise(v,{dur:.5,gain:.12,freq:5000,q:3,attack:.05});tone(v,{freq:1200,to:900,dur:.4,type:'sine',gain:.1,wobble:60,wobbleRate:20});},
+    hiss:(v)=>noise(v,{dur:.7,gain:.08,filter:'highpass',freq:3500,attack:.3}),
+    steam:(v)=>{noise(v,{dur:1.1,gain:.32,filter:'bandpass',freq:1800,to:900,q:.6,attack:.05});noise(v,{dur:.25,gain:.25,filter:'lowpass',freq:300});},
     click:(v)=>tone(v,{freq:900,to:700,dur:.05,type:'sine',gain:.12})
   };
   function play(ctx,name,volume=.25,options={}){
