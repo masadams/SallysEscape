@@ -1,7 +1,8 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {EscapeAdventure}=require('../public/escape-engine.js');const {EscapeCatalog}=require('../public/escape-levels.js');const {EscapeProgress}=require('../public/escape-progress.js');
+const legacy=require('./fixtures/legacy-levels.json');
 function ticks(g,seconds,input={}){for(let n=0;n<Math.round(seconds*120);n++)g.advance(1/120,input);}
-function ring(){const g=new EscapeAdventure({levelId:'anthill-gate'});g.hunters=[];g.motion.snakes=[];return g;}
+function ring(){const g=new EscapeAdventure({level:legacy['anthill-gate']});g.hunters=[];g.motion.snakes=[];return g;}
 test('the Ant Kingdom branches off Venom Depths behind eight challenges with columns and gecko thieves',()=>{
   const ants=EscapeCatalog.levels.slice(63,68);assert.deepEqual(ants.map(l=>l.id),['anthill-gate','sugar-store','marching-tunnels','thieves-gallery','queens-chamber']);
   assert.equal(ants[0].unlockAfter,'split-jaw');assert.equal(ants[0].unlockChallenges,8);for(const l of ants)assert.ok(l.tailDrop);
@@ -19,7 +20,7 @@ test('ants walk over a hidden or camouflaged Sally, cost the spare tail, and the
   const h=ring();h.tailDrop=false;const b=h.ants(h.antTrails[0])[3];Object.assign(h.player,{x:b.x,y:b.y});h.advance(1/120,{});assert.equal(h.status,'caught');assert.match(h.message,/ant column/);
   const safe=ring();Object.assign(safe.player,{x:14.5,y:4.5});ticks(safe,20);assert.equal(safe.status,'playing','one tile beside the trail is always safe');
 });
-function store(){const g=new EscapeAdventure({levelId:'sugar-store'});const thief=g.hunters[0];g.hunters=[thief];g.motion.snakes=[g.motion.snakes[0]];return {g,thief};}
+function store(){const g=new EscapeAdventure({level:legacy['sugar-store']});const thief=g.hunters[0];g.hunters=[thief];g.motion.snakes=[g.motion.snakes[0]];return {g,thief};}
 function untilState(g,h,state,limit=3){for(let i=0;i<limit*120&&h.state!==state;i++)g.advance(1/120,{});return h.state===state;}
 test('a gecko ignores Sally with empty pockets, then dashes in and steals the last treasure she picked up',()=>{
   const {g,thief}=store();Object.assign(g.player,{x:12.5,y:3.5});ticks(g,2);assert.equal(thief.state,'patrol');
