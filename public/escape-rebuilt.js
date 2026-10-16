@@ -1333,7 +1333,7 @@
  "#1...............................1#",
  "###################################"]},
 // Storm Heights
-{append:true,explore:false,tailDrop:true,id:"gale-steps",name:"Gale Steps",brief:"Three ledges over a long drop, and the wind keeps trying to push you off.",hint:"Streaks show each wind lane. When they thicken a gust is coming: step out of the lane or tuck into a gap in the wall. A gust that pushes Sally over the edge blows her off.",pebbles:2,tongues:1,wind:[{area:[1,2,29,3],dir:[0,1],period:5,on:1.6,offset:0},{area:[1,6,29,8],dir:[0,-1],period:5.5,on:1.7,offset:2.2},{area:[1,11,29,12],dir:[0,-1],period:6,on:1.8,offset:3.6}],guards:[{spawn:[20,6],facing:PI,patrol:[[8,6],[27,7]]},{spawn:[12,11],facing:0,patrol:[[5,12],[26,11]]},{spawn:[24,2],facing:PI,patrol:[[12,2],[27,2]]}],map:[
+{append:true,explore:false,tailDrop:true,id:"gale-steps",name:"Gale Steps",brief:"Three ledges over a long drop, and the wind keeps trying to push you off.",hint:"Streaks show each wind lane. When they thicken a gust is coming: step out of the lane or tuck into a gap in the wall. A gust that pushes Sally over the edge blows her off.",pebbles:2,tongues:1,wind:[{area:[1,2,29,3],dir:[0,1],period:5,on:1.6,offset:0},{area:[1,6,29,8],dir:[0,-1],period:5.5,on:1.7,offset:2.2},{area:[1,11,29,12],dir:[0,-1],period:6,on:1.8,offset:3.6}],guards:[{spawn:[20,6],facing:PI,patrol:[[8,6],[27,7]]},{spawn:[12,11],facing:0,patrol:[[5,12],[26,11]]}],map:[
  "###############################",
  "#1@.....#..L....#..L..#....L.2#",
  "#.............................#",
