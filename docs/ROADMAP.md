@@ -132,7 +132,14 @@ The Lantern Marsh brings owls, whose beams sweep the yards from their look-outs:
 - Rival Rooftops: two rival pairs share the roof roads, and an owl watches it all.
 - Moonwell Keep: a king cobra lies across the moonwell, the inner door opens only under the beetle's weight, and cracks let Sally slip the chase home.
 
-Next: Sunbaked Rooftops onward.
+Sunbaked Rooftops keeps the hawk, awnings and camouflage, and adds crumbling roof tiles and rolling barrels:
+- Sunbaked Ledge: striped awnings and a crumbling shortcut under the hawk.
+- Laundry Lines: sheets throw stripes of shade while barrels roll down the gaps between the lines.
+- Chimney Run: three chimney doors held open by hot plates on either side, with scorpions by the stacks.
+- Pigeon Court: the key slams the roof door; cracks in the court wall are the way out.
+- Weathervane Spire: a stepped spire of barrels and crumbling tiles, a king cobra over the richest chest, and a hawk that dives often.
+
+Next: Ant Kingdom onward.
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).
