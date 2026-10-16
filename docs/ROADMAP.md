@@ -139,7 +139,14 @@ Sunbaked Rooftops keeps the hawk, awnings and camouflage, and adds crumbling roo
 - Pigeon Court: the key slams the roof door; cracks in the court wall are the way out.
 - Weathervane Spire: a stepped spire of barrels and crumbling tiles, a king cobra over the richest chest, and a hawk that dives often.
 
-Next: Ant Kingdom onward.
+Ant Kingdom keeps its marching columns and gecko thieves:
+- Anthill Gate: a ring of ants circles the key mound; cross in the gaps.
+- Sugar Store: shelves of treasure and two geckos that steal the last thing Sally picked up.
+- Marching Tunnels: two columns loop the same hall in opposite directions.
+- Thieves' Gallery: a vault bridge that rises once, and a low bridge back that the key raises.
+- The Queen's Chamber: a column loops the outer hall, the queen's guard (a king cobra) coils in the great hall, and a crack is the way out of the sealed throne room.
+
+Next: Frost Hollow onward (snow fox).
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).
