@@ -164,7 +164,7 @@ Every region now has text maps. The Lantern Marsh's Firefly Ford gained a bog he
 
 ### Fix list
 Things flagged to come back to:
-- **Level builder**: built out with doors, bridges, triggers and links, sleeping enemies, hazards, cold ground, a password and a community shelf (see `docs/BUILDER.md`). Next: try it out and decide what else it needs.
+- **Level builder**: built out with doors, bridges, triggers and links, sleeping enemies, hazards, cold ground, passkey sign-in with an Admin area, and a community shelf (see `docs/BUILDER.md`). Next: try it out and decide what else it needs.
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).

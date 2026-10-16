@@ -372,3 +372,9 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 #world-totals .world-journal-item { display:none; }
 #world-totals.world-journal-open .world-journal-item { display:inline; }
 .world-journal-toggle { font:inherit; font-size:.8rem; padding:2px 10px; border-radius:999px; border:1px solid #668575; background:#1d3f3c; color:#e4edd6; cursor:pointer; }
+/* Admin: a quiet menu link, invite codes big enough to read across a room. */
+.escape-link { background:none; border:none; color:#9fc9b6; text-decoration:underline; cursor:pointer; font:inherit; padding:4px; }
+.admin-code { font-family:ui-monospace,monospace; font-size:1.3em; letter-spacing:2px; color:#ffe38a; }
+#escape-builder h3 { margin:18px 0 8px; } #escape-builder details summary { cursor:pointer; color:#9fc9b6; }
+.builder-lock input { font:inherit; padding:10px 12px; border-radius:8px; border:1px solid #4d7a68; background:#0f201b; color:#eaf6ef; }
+.builder-lock details > .builder-lock { margin-top:10px; }

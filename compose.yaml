@@ -7,8 +7,9 @@ services:
     security_opt: [no-new-privileges:true]
     tmpfs: [/tmp]
     environment:
-      # The level builder's password. Leave it empty to switch publishing off.
-      BUILDER_PASSWORD: ${BUILDER_PASSWORD:-}
+      # The address players use, so admin passkeys are bound to it. The first start prints a
+      # one-time admin setup code in the log (see docs/BUILDER.md).
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-}
       # One reverse proxy (nginx) sits in front of the game; only the address it adds is trusted.
       TRUST_PROXY: ${TRUST_PROXY:-1}
     volumes:
