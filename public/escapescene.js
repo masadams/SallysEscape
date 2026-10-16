@@ -417,7 +417,7 @@ function drawEscapeVault(){
   for(const den of g.pendingSpawns){if(view.follow&&!g.visibleTile(Math.floor(den.x),Math.floor(den.y)))continue;noFill();stroke(231,161,121);strokeWeight(cell*.05);ellipse(den.x*cell,den.y*cell,cell*(.7+Math.sin(g.elapsed*8)*.12),cell*.5);fill(237,177,142);noStroke();textSize(cell*.5);text('!',den.x*cell,(den.y-.5)*cell);}
   for(const h of g.hunters){const ang=h.facing,cone=h.kind==='beetle'?PI/5:PI/3;
   if(view.follow&&!g.visibleTile(Math.floor(h.x),Math.floor(h.y)))continue;
-  if(!g.level.dark&&!['millipede','cricket','moth','mimic','angler','flytrap','heron','mantis','crab','fox'].includes(h.kind)&&['patrol','alert'].includes(h.state)){
+  if(!g.level.dark&&!['millipede','cricket','moth','mimic','angler','flytrap','heron','mantis','wasp','dragonfly','crab','fox'].includes(h.kind)&&['patrol','alert'].includes(h.state)){
     noStroke();fill(245,171,105,18);beginShape();vertex(h.x*cell,h.y*cell);
     for(let a=-cone;a<=cone+.01;a+=cone/6){let reach=0;for(let d=.2;d<=4.5;d+=.2){if(!g.clear(h,{x:h.x+Math.cos(ang+a)*d,y:h.y+Math.sin(ang+a)*d},true))break;reach=d;}vertex((h.x+Math.cos(ang+a)*reach)*cell,(h.y+Math.sin(ang+a)*reach)*cell);}endShape(CLOSE);
   }
@@ -442,14 +442,14 @@ function drawEscapeVault(){
   drawingContext.clip();drawingContext.lineCap='round';drawingContext.lineJoin='round';
   // An angler's lure is a light, so it shows even in the dark; the angler itself only shows when it rises.
   g.hunters.filter(h=>h.kind==='angler').forEach(h=>drawEscapeAngler(h,cell,g.elapsed));
-  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='angler')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
+  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='angler')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='wasp'?drawEscapeWaspNest(h,cell,g.elapsed):h.kind==='dragonfly'?drawEscapeDragonfly(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
   drawingContext.save();drawingContext.globalAlpha*=g.player.hidden?.48:1;
   for(const h of g.hunters)if(h.state==='clash'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noFill();stroke(255,193,107,180);strokeWeight(cell*.035);ellipse(h.x*cell,h.y*cell,cell*(.9+Math.sin(g.elapsed*14)*.08),cell*.75);}
   drawEscapeLizard(g.motion.lizard,cell,g.motion.clock,g.player.swimming,!g.hasTail,escapeCharacter?.face);
   drawingContext.restore();drawingContext.restore();
   if(g.player.camo){noFill();stroke(214,190,140,90+60*Math.sin(g.elapsed*6));strokeWeight(cell*.03);ellipse(g.player.x*cell,g.player.y*cell,cell*1.1,cell*1.1);}
   if(g.hawk)drawEscapeHawk(g.hawk,cell,g.elapsed);
-  for(const h of g.hunters)if(h.kind!=='millipede'&&h.state!=='rooted'&&h.state!=='patrol'&&!(['angler','flytrap'].includes(h.kind)&&h.state!=='snap')&&!(h.kind==='heron'&&h.state!=='aim')&&!(h.kind==='mantis'&&h.state!=='raise')&&!(h.kind==='crab'&&!['peek','scuttle'].includes(h.state))&&h.kind!=='fox'&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))){fill(h.state==='decoy'?195:255, h.state==='decoy'?182:214, h.state==='decoy'?255:133);noStroke();textSize(cell*.65);text(h.state==='alert'?'?':['chase','windup','charge','sting','leap','glimmer','swoop','reveal','lunge','snap','peek','scuttle','aim','raise'].includes(h.state)?'!':h.state==='decoy'?'♪':'…',h.x*cell,(h.y-.65)*cell);}
+  for(const h of g.hunters)if(h.kind!=='millipede'&&h.state!=='rooted'&&h.state!=='patrol'&&!(['angler','flytrap'].includes(h.kind)&&h.state!=='snap')&&!(h.kind==='heron'&&h.state!=='aim')&&!(h.kind==='mantis'&&h.state!=='raise')&&!(h.kind==='wasp'&&h.state!=='stir')&&h.kind!=='dragonfly'&&!(h.kind==='crab'&&!['peek','scuttle'].includes(h.state))&&h.kind!=='fox'&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))){fill(h.state==='decoy'?195:255, h.state==='decoy'?182:214, h.state==='decoy'?255:133);noStroke();textSize(cell*.65);text(h.state==='alert'?'?':['chase','windup','charge','sting','leap','glimmer','swoop','reveal','lunge','snap','peek','scuttle','aim','raise','stir'].includes(h.state)?'!':h.state==='decoy'?'♪':'…',h.x*cell,(h.y-.65)*cell);}
   if(g.player.noisy&&!g.player.sprinting){noFill();stroke(221,195,149,80);strokeWeight(1);const pulse=(g.elapsed%.6)/.6;ellipse(g.player.x*cell,g.player.y*cell,cell*(.55+pulse),cell*(.55+pulse));}
   // Opaque remembered terrain hides creatures and objects outside current
   // sight. Memory shows layout; it never reports hidden enemy positions.
@@ -520,6 +520,35 @@ function drawEscapeMantis(h,cell,clock,shown){
   fill(150,206,104);triangle(cell*.22,-cell*.09,cell*.22,cell*.09,cell*.36,0);fill(30,40,20);ellipse(cell*.25,-cell*.06,cell*.05,cell*.05);ellipse(cell*.25,cell*.06,cell*.05,cell*.05);
   const reach=h.state==='raise'?.08:h.state==='strike'?.62:.18,lift=h.state==='raise'?.2:.06;stroke(126,186,88);strokeWeight(Math.max(1,cell*.04));
   for(const side of [-1,1]){line(cell*.16,side*cell*.04,cell*(.2+reach*.5),side*cell*lift);line(cell*(.2+reach*.5),side*cell*lift,cell*(.24+reach),side*cell*.03);}
+  pop();
+}
+// A wasp nest: a grey paper teardrop with a dark mouth, a few wasps idling around it. On the
+// tell the nest shakes; the swarm is a buzzing knot of wasps with a faint ring round it.
+function drawEscapeWasp(x,y,cell,clock,seed){
+  const flap=Math.abs(Math.sin(clock*40+seed));noStroke();fill(255,255,255,150);ellipse(x-cell*.03,y-cell*.05,cell*.09,cell*(.04+flap*.05));ellipse(x+cell*.03,y-cell*.05,cell*.09,cell*(.04+flap*.05));
+  fill(245,196,40);ellipse(x,y,cell*.14,cell*.09);fill(40,30,10);rect(x-cell*.015,y-cell*.045,cell*.03,cell*.09);
+}
+function drawEscapeWaspNest(h,cell,clock){
+  const shake=h.state==='stir'?Math.sin(clock*60)*cell*.04:0,nx=h.nest.x*cell+shake,ny=h.nest.y*cell;
+  // Its hearing range is marked: running inside the dashed ring stirs it.
+  if(h.state==='nest'){noFill();stroke(245,196,40,32);strokeWeight(Math.max(1,cell*.02));drawingContext.setLineDash?.([cell*.1,cell*.12]);ellipse(h.nest.x*cell,ny,cell*7,cell*7);drawingContext.setLineDash?.([]);}
+  push();translate(nx,ny);scale(1.35);translate(-nx,-ny);
+  noStroke();fill(0,0,0,50);ellipse(nx,ny+cell*.3,cell*.6,cell*.2);fill(186,174,150);ellipse(nx,ny,cell*.62,cell*.78);
+  stroke(150,138,116);strokeWeight(Math.max(1,cell*.025));noFill();for(let k=-1;k<=1;k++)arc(nx,ny+k*cell*.18,cell*.6,cell*.22,0,PI);noStroke();fill(60,48,32);ellipse(nx,ny+cell*.28,cell*.16,cell*.12);
+  const idle=h.state==='nest'?3:h.state==='stir'?6:1;for(let k=0;k<idle;k++){const a=clock*(2.4+k*.3)+k*2.1;drawEscapeWasp(nx+Math.cos(a)*cell*.45,ny+Math.sin(a*1.3)*cell*.35,cell,clock,k);}
+  pop();
+  if(h.swarm){const sx=h.swarm.x*cell,sy=h.swarm.y*cell;noFill();stroke(245,196,40,h.state==='swarm'?90:40);strokeWeight(Math.max(1,cell*.03));ellipse(sx,sy,cell*1.1,cell*1.1);
+    for(let k=0;k<12;k++){const a=clock*7+k*2.4,r=cell*(.18+(k%3)*.13);drawEscapeWasp(sx+Math.cos(a)*r,sy+Math.sin(a*1.4)*r,cell*1.4,clock,k);}}
+}
+// A dragonfly: a long blue body and four glassy wings in a blur, with its whole loop dotted on
+// the ground so the timing can be read.
+function drawEscapeDragonfly(h,cell,clock){
+  const pts=h.patrol;if(pts.length>1){noFill();stroke(120,220,240,75);strokeWeight(Math.max(1,cell*.035));drawingContext.setLineDash?.([cell*.08,cell*.12]);beginShape();for(const q of pts)vertex(q.x*cell,q.y*cell);endShape(CLOSE);drawingContext.setLineDash?.([]);}
+  push();translate(h.x*cell,h.y*cell);rotate(h.facing||0);scale(1.3);const flap=Math.abs(Math.sin(clock*45));noStroke();
+  fill(0,0,0,40);ellipse(cell*.05,cell*.25,cell*.6,cell*.14);
+  fill(200,240,255,120);for(const side of [-1,1])for(const o of [.04,-.1]){push();translate(cell*o,0);rotate(side*(.25+flap*.25));ellipse(0,side*cell*.2,cell*.14,cell*.38);pop();}
+  fill(40,150,190);rect(-cell*.42,-cell*.035,cell*.5,cell*.07,cell*.03);fill(60,190,220);ellipse(cell*.1,0,cell*.18,cell*.13);fill(30,90,140);ellipse(cell*.2,0,cell*.14,cell*.16);
+  fill(255,255,255,170);ellipse(cell*.23,-cell*.05,cell*.04,cell*.04);ellipse(cell*.23,cell*.05,cell*.04,cell*.04);
   pop();
 }
 // A flytrap on its stem: two toothed lobes that gape while it waits, slam shut on a snap,
