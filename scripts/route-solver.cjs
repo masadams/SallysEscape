@@ -39,7 +39,8 @@ function record(Engine,options,hints){
     if(/^w[0-9.]+$/.test(c)){move(0,0,false,Math.round(+c.slice(1)*120));continue;}
     if(/^f-?[01],-?[01]$/.test(c)){const [fx,fy]=c.slice(1).split(',').map(Number);move(fx,fy,false,1);continue;} // Face a direction with one frame of input.
     if(c.startsWith('g')){const [tx,ty]=c.slice(1).replace('!','').split(',').map(Number),sprint=c.endsWith('!');
-      for(const pt of g.route(g.player,{x:tx+.5,y:ty+.5})||[]){let n=0;while(Math.hypot(pt.x-g.player.x,pt.y-g.player.y)>.06&&n++<400&&g.status==='playing'){const dx=pt.x-g.player.x,dy=pt.y-g.player.y,L=Math.hypot(dx,dy),step=(sprint?4:2.45)/120,s=L<step?L/step:1;move(+(dx/L*s).toFixed(4),+(dy/L*s).toFixed(4),sprint,1);}}
+      // Stepping onto a bounce cap flings Sally; ride the flight out and carry on from where she lands.
+      route:for(const pt of g.route(g.player,{x:tx+.5,y:ty+.5})||[]){let n=0;while(Math.hypot(pt.x-g.player.x,pt.y-g.player.y)>.06&&n++<400&&g.status==='playing'){if(g.player.flight){while(g.player.flight&&g.status==='playing')move(0,0,false,1);break route;}const dx=pt.x-g.player.x,dy=pt.y-g.player.y,L=Math.hypot(dx,dy),step=(sprint?4:2.45)/120,s=L<step?L/step:1;move(+(dx/L*s).toFixed(4),+(dy/L*s).toFixed(4),sprint,1);}}
       continue;}
     if(ACT[c]){if(g[ACT[c]]())out.push({kind:c});else throw new Error('hint '+c+' failed at '+g.player.x.toFixed(2)+','+g.player.y.toFixed(2)+': '+g.message);continue;}
     throw new Error('unknown hint '+c);
@@ -55,7 +56,7 @@ function extractPlan(Engine,recording){
   for(const c of recording.commands){
     if(c.kind!=='move'){flushWait();plan.push({type:'go',x:g.player.x,y:g.player.y,sprint:false,exact:true});plan.push({type:'act',kind:c.kind,aim:lastInput&&(lastInput.x||lastInput.y)?{x:lastInput.x,y:lastInput.y}:null});g[ACT[c.kind]]();continue;}
     for(let n=0;n<c.frames;n++){
-      g.advance(1/120,c);if(!(c.x||c.y)){still++;continue;}
+      g.advance(1/120,c);if(g.player.flight){last={x:g.player.flight.to.x,y:g.player.flight.to.y};continue;}if(!(c.x||c.y)){still++;continue;}
       if(still)flushWait();
       const d=Math.hypot(g.player.x-last.x,g.player.y-last.y),turned=lastInput&&(lastInput.x!==c.x||lastInput.y!==c.y);
       if(d>=.35||turned&&d>.05){plan.push({type:'go',x:g.player.x,y:g.player.y,sprint:Boolean(c.sprint)});last={x:g.player.x,y:g.player.y};}
@@ -74,6 +75,7 @@ function wait(g,rec,t){for(let i=0;i<Math.round(t*120)&&g.status==='playing';i++
 function go(g,rec,item,sprint){
   const limit=Math.ceil((Math.hypot(item.x-g.player.x,item.y-g.player.y)+1.5)*120);
   for(let i=0;i<limit&&g.status==='playing';i++){
+    if(g.player.flight){frame(g,rec,0,0,false);if(bad(g))return false;continue;}
     const dx=item.x-g.player.x,dy=item.y-g.player.y,L=Math.hypot(dx,dy);if(L<(item.exact?.004:.12))return true;
     // Near an exact spot, a shorter input moves Sally only part of a step, so she lands on it.
     const step=(item.exact?2.45:sprint?4:2.45)/120,scale=item.exact&&L<step?L/step:1;

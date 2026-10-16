@@ -31,3 +31,12 @@ test('a mole tunnels toward footsteps and bursts up beneath Sally, but a still o
   assert.equal(still.status,'playing','stopping when it ripples close leaves it sniffing short of her');assert.ok(['up','under','surface'].includes(m.state));
   const leafy=room(ROWS.map((r,y)=>y===2?r.replace(/\./g,'L'):r));const l=mole(leafy,[9,2]);Object.assign(leafy.player,{x:4.5,y:2.5});ticks(leafy,2,{x:1});assert.equal(l.state,'under','footsteps on leaves make no tremble');
 });
+test('the Mushroom Grotto follows the Great Boiler with five escapes that teach puffballs, caps and moles',()=>{
+  const {EscapeCatalog}=require('../public/escape-levels.js'),{EscapeWorld}=require('../public/escape-world.js');
+  const grotto=EscapeCatalog.levels.slice(78,83);assert.deepEqual(grotto.map(l=>l.id),['puffball-hollow','capstone-leap','mole-run','spore-garden','fairy-ring']);
+  assert.ok(EscapeCatalog.regions.includes(78));for(const l of grotto){assert.equal(l.loot.reduce((n,t)=>n+t[2],0),10);assert.ok(l.tailDrop);}
+  assert.ok(grotto[0].puffballs.length>=4);assert.equal(grotto[1].caps.length,2);assert.ok(grotto[2].guards.filter(g=>g.kind==='mole').length>=2);
+  assert.ok(['mantis','mole','wasp'].every(k=>grotto[3].guards.some(g=>g.kind===k)));assert.equal(grotto[4].requiredTreasure,6);assert.equal(grotto[4].caps.length,4);
+  const w=new EscapeWorld(),c=w.chapters.find(c=>c.theme==='grotto');assert.equal(c.name,'Mushroom Grotto');assert.equal(c.start,78);
+  assert.ok(w.paths.some(([a,b])=>w.chapters[a].theme==='vents'&&w.chapters[b]===c),'the Grotto opens off the Steam Vents');
+});

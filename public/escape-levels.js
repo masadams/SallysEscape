@@ -8749,6 +8749,8 @@
   // their unlock rules, and a bumped revision retires any old record for that route.
   const rebuilt=typeof module!=='undefined'&&module.exports?require('./escape-rebuilt.js'):root.EscapeRebuilt||[];
   for(const route of rebuilt){
+    // New areas add their escapes to the end of the trail.
+    if(route.append){if(levels.some(l=>l.id===route.id))throw new Error('Duplicate route '+route.id);const {append,...rest}=route;levels.push({burrows:0,pebbles:0,tongues:0,...rest,revision:1});continue;}
     const i=levels.findIndex(l=>l.id===route.id);if(i<0)throw new Error('Unknown rebuilt route '+route.id);
     const old=levels[i],keep={};for(const k of ['unlockAfter','unlockChallenges','expedition'])if(old[k]!==undefined)keep[k]=old[k];
     levels[i]={burrows:0,pebbles:0,tongues:0,...keep,...route,revision:(old.revision||1)+1};
@@ -8763,7 +8765,7 @@
   // Each challenge also waits for stars in its area: two per route on the
   // shortest way from the area's first escape to the challenge's escape.
   // Stars from any route in the area count, so an alternative route helps too.
-  const regions=[0,5,9,13,17,23,27,32,37,42,47,49,53,58,63,68,73,levels.length];
+  const regions=[0,5,9,13,17,23,27,32,37,42,47,49,53,58,63,68,73,...[78].filter(n=>n<levels.length),levels.length];
   const alternatives=new Set([[1,3],[6,8],[10,12],[14,16],[18,20],[24,26],[28,30],[33,35],[38,40],[43,45]].map(([entry,b])=>b-1));
   for(const challenge of challenges){
     const index=levels.findIndex(l=>l.id===challenge.levelId),r=regions.findLastIndex(start=>start<=index);

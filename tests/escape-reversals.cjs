@@ -11,7 +11,7 @@ function openBlue(g){Object.assign(g.player,g.gates.find(g=>g.id==='blue').switc
 
 test('the maze only reacts in later chapters, with increasing enemy pressure',()=>{
  assert.equal(later.length,44);assert.ok(EscapeCatalog.levels.slice(0,13).every(l=>!l.reactions));
- assert.deepEqual(EscapeCatalog.levels.slice(13,17).map(l=>l.guards.length),[3,3,4,4]);assert.equal(EscapeCatalog.levels.length,78);assert.equal(EscapeCatalog.challenges.length,21);
+ assert.deepEqual(EscapeCatalog.levels.slice(13,17).map(l=>l.guards.length),[3,3,4,4]);assert.ok(EscapeCatalog.levels.length>=78);assert.equal(EscapeCatalog.challenges.length,21);
  for(const level of later){const g=new EscapeAdventure({levelId:level.id});for(const p of [g.player,g.key,g.exit,...g.loot,...g.hunters,...g.hunters.flatMap(h=>h.patrol)])assert.ok(g.fits(p),level.id+' valid placement');
   for(const r of level.reactions){assert.ok(r.message&&r.objective);for(const id of [...r.close||[],...r.open||[]])assert.ok(g.gates.find(g=>g.id===id));}
  }
