@@ -367,3 +367,8 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .mobile-game #game-toolbar.toolbar-open { flex-direction:column; align-items:stretch; padding:6px; border-radius:14px; background:rgba(12,30,30,.96); box-shadow:0 8px 24px #0008; z-index:30; }
 .mobile-game #game-toolbar.toolbar-open > button:not(#menu-button):not(#pause-button):not([style*="display: none"]):not([style*="display:none"]) { display:block !important; text-align:left; }
 .mobile-game #game-toolbar.toolbar-open #menu-button { order:-1; }
+
+/* World panel: stars stay visible; the rest of the tally opens under Journal. */
+#world-totals .world-journal-item { display:none; }
+#world-totals.world-journal-open .world-journal-item { display:inline; }
+.world-journal-toggle { font:inherit; font-size:.8rem; padding:2px 10px; border-radius:999px; border:1px solid #668575; background:#1d3f3c; color:#e4edd6; cursor:pointer; }

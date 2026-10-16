@@ -41,7 +41,7 @@
       for(const n of this.bonusNodes){room(n.x-6,n.y-3,n.x+6,n.y+3);room(n.lock.x,n.y+4,n.lock.x,n.lock.y+1);for(const [dx,dy] of [[-5,-2],[5,-2],[-5,2],[5,2]])this.grid[n.y+dy][n.x+dx]='L';}
 
       this.refreshRegions();this.tracks=[];
-      const track=(a,b,side=false)=>{const from={x:a.x+.5,y:a.y+.5},to={x:b.x+.5,y:b.y+.5},path=this.route(to,from,true);if(path)this.tracks.push({points:[from,...path],side});};
+      const track=(a,b,side=false)=>{const from={x:a.x+.5,y:a.y+.5},to={x:b.x+.5,y:b.y+.5},path=this.route(to,from,true);if(path)this.tracks.push({points:[from,...path],side,from:a.id,to:b.id});};
       for(const c of chapters){const nodes=this.nodes.filter(n=>n.chapter===chapters.indexOf(c));for(let i=1;i<nodes.length;i++)track(nodes[i-1],nodes[i]);if(nodes.length>3&&!c.linear)track(nodes[1],nodes[3],true);}
       for(const [a,b]of this.paths)track(this.nodes[chapters[a].end-1],this.nodes[chapters[b].start],b===13||b===14||b===16);
       this.motion=new Motion(this);
