@@ -29,6 +29,7 @@ straight on is rarely enough: change direction, break line of sight, or hide.
 | Dragonfly | Timing | Darts round a fixed loop (always dotted on the ground) over water, gaps and walls, far faster than Sally, hovering for a blink at each corner. Leaves do not hide Sally and pebbles do not distract it. Swimming under the surface is safe. | Read the loop; cross just behind it. |
 | Mole | Tremor hunter | Blind; hunts by footsteps. Walking within 4.5 tiles (6 on gravel, 8 at a sprint) sends it tunnelling toward the sound, shown as a ripple of soil; when it is under Sally a shaking mound gives a 0.3-second tell and it bursts up. Footsteps on leaves, swimming, standing still and bounce-cap flights make no tremble; if the trail goes cold for half a second it surfaces where it is, sniffs and digs back down. A pebble's thud draws it. | Stop as soon as the ripple heads your way, keep to leaves, or sprint clear (though a sprint carries further). |
 | Echo bat | Sonar | Flies a loop sending out a sonar ring every couple of seconds. If a ring sweeps over Sally while she is moving (a wind gust counts), it swoops on where she is heading. A still Sally is invisible to it; leaves make no difference. | Freeze when a ring spreads toward you, or change direction the moment it swoops. |
+| Eel | Pool lurker | Hides in a water tile with only its eyes showing. Walking the water's edge within 1.6 tiles (2.2 when swimming) makes it ripple for 0.3 seconds, then lunge where Sally is heading; it sulks for a moment after. When the tide leaves its tile as sand it lies buried and harmless. | Keep a tile back from its pool, swim wide of it, or pass at low tide. |
 | Hermit crab | Lane guard | Sits in its shell like any other on the beach. When Sally comes close in plain sight it peeks out, then scuttles sideways along its lane to cut her off and pinch. It never leaves its lane. A pebble landing by it sends it back into its shell for a few seconds. | Cross its lane at a sprint, while it is tucked in, or hidden; or toss a pebble first. |
 | Snow fox | Ear hunter | Hunts by ear, not by eye. Footsteps close by, a sprint or noisy ground further off, or a pebble, and it crouches for a blink and pounces on the sound, far and fast, with no warning mark. It sniffs about where it lands, then goes back to its rounds. | Stand still, keep to quiet ground and walk rather than run near it, or toss a pebble to send its pounce elsewhere. |
 | Ants | Moving wall | A column marches a fixed loop and catches anything it walks over. | Cross in the gaps between groups. |
@@ -51,6 +52,7 @@ Levels opt into each trap through their level data.
 | Bounce cap | `caps: [{at, to}]` | Stepping onto the cap flings Sally in a half-second arc to its landing tile, over gaps, water or walls. She cannot be caught in the air, and the flight makes no footsteps. The arc is marked. |
 | Wind lane | `wind: [{area: [x1, y1, x2, y2], dir, period, on, offset}]` | Streaks always show the lane and its direction; they thicken and race just before a gust. While it gusts, Sally inside is shoved along the lane, out of cover, and counts as moving. |
 | Lightning | `storm: {every, warn, first}` | Thunder rumbles and the sky darkens, then a flash: for a moment every hunter with a clear line sees Sally, even in leaves. Walls (and spore clouds) still hide her. |
+| Tide flat | `t` in a text map, `tide: {period, high, offset}` | Water for the first `high` seconds of each cycle (Sally swims, land hunters keep off), sand for the rest. Waves lap at the flats just before the tide turns. |
 
 ## Text maps
 
@@ -58,7 +60,7 @@ Rebuilt routes are drawn as text, one character per tile:
 
 ```
 # wall   . floor   L leaf cover   N noisy gravel   B cracked wall   M mud   ~ water
-_ gap    c crumbling floor   T tangle vine   S crack   o spore puffball   @ start   K key   X exit   1-5 treasure of that value
+_ gap    c crumbling floor   T tangle vine   S crack   o spore puffball   t tide flat   @ start   K key   X exit   1-5 treasure of that value
 ```
 
 Guards, gates and traps keep their own lists, with coordinates matching the map.
