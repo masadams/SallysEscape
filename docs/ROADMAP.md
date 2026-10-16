@@ -146,7 +146,14 @@ Ant Kingdom keeps its marching columns and gecko thieves:
 - Thieves' Gallery: a vault bridge that rises once, and a low bridge back that the key raises.
 - The Queen's Chamber: a column loops the outer hall, the queen's guard (a king cobra) coils in the great hall, and a crack is the way out of the sealed throne room.
 
-Next: Frost Hollow onward (snow fox).
+Frost Hollow keeps its cold rooms and warm stones and brings in the snow fox, which hunts by ear:
+- Frostbite Steps: a freezing hall with warm stones and a fox circling a patch of crunchy snow.
+- Icicle Gallery: a frost owl sweeps the gallery; the crunchy middle walk carries every step.
+- Frozen Plates: three ice doors, each with a plate on both sides, in a freezing yard.
+- Snowdrift Vault: the vault door freezes shut behind the key; a crack leads out into the coldest passage, where a fox listens.
+- Winter Heart: a king cobra slowed by the cold, two foxes, an owl, and a crack out of the sealed heart.
+
+Next: Steam Vents onward.
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).
