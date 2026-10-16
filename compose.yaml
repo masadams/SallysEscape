@@ -6,8 +6,15 @@ services:
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     tmpfs: [/tmp]
+    environment:
+      # The level builder's password. Leave it empty to switch publishing off.
+      BUILDER_PASSWORD: ${BUILDER_PASSWORD:-}
+    volumes:
+      - sally-data:/data
     networks: [proxy]
     expose: ["8080"]
+volumes:
+  sally-data:
 networks:
   proxy:
     external: true

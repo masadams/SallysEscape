@@ -25,8 +25,8 @@
       this.player={...centre(...this.level.spawn),facing:{x:0,y:-1},tongueAim:null,stamina:100,exhausted:false,moving:false,sprinting:false,hidden:false,noisy:false};
       this.hunters=this.level.guards.map(guard=>this.makeHunter(guard));
       this.pendingSpawns=[];this.spawnedReinforcements=new Set();this.webs=[];this.glowTrail=[];this.trailAt=0;
-      this.hunter=this.hunters[0];this.patrol=this.hunter.patrol;
-      this.gates=(this.level.gates||[]).map(g=>({...g,open:Boolean(g.initialOpen),sealed:false,closingAt:null,expiresAt:null,pressed:false,warned:false,activations:0,switch:g.switch?centre(...g.switch):null,plates:(g.plates||[]).map(p=>centre(...p)),tiles:g.tiles.map(p=>p.slice())}));
+      this.hunter=this.hunters[0]||null;this.patrol=this.hunter?.patrol||[];
+      this.gates=(this.level.gates||[]).map(g=>({...g,open:Boolean(g.initialOpen),sealed:false,closingAt:null,expiresAt:null,pressed:false,warned:false,activations:0,switch:g.switch?centre(...g.switch):null,plates:(g.plates||[]).map(p=>centre(...p)),levers:(g.levers||[]).map(p=>centre(...p)),heavyPlates:(g.heavyPlates||[]).map(p=>centre(...p)),tiles:g.tiles.map(p=>p.slice())}));
       this.reactionsFired=new Set();this.mazeObjective=null;
       this.wheelAngle=0;this.clashes=0;this.swimDistance=0;
       this.key=centre(...this.level.key);this.exit=centre(...this.level.exit);this.hasKey=false;
@@ -143,14 +143,18 @@
     activateSwitches(){
       for(const gate of this.gates){
         // A heavy plate ignores Sally; only a big hunter's weight (a beetle on its rounds) presses it.
-        const pressed=gate.heavy?this.hunters.some(h=>HEAVY.has(h.kind)&&gate.plates.some(p=>distance(h,p)<.45)):[...(gate.switch?[gate.switch]:[]),...gate.plates].some(p=>distance(this.player,p)<.4);
+        // A door can mix triggers: plates and levers for Sally, heavy plates for a beetle's weight.
+        const on=points=>points.some(p=>distance(this.player,p)<.4),heavyOn=points=>points.length>0&&this.hunters.some(h=>HEAVY.has(h.kind)&&points.some(p=>distance(h,p)<.45));
+        const pressed=(gate.heavy?heavyOn(gate.plates):on([...(gate.switch?[gate.switch]:[]),...gate.plates]))||on(gate.levers||[])||heavyOn(gate.heavyPlates||[]);
+        // A door that starts open and slams shut for good when any of its triggers fires.
+        if(gate.shut){if(pressed&&!gate.sealed){gate.sealed=true;gate.activations++;if(gate.open)gate.closingAt=this.elapsed+.9;this.notice(gate.name+(gate.bridge?' bridge':' gate')+' slams shut!','seal');}gate.pressed=pressed;continue;}
         if(gate.duration){
           if(pressed&&!gate.sealed){
             if(!gate.pressed){gate.activations++;this.notice(gate.heavy?'Something heavy presses the plate. '+gate.name+' opens for '+gate.duration+' seconds.':gate.name+' '+(gate.bridge?'bridge':'gate')+' lasts '+gate.duration+' seconds after you leave the plate.','plate');}
             this.setGateOpen(gate,true);gate.expiresAt=this.elapsed+gate.duration;gate.closingAt=null;gate.warned=false;
           }gate.pressed=pressed;continue;
         }
-        if(gate.switch&&!gate.open&&!gate.sealed&&pressed){
+        if((gate.switch||gate.stay||gate.levers?.length)&&!gate.open&&!gate.sealed&&pressed){gate.activations++;
         this.setGateOpen(gate,true);
         this.notice(gate.name+(this.level.reactions?' gates open.':' gates open. They stay open.'),'gate');
         }
