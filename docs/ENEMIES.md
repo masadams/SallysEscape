@@ -21,6 +21,11 @@ straight on is rarely enough: change direction, break line of sight, or hide.
 | Owl | Searchlight | Turns between look-outs with a long narrow beam, glares, then swoops; the swoop bends toward Sally. | Hide in leaves or behind cover before it lands. |
 | Hawk | Sky | A shadow follows Sally and dives on a timer. | Shelter under an awning, in leaves, or blend in with camouflage. |
 | Gecko | Thief | Steals the last treasure Sally picked up and runs for its burrow. | Catch it before it gets there. |
+| Angler | Bait | Hides under dark water and dangles a glowing lure that looks like a glow bug. Step close, or reach for it with the tongue, and it lunges at that spot, then sinks for a few seconds before the lure lights again. A pebble landing by the lure springs it too. | Learn the slow bob and the faint line. Walk around the lure, or spring it from afar and pass while it sinks. |
+| Flytrap | Rooted biter | Stands on its stem with its reach always marked. Anything that comes within reach, or a pebble landing there, makes it snap where Sally is heading; then it chews for a couple of seconds and is harmless. | Feed it a pebble and pass while it chews, or keep out of its ring. |
+| Bog heron | Rooted striker | Stands frozen in the reeds with the line in front of its beak marked on the ground. Anything that steps into that line, or a pebble landing there, is stabbed after a quarter-second tell; then it recovers for over a second. Some turn their heads between set directions every few seconds. It watches the surface, so it never sees Sally swimming. | Cross while it looks the other way or recovers from stabbing a pebble, or swim past. |
+| Hermit crab | Lane guard | Sits in its shell like any other on the beach. When Sally comes close in plain sight it peeks out, then scuttles sideways along its lane to cut her off and pinch. It never leaves its lane. A pebble landing by it sends it back into its shell for a few seconds. | Cross its lane at a sprint, while it is tucked in, or hidden; or toss a pebble first. |
+| Snow fox | Ear hunter | Hunts by ear, not by eye. Footsteps close by, a sprint or noisy ground further off, or a pebble, and it crouches for a blink and pounces on the sound, far and fast, with no warning mark. It sniffs about where it lands, then goes back to its rounds. | Stand still, keep to quiet ground and walk rather than run near it, or toss a pebble to send its pounce elsewhere. |
 | Ants | Moving wall | A column marches a fixed loop and catches anything it walks over. | Cross in the gaps between groups. |
 
 ## Traps
@@ -33,6 +38,9 @@ Levels opt into each trap through their level data.
 | Crumbling bridge | `crumble: true` on a bridge gate | Holds for one crossing, then falls away behind Sally. |
 | Crumbling floor | `c` in a text map, or `crumble: [[x, y]]` | Cracks under Sally and collapses into a gap once she leaves it. There is no way back. |
 | Rolling log | `logs: [{from, to, period, offset, speed}]` | Rumbles as a warning, then sweeps a straight lane. It flattens Sally and knocks hunters down. |
+| Tangle vine | `T` in a text map | Holds Sally still for about a second and a half. If a hunter sees her while she is held, she is caught (a spare tail tears her free instead). Then the vine withers for a few seconds and regrows. |
+| Crack | `S` in a text map | A narrow split in a wall. Sally slips through; no hunter can follow or see into it, so it ends a chase. |
+| Heavy plate | `heavy: true` on a timed gate | Ignores Sally. Only a big hunter's weight (a beetle on its rounds) presses it, opening the gate for its duration. Wait for the beetle, then sneak through. |
 | Thorns | `thorns: [{tiles, period, up, offset}]` | Tremble, then rise on a rhythm. They only catch Sally while raised. |
 
 ## Text maps
@@ -41,7 +49,7 @@ Rebuilt routes are drawn as text, one character per tile:
 
 ```
 # wall   . floor   L leaf cover   N noisy gravel   B cracked wall   M mud   ~ water
-_ gap    c crumbling floor   @ start   K key   X exit   1-5 treasure of that value
+_ gap    c crumbling floor   T tangle vine   S crack   @ start   K key   X exit   1-5 treasure of that value
 ```
 
 Guards, gates and traps keep their own lists, with coordinates matching the map.

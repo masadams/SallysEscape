@@ -1,4 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict');
+const {EscapeProgress}=require('../public/escape-progress.js');
 const {EscapeWorld}=require('../public/escape-world.js');const {EscapeCatalog}=require('../public/escape-levels.js');
 test('the overworld contains every escape exactly once across seventeen connected themed regions',()=>{const w=new EscapeWorld();assert.equal(w.nodes.length,78);assert.equal(w.chapters.length,17);assert.equal(new Set(w.nodes.map(n=>n.id)).size,78);for(const n of w.nodes){assert.equal(w.chapters.findIndex(c=>n.index>=c.start&&n.index<c.end),n.chapter);assert.ok(w.floor(n.x,n.y));assert.equal(n.name,EscapeCatalog.levels[n.index].name);}assert.ok(w.nodes[48].x>w.chapters[10].x+5,'lagoon flag lives on the coast');});
 test('visiting a locked flag never unlocks it, while the live progress callback immediately enables a cleared prerequisite',()=>{let unlocked=false;const w=new EscapeWorld(id=>id==='quiet-vault'||unlocked,'leafy-crossroads');assert.equal(w.nearby().id,'leafy-crossroads');assert.equal(w.enter(),null);unlocked=true;assert.equal(w.enter(),'leafy-crossroads');w.player.x+=3;assert.equal(w.enter(),null);});
@@ -24,10 +25,20 @@ test('golden flies appear on open ground near Sally, flee, expire, and are caugh
   w.elapsed=w.fly.expires;w.advance(.1);assert.equal(w.fly,null,'it leaves when unclaimed');assert.equal(caught,1);});
 test('the Gilded Burrow stays solid rock until five perfect areas, then opens north of the Garden Ruins with three escapes',()=>{
   const {EscapeWorld}=require('../public/escape-world.js'),{EscapeCatalog}=require('../public/escape-levels.js');let open=false;
-  const w=new EscapeWorld(()=>true,null,()=>open);assert.equal(EscapeCatalog.hidden.length,3);assert.ok(EscapeCatalog.hidden.every(l=>l.hidden&&!EscapeCatalog.levels.includes(l)));
+  const w=new EscapeWorld(()=>true,null,()=>open);assert.equal(EscapeCatalog.hidden.filter(l=>!l.bonus).length,3);assert.ok(EscapeCatalog.hidden.every(l=>l.hidden&&!EscapeCatalog.levels.includes(l)));
   assert.equal(w.grid[5][36],'#');assert.equal(w.floor(36.5,9.5),false);w.player.x=36.5;w.player.y=3.5;assert.equal(w.nearby()?.hidden,undefined);
   open=true;w.refreshRegions();assert.equal(w.hiddenCarved,true);assert.ok(w.terrainVersion>0);assert.equal(w.floor(36.5,9.5),true);
   assert.ok(w.route({x:36.5,y:3.5},{x:36.5,y:18.5}),'a path leads up from the Garden Ruins');assert.equal(w.nearby().id,EscapeCatalog.hidden[1].id);assert.equal(w.enter(),'hidden:'+EscapeCatalog.hidden[1].id);
+});
+test('the Bramble Maze grove is on the map behind a hedge that opens once the first five areas are mastered',()=>{
+  let open=false;const w=new EscapeWorld(()=>true,null,()=>false,()=>open);const node=w.bonusNodes[0];assert.equal(node.id,'bramble-maze');assert.equal(w.hiddenNodes.some(n=>n.id==='bramble-maze'),false);
+  assert.equal(w.floor(node.x+.5,node.y+.5),true,'the grove is always drawn');assert.equal(w.floor(node.lock.x+.5,node.lock.y+.5),false,'the hedge is shut');
+  assert.equal(w.route({x:node.x+.5,y:node.y+.5},{x:101.5,y:15.5}),null);w.player.x=node.lock.x+.5;w.player.y=node.lock.y+1.5;assert.equal(w.nearbyBonusLock()?.id,'bramble-maze');
+  open=true;assert.ok(w.route({x:node.x+.5,y:node.y+.5},{x:101.5,y:15.5}),'a path leads up from the Deep Trials');assert.equal(w.nearbyBonusLock(),null);
+  w.player.x=node.x+.5;w.player.y=node.y+1;assert.equal(w.enter(),'hidden:bramble-maze');open=false;assert.equal(w.enter(),null);
+  const p=new EscapeProgress(null);assert.equal(p.bonusOpen('bramble-maze',w.chapters),false);
+  for(const l of EscapeCatalog.levels.slice(0,w.chapters[4].end))p.data.levels[l.id]={cleared:true,stars:3,bestTime:30};assert.equal(p.bonusOpen('bramble-maze',w.chapters),true);assert.equal(p.hiddenLevelOpen('bramble-maze',w.chapters),true);
+  p.data.levels[EscapeCatalog.levels[3].id].stars=2;assert.equal(p.bonusOpen('bramble-maze',w.chapters),false,'every star, not just a clear');assert.equal(p.hiddenLevelOpen('gilded-gate',w.chapters),false);
 });
 test('every hidden escape has a recorded winning run',()=>{
   const {EscapeCatalog}=require('../public/escape-levels.js'),recs=require('./fixtures/escape-playthroughs.json');

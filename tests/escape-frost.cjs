@@ -1,7 +1,8 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {EscapeAdventure}=require('../public/escape-engine.js');const {EscapeCatalog}=require('../public/escape-levels.js');const {EscapeProgress}=require('../public/escape-progress.js');
+const legacy=require('./fixtures/legacy-levels.json');
 function ticks(g,seconds,input={}){for(let n=0;n<Math.round(seconds*120);n++)g.advance(1/120,input);}
-function steps(){const g=new EscapeAdventure({levelId:'frostbite-steps'});g.tailDrop=false;for(const h of g.hunters){h.patrol=[{x:h.x,y:h.y}];h.x=25.5;h.y=13.5;h.patrol=[{x:25.5,y:13.5}];}return g;}
+function steps(){const g=new EscapeAdventure({level:legacy['frostbite-steps']});g.tailDrop=false;for(const h of g.hunters){h.patrol=[{x:h.x,y:h.y}];h.x=25.5;h.y=13.5;h.patrol=[{x:25.5,y:13.5}];}return g;}
 test('Frost Hollow follows the Lantern Marsh: five routes where only marked rooms are cold',()=>{
   const frost=EscapeCatalog.levels.slice(68,73);assert.deepEqual(frost.map(l=>l.id),['frostbite-steps','icicle-gallery','frozen-plates','snowdrift-vault','winter-heart']);
   assert.equal(frost[0].unlockAfter,'moonwell-keep');for(const l of frost){assert.ok(l.cold.length&&l.warm.length>=4&&l.tailDrop);const g=new EscapeAdventure({levelId:l.id});assert.ok(!g.cold.has(g.tileKey(g.player)),'Sally starts warm');let floor=0,cold=0;for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.floor(x,y)){floor++;if(g.cold.has(x+','+y))cold++;}assert.ok(cold/floor<.75,l.id+' keeps warm ground too');}
@@ -20,7 +21,7 @@ test('a chilled Sally is slow and cannot sprint, frozen is slower still, and she
   Object.assign(g.player,{x:11.5,y:2.5});ticks(g,1.5);assert.equal(g.player.chilled,false);
 });
 test('cold-blooded hunters crawl on the ice while owls keep their pace, and Keep Warm fails on a chill',()=>{
-  const g=new EscapeAdventure({levelId:'frostbite-steps'}),h=g.hunters[0];g.hunters=[h];Object.assign(h,{x:12.5,y:5.5,path:[],targetId:null});const a=h.x;g.moveHunter({x:20.5,y:5.5},1,h);assert.ok(Math.abs(h.x-a-.6)<1e-6);
+  const g=new EscapeAdventure({level:legacy['frostbite-steps']}),h=g.hunters[0];g.hunters=[h];Object.assign(h,{x:12.5,y:5.5,path:[],targetId:null});const a=h.x;g.moveHunter({x:20.5,y:5.5},1,h);assert.ok(Math.abs(h.x-a-.6)<1e-6);
   const owl={kind:'owl',x:12.5,y:5.5,path:[],targetId:null};g.moveHunter({x:20.5,y:5.5},1,owl);assert.ok(Math.abs(owl.x-13.5)<1e-6);
   const c=new EscapeAdventure({challengeId:'keep-warm'});c.player.chilled=true;c.player.warmth=10;c.cold.clear();c.player.x=c.player.x;c.advance(1/120,{});assert.equal(c.status,'failed');
 });

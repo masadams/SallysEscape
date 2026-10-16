@@ -98,7 +98,75 @@ Hollow Jungle pits Sally against millipedes and crickets in five places:
 - a dark quarry ringed by ledges;
 - canopy islands joined by root bridges.
 
-Next: Luminous Depths onward.
+Luminous Depths stays dark, lit by glow plants, and brings in the angler, whose lure looks just like a glow bug:
+- Glowcap Grotto: a grotto split by a chasm, with a timed bridge.
+- Tideglass Causeway or Pulse Garden: three islands whose swim lanes weave between lures, or hedged beds round a vault whose door will not stay open.
+- Spore Engine: a pump hall with a timed block and a flooded shaft.
+- Nightbloom Reach: a crescent of islands that closes the area. Its new layout is drawn but still needs a recorded winning run, so the old layout stays live for now (on the fix list).
+
+Living Labyrinth keeps its living garden (seeds, root doors, vine crossings) and adds the flytrap, the tangle vine, Sally-only cracks and a heavy plate only a beetle can press:
+- Sleeping Orchard: tree rows along a stream, root doors that swap when the key is taken, and a seed-grown crossing.
+- False Garden or Rootwheel Ruins: hedged beds whose chest shifts the doors, with flytraps fed by pebbles; or a living wheel that turns which root arms are open.
+- Hungry Greenhouse: a seed vault that opens only while the beetle presses its slab, and cracks that shake off a chase.
+- The Heartwood: a king cobra watching the richest chest, a heart door that shuts behind the key, and a crack as the only way out.
+
+Sun and Sea brings in the hermit crab:
+- The Sunken Caravan: a canyon yard where the snake and the scorpion fight if they meet. Taking the key collapses the arch, so Sally runs home along the rim and slips through a crack only she fits.
+- Tideglass Lagoon: three islands where fish rule the channels, a sea snake takes both water and land, and hermit crabs guard the beaches.
+
+The Shedding Hollow lets Sally spare a tail and regrow it by eating a glowing bug:
+- Shedskin Gully: a beetle's charging lane between two shelves, with cracks to shake off a chase.
+- Thornback Warren: the key vault seals behind Sally; the way out is a slab door that opens only while the beetle presses its heavy plate.
+- Moltwater Steps: a sea snake owns the channel and its causeways, and tangle vines grip the steps.
+- The Old Shedding Tree: a king cobra lies coiled across the heart over the richest chest; taking the key shuts the heart, and cracks are the ways out.
+
+### Bonus escapes
+Bonus escapes sit on the map behind a hedge that opens once the areas before them are mastered (every star, not just a clear). They keep their own records.
+- The Bramble Maze (north of the Deep Trials, opens with the first five areas mastered): a true, dark maze with loops, a hunting snake, tangle vines and flytraps at the dead ends.
+- A mega escape (about five minutes, no checkpoints) will open with the first ten areas mastered.
+
+The Lantern Marsh brings owls, whose beams sweep the yards from their look-outs:
+- Firefly Ford: a dark black river with a plank ford, moths that follow glowing footprints, and an owl on the far bank.
+- Bramble Switchyard: three bramble doors held open by plates on both sides, under an owl's sweep.
+- Snapdragon Terrace: flytraps guard the stairs and mimics hide among the treasure; the key turns which stair is open.
+- Rival Rooftops: two rival pairs share the roof roads, and an owl watches it all.
+- Moonwell Keep: a king cobra lies across the moonwell, the inner door opens only under the beetle's weight, and cracks let Sally slip the chase home.
+
+Sunbaked Rooftops keeps the hawk, awnings and camouflage, and adds crumbling roof tiles and rolling barrels:
+- Sunbaked Ledge: striped awnings and a crumbling shortcut under the hawk.
+- Laundry Lines: sheets throw stripes of shade while barrels roll down the gaps between the lines.
+- Chimney Run: three chimney doors held open by hot plates on either side, with scorpions by the stacks.
+- Pigeon Court: the key slams the roof door; cracks in the court wall are the way out.
+- Weathervane Spire: a stepped spire of barrels and crumbling tiles, a king cobra over the richest chest, and a hawk that dives often.
+
+Ant Kingdom keeps its marching columns and gecko thieves:
+- Anthill Gate: a ring of ants circles the key mound; cross in the gaps.
+- Sugar Store: shelves of treasure and two geckos that steal the last thing Sally picked up.
+- Marching Tunnels: two columns loop the same hall in opposite directions.
+- Thieves' Gallery: a vault bridge that rises once, and a low bridge back that the key raises.
+- The Queen's Chamber: a column loops the outer hall, the queen's guard (a king cobra) coils in the great hall, and a crack is the way out of the sealed throne room.
+
+Frost Hollow keeps its cold rooms and warm stones and brings in the snow fox, which hunts by ear:
+- Frostbite Steps: a freezing hall with warm stones and a fox circling a patch of crunchy snow.
+- Icicle Gallery: a frost owl sweeps the gallery; the crunchy middle walk carries every step.
+- Frozen Plates: three ice doors, each with a plate on both sides, in a freezing yard.
+- Snowdrift Vault: the vault door freezes shut behind the key; a crack leads out into the coldest passage, where a fox listens.
+- Winter Heart: a king cobra slowed by the cold, two foxes, an owl, and a crack out of the sealed heart.
+
+Steam Vents is the steepest climb, with king cobras in its hardest boilers:
+- Kettle Works: brass vents hiss across the boiler hall; learn their rhythm and lead hunters into the jets (the Steam Trap challenge needs three dazed).
+- Pressure Pipes: steam below and a hawk above; awnings and camouflage cover the pipe runs.
+- Boiler Owls: two owls sweep the boiler floor, and a king cobra coils over the richest chest.
+- Ant Furnace: an ant column that steam does not stop, and a furnace door that opens only while the beetle presses its slab.
+- The Great Boiler: two king cobras in the boiler hall, an owl, a fox and the ants outside; the key seals the boiler room and a crack is the way out.
+
+Every region now has text maps. The Lantern Marsh's Firefly Ford gained a bog heron, a rooted striker that stabs along its beak line and never sees a swimmer. Still on the fix list: the new Nightbloom Reach layout (the old one stays live until it has a winning run).
+
+### Fix list
+Things flagged to come back to:
+- **Nightbloom Reach** (escape 42): the new text-map layout is drawn but has no winning run yet, so the old layout stays live.
+- **The Long Way Home** (mega bonus, opens with the first ten areas mastered): built on a work branch; its winning run is still being searched for. Bonus escapes only need a finish, so the run may use the tail drop or a chase.
+- **Level builder**: being built out (password, doors and links, hazards, a shared community area).
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).

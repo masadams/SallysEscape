@@ -111,3 +111,101 @@ test('brushing the back half of a resting snake wakes it, while passing well cle
   const tail=g.motion.snakes[0].joints.at(-2);Object.assign(g.player,{x:tail.x,y:tail.y+1.5,facing:{x:0,y:1}});g.advance(.1,{});assert.notEqual(h.reason,'touched');
   Object.assign(g.player,{x:tail.x,y:tail.y});g.advance(1/120,{});assert.equal(h.reason,'touched');assert.equal(h.awareness,1);assert.ok(h.lastKnown);assert.match(g.message,/tail/);
 });
+
+// The angler sits under water at (7,6) with its lure glowing over the floor at (7,4).
+function anglerArena(player){const r=arena('angler',[7,6],player,{lure:[7,4]});r.g.grid[6][7]='~';r.g.hasTail=false;return r;}
+test('walking up to an angler lure springs the angler, which snaps where the lure hung',()=>{
+  const {g,h}=anglerArena([3,4]);assert.equal(h.state,'lurking');
+  for(let i=0;i<120*3&&g.status==='playing';i++)g.advance(1/120,{x:1});
+  assert.equal(g.status,'caught');assert.match(g.result.message,/angler/);
+});
+test('a tongue grab at a lure makes the angler lunge, a quick sidestep survives, and the lure relights later',()=>{
+  const {g,h}=anglerArena([4,4]);g.tongues=1;g.player.facing={x:1,y:0};g.player.tongueAim={x:1,y:0};
+  assert.equal(g.tongueTarget().kind,'lure');assert.ok(g.useTongue());
+  for(let i=0;i<120*.2;i++)g.advance(1/120,{});assert.equal(h.state,'snap');assert.equal(g.alarms,1);
+  for(let i=0;i<120*.6;i++)g.advance(1/120,{y:-1,sprint:true});
+  assert.equal(g.status,'playing');assert.equal(h.state,'sink');
+  ticks(g,3.6);assert.equal(h.state,'lurking');
+});
+test('standing still where the tongue grab started is caught by the lunge',()=>{
+  const {g,h}=anglerArena([4,4]);g.tongues=1;g.player.facing={x:1,y:0};g.player.tongueAim={x:1,y:0};g.useTongue();
+  ticks(g,1);assert.equal(g.status,'caught');assert.equal(h.state,'sink');
+});
+test('a pebble that lands by the lure springs the angler harmlessly',()=>{
+  const {g,h}=anglerArena([3,4]);g.decoy={x:7.3,y:4.6,expires:5};ticks(g,.5);assert.equal(h.state,'sink');assert.equal(g.status,'playing');
+});
+
+test('a flytrap snaps where Sally is heading when she comes within reach, then chews and lets her pass',()=>{
+  const {g,h}=arena('flytrap',[7,4],[3,4]);assert.equal(h.state,'open');
+  for(let i=0;i<120*3&&g.status==='playing';i++)g.advance(1/120,{x:1});assert.equal(g.status,'caught');assert.match(g.result.message,/flytrap/);
+  const b=arena('flytrap',[7,4],[3,4]);b.g.decoy={x:7.5,y:5.5,expires:5};ticks(b.g,.5);assert.equal(b.h.state,'chew');
+  for(let i=0;i<120*1.5&&b.g.status==='playing';i++)b.g.advance(1/120,{x:1,sprint:true});assert.equal(b.g.status,'playing');assert.ok(b.g.player.x>8);
+});
+test('a bog heron stabs whatever steps into the line in front of its beak, but not Sally swimming below',()=>{
+  const walk=(g,s)=>{for(let i=0;i<120*s&&g.status==='playing';i++)g.advance(1/120,{x:1});};
+  const {g,h}=arena('heron',[7,4],[3,5],{facing:Math.PI/2});assert.equal(h.state,'still');walk(g,3);assert.equal(g.status,'caught');assert.match(g.result.message,/heron/);
+  const swim=arena('heron',[7,4],[3,5],{facing:Math.PI/2});for(let x=1;x<15;x++)swim.g.grid[5][x]='U';walk(swim.g,5);assert.equal(swim.g.status,'playing');assert.ok(swim.g.player.x>9,'Sally swam past under its beak');
+  const lure=arena('heron',[7,4],[3,5],{facing:Math.PI/2});lure.g.decoy={x:7.5,y:6.5,expires:5};ticks(lure.g,.4);assert.equal(lure.h.state,'stab');
+  for(let i=0;i<120*1.2&&lure.g.status==='playing';i++)lure.g.advance(1/120,{x:1,sprint:true});assert.equal(lure.g.status,'playing');assert.ok(lure.g.player.x>8,'crossed while it recovered from stabbing the pebble');
+});
+test('a bog heron with set looks turns its head between them',()=>{
+  const {g,h}=arena('heron',[7,4],[3,9],{looks:[Math.PI/2,0],every:1});assert.equal(h.facing,Math.PI/2);ticks(g,1.1);assert.equal(h.facing,0);ticks(g,1);assert.equal(h.facing,Math.PI/2);
+});
+function vineArena(){const r=arena('snake',[12,8],[3,4]);r.g.vines=[{x:5,y:4,key:'5,4',readyAt:0,holding:false}];r.h.facing=Math.PI;r.h.pauseUntil=100;return r;}
+test('a tangle vine holds Sally for a moment and lets her go when nothing sees her',()=>{
+  const {g,h}=vineArena();Object.assign(h,{x:12.5,y:9.5,facing:0});
+  ticks(g,.9,{x:1});assert.ok(g.heldBy);const x=g.player.x;ticks(g,1,{x:1});assert.equal(g.player.x,x,'held still');
+  ticks(g,.8,{x:1});assert.equal(g.heldBy,null);assert.ok(g.player.x>x+.5);assert.equal(g.status,'playing');
+  // It withers for a while, so stepping back across it is safe at once.
+  ticks(g,.6,{x:-1});assert.equal(g.heldBy,null);
+});
+test('a hunter that sees Sally in a vine catches her; a spare tail tears her free instead',()=>{
+  // A snake resting on its post three tiles past the vine, looking straight at it.
+  const watched=()=>{const r=arena('snake',[8,4],[3,4]);r.h.facing=Math.PI;r.g.player.hidden=true;r.g.vines=[{x:5,y:4,key:'5,4',readyAt:0,holding:false}];return r;};
+  const {g}=watched();g.hasTail=false;Object.assign(g.player,{x:5.5,y:4.5});ticks(g,.05);assert.equal(g.status,'caught');assert.match(g.result.message,/vine/);
+  const b=watched();b.g.tailDrop=true;b.g.hasTail=true;Object.assign(b.g.player,{x:5.5,y:4.5});ticks(b.g,.05);assert.equal(b.g.heldBy,null);assert.equal(b.g.tailsDropped,1);
+});
+
+test('a crack lets Sally slip through a wall, but a chasing snake can neither follow nor see into it',()=>{
+  const {g,h}=arena('snake',[3,4],[6,4]);for(let y=1;y<g.height-1;y++)g.grid[y][8]='#';g.grid[4][8]='Y';
+  assert.ok(g.fits({x:8.5,y:4.5}),'Sally fits');assert.ok(!g.fits({x:8.5,y:4.5},.22,h),'the snake does not');
+  assert.deepEqual(g.route(h,{x:10.5,y:4.5},h),[]);Object.assign(g.player,{x:8.5,y:4.5});assert.ok(!g.clear(h,g.player,true),'no sight into the crack');
+  Object.assign(g.player,{x:6.5,y:4.5});Object.assign(h,{state:'chase',awareness:1,lastKnown:copyOf(g.player),lastObserved:0,pauseUntil:0});
+  ticks(g,1.6,{x:1});assert.equal(g.status,'playing');assert.ok(g.player.x>9,'Sally is through');assert.ok(h.x<8,'the snake stays behind the wall');
+});
+function copyOf(p){return {x:p.x,y:p.y};}
+test('a heavy plate ignores Sally and opens only under a beetle, for its duration',()=>{
+  const {g,h}=arena('beetle',[3,8],[6,4]);g.gates=[{id:'slab',name:'Slab door',heavy:true,plates:[{x:3.5,y:8.5}],tiles:[[10,4]],duration:4,open:false,sealed:false,activations:0,expiresAt:null,closingAt:null,color:[1,2,3]}];g.grid[4][10]='G';
+  Object.assign(g.player,{x:3.5,y:8.5});Object.assign(h,{x:12.5,y:10.5});g.activateSwitches();assert.equal(g.gates[0].open,false,'Sally is too light');
+  Object.assign(g.player,{x:6.5,y:4.5});Object.assign(h,{x:3.5,y:8.5});g.activateSwitches();assert.equal(g.gates[0].open,true,'the beetle presses it');
+  Object.assign(h,{x:12.5,y:10.5});g.updateHunter=()=>{};ticks(g,5);assert.equal(g.gates[0].open,false,'and it closes again');
+});
+
+test('a hermit crab peeks out when Sally comes close, then scuttles along its lane to pinch her',()=>{
+  const {g,h}=arena('crab',[8,6],[8,9],{axis:'x',range:3});assert.equal(h.state,'shell');
+  // Sally walks up past the crab's lane; it waits, peeks, then cuts across.
+  Object.assign(g.player,{x:10.5,y:8.5});const states=new Set();
+  for(let i=0;i<120*2.5&&g.status==='playing';i++){g.advance(1/120,{y:-1});states.add(h.state);}
+  assert.ok(states.has('peek')&&states.has('scuttle'));assert.equal(g.status,'caught');assert.match(g.result.message,/hermit crab/);
+  assert.ok(Math.abs(h.y-6.5)<1e-9,'it never leaves its lane');
+});
+test('a pebble sends a hermit crab back into its shell, and a hidden Sally never wakes it',()=>{
+  const {g,h}=arena('crab',[8,6],[3,9],{axis:'x',range:3});g.decoy={x:8.5,y:7.5,expires:4};ticks(g,.1);assert.equal(h.state,'hide');
+  Object.assign(g.player,{x:8.5,y:7.5});ticks(g,1);assert.equal(g.status,'playing','tucked in, it cannot pinch');
+  const b=arena('crab',[8,6],[3,9],{axis:'x',range:3});b.g.grid[7][9]='L';Object.assign(b.g.player,{x:9.5,y:7.5});ticks(b.g,1);assert.equal(b.h.state,'shell');
+  const c=arena('crab',[8,6],[3,9],{axis:'x',range:3});Object.assign(c.g.player,{x:9.5,y:7.5});ticks(c.g,.3);assert.equal(c.h.state,'peek');ticks(c.g,.25,{x:1,sprint:true});
+  for(let i=0;i<120*4&&c.g.status==='playing';i++)c.g.advance(1/120,{y:1,sprint:true});assert.equal(c.g.status,'playing');ticks(c.g,5);assert.equal(c.h.state,'shell');assert.ok(Math.abs(c.h.x-8.5)<.06,'and walks home');
+});
+
+test('a snow fox hears footsteps close by and pounces far and fast with only a blink of warning',()=>{
+  const {g,h}=arena('fox',[10,6],[6,6]);h.pauseUntil=0;
+  const states=[];for(let i=0;i<120*2&&g.status==='playing';i++){g.advance(1/120,{x:1});states.push(h.state);}
+  assert.equal(g.status,'caught');assert.match(g.result.message,/snow fox/);assert.ok(states.includes('pounce'));
+  const crouch=states.filter(s=>s==='crouch').length;assert.ok(crouch<=30,'the warning lasts a blink');
+});
+test('a snow fox ignores a still or hidden Sally, but sprinting gives her away from far off, and a pebble draws its pounce',()=>{
+  const still=arena('fox',[10,6],[7,6]);still.h.patrol=[still.h.patrol[0]];ticks(still.g,3);assert.equal(still.g.status,'playing');
+  const far=arena('fox',[12,6],[6,6]);far.h.patrol=[far.h.patrol[0]];ticks(far.g,.6,{y:1});assert.ok(!['crouch','pounce'].includes(far.h.state),'quiet walking far off is safe');
+  const loud=arena('fox',[12,6],[6,6]);loud.h.patrol=[loud.h.patrol[0]];ticks(loud.g,.4,{y:1,sprint:true});assert.ok(['crouch','pounce','sniff'].includes(loud.h.state),'a sprint is heard');
+  const lure=arena('fox',[10,6],[3,10]);lure.h.patrol=[lure.h.patrol[0]];lure.g.decoy={x:13.5,y:6.5,expires:4};ticks(lure.g,.8);assert.ok(lure.h.x>10.6,'it pounced on the pebble');assert.equal(lure.g.status,'playing');
+});

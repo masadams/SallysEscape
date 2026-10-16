@@ -1,7 +1,8 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {EscapeAdventure}=require('../public/escape-engine.js');const {EscapeCatalog}=require('../public/escape-levels.js');const {EscapeProgress}=require('../public/escape-progress.js');const {EscapeWorld}=require('../public/escape-world.js');
+const legacy=require('./fixtures/legacy-levels.json');
 function ticks(g,seconds,input={}){for(let n=0;n<Math.round(seconds*120);n++)g.advance(1/120,input);}
-function ledge(){const g=new EscapeAdventure({levelId:'sunbaked-ledge'});g.hunters=[];g.motion.snakes=[];g.hawk.nextAt=0;Object.assign(g.player,{x:4.5,y:2.5});return g;}
+function ledge(){const g=new EscapeAdventure({level:legacy['sunbaked-ledge']});g.hunters=[];g.motion.snakes=[];g.hawk.nextAt=0;Object.assign(g.player,{x:4.5,y:2.5});return g;}
 test('Sunbaked Rooftops is a five-route branch with a hawk, awnings and camouflage in every route',()=>{
   const roofs=EscapeCatalog.levels.slice(58,63);assert.deepEqual(roofs.map(l=>l.id),['sunbaked-ledge','laundry-lines','chimney-run','pigeon-court','weathervane-spire']);
   for(const l of roofs){assert.ok(l.hawk&&l.camos>=2&&l.shade.length>=8&&l.tailDrop);assert.ok(l.shade.some(([x,y])=>x===l.spawn[0]&&y===l.spawn[1]),'Sally starts in shade');}
@@ -17,7 +18,7 @@ test('awnings, leaves and camouflage all keep a still Sally safe, and the hawk c
   const spare=ledge();ticks(spare,3);assert.equal(spare.status,'playing');assert.equal(spare.tailsDropped,1);
 });
 test('camouflage hides from ground hunters only while still, breaks on movement, and runs out',()=>{
-  const g=new EscapeAdventure({levelId:'sunbaked-ledge'});g.hawk=null;const h=g.hunters[0];g.hunters=[h];Object.assign(g.player,{x:12.5,y:3.5});Object.assign(h,{x:12.5,y:1.5,facing:Math.PI/2});
+  const g=new EscapeAdventure({level:legacy['sunbaked-ledge']});g.hawk=null;const h=g.hunters[0];g.hunters=[h];Object.assign(g.player,{x:12.5,y:3.5});Object.assign(h,{x:12.5,y:1.5,facing:Math.PI/2});
   assert.equal(g.camouflage(),true);assert.equal(g.camouflage(),false,'one blend at a time');ticks(g,.05);assert.equal(g.seesPlayer(h),false);
   assert.equal(g.player.hidden,true);ticks(g,.1,{x:1});assert.equal(g.player.camo,false);assert.equal(g.camoUntil,0);g.advance(1/120,{});assert.equal(g.player.hidden,false,'moving breaks the blend');
   g.camos=0;assert.equal(g.camouflage(),false);assert.equal(new EscapeAdventure({levelId:'quiet-vault'}).camouflage(),false);

@@ -76,6 +76,8 @@ function walkingGraph(level){
   // A timer can expire anywhere off its plate/crossing. Include those
   // closures as reachable states, so recovery never depends on a consumable.
   g.gates.forEach((gate,k)=>{if(!gate.duration||!gate.open||gate.sealed)return;const occupied=gate.tiles.some(([x,y])=>x===n.x&&y===n.y)||gate.plates.some(p=>Math.floor(p.x)===n.x&&Math.floor(p.y)===n.y);if(!occupied){const j=add(apply({...n,open:n.open&~(1<<k)}).n);edges[j].push(i);}});
+  // A heavy plate opens whenever its beetle comes round, so Sally can always wait for it.
+  g.gates.forEach((gate,k)=>{if(!gate.heavy||gate.open||gate.sealed)return;const j=add(apply({...n,open:n.open|(1<<k)}).n);edges[j].push(i);});
   for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const x=n.x+dx,y=n.y+dy;if(!g.floor(x,y))continue;const next=apply({...n,x,y}).n,j=add(next);edges[j].push(i);}
   // Seed crossings and braced roots can reach extra components. Treat
   // their far banks as spent-seed entry states, then prove a walking return.

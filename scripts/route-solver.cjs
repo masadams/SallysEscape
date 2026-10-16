@@ -25,8 +25,11 @@ function clone(value,memo=new Map()){
 }
 // The same rules with nothing hunting Sally: used to lay out a route from hints.
 class Peaceful extends EscapeAdventure{
-  constructor(options){super(options);this.hunters=[];this.hawk=null;this.antTrails=[];this.logs=[];this.thorns=[];}
+  // With no beetle about, a heavy plate's door simply stands open; the search then waits for the real one.
+  constructor(options){super(options);this.hunters=[];this.hawk=null;this.antTrails=[];this.logs=[];this.thorns=[];for(const gate of this.gates)if(gate.heavy){gate.heavy=false;gate.duration=0;this.setGateOpen(gate,true);}}
   updateEmergences(){this.pendingSpawns=[];}
+  // No hunters to steam here, so a steam-trap hatch opens on the key alone; the real search must still steam them.
+  exitUnlocked(){const c=this.challenge;if(!c?.steamTraps)return super.exitUnlocked();this.challenge={...c,steamTraps:0};const open=super.exitUnlocked();this.challenge=c;return open;}
 }
 function push(rec,cmd){const last=rec.at(-1);if(cmd.kind==='move'&&last&&last.kind==='move'&&last.x===cmd.x&&last.y===cmd.y&&last.sprint===cmd.sprint)last.frames+=cmd.frames;else rec.push({...cmd});}
 function record(Engine,options,hints){
@@ -63,7 +66,9 @@ function extractPlan(Engine,recording){
   return plan;
 }
 // A recorded run never leans on the forgiving tail drop: losing the tail counts as caught.
-const bad=g=>g.status==='caught'||g.status==='failed'||g.tailsDropped>0||(g.challenge?.noChase&&g.alarms>0);
+// ALLOW_TAIL=1 lets a bonus escape's run drop its tail (any finish will do there).
+// STEALTH=1 treats any chase as failure, for long routes where a chase started early dooms the run far beyond the search window.
+const bad=g=>g.status==='caught'||g.status==='failed'||(g.tailsDropped>0&&!process.env.ALLOW_TAIL)||(g.challenge?.noChase&&g.alarms>0)||(process.env.STEALTH&&g.hunters.some(h=>h.state==='chase'));
 function frame(g,rec,x,y,sprint){g.advance(1/120,{x,y,sprint});push(rec,{kind:'move',frames:1,x,y,sprint});}
 function wait(g,rec,t){for(let i=0;i<Math.round(t*120)&&g.status==='playing';i++)frame(g,rec,0,0,false);return !bad(g);}
 function go(g,rec,item,sprint){
