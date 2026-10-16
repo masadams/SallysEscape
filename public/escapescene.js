@@ -611,8 +611,9 @@ function drawEscapeEel(h,cell,clock){
   if(h.state==='buried'){fill(170,150,110);ellipse(hx,hy+cell*.1,cell*.5,cell*.22);fill(60,80,50);ellipse(hx-cell*.06,hy+cell*.04,cell*.05,cell*.04);return;}
   if(h.state==='ripple'||h.state==='sulk'){noFill();stroke(200,240,250,h.state==='ripple'?190:80);strokeWeight(Math.max(1,cell*.03));const t=(clock*3)%1;ellipse(hx,hy,cell*(.4+t*.6),cell*(.3+t*.4));ellipse(hx,hy,cell*(.2+t*.3),cell*(.15+t*.2));noStroke();}
   if(h.state==='lunge'){stroke(70,120,70);strokeWeight(cell*.22);line(hx,hy,h.x*cell,h.y*cell);noStroke();fill(90,150,84);ellipse(h.x*cell,h.y*cell,cell*.38,cell*.3);fill(255,240,120);ellipse(h.x*cell-cell*.06,h.y*cell-cell*.06,cell*.07,cell*.07);ellipse(h.x*cell+cell*.06,h.y*cell-cell*.06,cell*.07,cell*.07);return;}
-  const bob=Math.sin(clock*2+h.post.x)*cell*.03;fill(60,100,62,200);ellipse(hx,hy+bob,cell*.34,cell*.16);fill(255,240,120);ellipse(hx-cell*.07,hy+bob-cell*.03,cell*.06,cell*.06);ellipse(hx+cell*.07,hy+bob-cell*.03,cell*.06,cell*.06);
-  fill(20);ellipse(hx-cell*.07,hy+bob-cell*.03,cell*.025,cell*.04);ellipse(hx+cell*.07,hy+bob-cell*.03,cell*.025,cell*.04);
+  noFill();stroke(200,240,250,70);strokeWeight(Math.max(1,cell*.025));ellipse(hx,hy,cell*.8,cell*.5);noStroke();push();translate(hx,hy);scale(1.5);translate(-hx,-hy);
+  const bob=Math.sin(clock*2+h.post.x)*cell*.03;fill(60,100,62,220);ellipse(hx,hy+bob,cell*.34,cell*.16);fill(255,240,120);ellipse(hx-cell*.07,hy+bob-cell*.03,cell*.06,cell*.06);ellipse(hx+cell*.07,hy+bob-cell*.03,cell*.06,cell*.06);
+  fill(20);ellipse(hx-cell*.07,hy+bob-cell*.03,cell*.025,cell*.04);ellipse(hx+cell*.07,hy+bob-cell*.03,cell*.025,cell*.04);pop();
 }
 // A flytrap on its stem: two toothed lobes that gape while it waits, slam shut on a snap,
 // and stay closed and bulging while it chews. Its reach is always marked.
