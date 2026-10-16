@@ -30,7 +30,7 @@ function ghostOf(recording){
 // to wait, wobbling as she steers, and stopping or stepping back when the next moment looks
 // dangerous; she sprints to catch up when she is well behind. With no noise she matches the ghost.
 function attempt(options,ghost,r,{lag=30,wobble=.12,waitError=.2,careful=true}={}){
-  const g=new EscapeAdventure(options);let t=0,frames=0,dodge=null,wasStill=true,acted=new Set();
+  const g=new EscapeAdventure(options);let t=0,frames=0,dodge=null,wasStill=true,acted=new Set(),wary=0,bold=0;
   const send=(x,y,sprint)=>{g.advance(1/120,{x,y,sprint});frames++;};
   while(t<ghost.length&&g.status==='playing'&&frames<ghost.length*3+2400){
     const f=ghost[Math.floor(t)];
@@ -41,8 +41,11 @@ function attempt(options,ghost,r,{lag=30,wobble=.12,waitError=.2,careful=true}={
     // Pauses are misjudged: each paused frame of the ghost counts for a little more or less.
     if(f.still){const dx=f.x-g.player.x,dy=f.y-g.player.y,L=Math.hypot(dx,dy),step=2.45/120;
       if(L>.02){const k=Math.min(1,L/step);send(dx/L*k,dy/L*k,false);}else send(0,0,false);t+=Math.max(.3,1+gauss(r)*waitError*.15);continue;}
-    if(careful&&frames%12===0){dodge=null;const ahead=ghost[Math.min(ghost.length-1,Math.floor(t)+24)],ax=ahead.x-g.player.x,ay=ahead.y-g.player.y,AL=Math.hypot(ax,ay)||1;
+    // Caution has limits: after a second and a half of holding back she takes her chance anyway.
+    if(dodge)wary++;else wary=0;if(wary>180){bold=120;wary=0;}if(bold>0)bold--;
+    if(careful&&!bold&&frames%12===0&&near(g)){dodge=null;const ahead=ghost[Math.min(ghost.length-1,Math.floor(t)+24)],ax=ahead.x-g.player.x,ay=ahead.y-g.player.y,AL=Math.hypot(ax,ay)||1;
       if(foresee(g,ax/AL,ay/AL,f.sprint))for(const [x,y,sp] of [[0,0,false],[-ax/AL,-ay/AL,true],[-ay/AL,ax/AL,true],[ay/AL,-ax/AL,true]])if(!foresee(g,x,y,sp)){dodge={x,y,sp};break;}}
+    else if(frames%12===0)dodge=null;
     if(dodge){send(dodge.x,dodge.y,dodge.sp);continue;}
     const dx=f.x-g.player.x,dy=f.y-g.player.y,L=Math.hypot(dx,dy);
     if(g.player.flight){send(0,0,false);t++;continue;}
@@ -55,10 +58,12 @@ function attempt(options,ghost,r,{lag=30,wobble=.12,waitError=.2,careful=true}={
   const caught=g.status==='caught'||g.tailsDropped>0;
   return {won:g.status==='won',clean:g.status==='won'&&!g.tailsDropped,caughtAt:caught?{x:Math.floor(g.player.x),y:Math.floor(g.player.y),by:(g.result?.message||'').slice(0,60)}:null,time:frames/120};
 }
-// Would carrying on like this for the next 0.6 seconds get Sally caught, or start a chase? Played
-// out on a copy, the way a player pictures the next moment.
-function foresee(g,x,y,sprint){const c=clone(g),chasing=h=>['chase','windup','charge','rear','strike','dive','pounce','lunge'].includes(h.state);const before=c.hunters.filter(chasing).length;
-  for(let i=0;i<72&&c.status==='playing';i++)c.advance(1/120,{x,y,sprint});return c.status==='caught'||c.tailsDropped>g.tailsDropped||c.hunters.filter(chasing).length>before;}
+// Only a hunter within a few tiles, or a hawk overhead, is worth a second look.
+const near=g=>Boolean(g.hawk)||g.hunters.some(h=>Math.hypot(h.x-g.player.x,h.y-g.player.y)<6);
+// Would carrying on like this for the next 0.6 seconds get Sally caught? Played out on a copy, the
+// way a player pictures the next moment.
+function foresee(g,x,y,sprint){const c=clone(g);
+  for(let i=0;i<36&&c.status==='playing';i++)c.advance(1/60,{x,y,sprint});return c.status==='caught'||c.tailsDropped>g.tailsDropped;}
 function playtest(recording,{runs=20,seed=1}={}){
   const plan=ghostOf(recording),r=rng(seed+JSON.stringify(recording.options).length*7919),results=[];
   for(let i=0;i<runs;i++)results.push(attempt(recording.options,plan,r));
