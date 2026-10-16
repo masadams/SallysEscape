@@ -29,8 +29,8 @@ built, playtested with recorded winning runs, and pushed on its own.
 ## Branch map
 
 ```
-Meadow → Garden → Reedbanks → Ruins → Deep Trials → Venom Depths → Waking Maze → Hollow Jungle → Luminous → Living Labyrinth → Shedding Hollow → Lantern Marsh
-                         ↘ Sun and Sea (after Forked Fort)      ↘ Ant Kingdom          ↘ Sunbaked Rooftops          ↘ Frost Hollow
+Meadow → Garden → Reedbanks → Ruins → Deep Trials → Venom Depths → Waking Maze → Hollow Jungle → Luminous → Living Labyrinth → Sun and Sea → Shedding Hollow → Lantern Marsh
+                                                             ↘ Ant Kingdom          ↘ Sunbaked Rooftops          ↘ Frost Hollow
                                                                   (8 challenges)        (4 challenges)  ↘ Steam Vents (12 challenges)
 ```
 

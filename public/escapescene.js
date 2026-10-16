@@ -44,9 +44,14 @@ function toggleEscapeTestUnlock(){
   escapeSound('click');return escapeProgress.unlockAll;
 }
 
+const ESCAPE_LAST_PLAYED_KEY='sally-escape-last-played';
 function showEscapeSelect(){
   escapeAbandonRun();
-  const current=escapeGame?.level.id,won=escapeGame?.status==='won',index=EscapeCatalog.levels.findIndex(l=>l.id===current),focus=won?EscapeCatalog.levels[index+1]?.id||current:current;
+  // Sally comes out on the map where she just was (the escape she played, or the last one she
+  // played before this visit), never jumped ahead to the next open escape across the map.
+  const played=escapeGame&&!escapeGame.level.custom?escapeGame.level.id:null;
+  if(played)try{localStorage.setItem(ESCAPE_LAST_PLAYED_KEY,played);}catch(_){}
+  let focus=played;if(!focus)try{focus=localStorage.getItem(ESCAPE_LAST_PLAYED_KEY)||undefined;}catch(_){}
   escapeProgress.read();
   resetGameState();gameMode='escape';gameState='escapeSelect';
   for(const id of ['start-menu-container','game-container'])document.getElementById(id).style.display='none';
