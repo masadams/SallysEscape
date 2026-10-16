@@ -23,3 +23,10 @@ test('levels resize without losing what fits, and save, list, share and import s
   assert.equal(B.importText('nonsense'),null);assert.equal(B.importText('SALLY1:'+Buffer.from(JSON.stringify({map:['#<script>#']})).toString('base64')),null,'only map characters are accepted');
   B.removeOne(s,m.id);assert.equal(B.loadAll(s).length,0);
 });
+test('newer creatures, vines and cracks can be placed and turned, and play in the game',()=>{
+  const m=B.blank(21,13);B.paint(m,6,6,'T');B.paint(m,8,6,'S');assert.equal(B.addEnemy(m,'heron',12,6),true);assert.equal(B.addEnemy(m,'fox',16,3),true);
+  assert.equal(B.addEnemy(m,'crab',8,6),false,'creatures cannot stand in a crack');assert.equal(B.addPatrol(m,1,8,6),false,'nor walk through one');
+  assert.equal(B.addPatrol(m,0,13,6),false,'a heron keeps its post');assert.equal(B.turnEnemy(m,12,6),true);assert.equal(m.guards[0].facing,Math.PI*1.5);B.turnEnemy(m,12,6);assert.equal(m.guards[0].facing,0);
+  assert.deepEqual(B.validate(m),[]);const back=B.importText(B.exportText(m));assert.deepEqual(back.map,m.map);assert.equal(back.guards[0].kind,'heron');
+  const g=new EscapeAdventure({level:escapeBuildCustom(B.toRoute(m))});assert.equal(g.hunters.find(h=>h.kind==='heron').state,'still');assert.equal(g.vines.length,1);assert.equal(g.status,'playing');
+});
