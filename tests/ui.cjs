@@ -103,3 +103,7 @@ test('brief cards fold the hint away except where an area teaches something; Ful
   h.run('introMode="off";startEscape({levelId:"chimney-run"});');assert.equal(h.run('escapeIntroOpen'),false);});
 test('leaving a route part-way uses up its first try, and a first-attempt escape shows the bonus',()=>{const h=harness();h.run('startEscape({levelId:"quiet-vault",skipIntro:true});escapeGame.elapsed=5;showEscapeSelect();');assert.equal(h.run('escapeProgress.data.attempts["quiet-vault"]'),1);
   h.run('startEscape({levelId:"leafy-crossroads",skipIntro:true});draw();escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.finish("won","escaped");draw();');assert.match(h.el('escape-result-title').textContent,/First try/);assert.match(h.el('escape-result-medals').textContent,/First try bonus/);});
+test('a shared level cannot put markup on the intro card: its name, brief and hint show as text',()=>{
+ const h=harness();h.run('introMode="full";const m=EscapeBuilder.blank();m.name="<h1>AUDIT</h1>";m.brief="<form action=x><button>Go</button></form>";startEscape({custom:EscapeBuilder.toRoute(m),from:"builder"});hideEscapeIntro();for(let i=0;i<30;i++)draw();');assert.equal(h.run('escapeGame.status'),'playing','a level with no enemies plays');
+ const card=h.el('escape-intro').innerHTML;assert.doesNotMatch(card,/<h1>|<form/);assert.match(card,/&lt;h1&gt;AUDIT&lt;\/h1&gt;/);assert.match(card,/&lt;form action=x&gt;/);
+});

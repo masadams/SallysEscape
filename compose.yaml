@@ -9,8 +9,17 @@ services:
     environment:
       # The level builder's password. Leave it empty to switch publishing off.
       BUILDER_PASSWORD: ${BUILDER_PASSWORD:-}
+      # One reverse proxy (nginx) sits in front of the game; only the address it adds is trusted.
+      TRUST_PROXY: ${TRUST_PROXY:-1}
     volumes:
       - sally-data:/data
+    # Resource and log limits keep a misbehaving request from starving the rest of the host.
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 100
+    logging:
+      driver: json-file
+      options: {max-size: "5m", max-file: "3"}
     networks: [proxy]
     expose: ["8080"]
 volumes:

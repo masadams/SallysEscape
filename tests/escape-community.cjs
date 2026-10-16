@@ -30,7 +30,7 @@ test('a stored level that was tampered with on disk is not served',async t=>{
   const shelf=await (await fetch(base+'/api/levels')).json();assert.equal(shelf.levels.length,1);
 });
 test('a correct password still works with stray spaces, a Windows line ending, accents, and behind a shared proxy',async t=>{
-  const {base}=await serve(t,{password:'  Lézard-pass\r\n'});
+  const {base}=await serve(t,{password:'  Lézard-pass\r\n',trustProxy:1});
   assert.deepEqual(await (await fetch(base+'/api/builder')).json(),{enabled:true});
   assert.equal((await post(base,'/api/builder/unlock',{password:'Lézard-pass '})).status,204);
   assert.equal((await post(base,'/api/levels',{level:level()},encodeURIComponent('Lézard-pass'))).status,201,'publishing sends the password safely encoded');
@@ -39,4 +39,33 @@ test('a correct password still works with stray spaces, a Windows line ending, a
   const friend=await fetch(base+'/api/builder/unlock',{method:'POST',headers:{'Content-Type':'application/json','X-Forwarded-For':'10.0.0.7'},body:JSON.stringify({password:'Lézard-pass'})});
   assert.equal(friend.status,204,'another visitor behind the same proxy is not locked out');
   const off=await serve(t,{password:''});assert.deepEqual(await (await fetch(off.base+'/api/builder')).json(),{enabled:false});
+});
+test('only the address added by the trusted proxy counts: a visitor cannot dodge the limit by writing their own forwarded header',async t=>{
+  const {base}=await serve(t,{password:'p',trustProxy:1});
+  const tryAs=(xff,password)=>fetch(base+'/api/builder/unlock',{method:'POST',headers:{'Content-Type':'application/json','X-Forwarded-For':xff},body:JSON.stringify({password})});
+  for(let i=0;i<8;i++)await tryAs('1.1.1.'+i+', 10.0.0.9','nope');
+  assert.equal((await tryAs('9.9.9.9, 10.0.0.9','nope')).status,429,'a made-up address on the left changes nothing');
+  const direct=await serve(t,{password:'p'});
+  const raw=(xff,password)=>fetch(direct.base+'/api/builder/unlock',{method:'POST',headers:{'Content-Type':'application/json','X-Forwarded-For':xff},body:JSON.stringify({password})});
+  for(let i=0;i<8;i++)await raw('5.5.5.'+i,'nope');assert.equal((await raw('6.6.6.6','nope')).status,429,'with no trusted proxy the header is ignored entirely');
+});
+test('many wrong tries from many visitors do not lock out the maker with the right password',async t=>{
+  const {base}=await serve(t,{password:'p',trustProxy:1});
+  for(let i=0;i<120;i++)await fetch(base+'/api/builder/unlock',{method:'POST',headers:{'Content-Type':'application/json','X-Forwarded-For':'10.1.'+(i>>8)+'.'+(i&255)},body:JSON.stringify({password:'nope'})});
+  assert.equal((await fetch(base+'/api/builder/unlock',{method:'POST',headers:{'Content-Type':'application/json','X-Forwarded-For':'10.9.9.9'},body:JSON.stringify({password:'p'})})).status,204);
+});
+test('a stalled upload is dropped, and the shelf is read from memory until the file changes',async t=>{
+  const {base,dataDir}=await serve(t,{password:'p',bodyDeadline:300});
+  const http=require('node:http'),u=new URL(base);
+  const status=await new Promise(resolve=>{const req=http.request({host:u.hostname,port:u.port,path:'/api/builder/unlock',method:'POST',headers:{'Content-Type':'application/json','Content-Length':'100'}},res=>resolve(res.statusCode));req.on('error',()=>resolve('closed'));req.write('{"password":');});
+  assert.ok(status===408||status==='closed',String(status));
+  await post(base,'/api/levels',{level:level()},'p');const first=await (await fetch(base+'/api/levels')).text();
+  assert.equal(await (await fetch(base+'/api/levels')).text(),first,'the same checked shelf');
+  assert.equal((await fetch(base+'/api/levels',{method:'HEAD'})).status,200);
+  const file=path.join(dataDir,'community-levels.json');fs.writeFileSync(file,'[]');const later=new Date(Date.now()+5000);fs.utimesSync(file,later,later);
+  assert.equal((await (await fetch(base+'/api/levels')).json()).levels.length,0,'a changed file is read again');
+});
+test('pages send a policy that blocks form posts, plugins and powerful device features',async t=>{
+  const {base}=await serve(t,{password:''});const r=await fetch(base+'/');const csp=r.headers.get('content-security-policy');
+  assert.match(csp,/form-action 'none'/);assert.match(csp,/object-src 'none'/);assert.match(csp,/script-src 'self'/);assert.equal(r.headers.get('cross-origin-opener-policy'),'same-origin');assert.match(r.headers.get('permissions-policy'),/camera=\(\)/);
 });
