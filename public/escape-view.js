@@ -1,8 +1,12 @@
 (function(root){
-  function cameraFor(game,width,height,overview=false){
-    const follow=Boolean((game.level.explore||height<250)&&(!overview||game.level.dark));
+  // close: a phone's close view, which follows Sally at a readable size instead of shrinking the
+  // whole map to fit a short landscape screen.
+  function cameraFor(game,width,height,overview=false,close=false){
+    let follow=Boolean((game.level.explore||height<250)&&(!overview||game.level.dark));
     const normal=height<250?Math.min(28,(height-16)/7):width<600?28:44,gazeSpan=2*(game.level.sightRadius||6)+1;
-    const cell=follow?(game.level.gaze?Math.min(normal,(width-24)/gazeSpan,(height-24)/gazeSpan):normal):Math.min((width-24)/game.width,(height-46)/game.height);
+    let cell=follow?(game.level.gaze?Math.min(normal,(width-24)/gazeSpan,(height-24)/gazeSpan):normal):Math.min((width-24)/game.width,(height-46)/game.height);
+    const near=Math.min(width/15,height/9.5);
+    if(close&&!follow&&near>cell*1.15){follow=true;cell=near;}
     const clamp=(n,min,max)=>max<min?(min+max)/2:Math.max(min,Math.min(max,n));
     const cx=follow?clamp(game.player.x,width/(2*cell),game.width-width/(2*cell)):game.width/2;
     const cy=follow?clamp(game.player.y,height/(2*cell),game.height-height/(2*cell)):game.height/2;
