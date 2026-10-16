@@ -104,7 +104,7 @@ function startEscape(options={}){
   // Now and then (about one escape in four, never in a challenge) glow bugs drift about as a bonus.
   if(options.glowbugs===undefined&&!options.challengeId&&!options.custom&&Math.random()<ESCAPE_GLOWBUG_CHANCE)options={...options,glowbugs:1+Math.floor(Math.random()*1e6)};
   startRun('escape');escapeGame=new EscapeAdventure(options.custom?{level:escapeBuildCustom(options.custom)}:options);document.getElementById('escape-builder').style.display='none';escapeResultShown=false;escapeHudAt=-Infinity;
-  escapeOptions=options.custom?{custom:options.custom}:escapeGame.level.hidden?{hiddenId:escapeGame.level.id}:{levelId:escapeGame.level.id,challengeId:escapeGame.challenge?.id||null};
+  escapeOptions=options.custom?{custom:options.custom,from:options.from||'builder'}:escapeGame.level.hidden?{hiddenId:escapeGame.level.id}:{levelId:escapeGame.level.id,challengeId:escapeGame.challenge?.id||null};
   gameState='escape';escapeLibraryOpen=false;document.getElementById('game-area').classList.remove('escape-world-open');mountEscapeChrome(true);
   document.getElementById('game-area').classList.toggle('escape-exploring',Boolean(escapeGame.level.explore));
   for(const id of ['start-menu-container','escape-result','escape-select','escape-intro'])document.getElementById(id).style.display='none';escapeIntroOpen=false;
@@ -258,8 +258,10 @@ function showEscapeResult(){
   if(perfect&&escapeProgress.whisper())document.getElementById('escape-result-challenge').textContent+=' ✦ Somewhere beyond the trail, something has noticed you.';
   nextButton.style.display=won&&!r.challengeId?'inline-block':'none';
   nextButton.textContent=next?(next.expedition?'Explore expedition →':'Try next escape →'):'Return to world map';
-  nextButton.onclick=next?()=>startEscape({levelId:next.id}):escapeGame.level.custom?()=>openEscapeBuilder():showEscapeSelect;
-  if(escapeGame.level.custom){nextButton.style.display='inline-block';nextButton.textContent='Back to the builder';}
+  const community=escapeGame.level.custom&&escapeOptions.from==='community';
+  if(community&&won)escapeCommunityRecord(escapeGame.level.id,r.time);
+  nextButton.onclick=next?()=>startEscape({levelId:next.id}):community?()=>openEscapeCommunity():escapeGame.level.custom?()=>openEscapeBuilder():showEscapeSelect;
+  if(escapeGame.level.custom){nextButton.style.display='inline-block';nextButton.textContent=community?'Back to community levels':'Back to the builder';}
   document.getElementById('escape-result').style.display='block';
   document.getElementById('escape-retry-btn').onclick=()=>startEscape({...escapeOptions,skipIntro:true});
   document.getElementById('escape-retry-btn').className=won&&!r.challengeId?'escape-secondary':'escape-primary';
@@ -341,6 +343,8 @@ function drawEscapeVault(){
     for(const plate of gate.plates){noStroke();fill(...gateColor,gate.pressed?230:100);ellipse(plate.x*cell,plate.y*cell,cell*.65,cell*.45);noFill();stroke(...gateColor);strokeWeight(cell*.035);ellipse(plate.x*cell,plate.y*cell,cell*.5,cell*.32);
       // A heavy plate is a stone slab with a beetle mark: only a big hunter's weight presses it.
       if(gate.heavy){noStroke();fill(70,62,50,220);rect((plate.x-.38)*cell,(plate.y-.28)*cell,cell*.76,cell*.56,cell*.08);fill(...gateColor,gate.pressed?255:150);ellipse(plate.x*cell,plate.y*cell,cell*.22,cell*.3);stroke(...gateColor);strokeWeight(cell*.03);line((plate.x-.15)*cell,(plate.y-.12)*cell,(plate.x+.15)*cell,(plate.y+.12)*cell);line((plate.x+.15)*cell,(plate.y-.12)*cell,(plate.x-.15)*cell,(plate.y+.12)*cell);}}
+    for(const lever of gate.levers||[]){stroke(...gateColor);strokeWeight(cell*.05);fill(...gateColor,gate.open?70:160);rect((lever.x-.3)*cell,(lever.y-.3)*cell,cell*.6,cell*.6,cell*.1);stroke(30,40,40);strokeWeight(cell*.07);const tilt=gate.open?.35:-.35;line(lever.x*cell,(lever.y+.15)*cell,(lever.x+tilt)*cell,(lever.y-.25)*cell);noStroke();fill(240,230,200);ellipse((lever.x+tilt)*cell,(lever.y-.25)*cell,cell*.14,cell*.14);}
+    for(const plate of gate.heavyPlates||[]){noStroke();fill(70,62,50,220);rect((plate.x-.38)*cell,(plate.y-.28)*cell,cell*.76,cell*.56,cell*.08);fill(...gateColor,gate.pressed?255:150);ellipse(plate.x*cell,plate.y*cell,cell*.22,cell*.3);stroke(...gateColor);strokeWeight(cell*.03);line((plate.x-.15)*cell,(plate.y-.12)*cell,(plate.x+.15)*cell,(plate.y+.12)*cell);line((plate.x+.15)*cell,(plate.y-.12)*cell,(plate.x-.15)*cell,(plate.y+.12)*cell);}
     for(const [x,y] of gate.tiles){if(gate.root){stroke(gate.bracedUntil>g.elapsed?186:94,gate.bracedUntil>g.elapsed?224:132,73);strokeWeight(cell*(gate.open?.055:.13));for(const offset of [.25,.55,.8])bezier((x+offset)*cell,y*cell,(x+offset-.2)*cell,(y+.3)*cell,(x+offset+.2)*cell,(y+.7)*cell,(x+offset)*cell,(y+1)*cell);if(gate.closingAt!==null){fill(242,207,116);noStroke();textSize(cell*.4);text(gate.bracedUntil>g.elapsed?Math.ceil(gate.bracedUntil-g.elapsed):'!',(x+.5)*cell,(y+.5)*cell);}continue;}if(gate.bridge){if(gate.open){stroke(gate.warned?239:151,gate.warned?174:117,73);strokeWeight(cell*.12);for(const dy of [.2,.4,.6,.8])line((x+.1)*cell,(y+dy)*cell,(x+.9)*cell,(y+dy)*cell);stroke(...gateColor);strokeWeight(cell*.035);line((x+.1)*cell,y*cell,(x+.1)*cell,(y+1)*cell);line((x+.9)*cell,y*cell,(x+.9)*cell,(y+1)*cell);noStroke();fill(232,239,200);textSize(cell*.27);text(label,(x+.5)*cell,(y+.5)*cell);}continue;}stroke(...gateColor);strokeWeight(cell*.075);for(const dx of [.25,.5,.75])line((x+dx)*cell,(y+.12)*cell,(x+dx)*cell,(y+.88)*cell);noStroke();fill(...palette[0]);rect((x+.16)*cell,(y+.23)*cell,cell*.68,cell*.54);fill(...gateColor);textSize(cell*.32);text(label,(x+.5)*cell,(y+.5)*cell);}
   }
   for(const [x,y]of g.level.shrubs||[])if(!view.follow||g.visibleTile(x,y))drawEscapeMimic({x:x+.5,y:y+.5,state:'rooted',facing:PI,distanceMoved:0},cell,g.elapsed,true);
