@@ -141,6 +141,16 @@ test('a flytrap snaps where Sally is heading when she comes within reach, then c
   const b=arena('flytrap',[7,4],[3,4]);b.g.decoy={x:7.5,y:5.5,expires:5};ticks(b.g,.5);assert.equal(b.h.state,'chew');
   for(let i=0;i<120*1.5&&b.g.status==='playing';i++)b.g.advance(1/120,{x:1,sprint:true});assert.equal(b.g.status,'playing');assert.ok(b.g.player.x>8);
 });
+test('a bog heron stabs whatever steps into the line in front of its beak, but not Sally swimming below',()=>{
+  const walk=(g,s)=>{for(let i=0;i<120*s&&g.status==='playing';i++)g.advance(1/120,{x:1});};
+  const {g,h}=arena('heron',[7,4],[3,5],{facing:Math.PI/2});assert.equal(h.state,'still');walk(g,3);assert.equal(g.status,'caught');assert.match(g.result.message,/heron/);
+  const swim=arena('heron',[7,4],[3,5],{facing:Math.PI/2});for(let x=1;x<15;x++)swim.g.grid[5][x]='U';walk(swim.g,5);assert.equal(swim.g.status,'playing');assert.ok(swim.g.player.x>9,'Sally swam past under its beak');
+  const lure=arena('heron',[7,4],[3,5],{facing:Math.PI/2});lure.g.decoy={x:7.5,y:6.5,expires:5};ticks(lure.g,.4);assert.equal(lure.h.state,'stab');
+  for(let i=0;i<120*1.2&&lure.g.status==='playing';i++)lure.g.advance(1/120,{x:1,sprint:true});assert.equal(lure.g.status,'playing');assert.ok(lure.g.player.x>8,'crossed while it recovered from stabbing the pebble');
+});
+test('a bog heron with set looks turns its head between them',()=>{
+  const {g,h}=arena('heron',[7,4],[3,9],{looks:[Math.PI/2,0],every:1});assert.equal(h.facing,Math.PI/2);ticks(g,1.1);assert.equal(h.facing,0);ticks(g,1);assert.equal(h.facing,Math.PI/2);
+});
 function vineArena(){const r=arena('snake',[12,8],[3,4]);r.g.vines=[{x:5,y:4,key:'5,4',readyAt:0,holding:false}];r.h.facing=Math.PI;r.h.pauseUntil=100;return r;}
 test('a tangle vine holds Sally for a moment and lets her go when nothing sees her',()=>{
   const {g,h}=vineArena();Object.assign(h,{x:12.5,y:9.5,facing:0});
