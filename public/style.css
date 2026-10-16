@@ -378,3 +378,4 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 #escape-builder h3 { margin:18px 0 8px; } #escape-builder details summary { cursor:pointer; color:#9fc9b6; }
 .builder-lock input { font:inherit; padding:10px 12px; border-radius:8px; border:1px solid #4d7a68; background:#0f201b; color:#eaf6ef; }
 .builder-lock details > .builder-lock { margin-top:10px; }
+.world-route.world-route-idle { display:none; }

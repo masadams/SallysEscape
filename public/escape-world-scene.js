@@ -58,7 +58,7 @@ function openEscapeWorld(focusId){
   escapeWorld.refreshRegions();document.getElementById('escape-select').style.display='none';document.getElementById('game-container').style.display='block';
   document.getElementById('game-area').classList.add('escape-world-open');
   mountEscapeChrome(true);document.getElementById('escape-world-ui').style.display='block';document.getElementById('escape-world-portals').style.display='block';
-  document.getElementById('escape-world-ui').innerHTML=`<div class="world-heading"><span>SALLY’S ESCAPE TRAIL</span><h2 id="world-region-name">Sunny Meadow</h2><label class="world-travel">Travel <select id="world-travel">${escapeWorld.chapters.map((c,i)=>'<option '+(escapeWorld.regionOpen(i)?'':'disabled')+' value="'+i+'">'+(i+1)+' · '+c.name+'</option>').join('')}</select></label><div id="world-totals" class="world-totals"></div></div><div class="world-guide"><span>WASD / arrows · Shift to run · R grabs golden flies</span><p>Explore the clearings. Click an entrance to guide Sally there.</p><button id="world-library">Levels & challenges</button><button id="world-skin" title="Master an area (every star) to earn its colours">Sally\u2019s colours</button><button id="world-home">Main menu</button><p id="world-toast" class="world-toast" role="status" aria-live="polite"></p></div><article class="world-route"><span id="world-route-number">THE TRAIL</span><h3 id="world-route-name">A new escape awaits</h3><p id="world-route-brief"></p><p id="world-route-best"></p><p id="world-route-challenge" class="world-route-challenge"></p><button id="world-enter" class="escape-primary">Enter escape <span class="key-hint">[Enter]</span></button><button id="world-challenge" class="escape-secondary" style="display:none"></button></article>`;
+  document.getElementById('escape-world-ui').innerHTML=`<div class="world-heading"><span>SALLY’S ESCAPE TRAIL</span><h2 id="world-region-name">Sunny Meadow</h2><label class="world-travel">Travel <select id="world-travel">${escapeWorld.chapters.map((c,i)=>'<option '+(escapeWorld.regionOpen(i)?'':'disabled')+' value="'+i+'">'+(i+1)+' · '+c.name+'</option>').join('')}</select></label><div id="world-totals" class="world-totals"></div></div><div class="world-guide"><span>WASD / arrows · Shift to run · R grabs golden flies</span><p>Explore the clearings. Click an entrance to guide Sally there.</p><button id="world-library">Levels & challenges</button><button id="world-skin" title="Master an area (every star) to earn its colours">Sally\u2019s colours</button><button id="world-home">Main menu</button><p id="world-toast" class="world-toast" role="status" aria-live="polite"></p></div><article id="world-route" class="world-route"><span id="world-route-number">THE TRAIL</span><h3 id="world-route-name">A new escape awaits</h3><p id="world-route-brief"></p><p id="world-route-best"></p><p id="world-route-challenge" class="world-route-challenge"></p><button id="world-enter" class="escape-primary">Enter escape <span class="key-hint">[Enter]</span></button><button id="world-challenge" class="escape-secondary" style="display:none"></button></article>`;
   document.getElementById('world-travel').onchange=e=>{if(!escapeWorld.travel(Number(e.target.value)))renderEscapeWorldHUD();clearTouchInput();suppressHeldKeys();document.activeElement?.blur?.();};
   document.getElementById('world-library').onclick=openEscapeLibrary;document.getElementById('world-skin').onclick=cycleEscapeSkin;document.getElementById('world-home').onclick=leaveEscape;document.getElementById('world-enter').onclick=enterEscapeWorld;
   document.getElementById('escape-world-portals').innerHTML=escapeWorld.nodes.map(n=>'<button id="world-node-'+n.id+'" class="world-node" aria-label="'+(n.index+1)+' · '+n.name+'">'+(n.index+1)+'</button>').join('');
@@ -72,6 +72,7 @@ function openEscapeLibrary(){
 function enterEscapeWorld(){const id=escapeWorld?.enter();if(id?.startsWith('hidden:'))startEscape({hiddenId:id.slice(7)});else if(id)startEscape({levelId:id});}
 // The Gilded Burrow's three escapes, shown only to those who found it.
 function renderEscapeHiddenHUD(node){
+  document.getElementById('world-route')?.classList.remove('world-route-idle');
   const level=EscapeCatalog.hidden[node.index],saved=escapeProgress.data.hidden[level.id],signature='hidden:'+node.id+':'+(saved?.bestTime||'');if(signature===escapeWorldHudSignature)return;escapeWorldHudSignature=signature;
   if(level.bonus){document.getElementById('world-region-name').textContent='Bonus escape';document.getElementById('world-route-number').textContent='BONUS · EVERY STAR IN THE FIRST '+level.bonus.areas+' AREAS';}
   else{document.getElementById('world-region-name').textContent='The Gilded Burrow';document.getElementById('world-route-number').textContent='THE GILDED BURROW · '+(node.index+1)+' OF 3';}
@@ -93,6 +94,8 @@ function renderEscapeWorldHUD(){
   const challengeLine=document.getElementById('world-route-challenge'),challengeButton=document.getElementById('world-challenge'),challengeOpen=challenge&&escapeProgress.challengeUnlocked(challenge.id);
   challengeLine.textContent=challenge?'⚑ Challenge · '+challenge.name+' — '+(challengeSaved?escapeRecordSummary(level,challengeSaved,true):challengeOpen?challenge.brief:escapeChallengeLock(challenge)):'';challengeLine.classList.toggle('world-challenge-new',Boolean(challengeOpen&&!challengeSaved));
   challengeButton.style.display=challengeOpen?'':'none';challengeButton.textContent=challengeSaved?'Replay challenge':'Try challenge';challengeButton.onclick=challengeOpen?()=>startEscape({challengeId:challenge.id}):null;
+  // Away from an entrance there is nothing to enter, so the card steps aside and the map shows.
+  document.getElementById('world-route')?.classList.toggle('world-route-idle',!node);
   const enter=document.getElementById('world-enter');enter.disabled=!unlocked;enter.innerHTML=unlocked?(saved?'Play again':'Enter escape')+' <span class="key-hint">[Enter]</span>':node?'Trail locked':'Find an entrance';
 }
 function playEscapeWorld(){
@@ -123,6 +126,45 @@ function escapeWorldTerrain(w,palettes,cell,x1,x2,y1,y2){
     image(chunk,cx*ESCAPE_CHUNK*cell,cy*ESCAPE_CHUNK*cell);
   }
 }
+// Tiles the trail, entrances, signs, villagers and caches use; ground details keep clear of them.
+let escapeWorldBusyCache=null;
+function escapeWorldBusy(w){
+  if(escapeWorldBusyCache?.world===w&&escapeWorldBusyCache.version===w.terrainVersion)return escapeWorldBusyCache.busy;
+  const busy=new Set(),mark=(x,y,r=0)=>{for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++)busy.add((Math.floor(x)+dx)+','+(Math.floor(y)+dy));};
+  for(const t of w.tracks)for(const p of t.points)mark(p.x,p.y);
+  for(const n of [...w.nodes,...w.bonusNodes,...w.hiddenNodes])mark(n.x,n.y,1);
+  for(const s of [...w.signs,...w.npcs,...w.caches])mark(s.x,s.y,1);
+  escapeWorldBusyCache={world:w,version:w.terrainVersion,busy};return busy;
+}
+// Small, still details that make each region's ground read as its own place: flowers in the
+// meadow, reeds by the river, ripples in the sand, drifts in the snow, glowing caps in the dark.
+function drawEscapeWorldProp(d,theme,px,py,cell,hash,p){
+  const s=cell,r=(hash%5)/5;d.noStroke();
+  const flower=(c)=>{d.fill(...c);for(let k=0;k<5;k++){const a=k*1.2566+r;d.ellipse(px+Math.cos(a)*s*.09,py+Math.sin(a)*s*.09,s*.11,s*.11);}d.fill(250,226,110);d.ellipse(px,py,s*.08,s*.08);};
+  const reeds=(c=[72,112,70])=>{d.stroke(...c);d.strokeWeight(s*.045);for(const o of [-.12,0,.12])d.line(px+o*s,py+s*.2,px+o*s*1.6,py-s*.25-Math.abs(o)*s);d.noStroke();d.fill(110,78,48);d.ellipse(px+s*.01,py-s*.27,s*.06,s*.14);};
+  const puddle=(c=[64,128,140,170])=>{d.fill(...c);d.ellipse(px,py,s*.7,s*.36);d.fill(200,235,240,90);d.ellipse(px-s*.12,py-s*.05,s*.22,s*.06);};
+  const pebbles=(c)=>{d.fill(...c);for(const [ox,oy,w] of [[-.15,.05,.18],[.1,-.05,.14],[.16,.12,.1]])d.ellipse(px+ox*s,py+oy*s,w*s,w*s*.7);};
+  const ripples=(c)=>{d.noFill();d.stroke(...c);d.strokeWeight(s*.035);for(const o of [-.15,.05,.25])d.arc(px,py+o*s,s*.8,s*.25,PI*1.1,PI*1.9);d.noStroke();};
+  const cap=(c,glow)=>{if(glow){d.fill(...c,50);d.ellipse(px,py-s*.05,s*.6,s*.6);}d.fill(230,220,200);d.rect(px-s*.035,py-s*.05,s*.07,s*.18);d.fill(...c);d.arc(px,py-s*.04,s*.3,s*.24,PI,TWO_PI);d.fill(255,255,255,120);d.ellipse(px-s*.05,py-s*.1,s*.05,s*.04);};
+  switch(theme){
+    case 'meadow':hash%3?flower(hash%2?[250,250,240]:[246,206,90]):flower([200,170,240]);break;
+    case 'garden':hash%3?flower([236,150,190]):pebbles([170,170,150]);break;
+    case 'orchard':if(hash%3){d.fill(200,70,50);d.ellipse(px,py,s*.18,s*.18);d.fill(80,120,50);d.ellipse(px+s*.05,py-s*.09,s*.08,s*.05);}else flower([250,250,240]);break;
+    case 'river':case 'marsh':hash%3?reeds():puddle();break;
+    case 'lantern':hash%3?puddle([40,90,96,190]):(d.fill(70,130,80),d.arc(px,py,s*.5,s*.4,.4,TWO_PI-.1),d.fill(240,200,220),d.ellipse(px+s*.05,py-s*.03,s*.1,s*.1));break;
+    case 'coast':hash%2?ripples([230,214,160,170]):(d.fill(244,226,214),d.arc(px,py,s*.26,s*.22,PI,TWO_PI),d.stroke(210,170,150),d.strokeWeight(s*.02),d.line(px,py,px-s*.06,py-s*.1),d.line(px,py,px+s*.06,py-s*.1),d.noStroke());break;
+    case 'desert':hash%3?ripples([226,190,120,170]):(d.fill(99,140,80),d.rect(px-s*.06,py-s*.3,s*.12,s*.4,s*.06),d.rect(px+s*.04,py-s*.18,s*.14,s*.06,s*.03),d.rect(px+s*.12,py-s*.28,s*.06,s*.14,s*.03));break;
+    case 'rooftops':d.stroke(...p[1],90);d.strokeWeight(s*.03);for(const o of [-.2,0,.2])d.line(px-s*.3,py+o*s,px+s*.3,py+o*s);d.noStroke();break;
+    case 'ruins':case 'quarry':hash%2?pebbles([...p[1],200]):(d.fill(...p[2],160),d.rect(px-s*.2,py-s*.15,s*.4,s*.3,s*.04),d.stroke(...p[1],150),d.strokeWeight(s*.025),d.line(px-s*.1,py-s*.15,px+s*.05,py+s*.15),d.noStroke());break;
+    case 'jungle':d.fill(60,120,64);for(let k=0;k<5;k++){const a=-PI/2+(k-2)*.5;d.ellipse(px+Math.cos(a)*s*.16,py+Math.sin(a)*s*.16+s*.05,s*.12,s*.3);}break;
+    case 'glow':cap(hash%2?[120,255,230]:[180,140,255],true);break;
+    case 'hollow':hash%2?cap([230,120,170],false):(d.noFill(),d.stroke(230,214,200,170),d.strokeWeight(s*.04),d.arc(px,py,s*.4,s*.25,0,PI*1.5),d.noStroke());break;
+    case 'ants':d.fill(...p[1]);d.ellipse(px,py+s*.06,s*.5,s*.24);d.fill(...p[2]);d.ellipse(px,py,s*.36,s*.18);d.fill(40,24,14);d.ellipse(px,py-s*.02,s*.08,s*.05);break;
+    case 'frost':hash%2?(d.fill(250,252,255,200),d.ellipse(px,py,s*.8,s*.3),d.fill(255,255,255),d.ellipse(px-s*.1,py-s*.05,s*.4,s*.12)):(d.fill(190,226,240,170),d.ellipse(px,py,s*.6,s*.34),d.stroke(255,255,255,170),d.strokeWeight(s*.02),d.line(px-s*.15,py-s*.05,px+s*.1,py+s*.07),d.noStroke());break;
+    case 'vents':d.stroke(60,36,30);d.strokeWeight(s*.05);d.line(px-s*.25,py,px,py-s*.05);d.line(px,py-s*.05,px+s*.2,py+s*.08);d.stroke(255,140,60,180);d.strokeWeight(s*.02);d.line(px-s*.2,py,px,py-s*.05);d.noStroke();break;
+    default:pebbles([...p[1],160]);
+  }
+}
 function drawEscapeWorldTerrain(d,w,palettes,cell,x1,x2,y1,y2){
   const shades=escapeWorldShades(w,palettes);
   // The grid defines collision, but the overworld reads as continuous terrain.
@@ -131,8 +173,25 @@ function drawEscapeWorldTerrain(d,w,palettes,cell,x1,x2,y1,y2){
     if(tile==='P'){d.fill(39,113,132);d.rect(x*cell,y*cell,cell+1,cell+1);d.stroke(126,193,182,130);d.strokeWeight(cell*.04);d.line((x+.15)*cell,(y+.4)*cell,(x+.82)*cell,(y+.4)*cell);}
     if(floor&&(x*13+y*7)%9===0){d.stroke(...p[2],75);d.strokeWeight(cell*.045);d.line((x+.25)*cell,(y+.7)*cell,(x+.31)*cell,(y+.54)*cell);d.line((x+.45)*cell,(y+.71)*cell,(x+.42)*cell,(y+.58)*cell);}
   }
+  // Soft patches of lighter and darker ground break up each clearing, and the ground darkens
+  // under the canopy along every edge, so clearings read as sunlit hollows, not flat boxes.
+  const open=(x,y)=>['.','L','P'].includes(w.grid[y]?.[x]);
+  for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++){if(!open(x,y))continue;const hash=(x*92821+y*68917)%997,p=palettes[w.chapters[w.chapterAt({x,y})].theme];d.noStroke();
+    if(hash%7===0){const light=hash%2?[255,255,230,22]:[...p[1],30];d.fill(...light);d.ellipse((x+.5)*cell,(y+.5)*cell,cell*(1.8+hash%3*.5),cell*(1.2+hash%4*.3));}
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])if(w.grid[y+dy]?.[x+dx]==='#')for(let k=0;k<3;k++){const depth=.18*(k+1),a=(dy<0?20:13);d.fill(8,28,22,a);if(dx)d.rect((x+(dx>0?1-depth:0))*cell,y*cell,cell*depth,cell+1);else d.rect(x*cell,(y+(dy>0?1-depth:0))*cell,cell+1,cell*depth);}
+  }
   // A winding track gives the main route a readable direction through open spaces.
   for(const track of w.tracks){for(const [color,weight]of track.side?[[[157,174,117,140],.28]]:[[[45,65,45,75],.78],[[206,187,131,210],.58]]){d.noFill();d.stroke(...color);d.strokeWeight(cell*weight);d.beginShape();const first=track.points[0],last=track.points.at(-1);d.curveVertex(first.x*cell,first.y*cell);for(const p of track.points)d.curveVertex(p.x*cell,p.y*cell);d.curveVertex(last.x*cell,last.y*cell);d.endShape();}}
+  const busy=escapeWorldBusy(w);
+  for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++){if(w.grid[y][x]!=='.'||busy.has(x+','+y))continue;const hash=(x*7919+y*104729)%211;if(hash%6)continue;const c=w.chapters[w.chapterAt({x,y})];
+    drawEscapeWorldProp(d,c.theme,(x+.3+(hash%5)*.1)*cell,(y+.35+(hash%3)*.15)*cell,cell*1.3,hash,palettes[c.theme]);}
+  // Bushes and boulders spill over the clearing edges, so the borders are ragged rather than ruled.
+  for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++){if(w.grid[y][x]!=='.'||busy.has(x+','+y))continue;const hash=(x*31+y*57)%13;if(hash>4)continue;
+    const walls=[[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy])=>w.grid[y+dy]?.[x+dx]==='#');if(!walls.length)continue;
+    const c=w.chapters[w.chapterAt({x,y})],p=palettes[c.theme],rocky=['ruins','quarry','ants','vents','desert','coast','rooftops'].includes(c.theme),[dx,dy]=walls[0],px=(x+.5+dx*.32)*cell,py=(y+.5+dy*.32)*cell,r=cell*(.75+hash*.08);d.noStroke();
+    if(rocky){d.fill(7,26,19,45);d.ellipse(px,py+r*.2,r*1.05,r*.55);d.fill(...p[2]);d.ellipse(px,py,r,r*.7);d.fill(255,255,255,35);d.ellipse(px-r*.18,py-r*.15,r*.4,r*.18);}
+    else{d.fill(0,0,0,40);d.ellipse(px+cell*.05,py+cell*.12,r,r*.85);d.fill(...p[1]);d.ellipse(px,py,r,r*.9);d.fill(...p[2],60);d.ellipse(px-r*.18,py-r*.2,r*.5,r*.42);if(hash===1){d.fill(236,140,180);for(const [ox,oy] of [[-.2,0],[.15,-.15],[.1,.2]])d.ellipse(px+ox*r,py+oy*r,cell*.13,cell*.13);}}
+  }
   // Border trees, dune rocks and ruined masonry echo the level art without tiling the whole map.
   for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++){const tile=w.grid[y][x],c=w.chapters[w.chapterAt({x,y})],p=palettes[c.theme];
     if(tile==='#'){
@@ -195,8 +254,47 @@ function drawEscapeWorld(){
   noStroke();for(let i=0;i<7;i++){const cx=((i*41+w.elapsed*.35)%(w.width+24))-12,cy=(i*13+7)%w.height;fill(10,30,25,26);ellipse(cx*cell,cy*cell,cell*7,cell*3.4);ellipse((cx+2.6)*cell,(cy-.8)*cell,cell*5,cell*2.6);}
   if(talking)drawEscapeSpeech(talking,escapeNpcLine(talking),cell);
   pop();
+  drawEscapeWorldWeather(w);
   // A slow day and night cycle tints the trail every four minutes.
   const night=(1-Math.cos(w.elapsed/240*Math.PI*2))/2;if(night>.02){noStroke();fill(12,22,58,110*night);rect(0,0,width,height);}
+}
+// Weather: each region has its own, drawn over the map in screen space. Rain comes and goes in
+// fronts, snow thickens and thins, leaves and petals drift on the breeze, dust blows across the
+// sand and roofs, steam rises from the vents, spores glow in the dark places. Particles keep the
+// kind they were born with, so walking between regions crossfades one weather into the next.
+const ESCAPE_WEATHER={meadow:'petals',garden:'petals',orchard:'blossom',ruins:'leaves',river:'rain',marsh:'rain',lantern:'rain',jungle:'rain',quarry:'dust',desert:'dust',rooftops:'dust',ants:'dust',frost:'snow',vents:'steam',glow:'spores',hollow:'spores',coast:'spray'};
+let escapeWeather={parts:[],clock:0};
+function escapeWeatherStrength(kind,t){
+  // Rain and snow arrive in fronts a minute or two apart; the gentle kinds never stop.
+  if(kind==='rain')return Math.max(0,Math.sin(t/37)*1.4-.2);
+  if(kind==='snow')return .45+.55*Math.max(0,Math.sin(t/29));
+  if(kind==='dust')return .35+.65*Math.max(0,Math.sin(t/23));
+  return 1;
+}
+function drawEscapeWorldWeather(w){
+  const reduced=Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches),dt=Math.min(.1,(deltaTime||16)/1000);escapeWeather.clock+=dt;
+  const kind=ESCAPE_WEATHER[w.chapters[w.chapterAt()]?.theme]||null,t=escapeWeather.clock,strength=kind?escapeWeatherStrength(kind,t):0;
+  const target={rain:110,snow:70,dust:40,petals:22,blossom:26,leaves:22,steam:18,spores:30,spray:16}[kind]||0,want=Math.round(target*strength*(reduced?.35:1)*Math.min(1.2,width*height/(1280*800)+.3));
+  const living=escapeWeather.parts.filter(p=>p.kind===kind).length;
+  for(let i=living;i<want&&i<living+4;i++){const p={kind,x:Math.random()*width,y:Math.random()*height,age:0,life:2+Math.random()*6,seed:Math.random()*99};
+    if(kind==='rain'||kind==='snow'||kind==='petals'||kind==='blossom'||kind==='leaves')p.y=-10-Math.random()*40;if(kind==='steam'||kind==='spores')p.y=height*(.25+Math.random()*.8);if(kind==='dust'||kind==='spray')p.x=-10;
+    if(kind==='rain')p.life=1.2;if(kind==='steam')p.life=5+Math.random()*3;escapeWeather.parts.push(p);}
+  const wind=Math.sin(t/11)*.6+.4,speed=reduced?.5:1;noStroke();
+  escapeWeather.parts=escapeWeather.parts.filter(p=>{p.age+=dt;const fade=Math.min(1,p.age*2,(p.life-p.age)*2,p.kind===kind?1:Math.max(0,1-p.age/p.life));if(p.age>p.life||p.y>height+30||p.x>width+30||p.y<-60&&p.age>1)return false;
+    switch(p.kind){
+      case 'rain':{p.x+=(60+wind*80)*dt*speed;p.y+=620*dt*speed;stroke(190,214,236,120*fade);strokeWeight(1.3);line(p.x,p.y,p.x-(6+wind*8),p.y-16);noStroke();
+        if(p.age>p.life-.08){noFill();stroke(200,224,240,100);strokeWeight(1);ellipse(p.x,p.y,10,4);noStroke();}break;}
+      case 'snow':{p.x+=(Math.sin(p.age*1.7+p.seed)*18+wind*20)*dt*speed;p.y+=40*dt*speed;fill(255,255,255,210*fade);ellipse(p.x,p.y,3+p.seed%3,3+p.seed%3);break;}
+      case 'petals':case 'blossom':case 'leaves':{p.x+=(30+wind*45+Math.sin(p.age*2+p.seed)*20)*dt*speed;p.y+=32*dt*speed;const c=p.kind==='petals'?(p.seed%2>1?[250,236,120]:[236,170,210]):p.kind==='blossom'?[255,240,246]:(p.seed%3>1.5?[214,140,60]:[190,90,50]);
+        push();translate(p.x,p.y);rotate(p.age*2+p.seed);fill(...c,220*fade);ellipse(0,0,7,3.6);pop();break;}
+      case 'dust':{p.x+=(120+wind*160)*dt*speed;p.y+=Math.sin(p.age*3+p.seed)*12*dt;fill(236,206,150,(70+p.seed%40)*fade);ellipse(p.x,p.y,2+p.seed%3,2+p.seed%3);if(p.seed<8){fill(236,206,150,18*fade);ellipse(p.x,p.y,80,14);}break;}
+      case 'steam':{p.y-=26*dt*speed;p.x+=Math.sin(p.age+p.seed)*10*dt;const r=20+p.age*14;fill(240,236,230,34*fade);ellipse(p.x,p.y,r,r*.7);break;}
+      case 'spores':{p.y-=14*dt*speed;p.x+=Math.sin(p.age*1.3+p.seed)*16*dt;const glow=.5+.5*Math.sin(p.age*4+p.seed);fill(160,255,220,60*fade*glow);ellipse(p.x,p.y,12,12);fill(200,255,240,200*fade);ellipse(p.x,p.y,2.6,2.6);break;}
+      case 'spray':{p.x+=(70+wind*40)*dt*speed;p.y+=Math.sin(p.age*2+p.seed)*8*dt;fill(255,255,255,90*fade);ellipse(p.x,p.y,3,3);break;}
+    }return true;});
+  // A wash of grey under heavy rain, and a cool haze under thick snow.
+  if(kind==='rain'&&strength>.2){fill(40,60,80,Math.min(60,strength*45));rect(0,0,width,height);}
+  if(kind==='snow'&&strength>.6){fill(230,240,250,(strength-.6)*70);rect(0,0,width,height);}
 }
 function drawEscapeRegionCloud(c,i,cell,clock){
   noStroke();const puffs=[[0,0,9],[-5,-3,6.5],[5,-3,7],[-6,3,6],[6,3,6.5],[0,-5,6],[0,5,6.5],[-3,1,5.5],[3,-1,5.5]];
