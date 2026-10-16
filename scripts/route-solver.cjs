@@ -75,7 +75,8 @@ function wait(g,rec,t){for(let i=0;i<Math.round(t*120)&&g.status==='playing';i++
 function go(g,rec,item,sprint){
   const limit=Math.ceil((Math.hypot(item.x-g.player.x,item.y-g.player.y)+1.5)*120);
   for(let i=0;i<limit&&g.status==='playing';i++){
-    if(g.player.flight){frame(g,rec,0,0,false);if(bad(g))return false;continue;}
+    // Reaching a bounce cap launches Sally: ride the flight out, and the waypoint counts as reached.
+    if(g.player.flight){while(g.player.flight&&g.status==='playing'){frame(g,rec,0,0,false);if(bad(g))return false;}return true;}
     const dx=item.x-g.player.x,dy=item.y-g.player.y,L=Math.hypot(dx,dy);if(L<(item.exact?.004:.12))return true;
     // Near an exact spot, a shorter input moves Sally only part of a step, so she lands on it.
     const step=(item.exact?2.45:sprint?4:2.45)/120,scale=item.exact&&L<step?L/step:1;
