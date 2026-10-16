@@ -153,7 +153,14 @@ Frost Hollow keeps its cold rooms and warm stones and brings in the snow fox, wh
 - Snowdrift Vault: the vault door freezes shut behind the key; a crack leads out into the coldest passage, where a fox listens.
 - Winter Heart: a king cobra slowed by the cold, two foxes, an owl, and a crack out of the sealed heart.
 
-Next: Steam Vents onward.
+Steam Vents is the steepest climb, with king cobras in its hardest boilers:
+- Kettle Works: brass vents hiss across the boiler hall; learn their rhythm and lead hunters into the jets (the Steam Trap challenge needs three dazed).
+- Pressure Pipes: steam below and a hawk above; awnings and camouflage cover the pipe runs.
+- Boiler Owls: two owls sweep the boiler floor, and a king cobra coils over the richest chest.
+- Ant Furnace: an ant column that steam does not stop, and a furnace door that opens only while the beetle presses its slab.
+- The Great Boiler: two king cobras in the boiler hall, an owl, a fox and the ants outside; the key seals the boiler room and a crack is the way out.
+
+Every region now has text maps. Still on the fix list: the new Nightbloom Reach layout (the old one stays live until it has a winning run).
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).
