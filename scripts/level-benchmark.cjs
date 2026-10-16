@@ -56,7 +56,7 @@ function main(argv){
   if(!Number.isInteger(config.trials)||config.trials<0||config.trials>100)throw new Error('Invalid trials');
   const selected=shardCases(selectCases(cases(),flags.only),flags.shard,flags.shards);
   const recordings=JSON.parse(fs.readFileSync(path.join(__dirname,'../tests/fixtures/escape-playthroughs.json'),'utf8'));
-  const solverFingerprint=crypto.createHash('sha256').update(['lib/level-lab.cjs','level-lab.cjs','level-benchmark.cjs','route-solver.cjs'].map(file=>fs.readFileSync(path.join(__dirname,file),'utf8')).join('\0')).digest('hex');
+  const solverFingerprint=crypto.createHash('sha256').update(['lib/level-lab.cjs','lib/level-policy.cjs','level-lab.cjs','level-benchmark.cjs','route-solver.cjs'].map(file=>fs.readFileSync(path.join(__dirname,file),'utf8')).join('\0')).digest('hex');
   const metadata={...config,shard:flags.shard,shards:flags.shards,only:flags.only||null,node:process.version,solverFingerprint};
   const results=[];
   for(const item of selected){

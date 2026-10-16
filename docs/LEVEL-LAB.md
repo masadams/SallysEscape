@@ -17,7 +17,8 @@ npm run level:lab -- stress work/lab/quiet-vault/replay.json --trials 20 --jitte
 ```
 
 `solve` saves `report.md`, machine-readable `report.json`, and, on success,
-`replay.json`. Use a separate output directory per map/revision. A failed search
+`replay.json` plus a `policy.json` containing the discovered decisions. A run
+that only reuses raw inputs does not invent a policy for them. Use a separate output directory per map/revision. A failed search
 removes a previous replay in that output directory so it cannot look like a new
 success. The report lists the best progress and frequent failed branches with
 coordinates and the engine's explanations. Those counts are search diagnostics,
@@ -78,6 +79,42 @@ failed. `stress` returns 1 if the baseline fails or any variation fails. Invalid
 arguments, malformed replays or stale artifacts return 2. `solve` still returns
 0 for a verified win with failed stress variations: inspect the report before
 accepting it. `--trials 0` supplies no timing evidence.
+
+## Feedback policies and latency testing
+
+An exact replay repeats button durations. A feedback policy instead follows
+the search's saved decisions and steers from Sally's current position toward
+the saved waypoints. It uses full game state, makes no model calls, and does not
+run a new search. Tools and waits are preserved. Existing gates, traps, hunters
+and collision rules remain active. It cannot choose a different strategy when
+a hunter blocks the saved route.
+
+```sh
+node scripts/level-lab.cjs policy-replay work/lab/quiet-vault/policy.json
+node scripts/level-lab.cjs policy-stress work/lab/quiet-vault/policy.json --trials 8 --jitter 6 --seed 1 --frames 50000 --milliseconds 10000 --out work/policy-check
+```
+
+`policy-stress` first verifies an unperturbed baseline. Each seeded trial samples
+a control interval from 1 to `jitter + 1` frames and an idle delay from 0 to
+`jitter` frames before **each decision**. The controller checks position less
+often, refining its steps near waypoints. It tests sampled steering and delayed
+decisions, not the independent duration jitter used by `stress`. Results from
+these two models are not interchangeable. Neither estimates human success.
+
+Every winning policy execution is independently replayed as raw engine inputs.
+The frame and wall-clock allowances are shared by baseline execution, every
+trial, and all fresh verification. If either allowance runs out, incomplete
+trials are reported separately with `budgetExhausted`, `attemptedTrials` and
+`completedTrials`; the CLI returns 1. A failed baseline starts no variations and
+also returns 1, including with zero requested trials. Report requested and
+completed counts alongside wins. Default batch limits are 100,000 frames and
+10 seconds; explicit `--frames` and `--milliseconds` override them.
+
+`policy-replay` uses the normal lab frame/time defaults. Both commands reject
+stale engine/map fingerprints and malformed plans before execution, preserve a
+saved no-tail restriction, and can save details in `policy-result.json` using
+`--out`. Failed or reused-only solves remove a previous `policy.json` from their
+output directory, so an old plan cannot look like a newly discovered one.
 
 ## Working within a small compute budget
 

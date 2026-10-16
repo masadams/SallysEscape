@@ -32,15 +32,18 @@ function validateCommands(commands){
   }
   if(frames>FPS*600)throw new Error('Replay exceeds ten minutes');
 }
-function replay(options,commands,{allowTail=true}={}){
+function replay(options,commands,{allowTail=true,consumeFrame}={}){
   validateCommands(commands);
-  const g=new EscapeAdventure(options);let actionFailure=null;
-  for(let index=0;index<commands.length&&g.status==='playing';index++){
+  const g=new EscapeAdventure(options);let actionFailure=null,budgetExhausted=false;
+  run:for(let index=0;index<commands.length&&g.status==='playing';index++){
     const c=commands[index];
-    if(c.kind==='move')for(let f=0;f<c.frames&&g.status==='playing';f++)g.advance(1/FPS,c);
+    if(c.kind==='move')for(let f=0;f<c.frames&&g.status==='playing';f++){
+      if(consumeFrame&&!consumeFrame()){budgetExhausted=true;break run;}
+      g.advance(1/FPS,c);
+    }
     else if(!g[ACTIONS[c.kind]]()){actionFailure={index,kind:c.kind,message:g.message};break;}
   }
-  return {won:!actionFailure&&legalWin(g)&&(allowTail||g.tailsDropped===0),actionFailure,...summary(g)};
+  return {won:!budgetExhausted&&!actionFailure&&legalWin(g)&&(allowTail||g.tailsDropped===0),actionFailure,budgetExhausted,...summary(g)};
 }
 function random(seed){let s=seed>>>0;return ()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};}
 function stress(options,commands,{trials=8,jitter=6,seed=1,allowTail=true}={}){
@@ -150,11 +153,14 @@ function execute(parent,choice,config){
   const wait=frames=>{for(let i=0;i<frames;i++)if(!tick(0,0,false))break;};
   if(choice.lookBack){if(!g.lookBack())return null;commands.push({kind:'lookBack'});}
   const walk=target=>{
-    for(let n=0;n<240&&g.status==='playing'&&g.elapsed<config.seconds;n++){
+    for(let n=0;n<240&&g.status==='playing'&&g.elapsed<config.seconds;){
       const dx=target.x-g.player.x,dy=target.y-g.player.y;
       if(Math.hypot(dx,dy)<.09)return true;
       // Keyboard-like digital movement; no exact fractional input or teleport.
-      if(!tick(Math.abs(dx)>.055?Math.sign(dx):0,Math.abs(dy)>.055?Math.sign(dy):0,choice.sprint))return false;
+      // Feedback tests can sample less often. Refine near a waypoint rather
+      // than oscillating past it; each held frame still consumes the budget.
+      const hold=Math.min(config.controlFrames||1,Math.max(1,Math.floor(Math.hypot(dx,dy)*FPS/4)),240-n);
+      for(let i=0;i<hold;i++,n++)if(!tick(Math.abs(dx)>.055?Math.sign(dx):0,Math.abs(dy)>.055?Math.sign(dy):0,choice.sprint))return false;
       if(n>20&&!g.player.moving&&!g.player.flight)break;
     }
     return false;
@@ -175,7 +181,7 @@ function execute(parent,choice,config){
     commands.push({kind:choice.kind});wait(choice.kind==='camo'?90:30);
   }
   if(!commands.length)return null;
-  return {g,commands};
+  return {g,commands,choice};
 }
 function commandsFor(node){const parts=[];for(let n=node;n?.parent;n=n.parent)parts.push(n.commands);const commands=[];for(const part of parts.reverse())for(const c of part)append(commands,c);return commands;}
 function solve(options,config={}){
@@ -219,9 +225,10 @@ function solve(options,config={}){
     if(!beam.length)reason='frontier-exhausted';
   }
   const commands=winner?commandsFor(winner):null;
+  const choices=[];if(winner)for(let n=winner;n?.parent;n=n.parent)choices.unshift(n.choice);
   const verification=commands?replay(options,commands,{allowTail:cfg.allowTail}):null;
   if(winner&&!verification.won)throw new Error('Search/replay disagreement: '+JSON.stringify(verification));
-  return {schemaVersion:VERSION,status:winner?'solved':'unresolved',reason:winner?'verified-replay':reason,options,fingerprint:fingerprint(options),settings:cfg,search:{expanded,generated,simulatedFrames,depth,milliseconds:Date.now()-started},bestAttempt:summary((winner||best).g),failures:[...failures.values()].sort((a,b)=>b.count-a.count).slice(0,12),verification,memory,replay:commands?{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands}:null};
+  return {schemaVersion:VERSION,status:winner?'solved':'unresolved',reason:winner?'verified-replay':reason,options,fingerprint:fingerprint(options),settings:cfg,search:{expanded,generated,simulatedFrames,depth,milliseconds:Date.now()-started},bestAttempt:summary((winner||best).g),failures:[...failures.values()].sort((a,b)=>b.count-a.count).slice(0,12),verification,memory,replay:commands?{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands}:null,policy:winner?{schemaVersion:1,kind:'feedback-policy',options,fingerprint:fingerprint(options),settings:{seconds:cfg.seconds,allowTail:cfg.allowTail},choices}:null};
 }
 function verifyArtifact(artifact,config={}){
   if(artifact.schemaVersion!==VERSION||!artifact.options||!Array.isArray(artifact.commands))throw new Error('Invalid level-lab replay');

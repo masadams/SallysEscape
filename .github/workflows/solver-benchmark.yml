@@ -6,7 +6,7 @@ on:
     branches: [main]
     paths:
       - 'scripts/level-*.cjs'
-      - 'scripts/lib/level-lab.cjs'
+      - 'scripts/lib/level-*.cjs'
       - 'scripts/route-solver.cjs'
       - 'public/escape-engine.js'
       - 'public/escape-levels.js'
@@ -15,6 +15,8 @@ on:
       - 'public/creature-rig.js'
       - 'tests/fixtures/escape-playthroughs.json'
       - 'tests/level-lab.cjs'
+      - 'tests/level-policy.cjs'
+      - 'package.json'
       - '.github/workflows/solver-benchmark.yml'
 
 permissions:
@@ -36,7 +38,7 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - name: Solver regressions
-        run: node --test tests/level-lab.cjs
+        run: node --test tests/level-lab.cjs tests/level-policy.cjs
       - name: Three-level development sample
         run: npm run level:smoke
       - name: Save smoke reports

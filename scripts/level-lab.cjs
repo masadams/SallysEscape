@@ -2,6 +2,7 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path');
 const Lab=require('./lib/level-lab.cjs');
+const Policy=require('./lib/level-policy.cjs');
 const {EscapeCatalog,escapeBuildCustom}=require('../public/escape-levels.js');
 const Builder=require('../public/escape-builder.js');
 const USAGE=`Level lab: find and check legal solutions without editing maps.
@@ -12,6 +13,8 @@ const USAGE=`Level lab: find and check legal solutions without editing maps.
   npm run level:lab -- solve --route route.json --out work/custom
   npm run level:lab -- replay work/quiet-vault/replay.json
   npm run level:lab -- stress work/quiet-vault/replay.json --trials 12 --jitter 6 --seed 1
+  npm run level:lab -- policy-replay work/quiet-vault/policy.json
+  npm run level:lab -- policy-stress work/quiet-vault/policy.json --trials 8 --frames 100000 --milliseconds 10000
 Options: --budget 1500 --width 24 --depth 160 --seconds 120 --trials 8
          --milliseconds 60000 --frames 1000000 --jitter 6 (frames at 120 Hz) --seed 1 --no-tail
          --reuse previous/replay.json (try previous inputs against this map first)
@@ -42,8 +45,12 @@ function writeOutputs(dir,report){
   const replayPath=path.join(dir,'replay.json');
   if(report.replay)fs.writeFileSync(replayPath,JSON.stringify(report.replay,null,2)+'\n');
   else if(fs.existsSync(replayPath))fs.unlinkSync(replayPath); // Never leave a previous win beside an unresolved report.
+  const policyPath=path.join(dir,'policy.json');
+  if(report.policy)fs.writeFileSync(policyPath,JSON.stringify(report.policy,null,2)+'\n');
+  else if(fs.existsSync(policyPath))fs.unlinkSync(policyPath);
   const s=report.stress;
   const lines=[`# Level lab: ${report.options.levelId||report.options.challengeId||report.options.hiddenId||report.options.level.name}`,``, `Result: **${report.status}** (${report.reason}).`,``, `Search: ${report.search.expanded} expanded states; ${report.search.generated} simulated candidates.`,``, `Best attempt: ${report.bestAttempt.hasKey?'key collected':'key not collected'}, ${report.bestAttempt.treasure}/${report.bestAttempt.requiredTreasure} required treasure, ${report.bestAttempt.seconds}s; tail drops: ${report.bestAttempt.tailsDropped}.`,``,s?`Timing stress: ${s.wins}/${s.trials} wins with ±${s.jitterFrames} input frames and intermittent delays. This is an open-loop stress test, not a human success estimate.`:'Timing stress: unavailable without a winning replay.',``,report.status==='unresolved'?'No solution was found within this search configuration. This is NOT proof that the map is impossible.':'A fresh instance of the real engine verified the saved replay.',``,`## Most frequent failed branches`,``,...report.failures.map(f=>`- Tile ${f.tile}: ${f.message} (${f.count} branches)`),``,`These counts describe this search, not player death rates. Search has full map knowledge. Inspect the replay and playtest readability and fun before accepting a map.`];
+  if(report.policy)lines.push('', 'A full-state feedback plan is saved in policy.json. Use policy-replay or policy-stress to evaluate it separately; it is not an open-loop replay or a human player model.');
   fs.writeFileSync(path.join(dir,'report.md'),lines.join('\n')+'\n');
 }
 function main(argv){
@@ -69,6 +76,15 @@ function main(argv){
     const artifact=JSON.parse(fs.readFileSync(id,'utf8')),verified=Lab.verifyArtifact(artifact,flags);
     const result=mode==='replay'?verified:Lab.stress(artifact.options,artifact.commands,flags);
     console.log(JSON.stringify(result,null,2));return mode==='replay'?(verified.won?0:1):(verified.won&&result.wins===result.trials?0:1);
+  }
+  if(mode==='policy-replay'||mode==='policy-stress'){
+    if(!id||pos.length!==2)throw new Error('Supply one policy file');
+    const artifact=JSON.parse(fs.readFileSync(id,'utf8'));
+    const result=mode==='policy-replay'?Policy.follow(artifact,flags):Policy.stress(artifact,flags);
+    if(flags.out){fs.mkdirSync(flags.out,{recursive:true});fs.writeFileSync(path.join(flags.out,'policy-result.json'),JSON.stringify(result,null,2)+'\n');}
+    // Detailed inputs remain in saved reports; keep terminal output compact.
+    const {commands,runs,verification,...overview}=result;console.log(JSON.stringify(overview,null,2));
+    return mode==='policy-replay'?(result.won?0:1):(result.baseline.won&&!result.budgetExhausted&&result.wins===result.trials?0:1);
   }
   throw new Error('Unknown command '+mode+'\n'+USAGE);
 }
