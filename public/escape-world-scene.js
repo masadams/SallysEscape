@@ -1,10 +1,14 @@
 let escapeWorld=null,escapeLibraryOpen=false,escapeWorldHudSignature='',escapeWorldToastUntil=0;
 const ESCAPE_CACHE_VALUE=5;
 function escapeRegionStars(chapter){const c=escapeWorld.chapters[chapter];let stars=0;for(let i=c.start;i<c.end;i++)stars+=escapeProgress.data.levels[EscapeCatalog.levels[i].id]?.stars||0;return {stars,max:(c.end-c.start)*3};}
+let escapeJournalOpen=false;
 function renderEscapeWorldTotals(){
   const t=escapeProgress.totals(ESCAPE_CACHE_VALUE),el=document.getElementById('world-totals');if(!el)return;
-  el.innerHTML='<span title="Best stars across every escape">★ '+t.stars+' / '+t.maxStars+'</span><span title="Best treasure from every escape plus hidden caches">◆ '+t.treasure+' treasure</span><span title="Escapes won on the very first attempt">✓ '+t.firstTries+' first '+(t.firstTries===1?'try':'tries')+'</span><span title="Extra challenges completed">⚑ '+t.challenges+' / '+t.maxChallenges+'</span><span title="Hidden world caches found">✦ '+t.caches+' / '+escapeWorld.caches.length+' caches</span><span title="Golden flies caught on the trail">✧ '+t.goldflies+' golden flies</span>';
+  // Stars stay in view; the rest of the tally folds away under Journal so the panel stays small.
+  el.innerHTML='<span title="Best stars across every escape">★ '+t.stars+' / '+t.maxStars+'</span><button type="button" id="world-journal" class="world-journal-toggle" aria-expanded="'+escapeJournalOpen+'">Journal '+(escapeJournalOpen?'▴':'▾')+'</button><span class="world-journal-item" title="Best treasure from every escape plus hidden caches">◆ '+t.treasure+' treasure</span><span class="world-journal-item" title="Escapes won on the very first attempt">✓ '+t.firstTries+' first '+(t.firstTries===1?'try':'tries')+'</span><span class="world-journal-item" title="Extra challenges completed">⚑ '+t.challenges+' / '+t.maxChallenges+'</span><span class="world-journal-item" title="Hidden world caches found">✦ '+t.caches+' / '+escapeWorld.caches.length+' caches</span><span class="world-journal-item" title="Golden flies caught on the trail">✧ '+t.goldflies+' golden flies</span>';
   if(escapeProgress.unlockAll)el.innerHTML+='<span title="Ctrl+Alt+U turns test mode off">🔓 Test mode</span>';
+  el.classList.toggle('world-journal-open',escapeJournalOpen);
+  const journal=document.getElementById('world-journal');if(journal)journal.onclick=()=>{escapeJournalOpen=!escapeJournalOpen;renderEscapeWorldTotals();document.activeElement?.blur?.();};
   const library=document.getElementById('world-library'),waiting=EscapeCatalog.challenges.filter(c=>escapeProgress.challengeUnlocked(c.id)&&!escapeProgress.data.challenges[c.id]?.cleared).length;if(library)library.textContent='Levels & challenges'+(waiting?' · ⚑ '+waiting+' open':'');
   for(const option of document.getElementById('world-travel')?.options||[]){const i=Number(option.value),r=escapeRegionStars(i);option.textContent=(i+1)+' · '+escapeWorld.chapters[i].name+' · '+(r.stars===r.max&&r.max?'♛ ':'★')+r.stars+'/'+r.max;}
   const skin=document.getElementById('world-skin');if(skin){const chapters=EscapeWorld.chapters,owned=escapeProgress.skins(chapters);skin.textContent='Colours: '+ESCAPE_SKINS[escapeProgress.skin(chapters)].name+(owned.length>1?' ('+owned.length+')':' · ♛ 0');}
@@ -158,6 +162,11 @@ function drawEscapeWorld(){
   background(37,66,54);push();translate(ox,oy);
   const x1=Math.max(0,Math.floor(-ox/cell)),x2=Math.min(w.width-1,Math.ceil((width-ox)/cell)),y1=Math.max(0,Math.floor(-oy/cell)),y2=Math.min(w.height-1,Math.ceil((height-oy)/cell));
   escapeWorldTerrain(w,palettes,cell,x1,x2,y1,y2);
+  // A trail between two cleared escapes glows gold, so progress reads at a glance.
+  for(const track of w.tracks){if(track.side||!escapeProgress.data.levels[track.to]?.cleared||!escapeProgress.data.levels[track.from]?.cleared)continue;noFill();stroke(246,206,96,190);strokeWeight(cell*.22);beginShape();const first=track.points[0],last=track.points.at(-1);curveVertex(first.x*cell,first.y*cell);for(const p of track.points)curveVertex(p.x*cell,p.y*cell);curveVertex(last.x*cell,last.y*cell);endShape();}
+  // The next escape to play pulses.
+  const next=w.nodes.find(n=>escapeProgress.unlocked(n.id)&&!escapeProgress.data.levels[n.id]?.cleared&&w.regionOpen(n.chapter));
+  if(next){const pulse=(sin(w.elapsed*3)+1)/2;noFill();stroke(255,226,120,90+pulse*130);strokeWeight(cell*.09);ellipse(next.x*cell,next.y*cell,cell*(1.9+pulse*.6),cell*(1.9+pulse*.6));}
   for(const gate of w.gates){if(w.regionOpen(gate.chapter))continue;const x=gate.x+.5,y=gate.y+.5;stroke(224,187,99);strokeWeight(cell*.1);for(const d of [-1.2,-.8,-.4,0,.4,.8,1.2]){if(gate.vertical)line((x+d)*cell,(y-.32)*cell,(x+d)*cell,(y+.32)*cell);else line((x-.32)*cell,(y+d)*cell,(x+.32)*cell,(y+d)*cell);}noStroke();fill(245,223,151);textAlign(CENTER,CENTER);const need=EscapeCatalog.levels[w.chapters[gate.chapter].start]?.unlockChallenges;textSize(cell*(need?.42:.34));text(need?'⚑'+need:'◇',x*cell,y*cell);}
   for(const sign of w.signs)if(w.regionOpen(sign.chapter))drawEscapeWorldSign(sign,w.chapters[sign.chapter],escapeRegionStars(sign.chapter),cell);
   for(const cache of w.caches)if(w.regionOpen(cache.chapter))drawEscapeWorldCache(cache,w.found.has(cache.id),cell,w.elapsed,Math.hypot(cache.x+.5-w.player.x,cache.y+.5-w.player.y));
@@ -167,7 +176,7 @@ function drawEscapeWorld(){
       // An open, unbeaten challenge pulses so it is easy to spot from across the map.
       if(open&&!done){const pulse=(sin(w.elapsed*4)+1)/2,fy=by-cell*.25-pulse*cell*.12;fill(255,214,92,60+pulse*90);ellipse(bx,fy,cell*(.95+pulse*.4),cell*(.95+pulse*.4));fill(255,226,120);stroke(120,60,10);strokeWeight(cell*.05);ellipse(bx,fy,cell*.72,cell*.72);noStroke();fill(120,60,10);textSize(cell*.44);text('⚑',bx,fy+cell*.02);fill(226,74,60);ellipse(bx+cell*.36,fy-cell*.32,cell*.32,cell*.32);fill(255);textSize(cell*.26);text('!',bx+cell*.36,fy-cell*.31);}
       else{fill(...(done?[255,205,86]:[120,132,118]));ellipse(bx,by,cell*.42,cell*.42);fill(...(done?[110,70,20]:[55,70,60]));textSize(cell*.26);text('⚑',bx,by+cell*.01);if(!done&&gate.cleared){const label=gate.stars+'/'+gate.need+'★';textSize(cell*.28);fill(30,48,38,210);rect(bx-textWidth(label)/2-cell*.08,by-cell*.62,textWidth(label)+cell*.16,cell*.34,cell*.1);fill(255,236,170);text(label,bx,by-cell*.45);}}}
-    const button=document.getElementById('world-node-'+n.id),sx=x+ox,sy=y+oy,px=bounds.left+sx/width*bounds.width,py=bounds.top+sy/height*bounds.height,covered=panels.some(p=>px+20>p.left&&px-20<p.right&&py+20>p.top&&py-20<p.bottom);button.style.display=!covered&&sx>=30&&sx<=width-30&&sy>=30&&sy<=height-30?'block':'none';button.style.left=sx/width*100+'%';button.style.top=sy/height*100+'%';button.className='world-node '+(saved?'world-cleared':unlocked?'world-available':'world-locked');button.setAttribute('aria-label',(n.index+1)+' · '+n.name+(saved?' · cleared':unlocked?' · available':' · locked'));
+    const button=document.getElementById('world-node-'+n.id),sx=x+ox,sy=y+oy,px=bounds.left+sx/width*bounds.width,py=bounds.top+sy/height*bounds.height,covered=panels.some(p=>px+20>p.left&&px-20<p.right&&py+20>p.top&&py-20<p.bottom);button.style.display=!covered&&w.regionOpen(n.chapter)&&sx>=30&&sx<=width-30&&sy>=30&&sy<=height-30?'block':'none';button.style.left=sx/width*100+'%';button.style.top=sy/height*100+'%';button.className='world-node '+(saved?'world-cleared':unlocked?'world-available':'world-locked');button.setAttribute('aria-label',(n.index+1)+' · '+n.name+(saved?' · cleared':unlocked?' · available':' · locked'));
   }
   for(const n of w.bonusNodes){const open=w.bonusOpen(n.id),x=n.x*cell,y=n.y*cell,saved=escapeProgress.data.hidden[n.id],pulse=(sin(w.elapsed*1.6)+1)/2;
     if(!open){const lx=n.lock.x*cell,ly=n.lock.y*cell;noStroke();fill(46,92,52);rect(lx-cell*.1,ly,cell*1.2,cell,cell*.2);fill(196,70,90);for(let k=0;k<3;k++)ellipse(lx+cell*(.2+k*.3),ly+cell*(.3+(k%2)*.4),cell*.16,cell*.16);}
@@ -176,6 +185,8 @@ function drawEscapeWorld(){
   if(w.hiddenCarved)for(const n of w.hiddenNodes){const x=n.x*cell,y=n.y*cell,saved=escapeProgress.data.hidden[n.id],pulse=(sin(w.elapsed*2+n.index)+1)/2;noStroke();fill(255,206,90,40+pulse*50);ellipse(x,y,cell*(1.8+pulse*.3),cell*(1.8+pulse*.3));fill(120,86,24);rect(x-cell*.5,y-cell*.5,cell,cell,cell*.2);fill(255,214,100);rect(x-cell*.38,y-cell*.38,cell*.76,cell*.76,cell*.16);fill(90,60,10);textAlign(CENTER,CENTER);textSize(cell*.42);text('✦',x,y);
     if(saved){textSize(cell*.36);for(let i=0;i<3;i++){fill(...(i<saved.stars?[255,196,40]:[40,58,46,160]));text('★',x+(i-1)*cell*.36,y+cell*1.02);}}}
   for(const npc of w.npcs)if(w.regionOpen(npc.chapter))drawEscapeWorldNpc(npc,cell,w.elapsed);
+  // Regions not yet opened sit under drifting cloud that clears when they open.
+  for(const [i,c] of w.chapters.entries())if(!w.regionOpen(i)&&Math.abs(c.x-w.player.x)<width/cell+10&&Math.abs(c.y-w.player.y)<height/cell+10)drawEscapeRegionCloud(c,i,cell,w.elapsed);
   if(w.lick){const head=w.motion.lizard.joints[0];stroke(232,110,140);strokeWeight(cell*.08);line(head.x*cell,head.y*cell,w.lick.x*cell,w.lick.y*cell);}
   drawEscapeLizard(w.motion.lizard,cell,w.motion.clock);
   for(const [i,c] of w.chapters.entries())if(w.regionOpen(i))drawEscapeWorldCritters(c,i,w,cell);
@@ -186,6 +197,12 @@ function drawEscapeWorld(){
   pop();
   // A slow day and night cycle tints the trail every four minutes.
   const night=(1-Math.cos(w.elapsed/240*Math.PI*2))/2;if(night>.02){noStroke();fill(12,22,58,110*night);rect(0,0,width,height);}
+}
+function drawEscapeRegionCloud(c,i,cell,clock){
+  noStroke();const puffs=[[0,0,9],[-5,-3,6.5],[5,-3,7],[-6,3,6],[6,3,6.5],[0,-5,6],[0,5,6.5],[-3,1,5.5],[3,-1,5.5]];
+  for(const [k,[dx,dy,r]] of puffs.entries()){const drift=Math.sin(clock*.25+i+k)*.5;fill(214,226,222,k<1?235:225);ellipse((c.x+.5+dx+drift)*cell,(c.y+.5+dy)*cell,r*cell*1.45,r*cell*1.05);}
+  for(const [k,[dx,dy,r]] of puffs.entries()){const drift=Math.sin(clock*.25+i+k)*.5;fill(245,248,246,170);ellipse((c.x+.5+dx+drift-.4)*cell,(c.y+.5+dy-.5)*cell,r*cell*1.05,r*cell*.7);}
+  fill(98,116,112);textAlign(CENTER,CENTER);textSize(cell*.7);text('?',(c.x+.5)*cell,(c.y+.5)*cell);
 }
 function drawEscapeWorldNpc(npc,cell,clock){
   push();translate((npc.x+.5)*cell,(npc.y+.5)*cell);scale(1.45);translate(-(npc.x+.5)*cell,-(npc.y+.5)*cell);
