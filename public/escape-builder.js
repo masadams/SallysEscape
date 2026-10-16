@@ -3,11 +3,11 @@
 // text, and publish to the community shelf. toRoute turns it into the route the game plays.
 (function(root){
   const KEY='sally-escape-custom-v1',VERSION=2;
-  const TILES={'#':'Wall','.':'Floor','L':'Leaves','N':'Gravel','B':'Cracked wall','M':'Mud','~':'Water','_':'Gap','c':'Crumbling floor','T':'Tangle vine','S':'Crack (Sally only)','o':'Spore puffball'};
+  const TILES={'#':'Wall','.':'Floor','L':'Leaves','N':'Gravel','B':'Cracked wall','M':'Mud','~':'Water','_':'Gap','c':'Crumbling floor','T':'Tangle vine','S':'Crack (Sally only)','o':'Spore puffball','t':'Tide flat'};
   const MARKS={'@':'Sally','K':'Key','X':'Hatch','1':'Treasure 1','2':'Treasure 2','3':'Chest 3'};
-  const ENEMIES={snake:'Snake',beetle:'Beetle',scorpion:'Scorpion',toad:'Toad',spider:'Spider',cricket:'Cricket',moth:'Moth',mimic:'Mimic',millipede:'Millipede',cobra:'King cobra',flytrap:'Flytrap',crab:'Hermit crab',fox:'Snow fox',heron:'Bog heron',mantis:'Praying mantis',wasp:'Wasp nest',dragonfly:'Dragonfly',mole:'Mole',bat:'Echo bat'};
+  const ENEMIES={snake:'Snake',beetle:'Beetle',scorpion:'Scorpion',toad:'Toad',spider:'Spider',cricket:'Cricket',moth:'Moth',mimic:'Mimic',millipede:'Millipede',cobra:'King cobra',flytrap:'Flytrap',crab:'Hermit crab',fox:'Snow fox',heron:'Bog heron',mantis:'Praying mantis',wasp:'Wasp nest',dragonfly:'Dragonfly',mole:'Mole',bat:'Echo bat',eel:'Eel'};
   // Enemies that stay on their post; the rest walk their patrol.
-  const POSTED=new Set(['scorpion','toad','mimic','millipede','cobra','flytrap','crab','heron','mantis','wasp']);
+  const POSTED=new Set(['scorpion','toad','mimic','millipede','cobra','flytrap','crab','heron','mantis','wasp','eel']);
   const LIMITS={minW:11,maxW:35,minH:9,maxH:21,doors:6,triggers:24,hazards:24,guards:24};
   // Doors and bridges come in six colours; each colour is one door and one bridge.
   const COLORS=[['Red',[226,96,96]],['Blue',[96,150,236]],['Gold',[240,196,80]],['Green',[110,200,120]],['Violet',[178,120,230]],['Teal',[80,200,196]]];
@@ -234,7 +234,7 @@
   // Checks every field of a saved, shared or published level (old version-1 levels included)
   // and returns a clean model, or null when it is not a Sally level.
   function sanitize(r){
-    if(!r||!Array.isArray(r.map)||r.map.length<LIMITS.minH||r.map.length>LIMITS.maxH||!r.map.every(row=>typeof row==='string'&&row.length===r.map[0].length&&row.length>=LIMITS.minW&&row.length<=LIMITS.maxW&&/^[#.LNBM~_cTSo@KX1-5]+$/.test(row)))return null;
+    if(!r||!Array.isArray(r.map)||r.map.length<LIMITS.minH||r.map.length>LIMITS.maxH||!r.map.every(row=>typeof row==='string'&&row.length===r.map[0].length&&row.length>=LIMITS.minW&&row.length<=LIMITS.maxW&&/^[#.LNBM~_cTSot@KX1-5]+$/.test(row)))return null;
     const w=r.map[0].length,h=r.map.length,model={version:VERSION,id:safeId(r.id,/^custom-[a-z0-9-]{1,40}$/)||'custom-'+Date.now().toString(36),name:String(r.name||'Shared escape').slice(0,40),brief:String(r.brief||'').slice(0,140),author:String(r.author||'').slice(0,30),
       map:r.map.slice(),burrows:clampInt(r.burrows,0,5),pebbles:clampInt(r.pebbles,0,5),tongues:clampInt(r.tongues,0,5),explore:Boolean(r.explore),requiredTreasure:clampInt(r.requiredTreasure,0,99),nextId:clampInt(r.nextId,1,1e6)};
     let n=0;const fresh=prefix=>prefix+(1e6+(++n));
