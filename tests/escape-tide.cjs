@@ -19,3 +19,11 @@ test('an eel lunges at Sally on the edge of its pool, but lies buried when the t
   const wide=room({tide:{period:20,high:10,offset:0}});add(wide,{kind:'eel',spawn:[8,3]});Object.assign(wide.player,{x:3.5,y:1.5});
   ticks(wide,3.5,{x:1});assert.equal(wide.status,'playing','a tile further back is safe');
 });
+test('the Tide Pools follow Storm Heights with five escapes built on the tide and the eel',()=>{
+  const {EscapeCatalog}=require('../public/escape-levels.js'),{EscapeWorld}=require('../public/escape-world.js');
+  const tide=EscapeCatalog.levels.slice(88,93);assert.deepEqual(tide.map(l=>l.id),['low-water','eel-rocks','kelp-maze','shoal-light','great-tide']);
+  assert.ok(EscapeCatalog.regions.includes(88));for(const l of tide){assert.equal(l.loot.reduce((n,t)=>n+t[2],0),10);assert.ok(l.tideFlats.length>0&&l.tide);assert.ok(l.tailDrop);}
+  assert.ok(tide.slice(1).every(l=>l.guards.some(g=>g.kind==='eel')));assert.equal(tide[4].requiredTreasure,6);
+  const w=new EscapeWorld(),c=w.chapters.find(c=>c.theme==='tide');assert.equal(c.name,'Tide Pools');assert.equal(c.start,88);
+  assert.ok(w.paths.some(([a,b])=>w.chapters[a].theme==='storm'&&w.chapters[b]===c),'the Tide Pools open off Storm Heights');
+});
