@@ -1,7 +1,8 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {EscapeAdventure}=require('../public/escape-engine.js');const {EscapeCatalog}=require('../public/escape-levels.js');const {EscapeProgress}=require('../public/escape-progress.js');
+const legacy=require('./fixtures/legacy-levels.json');
 function ticks(g,seconds,input={}){for(let n=0;n<Math.round(seconds*120);n++)g.advance(1/120,input);}
-function works(){const g=new EscapeAdventure({levelId:'kettle-works'});g.tailDrop=false;g.vents=[g.vents[0]];for(const h of g.hunters){Object.assign(h,{x:25.5,y:10.5,patrol:[{x:25.5,y:10.5}]});}return g;}
+function works(){const g=new EscapeAdventure({level:legacy['kettle-works']});g.tailDrop=false;g.vents=[g.vents[0]];for(const h of g.hunters){Object.assign(h,{x:25.5,y:10.5,patrol:[{x:25.5,y:10.5}]});}return g;}
 function untilActive(g,v,limit=12){for(let i=0;i<limit*120&&!v.active;i++)g.advance(1/120,{});return v.active;}
 test('Steam Vents branches off the Rooftops behind twelve challenges, mixing the hawk, owls and ants',()=>{
   const vents=EscapeCatalog.levels.slice(73);assert.deepEqual(vents.map(l=>l.id),['kettle-works','pressure-pipes','boiler-owls','ant-furnace','great-boiler']);
@@ -20,7 +21,7 @@ test('an active jet blocks its lane, and firing on Sally blows her clear without
   const c=works(),u=c.vents[0];const [tx,ty]=u.tiles[1];Object.assign(c.player,{x:tx+.5,y:ty+.5});untilActive(c,u);c.advance(1/120,{});assert.equal(c.blasts,1);assert.equal(c.status,'playing');assert.ok(!u.keys.has(c.tileKey(c.player)));assert.ok(c.player.stamina<70);
 });
 test('steam dazes walking hunters for a moment, but owls ride it out',()=>{
-  const g=new EscapeAdventure({levelId:'kettle-works'}),h=g.hunters[0],v=g.vents[0];g.vents=[v];g.hunters=[h];g.motion.snakes=[g.motion.snakes[0]];const [tx,ty]=v.tiles[1];Object.assign(h,{x:tx+.5,y:ty+.5,patrol:[{x:tx+.5,y:ty+.5}]});
+  const g=new EscapeAdventure({level:legacy['kettle-works']}),h=g.hunters[0],v=g.vents[0];g.vents=[v];g.hunters=[h];g.motion.snakes=[g.motion.snakes[0]];const [tx,ty]=v.tiles[1];Object.assign(h,{x:tx+.5,y:ty+.5,patrol:[{x:tx+.5,y:ty+.5}]});
   untilActive(g,v);g.advance(1/120,{});assert.equal(h.state,'steamed');assert.equal(g.steamed,1);assert.ok(!v.keys.has(g.tileKey(h)));
   Object.assign(g.player,{x:h.x,y:h.y});g.advance(1/120,{});assert.equal(g.status,'playing','a dazed hunter cannot catch');ticks(g,2.6);assert.notEqual(h.state,'steamed');
   const o=new EscapeAdventure({levelId:'boiler-owls'}),owl=o.hunters[0],w=o.vents[0];const [ox,oy]=w.tiles[0];Object.assign(owl,{x:ox+.5,y:oy+.5,perch:{x:ox+.5,y:oy+.5}});untilActive(o,w);o.advance(1/120,{});assert.notEqual(owl.state,'steamed');
