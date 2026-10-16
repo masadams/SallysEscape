@@ -1025,7 +1025,7 @@
  "#.L........N..S.............#",
  "#@.........................1#",
  "#############################"]},
-{explore:false,tailDrop:true,id:"marching-tunnels",name:"Marching Tunnels",brief:"Two columns march through the same hall in opposite loops.",hint:"The two columns loop the central hall in opposite directions. Wait in a side tunnel for a gap in both. Tangle vines grow where the columns cross.",pebbles:2,tongues:1,antTrails:[{path:[[12,5],[18,5],[18,9],[12,9]],groups:3,size:4,speed:1.7},{path:[[11,3],[11,11],[19,11],[19,3]],groups:3,size:4,speed:1.5}],guards:[{kind:"spider",spawn:[5,2],facing:0,patrol:[[2,2],[9,3]]},{kind:"spider",spawn:[25,12],facing:PI,patrol:[[21,12],[28,11]]},{spawn:[23,2],facing:PI,patrol:[[21,1],[28,3]]}],map:[
+{explore:false,tailDrop:true,id:"marching-tunnels",name:"Marching Tunnels",brief:"Two columns march through the same hall in opposite loops.",hint:"The two columns loop the central hall in opposite directions. Wait in a side tunnel for a gap in both. Tangle vines grow where the columns cross.",pebbles:2,tongues:1,antTrails:[{path:[[12,5],[18,5],[18,9],[12,9]],groups:2,size:4,speed:1.7},{path:[[11,3],[11,11],[19,11],[19,3]],groups:2,size:4,speed:1.5}],guards:[{kind:"spider",spawn:[5,2],facing:0,patrol:[[2,2],[9,3]]},{kind:"spider",spawn:[25,12],facing:PI,patrol:[[21,12],[28,11]]},{spawn:[23,2],facing:PI,patrol:[[21,1],[28,3]]}],map:[
  "###############################",
  "#1.............2.............1#",
  "#.L.....N....#####..........L.#",
