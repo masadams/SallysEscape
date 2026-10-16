@@ -32,7 +32,7 @@ function harness() {
   const element=id=>elements[id] ||= {style:{},value:'Tester',disabled:false,innerHTML:'',textContent:'',classList:{add(){},remove(){},toggle(){}},setAttribute(){},focus(){},appendChild(){},insertBefore(){},addEventListener(type,fn){this['on'+type]=fn}};
   const noop=()=>{};
   const sound=()=>({playing:false,loops:0,plays:0,volume:0,volumeChanges:0,stop(){this.playing=false},loop(){this.playing=true;this.loops++},play(){this.playing=true;this.plays++},isPlaying(){return this.playing},setVolume(value){this.volume=value;this.volumeChanges++},getVolume(){return this.volume}});
-  const dc={createLinearGradient:()=>({addColorStop:noop}),fillRect:noop,save:noop,restore:noop,beginPath:noop,rect:noop,clip:noop,globalAlpha:1};
+  const dc={createLinearGradient:()=>({addColorStop:noop}),fillRect:noop,save:noop,restore:noop,beginPath:noop,rect:noop,clip:noop,moveTo:noop,lineTo:noop,ellipse:noop,stroke:noop,fill:noop,globalAlpha:1};
   const c={console:{log:noop,warn:noop,error:noop},URLSearchParams,Promise,AbortSignal,crypto:{randomUUID:()=> "12345678-1234-4123-8123-123456789abc"},
     localStorage:{getItem:key=>storage.get(key),setItem:(key,value)=>storage.set(key,value)},
     navigator:{userAgent:'test'},window:{addEventListener:(name,handler)=>{events['window:'+name]=handler}},document:{hidden:false,addEventListener:(name,handler)=>{events['document:'+name]=handler},getElementById:element,createElement:()=>element(Math.random()),querySelectorAll:()=>[]},

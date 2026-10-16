@@ -315,6 +315,53 @@ function escapeFootsteps(p){
 const ESCAPE_CLOSE_VIEW_KEY='sally-escape-close-view';
 function escapeCloseView(){try{return localStorage.getItem(ESCAPE_CLOSE_VIEW_KEY)!=='0';}catch(_){return true;}}
 function toggleEscapeCloseView(){try{localStorage.setItem(ESCAPE_CLOSE_VIEW_KEY,escapeCloseView()?'0':'1');}catch(_){}updateToolbar();}
+// The floor, walls and other still tiles, drawn once into an offscreen layer and copied each frame;
+// the layer is redrawn only when the map itself changes (a smashed wall, flattened leaves).
+let escapeTileCache=null;
+function drawEscapeStillTiles(g,cell,palette,index){
+  for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){
+    const tile=g.grid[y][x],floor=g.floor(x,y);
+    noStroke();fill(...palette[floor?0:1]);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*0.12);
+    if(!floor){stroke(...palette[2]);strokeWeight(1);line((x+.15)*cell,(y+.12)*cell,(x+.85)*cell,(y+.12)*cell);}
+    // A crack: drawn as wall with a dark, jagged slit only Sally fits through.
+    if(tile==='Y'){noStroke();fill(...palette[1]);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*0.12);fill(6,10,12);beginShape();for(const [dx,dy] of [[.42,0],[.56,.22],[.48,.45],[.6,.7],[.52,1],[.42,1],[.46,.7],[.36,.45],[.46,.22],[.36,0]])vertex((x+dx)*cell,(y+dy)*cell);endShape(CLOSE);}
+    if(tile==='B'){
+      stroke(93,151,160);strokeWeight(1.3);line((x+0.3)*cell,(y+0.2)*cell,(x+0.6)*cell,(y+0.55)*cell);line((x+0.6)*cell,(y+0.55)*cell,(x+0.35)*cell,(y+0.8)*cell);
+    }
+    if(tile==='L'){
+      noStroke();fill(49,109,77);for(const [dx,dy] of [[.3,.4],[.65,.3],[.5,.65]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.45,cell*.4);
+    }
+    if(tile==='N'){
+      noStroke();fill(135,118,92);for(const [dx,dy] of [[.3,.3],[.7,.45],[.4,.7]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.13,cell*.1);
+    }
+    if(tile==='M'){noStroke();fill(93,76,48);ellipse((x+.5)*cell,(y+.5)*cell,cell*.8,cell*.65);fill(113,102,59,140);ellipse((x+.35)*cell,(y+.4)*cell,cell*.4,cell*.24);}
+    if(tile==='V'){stroke(96,172,104);strokeWeight(cell*.14);line(x*cell,(y+.4)*cell,(x+1)*cell,(y+.6)*cell);line(x*cell,(y+.7)*cell,(x+1)*cell,(y+.3)*cell);noStroke();fill(164,206,121);ellipse((x+.5)*cell,(y+.4)*cell,cell*.3,cell*.12);}
+    if(g.level.biome==='desert'&&tile==='.'){stroke(229,179,109,85);strokeWeight(cell*.025);line((x+.18)*cell,(y+.7)*cell,(x+.7)*cell,(y+.62)*cell);}
+    // In the Mushroom Grotto a gap is a black sinkhole with a faint glowing rim, and on Storm Heights
+    // a sheer drop with a pale edge, not a channel.
+    if(tile==='P'&&index>=78&&index<88){const storm=index>=83;noStroke();fill(...(storm?[8,10,16]:[6,4,10]));rect(x*cell,y*cell,cell,cell);for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])if(g.grid[y+dy]?.[x+dx]!=='P'&&g.floor(x+dx,y+dy)){fill(...(storm?[200,210,225,80]:[170,130,230,70]));if(dx)rect((x+(dx>0?.88:0))*cell,y*cell,cell*.12,cell);else rect(x*cell,(y+(dy>0?.88:0))*cell,cell,cell*.12);}if((x*7+y*13)%11===0){fill(190,160,255,60+40*Math.sin(g.elapsed*2+x));ellipse((x+.5)*cell,(y+.5)*cell,cell*.08,cell*.08);}}
+    else if(tile==='P'){
+      noStroke();fill(14,47,66);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*.12);stroke(64,126,155,150);strokeWeight(cell*.025);
+      for(const dy of [.3,.65])line((x+.2)*cell,(y+dy)*cell,(x+.8)*cell,(y+dy)*cell);
+    }
+  }
+}
+function drawEscapeTiles(g,cell,palette,index){
+  const key=g.level.id+'|'+cell+'|'+index+'|'+g.grid.map(r=>r.join('')).join('/'),w=g.width*cell,h=g.height*cell;
+  // Without a real p5 sketch (the test harness) the tiles are simply drawn every frame.
+  if(!p5.instance?._renderer||!drawingContext.drawImage)drawEscapeStillTiles(g,cell,palette,index);
+  else{if(escapeTileCache?.key!==key){
+    if(!escapeTileCache||escapeTileCache.w!==w||escapeTileCache.h!==h){escapeTileCache?.layer.remove();escapeTileCache={layer:createGraphics(w,h),w,h};}
+    const layer=escapeTileCache.layer,host=p5.instance,renderer=host._renderer;layer.clear();
+    // Point the drawing calls at the layer for one pass, then back at the screen.
+    host._renderer=layer._renderer;try{push();drawEscapeStillTiles(g,cell,palette,index);pop();}finally{host._renderer=renderer;}
+    escapeTileCache.key=key;
+  }
+  drawingContext.drawImage(escapeTileCache.layer.elt,0,0,w,h);}
+  for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.grid[y][x]==='U'){
+      noStroke();fill(22,99,121);rect(x*cell,y*cell,cell,cell);stroke(112,213,211,100);strokeWeight(cell*.035);const tide=Math.sin(g.elapsed*1.4+x*.5+y)*.05;for(const dy of [.3,.7])line((x+.15)*cell,(y+dy+tide)*cell,(x+.85)*cell,(y+dy-tide)*cell);
+    }
+}
 function drawEscapeVault(){
   const g=escapeGame,close=mobile&&escapeCloseView(),top=mobile?(close?8:45):height<=550?126:164,bottom=mobile?(close?8:65):70,view=escapeCameraFor(g,width,height-top-bottom,escapeProgress.data.view==='overview',close);view.oy+=top;const {cell,ox,oy}=view;
   const palettes=[[[16,30,36],[39,65,74],[65,93,101]],[[19,34,29],[48,74,56],[78,103,76]],[[33,29,26],[77,63,48],[108,89,66]],[[21,28,37],[46,61,80],[75,91,109]],[[22,24,41],[54,57,85],[86,89,124]],[[14,31,26],[38,68,49],[58,92,66]],[[34,29,20],[80,67,39],[123,102,60]],[[16,30,39],[34,61,73],[55,90,103]],[[26,22,37],[62,48,76],[100,81,116]]];
@@ -335,35 +382,7 @@ function drawEscapeVault(){
   const ventPalettes=[[[30,24,22],[96,66,52],[160,112,84]],[[26,24,26],[84,70,66],[148,124,112]],[[32,26,20],[104,74,44],[172,128,80]],[[28,22,24],[92,58,56],[158,100,92]],[[30,26,22],[100,80,60],[166,136,100]]];
   const palette=g.level.custom?[[24,40,34],[58,84,70],[110,140,110]]:g.level.hidden?[[38,30,14],[96,76,32],[176,144,64]]:index>=88?tidePalettes[(index-88)%tidePalettes.length]:index>=83?stormPalettes[(index-83)%stormPalettes.length]:index>=78?grottoPalettes[(index-78)%grottoPalettes.length]:index>=73?ventPalettes[(index-73)%ventPalettes.length]:index>=68?frostPalettes[(index-68)%frostPalettes.length]:index>=63?antPalettes[(index-63)%antPalettes.length]:index>=58?rooftopPalettes[(index-58)%rooftopPalettes.length]:index>=53?lanternPalettes[(index-53)%lanternPalettes.length]:index>=49?hollowPalettes[(index-49)%hollowPalettes.length]:index>=47?biomePalettes[index-47]:index>=42?livingPalettes[index-42]:index>=37?glowPalettes[index-37]:index>=32?junglePalettes[index-32]:index>=27?wakingPalettes[index-27]:palettes[index]||(index>=17?deepPalettes[(index-17)%deepPalettes.length]:palettes[0]);
   background(10,18,25);push();translate(ox,oy);textFont('sans-serif');textAlign(CENTER,CENTER);
-  for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){
-    const tile=g.grid[y][x],floor=g.floor(x,y);
-    noStroke();fill(...palette[floor?0:1]);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*0.12);
-    if(!floor){stroke(...palette[2]);strokeWeight(1);line((x+.15)*cell,(y+.12)*cell,(x+.85)*cell,(y+.12)*cell);}
-    // A crack: drawn as wall with a dark, jagged slit only Sally fits through.
-    if(tile==='Y'){noStroke();fill(...palette[1]);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*0.12);fill(6,10,12);beginShape();for(const [dx,dy] of [[.42,0],[.56,.22],[.48,.45],[.6,.7],[.52,1],[.42,1],[.46,.7],[.36,.45],[.46,.22],[.36,0]])vertex((x+dx)*cell,(y+dy)*cell);endShape(CLOSE);}
-    if(tile==='B'){
-      stroke(93,151,160);strokeWeight(1.3);line((x+0.3)*cell,(y+0.2)*cell,(x+0.6)*cell,(y+0.55)*cell);line((x+0.6)*cell,(y+0.55)*cell,(x+0.35)*cell,(y+0.8)*cell);
-    }
-    if(tile==='L'){
-      noStroke();fill(49,109,77);for(const [dx,dy] of [[.3,.4],[.65,.3],[.5,.65]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.45,cell*.4);
-    }
-    if(tile==='N'){
-      noStroke();fill(135,118,92);for(const [dx,dy] of [[.3,.3],[.7,.45],[.4,.7]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.13,cell*.1);
-    }
-    if(tile==='M'){noStroke();fill(93,76,48);ellipse((x+.5)*cell,(y+.5)*cell,cell*.8,cell*.65);fill(113,102,59,140);ellipse((x+.35)*cell,(y+.4)*cell,cell*.4,cell*.24);}
-    if(tile==='V'){stroke(96,172,104);strokeWeight(cell*.14);line(x*cell,(y+.4)*cell,(x+1)*cell,(y+.6)*cell);line(x*cell,(y+.7)*cell,(x+1)*cell,(y+.3)*cell);noStroke();fill(164,206,121);ellipse((x+.5)*cell,(y+.4)*cell,cell*.3,cell*.12);}
-    if(tile==='U'){
-      noStroke();fill(22,99,121);rect(x*cell,y*cell,cell,cell);stroke(112,213,211,100);strokeWeight(cell*.035);const tide=Math.sin(g.elapsed*1.4+x*.5+y)*.05;for(const dy of [.3,.7])line((x+.15)*cell,(y+dy+tide)*cell,(x+.85)*cell,(y+dy-tide)*cell);
-    }
-    if(g.level.biome==='desert'&&tile==='.'){stroke(229,179,109,85);strokeWeight(cell*.025);line((x+.18)*cell,(y+.7)*cell,(x+.7)*cell,(y+.62)*cell);}
-    // In the Mushroom Grotto a gap is a black sinkhole with a faint glowing rim, and on Storm Heights
-    // a sheer drop with a pale edge, not a channel.
-    if(tile==='P'&&index>=78&&index<88){const storm=index>=83;noStroke();fill(...(storm?[8,10,16]:[6,4,10]));rect(x*cell,y*cell,cell,cell);for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])if(g.grid[y+dy]?.[x+dx]!=='P'&&g.floor(x+dx,y+dy)){fill(...(storm?[200,210,225,80]:[170,130,230,70]));if(dx)rect((x+(dx>0?.88:0))*cell,y*cell,cell*.12,cell);else rect(x*cell,(y+(dy>0?.88:0))*cell,cell,cell*.12);}if((x*7+y*13)%11===0){fill(190,160,255,60+40*Math.sin(g.elapsed*2+x));ellipse((x+.5)*cell,(y+.5)*cell,cell*.08,cell*.08);}}
-    else if(tile==='P'){
-      noStroke();fill(14,47,66);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*.12);stroke(64,126,155,150);strokeWeight(cell*.025);
-      for(const dy of [.3,.65])line((x+.2)*cell,(y+dy)*cell,(x+.8)*cell,(y+dy)*cell);
-    }
-  }
+  drawEscapeTiles(g,cell,palette,index);
   if(g.level.rootWheel){const [x,y]=g.level.rootWheel,angle=g.wheelAngle;push();translate((x+.5)*cell,(y+.5)*cell);rotate(angle);noFill();stroke(106,147,76,95);strokeWeight(cell*.11);ellipse(0,0,cell*2.7,cell*2.7);for(let a=0;a<TWO_PI;a+=PI/2)line(0,0,Math.cos(a)*cell*1.35,Math.sin(a)*cell*1.35);pop();}
   for(const gate of g.gates){
     const s=gate.switch,label=gate.closingAt!==null?'!':gate.duration&&gate.open?String(Math.max(0,Math.ceil(gate.expiresAt-g.elapsed))):gate.sealed?'×':gate.open?'✓':s?gate.id==='blue'?'B':'A':'◇',gateColor=gate.sealed?[230,137,148]:gate.color;
@@ -442,7 +461,7 @@ function drawEscapeVault(){
   if(view.follow&&!g.visibleTile(Math.floor(h.x),Math.floor(h.y)))continue;
   if(!g.level.dark&&!['millipede','cricket','moth','mimic','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','crab','fox'].includes(h.kind)&&['patrol','alert'].includes(h.state)){
     noStroke();fill(245,171,105,18);beginShape();vertex(h.x*cell,h.y*cell);
-    for(let a=-cone;a<=cone+.01;a+=cone/6){let reach=0;for(let d=.2;d<=4.5;d+=.2){if(!g.clear(h,{x:h.x+Math.cos(ang+a)*d,y:h.y+Math.sin(ang+a)*d},true))break;reach=d;}vertex((h.x+Math.cos(ang+a)*reach)*cell,(h.y+Math.sin(ang+a)*reach)*cell);}endShape(CLOSE);
+    for(let a=-cone;a<=cone+.01;a+=cone/6){let reach=0,from=h;for(let d=.2;d<=4.5;d+=.2){const to={x:h.x+Math.cos(ang+a)*d,y:h.y+Math.sin(ang+a)*d};if(!g.clear(from,to,true))break;reach=d;from=to;}vertex((h.x+Math.cos(ang+a)*reach)*cell,(h.y+Math.sin(ang+a)*reach)*cell);}endShape(CLOSE);
   }
   if(h.kind==='toad'&&h.state==='windup'){let d=0;const dx=Math.cos(h.facing),dy=Math.sin(h.facing);while(d<5.5&&g.sightFloor(Math.floor(h.x+dx*(d+.1)),Math.floor(h.y+dy*(d+.1))))d+=.1;stroke(240,120,140,90+70*Math.sin(g.elapsed*22));strokeWeight(cell*.06);drawingContext.setLineDash([cell*.12,cell*.12]);line(h.x*cell,h.y*cell,(h.x+dx*d)*cell,(h.y+dy*d)*cell);drawingContext.setLineDash([]);}
   if(h.kind==='toad'&&h.state==='tongue'&&h.tongueLength>0){stroke(232,110,140);strokeWeight(cell*.12);line(h.x*cell,h.y*cell,(h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell);noStroke();fill(250,150,170);ellipse((h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell,cell*.22,cell*.22);}
@@ -465,6 +484,7 @@ function drawEscapeVault(){
   drawingContext.clip();drawingContext.lineCap='round';drawingContext.lineJoin='round';
   // An angler's lure is a light, so it shows even in the dark; the angler itself only shows when it rises.
   g.hunters.filter(h=>h.kind==='angler').forEach(h=>drawEscapeAngler(h,cell,g.elapsed));
+  g.motion.refresh?.();
   g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='angler')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='wasp'?drawEscapeWaspNest(h,cell,g.elapsed):h.kind==='dragonfly'?drawEscapeDragonfly(h,cell,g.elapsed):h.kind==='mole'?drawEscapeMole(h,cell,g.elapsed):h.kind==='bat'?drawEscapeBat(h,cell,g.elapsed,g):h.kind==='eel'?drawEscapeEel(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
   drawingContext.save();drawingContext.globalAlpha*=g.player.hidden?.48:1;
   for(const h of g.hunters)if(h.state==='clash'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noFill();stroke(255,193,107,180);strokeWeight(cell*.035);ellipse(h.x*cell,h.y*cell,cell*(.9+Math.sin(g.elapsed*14)*.08),cell*.75);}
@@ -700,17 +720,21 @@ function drawEscapeMillipede(h,model,cell,watched=true,clock=0){
   // travelled distance, so observation freezes every foot as well as the head.
   // Out of Sally's gaze it is a dim shape creeping after her; once she faces it, it is solid and still.
   drawingContext.save();if(!watched)drawingContext.globalAlpha*=h.state==='follow'?.42+.1*Math.sin(clock*6):.38;
-  for(let i=model.joints.length-2;i>=0;i--){
-    const p=model.joints[i],a=model.angles[i],w=.13*(1-i/model.joints.length*.35);
-    push();translate(p.x*cell,p.y*cell);rotate(a);
-    stroke(190,132,72);strokeWeight(cell*.024);
+  // Thirty-odd segments a body: drawn straight onto the canvas, without p5's per-call state
+  // bookkeeping, which made a room of millipedes slow.
+  const ctx=drawingContext,n=model.joints.length;ctx.lineCap='round';
+  for(let i=n-2;i>=0;i--){
+    const p=model.joints[i],a=model.angles[i],w=.13*(1-i/n*.35),c=Math.cos(a),sn=Math.sin(a),px=p.x*cell,py=p.y*cell;
+    const at=(lx,ly)=>[px+(lx*c-ly*sn)*cell,py+(lx*sn+ly*c)*cell];
+    ctx.beginPath();
     for(const side of [-1,1])for(const offset of [-.022,.022]){
       const step=Math.sin(h.distanceMoved*14-i*.8+side)*.035;
-      line(offset*cell,side*w*cell,(offset-.045+step)*cell,side*(w+.08)*cell);
-      line((offset-.045+step)*cell,side*(w+.08)*cell,(offset-.08+step)*cell,side*(w+.14)*cell);
+      ctx.moveTo(...at(offset,side*w));ctx.lineTo(...at(offset-.045+step,side*(w+.08)));ctx.lineTo(...at(offset-.08+step,side*(w+.14)));
     }
-    stroke(39,23,20);strokeWeight(cell*.023);fill(i%2?94:111,50,30);ellipse(0,0,cell*.15,w*cell*2);
-    noStroke();fill(199,130,64,180);ellipse(cell*.018,-w*cell*.45,cell*.04,cell*.065);pop();
+    ctx.strokeStyle='rgb(190,132,72)';ctx.lineWidth=cell*.024;ctx.stroke();
+    ctx.beginPath();ctx.ellipse(px,py,cell*.075,w*cell,a,0,Math.PI*2);ctx.fillStyle=i%2?'rgb(94,50,30)':'rgb(111,50,30)';ctx.fill();
+    ctx.strokeStyle='rgb(39,23,20)';ctx.lineWidth=cell*.023;ctx.stroke();
+    const [sx,sy]=at(.018,-w*.45);ctx.beginPath();ctx.ellipse(sx,sy,cell*.02,cell*.0325,a,0,Math.PI*2);ctx.fillStyle='rgba(199,130,64,0.706)';ctx.fill();
   }
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);noStroke();fill(145,78,36);ellipse(cell*.02,0,cell*.32,cell*.3);
   stroke(225,177,106);strokeWeight(cell*.025);for(const side of [-1,1]){line(cell*.13,side*cell*.09,cell*.29,side*cell*.2);line(cell*.29,side*cell*.2,cell*.39,side*cell*.16);}pop();
