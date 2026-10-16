@@ -56,7 +56,7 @@ function extractPlan(Engine,recording){
   for(const c of recording.commands){
     if(c.kind!=='move'){flushWait();plan.push({type:'go',x:g.player.x,y:g.player.y,sprint:false,exact:true});plan.push({type:'act',kind:c.kind,aim:lastInput&&(lastInput.x||lastInput.y)?{x:lastInput.x,y:lastInput.y}:null});g[ACT[c.kind]]();continue;}
     for(let n=0;n<c.frames;n++){
-      g.advance(1/120,c);if(g.player.flight){last={x:g.player.flight.to.x,y:g.player.flight.to.y};continue;}if(!(c.x||c.y)){still++;continue;}
+      const flying=Boolean(g.player.flight);g.advance(1/120,c);if(g.player.flight){if(!flying){if(still)flushWait();plan.push({type:'go',x:g.player.flight.from.x,y:g.player.flight.from.y,sprint:false});}last={x:g.player.flight.to.x,y:g.player.flight.to.y};continue;}if(!(c.x||c.y)){still++;continue;}
       if(still)flushWait();
       const d=Math.hypot(g.player.x-last.x,g.player.y-last.y),turned=lastInput&&(lastInput.x!==c.x||lastInput.y!==c.y);
       if(d>=.35||turned&&d>.05){plan.push({type:'go',x:g.player.x,y:g.player.y,sprint:Boolean(c.sprint)});last={x:g.player.x,y:g.player.y};}
