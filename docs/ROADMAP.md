@@ -160,7 +160,13 @@ Steam Vents is the steepest climb, with king cobras in its hardest boilers:
 - Ant Furnace: an ant column that steam does not stop, and a furnace door that opens only while the beetle presses its slab.
 - The Great Boiler: two king cobras in the boiler hall, an owl, a fox and the ants outside; the key seals the boiler room and a crack is the way out.
 
-Every region now has text maps. Still on the fix list: the new Nightbloom Reach layout (the old one stays live until it has a winning run).
+Every region now has text maps. The Lantern Marsh's Firefly Ford gained a bog heron, a rooted striker that stabs along its beak line and never sees a swimmer. Still on the fix list: the new Nightbloom Reach layout (the old one stays live until it has a winning run).
+
+### Fix list
+Things flagged to come back to:
+- **Nightbloom Reach** (escape 42): the new text-map layout is drawn but has no winning run yet, so the old layout stays live.
+- **The Long Way Home** (mega bonus, opens with the first ten areas mastered): built on a work branch; its winning run is still being searched for. Bonus escapes only need a finish, so the run may use the tail drop or a chase.
+- **Level builder**: being built out (password, doors and links, hazards, a shared community area).
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).
