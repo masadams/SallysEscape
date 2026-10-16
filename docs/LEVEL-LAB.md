@@ -127,10 +127,11 @@ recordings are reported separately.
 
 Defaults are 600 expanded states, width 8, a 20-second search budget and three
 timing variations per solved case. Options can increase those budgets. Split
-work reproducibly with `--shard 1 --shards 8` through shard 8. The dedicated
-GitHub Actions workflow runs all eight shards on relevant pull requests, where
-the full fixture and normal networking are available, and uploads the reports
-and replays. Its summary distinguishes reference verification from new search
+work reproducibly with `--shard 1 --shards 8` through shard 8. On relevant pull
+requests, the dedicated GitHub Actions workflow runs the solver tests and the
+three-level smoke sample. Run that workflow manually to opt into the full eight
+catalog shards; this avoids repeating 114 independent searches on every push.
+Both modes upload their reports and replays. The summary distinguishes reference verification from new search
 success. Compare equal settings across revisions; this is a measured baseline,
 not a required 100% solver success threshold.
 
