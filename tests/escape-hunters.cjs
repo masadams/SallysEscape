@@ -186,3 +186,16 @@ test('a pebble sends a hermit crab back into its shell, and a hidden Sally never
   const c=arena('crab',[8,6],[3,9],{axis:'x',range:3});Object.assign(c.g.player,{x:9.5,y:7.5});ticks(c.g,.3);assert.equal(c.h.state,'peek');ticks(c.g,.25,{x:1,sprint:true});
   for(let i=0;i<120*4&&c.g.status==='playing';i++)c.g.advance(1/120,{y:1,sprint:true});assert.equal(c.g.status,'playing');ticks(c.g,5);assert.equal(c.h.state,'shell');assert.ok(Math.abs(c.h.x-8.5)<.06,'and walks home');
 });
+
+test('a snow fox hears footsteps close by and pounces far and fast with only a blink of warning',()=>{
+  const {g,h}=arena('fox',[10,6],[6,6]);h.pauseUntil=0;
+  const states=[];for(let i=0;i<120*2&&g.status==='playing';i++){g.advance(1/120,{x:1});states.push(h.state);}
+  assert.equal(g.status,'caught');assert.match(g.result.message,/snow fox/);assert.ok(states.includes('pounce'));
+  const crouch=states.filter(s=>s==='crouch').length;assert.ok(crouch<=30,'the warning lasts a blink');
+});
+test('a snow fox ignores a still or hidden Sally, but sprinting gives her away from far off, and a pebble draws its pounce',()=>{
+  const still=arena('fox',[10,6],[7,6]);still.h.patrol=[still.h.patrol[0]];ticks(still.g,3);assert.equal(still.g.status,'playing');
+  const far=arena('fox',[12,6],[6,6]);far.h.patrol=[far.h.patrol[0]];ticks(far.g,.6,{y:1});assert.ok(!['crouch','pounce'].includes(far.h.state),'quiet walking far off is safe');
+  const loud=arena('fox',[12,6],[6,6]);loud.h.patrol=[loud.h.patrol[0]];ticks(loud.g,.4,{y:1,sprint:true});assert.ok(['crouch','pounce','sniff'].includes(loud.h.state),'a sprint is heard');
+  const lure=arena('fox',[10,6],[3,10]);lure.h.patrol=[lure.h.patrol[0]];lure.g.decoy={x:13.5,y:6.5,expires:4};ticks(lure.g,.8);assert.ok(lure.h.x>10.6,'it pounced on the pebble');assert.equal(lure.g.status,'playing');
+});

@@ -494,7 +494,7 @@
       const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='angler'&&h.kind!=='flytrap'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(h.kind==='beetle'&&h.state==='charge'?.62:.48)&&this.clear(p,h));
       if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
       if(this.elapsed>=this.invulnerableUntil && captor){
-        this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. Try another route through the ruins.':captor.kind==='mimic'?'The plant snapped at its marked spot. Provoke it from a distance or step aside when it opens.':captor.kind==='crab'?'A hermit crab scuttled out and pinched Sally. Pass its lane while it is tucked in, or send it back into its shell with a pebble.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'The guard spotted you. Break sight at a corner or use a pebble.');return;
+        this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. Try another route through the ruins.':captor.kind==='mimic'?'The plant snapped at its marked spot. Provoke it from a distance or step aside when it opens.':captor.kind==='fox'?'A snow fox heard Sally and pounced. Stand still, keep to quiet ground, or toss a pebble to send it pouncing elsewhere.':captor.kind==='crab'?'A hermit crab scuttled out and pinched Sally. Pass its lane while it is tucked in, or send it back into its shell with a pebble.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'The guard spotted you. Break sight at a corner or use a pebble.');return;
       }
       if(this.challenge?.noChase&&this.alarms>0){this.finish('failed','A guard gave chase. Break sight before it is sure next time.');return;}
       if(this.challenge?.noChill&&this.player.chilled){this.finish('failed','Sally got too cold. Thaw on warm stones before the frost slows her.');return;}
@@ -549,6 +549,7 @@
       if(h.kind==='angler'){this.updateAngler(dt,h);return;}
       if(h.kind==='flytrap'){this.updateFlytrap(dt,h);return;}
       if(h.kind==='crab'){this.updateCrab(dt,h);return;}
+      if(h.kind==='fox'){this.updateFox(dt,h);return;}
       const p=this.player,previousState=h.state;
       // Nearby visible danger overrides a lure; a pebble cannot make it ignore a bite.
       const seen=this.seesPlayer(h),heard=(p.noisy||p.sprinting)&&!p.hidden&&this.audible(h,p,p.sprinting?6:3.5);
@@ -617,6 +618,27 @@
         return;
       }
       if(h.state==='sink'&&this.elapsed>=h.phaseUntil)h.state='lurking';
+    }
+    // Snow fox: it hunts by ear, not by eye. Footsteps close by, a sprint or noisy ground further off,
+    // or a pebble, and it crouches for a blink and pounces on the sound, far and fast, with none of
+    // the usual warning. Then it sniffs about where it landed before going back to its rounds.
+    updateFox(dt,h){
+      const p=this.player;
+      if(h.state==='crouch'){if(this.elapsed>=h.phaseUntil){h.state='pounce';h.pounceFrom=copy(h);h.phaseUntil=this.elapsed+.6;this.events.push('skitter');}return;}
+      if(h.state==='pounce'){
+        const remaining=distance(h,h.aim),step=Math.min(remaining,8*dt),next={x:h.x+Math.cos(h.facing)*step,y:h.y+Math.sin(h.facing)*step};
+        if(remaining<.05||this.elapsed>=h.phaseUntil||!this.fits(next,.22,h)){h.state='sniff';h.phaseUntil=this.elapsed+1.6;h.path=[];return;}
+        h.x=next.x;h.y=next.y;h.distanceMoved+=step;return;
+      }
+      const heard=(p.noisy||p.sprinting)&&this.audible(h,p,7)||p.moving&&!p.hidden&&this.audible(h,p,2.6),lure=this.decoy&&this.decoy.expires!==h.lastLure&&this.audible(h,this.decoy,7);
+      if((heard||lure)&&this.elapsed>=(h.calmUntil||0)){
+        const target=lure&&!heard?copy(this.decoy):this.lead(.2);if(lure)h.lastLure=this.decoy.expires;
+        const d=Math.min(distance(h,target)+.4,4.5),a=Math.atan2(target.y-h.y,target.x-h.x);
+        h.aim={x:h.x+Math.cos(a)*d,y:h.y+Math.sin(a)*d};h.facing=a;h.state='crouch';h.phaseUntil=this.elapsed+.22;h.reason='heard';h.calmUntil=this.elapsed+2.2;this.alarms++;return;
+      }
+      if(h.state==='sniff'){if(this.elapsed<h.phaseUntil)return;h.state='patrol';}
+      const target=h.patrol[h.routeIndex];if(distance(h,target)<.1){h.routeIndex=(h.routeIndex+1)%h.patrol.length;return;}
+      h.facing=Math.atan2(target.y-h.y,target.x-h.x);this.moveHunter(target,1.25*dt,h);
     }
     // Hermit crab: hides in its shell until Sally comes close, peeks out, then scuttles sideways
     // along its beach lane to cut her off and pinch. A pebble landing by it sends it back into
@@ -980,7 +1002,7 @@
       if(this.grid[Math.floor(h.y)]?.[Math.floor(h.x)]==='M')budget*=.72;
       if(h.kind==='sea-snake')budget*=this.water(h)?1.05:.65;
       // Cold-blooded hunters crawl in the frozen rooms; owls and moths do not mind.
-      if(this.cold.has(this.tileKey(h))&&!['owl','moth'].includes(h.kind))budget*=.6;
+      if(this.cold.has(this.tileKey(h))&&!['owl','moth','fox'].includes(h.kind))budget*=.6;
       const id=Math.floor(target.x)+','+Math.floor(target.y);
       if(h.targetId!==id || !h.path.length){h.path=this.route(h,target,h);h.targetId=id;}
       while(h.path.length&&budget>0){
