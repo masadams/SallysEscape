@@ -11,7 +11,8 @@
     "prepare:static": "node scripts/prepare-static.cjs",
     "test": "node --test tests/*.cjs",
     "level:lab": "node scripts/level-lab.cjs",
-    "level:benchmark": "node scripts/level-benchmark.cjs"
+    "level:benchmark": "node scripts/level-benchmark.cjs",
+    "level:smoke": "node scripts/level-benchmark.cjs --only quiet-vault,leafy-crossroads,fern-cloister --width 2 --budget 200 --milliseconds 10000 --trials 0 --out work/smoke"
   },
   "devDependencies": {
     "p5": "1.11.2",

@@ -13,15 +13,16 @@ const USAGE=`Level lab: find and check legal solutions without editing maps.
   npm run level:lab -- replay work/quiet-vault/replay.json
   npm run level:lab -- stress work/quiet-vault/replay.json --trials 12 --jitter 6 --seed 1
 Options: --budget 1500 --width 24 --depth 160 --seconds 120 --trials 8
-         --milliseconds 60000 --jitter 6 (frames at 120 Hz) --seed 1 --no-tail
+         --milliseconds 60000 --frames 1000000 --jitter 6 (frames at 120 Hz) --seed 1 --no-tail
          --reuse previous/replay.json (try previous inputs against this map first)
+         --no-macro (disable goal-directed route segments for comparison)
 Exit codes: 0 solved/replay passed; 1 unresolved/replay failed/stress failure; 2 invalid input.
 Search uses full game state. Results do not certify human difficulty or impossibility.`;
 function parse(argv){
-  const flags={},pos=[];const numeric=new Set(['budget','width','depth','seconds','milliseconds','trials','jitter','seed']);
+  const flags={},pos=[];const numeric=new Set(['budget','width','depth','seconds','milliseconds','frames','trials','jitter','seed']);
   for(let i=0;i<argv.length;i++){
     const arg=argv[i];if(!arg.startsWith('--')){pos.push(arg);continue;}
-    const key=arg.slice(2);if(key==='no-tail'){flags.allowTail=false;continue;}if(key==='help'){flags.help=true;continue;}
+    const key=arg.slice(2);if(key==='no-tail'){flags.allowTail=false;continue;}if(key==='no-macro'){flags.macro=false;continue;}if(key==='help'){flags.help=true;continue;}
     if(!numeric.has(key)&&!['out','custom','route','reuse'].includes(key))throw new Error('Unknown option '+arg);
     const value=argv[++i];if(value===undefined||value.startsWith('--'))throw new Error('Missing value for '+arg);
     flags[key]=numeric.has(key)?Number(value):value;

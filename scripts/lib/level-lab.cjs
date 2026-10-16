@@ -60,9 +60,10 @@ function stress(options,commands,{trials=8,jitter=6,seed=1,allowTail=true}={}){
   return {kind:'open-loop timing stress; not a human win-rate estimate',trials,jitterFrames:jitter,seed,wins:runs.filter(r=>r.won).length,runs};
 }
 function settings(config={}){
-  const defaults={budget:1500,width:24,depth:160,seconds:120,milliseconds:60000,allowTail:true};
+  const defaults={budget:1500,width:24,depth:160,seconds:120,milliseconds:60000,frames:1000000,allowTail:true,macro:true};
   const s=Object.fromEntries(Object.entries(defaults).map(([k,v])=>[k,config[k]??v]));
-  for(const [k,max] of [['budget',100000],['width',256],['depth',1000],['seconds',300],['milliseconds',600000]])if(!Number.isInteger(s[k])||s[k]<1||s[k]>max)throw new Error('Invalid '+k+' (1–'+max+')');
+  for(const [k,max] of [['budget',100000],['width',256],['depth',1000],['seconds',300],['milliseconds',600000],['frames',100000000]])if(!Number.isInteger(s[k])||s[k]<1||s[k]>max)throw new Error('Invalid '+k+' (1–'+max+')');
+  for(const k of ['allowTail','macro'])if(typeof s[k]!=='boolean')throw new Error('Invalid '+k+' (boolean required)');
   return s;
 }
 // Optimistic distances guide search only: gates, cracked walls and gaps may be
@@ -103,8 +104,29 @@ function signature(g){
   const q=n=>Math.round((n||0)*4);
   return JSON.stringify([q(g.player.x),q(g.player.y),g.player.facing,g.player.tongueAim,Math.floor(g.elapsed*2),Math.floor(g.player.stamina/20),Math.floor(g.player.warmth/20),g.hasKey,g.keyByTongue,g.loot.map(p=>p.taken),g.treasure,g.decoys,g.burrows,g.tongues,g.seeds,g.camos,g.hasTail,g.alarms,g.steamed,g.gates.map(p=>[p.open,p.sealed,p.bracedUntil,p.expiresAt]),[...g.reactionsFired],g.hunters.map(h=>[q(h.x),q(h.y),h.state,q(h.awareness),h.routeIndex]),g.grid.map(row=>row.join('')).join(''),g.lookUntil,g.camoUntil]);
 }
-function candidates(g){
-  const out=[],x=Math.floor(g.player.x),y=Math.floor(g.player.y);
+function goalRoutes(g){
+  const objectives=[];
+  if(!g.hasKey)objectives.push(g.key);
+  if(g.hasKey&&g.exitUnlocked())objectives.push(g.exit);
+  if(g.treasure<g.requiredTreasure)objectives.push(...g.loot.filter(p=>!p.taken));
+  for(const gate of g.gates)if(!gate.sealed&&!gate.open){
+    if(gate.switch)objectives.push(gate.switch);
+    objectives.push(...gate.plates,...gate.levers);
+  }
+  const unique=new Set(),routes=[];
+  for(const target of objectives){
+    // Recompute on this branch's real geometry, including closed gates and
+    // collapsed bridges. Short segments leave room to react to moving threats.
+    const waypoints=g.route(g.player,target).slice(0,6);
+    if(!waypoints.length)continue;
+    const key=JSON.stringify(waypoints);if(unique.has(key))continue;unique.add(key);
+    for(const sprint of [true,false])routes.push({type:'route',waypoints,sprint});
+    if(g.level.gaze)routes.push({type:'route',waypoints,sprint:true,lookBack:true});
+  }
+  return routes;
+}
+function candidates(g,{macro=true}={}){
+  const out=macro?goalRoutes(g):[],x=Math.floor(g.player.x),y=Math.floor(g.player.y);
   for(const [dx,dy]of DIRS){
     if(g.actorFloor(x+dx,y+dy,null))for(const sprint of [true,false]){
       const move={type:'tile',target:{x:x+dx+.5,y:y+dy+.5},sprint};out.push(move);
@@ -124,22 +146,31 @@ function execute(parent,choice,config){
   // The rig contains an arrow function closing over its original game. A plain
   // deep copy would still read the parent's grid after a gate/bridge changes.
   g.motion.floor=(x,y)=>g.floor(x,y);
-  const tick=(x,y,sprint)=>{if(g.status!=='playing'||g.elapsed>=config.seconds)return false;g.advance(1/FPS,{x,y,sprint});append(commands,{kind:'move',frames:1,x,y,sprint});return true;};
+  const tick=(x,y,sprint)=>{if(g.status!=='playing'||g.elapsed>=config.seconds)return false;if(config.consumeFrame&&!config.consumeFrame())return false;g.advance(1/FPS,{x,y,sprint});append(commands,{kind:'move',frames:1,x,y,sprint});return true;};
   const wait=frames=>{for(let i=0;i<frames;i++)if(!tick(0,0,false))break;};
   if(choice.lookBack){if(!g.lookBack())return null;commands.push({kind:'lookBack'});}
-  if(choice.type==='tile'){
+  const walk=target=>{
     for(let n=0;n<240&&g.status==='playing'&&g.elapsed<config.seconds;n++){
-      const dx=choice.target.x-g.player.x,dy=choice.target.y-g.player.y;
-      if(Math.hypot(dx,dy)<.09)break;
+      const dx=target.x-g.player.x,dy=target.y-g.player.y;
+      if(Math.hypot(dx,dy)<.09)return true;
       // Keyboard-like digital movement; no exact fractional input or teleport.
-      tick(Math.abs(dx)>.055?Math.sign(dx):0,Math.abs(dy)>.055?Math.sign(dy):0,choice.sprint);
+      if(!tick(Math.abs(dx)>.055?Math.sign(dx):0,Math.abs(dy)>.055?Math.sign(dy):0,choice.sprint))return false;
       if(n>20&&!g.player.moving&&!g.player.flight)break;
     }
+    return false;
+  };
+  if(choice.type==='tile'){
+    walk(choice.target);
+  }else if(choice.type==='route'){
+    for(const target of choice.waypoints)if(!walk(target))break;
+    // Escaping requires holding on the exit; do not make the beam discover
+    // that finishing wait through unrelated idle branches.
+    if(g.status==='playing'&&g.exitUnlocked()&&Math.hypot(g.player.x-g.exit.x,g.player.y-g.exit.y)<.3)wait(90);
   }else if(choice.type==='input'){
     for(let n=0;n<choice.frames;n++)if(!tick(choice.x,choice.y,choice.sprint))break;
   }else{
     // Facing is changed using the same movement input available to the player.
-    if(choice.x!==undefined)tick(choice.x,choice.y,false);
+    if(choice.x!==undefined&&!tick(choice.x,choice.y,false))return null;
     if(g.status!=='playing'||!g[ACTIONS[choice.kind]]())return null;
     commands.push({kind:choice.kind});wait(choice.kind==='camo'?90:30);
   }
@@ -150,7 +181,8 @@ function commandsFor(node){const parts=[];for(let n=node;n?.parent;n=n.parent)pa
 function solve(options,config={}){
   const cfg=settings(config),initial=new EscapeAdventure(options),evaluate=makeEvaluator(initial),started=Date.now();
   const root={g:initial,parent:null,commands:[],...evaluate(initial)};
-  let beam=[root],best=root,expanded=0,generated=0,depth=0,winner=null,reason='depth-limit',memory=null;
+  let beam=[root],best=root,expanded=0,generated=0,simulatedFrames=0,depth=0,winner=null,reason='depth-limit',memory=null;
+  const executionConfig={...cfg,consumeFrame:()=>{if(simulatedFrames>=cfg.frames)return false;simulatedFrames++;return true;}};
   if(config.reuseCommands){
     const check=replay(options,config.reuseCommands,{allowTail:cfg.allowTail});memory={attempted:true,...check};
     if(check.won)return {schemaVersion:VERSION,status:'solved',reason:'reused-verified-replay',options,fingerprint:fingerprint(options),settings:cfg,search:{expanded:0,generated:0,depth:0,milliseconds:Date.now()-started},bestAttempt:check,failures:[],verification:check,memory,replay:{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands:config.reuseCommands}};
@@ -160,9 +192,10 @@ function solve(options,config={}){
     const next=[];
     for(const node of beam){
       if(expanded>=cfg.budget){reason='expansion-budget';break outer;}expanded++;
-      for(const choice of candidates(node.g)){
+      for(const choice of candidates(node.g,cfg)){
+        if(simulatedFrames>=cfg.frames){reason='simulation-budget';break outer;}
         if(Date.now()-started>=cfg.milliseconds){reason='wall-time-budget';break outer;}
-        const result=execute(node.g,choice,cfg);if(!result)continue;generated++;
+        const result=execute(node.g,choice,executionConfig);if(!result)continue;generated++;
         const {g}=result;
         if(legalWin(g)&&(cfg.allowTail||g.tailsDropped===0)){winner={...result,parent:node};break outer;}
         if(g.status!=='playing'||(!cfg.allowTail&&g.tailsDropped>0)){
@@ -188,11 +221,11 @@ function solve(options,config={}){
   const commands=winner?commandsFor(winner):null;
   const verification=commands?replay(options,commands,{allowTail:cfg.allowTail}):null;
   if(winner&&!verification.won)throw new Error('Search/replay disagreement: '+JSON.stringify(verification));
-  return {schemaVersion:VERSION,status:winner?'solved':'unresolved',reason:winner?'verified-replay':reason,options,fingerprint:fingerprint(options),settings:cfg,search:{expanded,generated,depth,milliseconds:Date.now()-started},bestAttempt:summary((winner||best).g),failures:[...failures.values()].sort((a,b)=>b.count-a.count).slice(0,12),verification,memory,replay:commands?{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands}:null};
+  return {schemaVersion:VERSION,status:winner?'solved':'unresolved',reason:winner?'verified-replay':reason,options,fingerprint:fingerprint(options),settings:cfg,search:{expanded,generated,simulatedFrames,depth,milliseconds:Date.now()-started},bestAttempt:summary((winner||best).g),failures:[...failures.values()].sort((a,b)=>b.count-a.count).slice(0,12),verification,memory,replay:commands?{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands}:null};
 }
 function verifyArtifact(artifact,config={}){
   if(artifact.schemaVersion!==VERSION||!artifact.options||!Array.isArray(artifact.commands))throw new Error('Invalid level-lab replay');
   if(artifact.fingerprint!==fingerprint(artifact.options))throw new Error('Replay is stale: engine or level changed. Solve the level again.');
   return replay(artifact.options,artifact.commands,config);
 }
-module.exports={ACTIONS,FPS,fingerprint,append,summary,replay,stress,settings,signature,candidates,execute,solve,verifyArtifact,validateCommands};
+module.exports={ACTIONS,FPS,fingerprint,append,summary,replay,stress,settings,signature,goalRoutes,candidates,execute,solve,verifyArtifact,validateCommands};

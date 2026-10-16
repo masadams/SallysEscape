@@ -53,6 +53,7 @@ catalog level by its ID, not by exporting a partial approximation of it.
 | `--depth` | 160 | Maximum decisions along a branch |
 | `--seconds` | 120 | Maximum simulated time per branch |
 | `--milliseconds` | 60000 | Search wall-clock budget, checked between candidates |
+| `--frames` | 1000000 | Total search simulation frames across all branches, checked every tick |
 | `--no-tail` | off | Require no tail drops; normal legal tail recovery is otherwise allowed |
 | `--trials` | 8 | Timing stress runs after a solution, up to 100; 0 disables |
 | `--jitter` | 6 | Maximum input-duration change in 120 Hz frames, plus occasional input delays |
@@ -77,6 +78,40 @@ failed. `stress` returns 1 if the baseline fails or any variation fails. Invalid
 arguments, malformed replays or stale artifacts return 2. `solve` still returns
 0 for a verified win with failed stress variations: inspect the report before
 accepting it. `--trials 0` supplies no timing evidence.
+
+## Working within a small compute budget
+
+Start with `node --test tests/level-lab.cjs`, then
+`npm run level:smoke`. Reports go to `work/smoke`. The smoke benchmark checks three
+early encounters at width 2, at most 200 expansions and 10 seconds of search
+per case, without timing stress. These are development samples, not coverage
+of late-game mechanics. A single candidate and reference/verification work can
+extend past the search time limit.
+Use `--frames` to cap simulated work reproducibly across computers; the cap
+also interrupts long route segments and waits. Reference, reuse, verification
+and stress are separate workloads outside this search cap. There is no claim
+that one frame has a constant CPU cost across levels.
+
+Use `level:benchmark -- --only quiet-vault,challenge:ghost-run --out work/focused`
+to investigate specific mechanics. Unknown IDs fail before search starts.
+Increase budgets only for cases whose reports justify further investigation;
+run the full catalog before accepting a substantial solver or engine change.
+Exact replay and `solve --reuse` are cheaper than rediscovering a known route.
+
+Compare with `--no-macro` using the same levels, width, expansion and wall-clock
+limits. Run comparisons sequentially on an otherwise idle machine when measuring
+time; expansion counts also help explain differences. Benchmark summaries save
+Node version, a solver source fingerprint, per-case engine/map fingerprints,
+total expansions, generated candidates and search milliseconds. Per-level
+`search.simulatedFrames` counts search simulation, including rejected tool
+attempts; it excludes reference, fresh verification and stress runs. Wall-clock
+totals include fresh winning verification, but exclude reference and stress.
+Search status is separate from reference validity: a narrow beam can exhaust
+its frontier even on a map with a verified reference.
+
+This planner runs on CPU with no model calls, paid services, GPU or training.
+It is a development instrument for finding legal strategies and diagnosing
+failures; good level design still needs playtesting and encounter-specific tests.
 
 ## How the solver works
 
@@ -107,6 +142,16 @@ burrow/seed actions, camouflage and look-back. Controls use digital movement,
 not coordinate teleportation or exact fractional positioning. Switching facing
 uses real movement input. Tail shedding is an automatic engine response, not a
 free solver action.
+
+Goal-directed route segments also target the key, unlocked exit, required loot,
+and reachable switches, plates and levers. Each segment follows at most six
+waypoints computed from the current branch's actual walkable geometry. Every
+frame uses the same digital movement and collision rules as local steps. A
+blocked segment stops rather than skipping to its next waypoint, and reaching
+an unlocked exit includes the real finishing hold. Local movements, waits and
+tools remain available when a direct route is unsafe. These segments reduce
+decision depth; they do not predict a safe route through hunters or authorize
+crossing a closed gate. `--no-macro` disables them for controlled comparisons.
 
 Optimistic map distances guide key/treasure/exit search. Reserved beam slots
 also explore switches, plates, levers and treasure, allowing detours away from

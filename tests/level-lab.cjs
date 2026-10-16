@@ -87,10 +87,50 @@ test('budgets and CLI arguments fail early on invalid values',()=>{
   assert.throws(()=>CLI.parse(['solve','quiet-vault','--typo','1']),/Unknown option/);
   assert.throws(()=>CLI.parse(['solve','--out']),/Missing value/);
 });
+
+test('goal routes solve a long corridor within a budget that local stepping cannot',()=>{
+  const options={level:level(['#####################','#@...........K.....X#','#####################'])};
+  const budget={...config,budget:3,width:1};
+  assert.equal(Lab.solve(options,{...budget,macro:false}).status,'unresolved');
+  const result=Lab.solve(options,budget);
+  assert.equal(result.status,'solved');assert.equal(result.verification.won,true);
+  assert.ok(result.search.expanded<=3);
+});
+
+test('goal routes respect closed geometry, execute real collisions, and preserve their parent',()=>{
+  const options={level:level(['#########','#@..K..X#','#########'],{guards:[{kind:'snake',spawn:[3,1],facing:Math.PI,patrol:[[3,1]]}]})};
+  const g=new EscapeAdventure(options),before=Lab.signature(g);
+  const choice=Lab.goalRoutes(g)[0],result=Lab.execute(g,choice,Lab.settings(config));
+  assert.equal(result.g.status,'caught');assert.equal(Lab.signature(g),before);
+  assert.equal(Lab.replay(options,result.commands).status,'caught');
+  const blocked=new EscapeAdventure({level:level(['#########','#@..G.KX#','#########'],{gates:[{id:'closed',tiles:[[4,1]],switch:[2,1]}]})});
+  for(const route of Lab.goalRoutes(blocked))assert.ok(route.waypoints.every(p=>p.x<4));
+});
+
+test('goal routes turn through a winding corridor and exact replay reproduces the win',()=>{
+  const options={level:level(['#########','#@..#..X#','###.#.###','#...#...#','#.#####.#','#...K...#','#########'])};
+  const result=Lab.solve(options,{...config,budget:80,width:4});
+  assert.equal(result.status,'solved');assert.equal(Lab.verifyArtifact(result.replay).won,true);
+  assert.deepEqual(CLI.parse(['solve','quiet-vault','--no-macro']).flags,{macro:false});
+});
+
+test('simulation budget stops inside a route and also counts discarded tool attempts',()=>{
+  const result=Lab.solve(room(),{...config,frames:1});
+  assert.equal(result.status,'unresolved');assert.equal(result.reason,'simulation-budget');
+  assert.equal(result.search.simulatedFrames,1);assert.equal(result.replay,null);
+  let frames=0;
+  const g=new EscapeAdventure(room());
+  assert.equal(Lab.execute(g,{type:'tool',kind:'burrow',x:1,y:0},{...Lab.settings(config),consumeFrame:()=>{frames++;return true;}}),null);
+  assert.equal(frames,1);assert.equal(g.elapsed,0);
+  assert.throws(()=>Lab.settings({frames:0}),/Invalid frames/);
+});
 test('benchmark shards cover every catalog case exactly once, including challenges and hidden levels',()=>{
   const all=Benchmark.cases(),joined=Array.from({length:8},(_,i)=>Benchmark.shardCases(all,i+1,8)).flat();
   assert.equal(joined.length,all.length);assert.equal(new Set(joined.map(c=>c.id)).size,all.length);assert.ok(all.some(c=>c.id.startsWith('challenge:')));assert.ok(all.some(c=>c.id.startsWith('hidden:')));
   assert.throws(()=>Benchmark.shardCases(all,0,8),/shard/);
+  assert.deepEqual(Benchmark.selectCases(all,'quiet-vault,challenge:ghost-run').map(c=>c.id),['quiet-vault','challenge:ghost-run']);
+  assert.throws(()=>Benchmark.selectCases(all,'quiet-vault,typo'),/Unknown benchmark level typo/);
+  assert.throws(()=>Benchmark.selectCases(all,''+'missing'),/Unknown/);
 });
 test('benchmark verifies a known witness separately without feeding it to independent search',()=>{
   const options=room(),known=Lab.solve(options,config).replay.commands;
