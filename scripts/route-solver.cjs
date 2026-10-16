@@ -66,7 +66,8 @@ function extractPlan(Engine,recording){
   return plan;
 }
 // A recorded run never leans on the forgiving tail drop: losing the tail counts as caught.
-const bad=g=>g.status==='caught'||g.status==='failed'||g.tailsDropped>0||(g.challenge?.noChase&&g.alarms>0);
+// STEALTH=1 treats any chase as failure, for long routes where a chase started early dooms the run far beyond the search window.
+const bad=g=>g.status==='caught'||g.status==='failed'||g.tailsDropped>0||(g.challenge?.noChase&&g.alarms>0)||(process.env.STEALTH&&g.hunters.some(h=>h.state==='chase'));
 function frame(g,rec,x,y,sprint){g.advance(1/120,{x,y,sprint});push(rec,{kind:'move',frames:1,x,y,sprint});}
 function wait(g,rec,t){for(let i=0;i<Math.round(t*120)&&g.status==='playing';i++)frame(g,rec,0,0,false);return !bad(g);}
 function go(g,rec,item,sprint){
