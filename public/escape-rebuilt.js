@@ -643,7 +643,7 @@
  "#.@....L......##..##.L..#...L.#",
  "#1...........~..........#....X#",
  "###############################"],glowPlants:[[1,1],[16,1],[20,3],[10,4],[28,5],[17,9],[23,9],[2,10],[28,10],[12,13]],dark:true,explore:true,sightRadius:3.5},
-{id:"nightbloom-reach",name:"Nightbloom Reach",brief:"Three islands above black water. When the key moves, the night blooms.",hint:"Swim the west channel, keeping clear of the lure. The east bridge has a plate on each bank and stays up a few seconds. Taking the key raises a bridge in the south for the way home, and wakes something in the middle. The hatch wants six treasure.",pebbles:2,tongues:1,requiredTreasure:6,gates:[{id:"reach-bridge",name:"Reach bridge",color:[91,225,207],bridge:true,tiles:[[18,3],[19,3],[20,3],[21,3]],plates:[[17,3],[22,3]],duration:6},{id:"bloom-bridge",name:"Bloom bridge",color:[177,137,239],bridge:true,tiles:[[18,12],[19,12],[20,12],[21,12]]}],reactions:[{id:"bloom-key",when:"key",open:["bloom-bridge"],spawn:["bloom-moth"],message:"The night blooms. A bridge of petals rises in the south, and pale wings stir on the middle island.",objective:"Cross the bloom bridge and go home with six treasure."}],reinforcements:[{id:"bloom-moth",kind:"moth",spawn:[13,10],facing:0,patrol:[[13,9],[16,10],[13,11]]}],guards:[{kind:"angler",spawn:[10,11],facing:-PI/2,patrol:[[10,11]],lure:[9,10]},{spawn:[13,4],facing:0,patrol:[[13,4],[16,4],[16,10],[13,10]]},{kind:"moth",spawn:[25,7],facing:PI,patrol:[[23,2],[26,6],[24,9]]},{kind:"spider",spawn:[25,11],facing:PI,patrol:[[23,11],[26,10]]},{kind:"cricket",spawn:[5,4],facing:0,patrol:[[4,5],[6,3]]}],map:[
+{id:"nightbloom-reach",name:"Nightbloom Reach",brief:"Three islands above black water. When the key moves, the night blooms.",hint:"Swim the west channel, keeping clear of the lure. The east bridge has a plate on each bank and stays up a few seconds. Taking the key raises a bridge in the south for the way home, and wakes something in the middle. The hatch wants six treasure.",pebbles:2,tongues:1,requiredTreasure:6,gates:[{id:"reach-bridge",name:"Reach bridge",color:[91,225,207],bridge:true,tiles:[[18,3],[19,3],[20,3],[21,3]],plates:[[17,3],[22,3]],duration:6},{id:"bloom-bridge",name:"Bloom bridge",color:[177,137,239],bridge:true,tiles:[[18,12],[19,12],[20,12],[21,12]]}],reactions:[{id:"bloom-key",when:"key",open:["bloom-bridge"],spawn:["bloom-moth"],message:"The night blooms. A bridge of petals rises in the south, and pale wings stir on the middle island.",objective:"Cross the bloom bridge and go home with six treasure."}],reinforcements:[{id:"bloom-moth",kind:"moth",spawn:[13,10],facing:0,patrol:[[13,9],[16,10],[13,11]]}],guards:[{kind:"angler",spawn:[11,11],facing:-PI/2,patrol:[[11,11]],lure:[10,11]},{spawn:[13,4],facing:0,patrol:[[13,4],[16,4],[16,10],[13,10]]},{kind:"moth",spawn:[25,7],facing:PI,patrol:[[23,2],[26,6],[24,9]]},{kind:"spider",spawn:[25,11],facing:PI,patrol:[[23,11],[26,10]]},{kind:"cricket",spawn:[5,4],facing:0,patrol:[[4,5],[6,3]]}],map:[
  "#############################",
  "#..1....____..2...____....K.#",
  "#X......____.L....____......#",
@@ -653,7 +653,7 @@
  "#.......____..##..____..L...#",
  "#....#..____1.##..____......#",
  "#....#..____..##..____.1....#",
- "#.......____....L.____......#",
+ "#.......~~~~....L.____......#",
  "#....L..~~~~......____......#",
  "#.......~~~~..N...____......#",
  "#.@.....____....3.____L.....#",
