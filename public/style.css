@@ -307,3 +307,36 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
  body:not(.mobile-game) .escape-actions button>svg { width:23px; height:23px; }
  body:not(.mobile-game) .escape-tail-status { min-height:54px; flex-basis:58px; gap:3px; }
 }
+/* Level builder */
+.escape-builder { max-width:1100px; margin:0 auto; padding:14px 16px 40px; color:#e4edd6; }
+.builder-head { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.builder-head h2 { margin:0 12px 0 4px; font-size:1.3rem; }
+.builder-head label,.builder-settings label { display:flex; gap:6px; align-items:center; font-size:.85rem; }
+.builder-head input,.builder-settings input { background:#21443f; color:#e4edd6; border:1px solid #789575; border-radius:6px; padding:5px 7px; font:inherit; }
+.builder-head input { width:220px; } .builder-settings input[type=number] { width:58px; }
+.builder-settings { display:flex; flex-wrap:wrap; gap:12px; margin:10px 0; }
+.builder-palette { display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin:8px 0; }
+.builder-palette span { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; color:#9fb59a; margin:0 4px 0 10px; }
+.builder-tool { min-width:34px; height:34px; border:1px solid #5d7a62; border-radius:7px; background:#1c3732; color:#f2f5e6; font:inherit; cursor:pointer; }
+.builder-tool-on { background:#e7c96a; color:#2b2a14; border-color:#fff3b0; }
+.builder-swatch { width:28px; height:28px; border:2px solid #10221e; border-radius:50%; cursor:pointer; padding:0; }
+.builder-swatch.builder-tool-on { border-color:#fff3b0; box-shadow:0 0 0 2px #e7c96a; }
+.builder-inspector { margin:6px 0 8px; padding:8px 10px; border:1px solid #5d7a6288; border-radius:8px; background:#132a26; font-size:.85rem; line-height:1.6; }
+.builder-inspector select,.builder-inspector input[type=number] { margin:0 4px; }
+.builder-selected { outline:2px solid #fff3b0; outline-offset:-2px; z-index:1; }
+.builder-linked { outline:2px dashed #7fe0ff; outline-offset:-2px; }
+.builder-cold { box-shadow:inset 0 0 0 3px #8cc8ff66; }
+.builder-zz { position:absolute; right:2px; top:0; font-size:9px; color:#bcd; }
+.builder-note { color:#cfe0a8; font-size:.85rem; margin:4px 0; }
+.builder-lock { display:flex; flex-direction:column; gap:10px; max-width:420px; }
+.community-list em { display:block; font-size:.8rem; color:#b9cbbf; }
+.builder-grid { display:grid; gap:1px; background:#0b1714; padding:1px; border-radius:8px; user-select:none; touch-action:none; max-width:100%; }
+.builder-cell { aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:clamp(9px,1.4vw,16px); position:relative; cursor:crosshair; color:#f4e9b8; }
+.builder-cell i { position:absolute; right:1px; bottom:0; font-size:9px; font-style:normal; color:#ffd25a; }
+.builder-facing { position:absolute; left:1px; top:0; font-size:9px; font-weight:700; color:#ffb08a; }
+.builder-status { margin:10px 0; color:#9ff5d0; } .builder-bad { color:#ffb38a; }
+.builder-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.builder-actions button[disabled] { opacity:.45; cursor:not-allowed; }
+.builder-text { width:100%; min-height:70px; margin-top:8px; background:#10231f; color:#e4edd6; border:1px solid #789575; border-radius:6px; font:12px monospace; }
+.builder-list { display:grid; gap:6px; } .builder-saved { display:flex; gap:8px; align-items:center; flex-wrap:wrap; background:#17302b; border-radius:8px; padding:6px 10px; }
+.builder-saved span { color:#9fb59a; font-size:.8rem; margin-right:auto; } .builder-saved button { border:1px solid #789575; border-radius:6px; background:#21443f; color:#e4edd6; font:inherit; padding:4px 9px; }

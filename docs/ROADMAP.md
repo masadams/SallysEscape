@@ -166,7 +166,7 @@ Every region now has text maps. The Lantern Marsh's Firefly Ford gained a bog he
 Things flagged to come back to:
 - **Nightbloom Reach** (escape 42): the new text-map layout is drawn but has no winning run yet, so the old layout stays live.
 - **The Long Way Home** (mega bonus, opens with the first ten areas mastered): built on a work branch; its winning run is still being searched for. Bonus escapes only need a finish, so the run may use the tail drop or a chase.
-- **Level builder**: being built out (password, doors and links, hazards, a shared community area).
+- **Level builder**: built out with doors, bridges, triggers and links, sleeping enemies, hazards, cold ground, a password and a community shelf (see `docs/BUILDER.md`). Next: try it out and decide what else it needs.
 
 ### Area mastery (done)
 Earning every star in an area masters it. Mastery puts a crown on the area's sign and gives Sally that area's colours to wear (17 sets, chosen on the world map).
