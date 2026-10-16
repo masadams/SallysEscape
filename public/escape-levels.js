@@ -8765,7 +8765,7 @@
   // Each challenge also waits for stars in its area: two per route on the
   // shortest way from the area's first escape to the challenge's escape.
   // Stars from any route in the area count, so an alternative route helps too.
-  const regions=[0,5,9,13,17,23,27,32,37,42,47,49,53,58,63,68,73,...[78].filter(n=>n<levels.length),levels.length];
+  const regions=[0,5,9,13,17,23,27,32,37,42,47,49,53,58,63,68,73,...[78,83].filter(n=>n<levels.length),levels.length];
   const alternatives=new Set([[1,3],[6,8],[10,12],[14,16],[18,20],[24,26],[28,30],[33,35],[38,40],[43,45]].map(([entry,b])=>b-1));
   for(const challenge of challenges){
     const index=levels.findIndex(l=>l.id===challenge.levelId),r=regions.findLastIndex(start=>start<=index);
