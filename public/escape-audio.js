@@ -85,6 +85,7 @@
     shiver:(v)=>{noise(v,{dur:.5,gain:.12,freq:5000,q:3,attack:.05});tone(v,{freq:1200,to:900,dur:.4,type:'sine',gain:.1,wobble:60,wobbleRate:20});},
     hiss:(v)=>noise(v,{dur:.7,gain:.08,filter:'highpass',freq:3500,attack:.3}),
     steam:(v)=>{noise(v,{dur:1.1,gain:.32,filter:'bandpass',freq:1800,to:900,q:.6,attack:.05});noise(v,{dur:.25,gain:.25,filter:'lowpass',freq:300});},
+    buzz:(v)=>{tone(v,{freq:210,to:240,dur:.55,type:'sawtooth',gain:.07,attack:.05,wobble:18,wobbleRate:42});noise(v,{dur:.5,gain:.05,freq:1600,q:3,attack:.05});},
     chirp:(v)=>{for(let i=0;i<6;i++)tone(v,{freq:4200,to:3900,dur:.04,delay:i*.07,type:'sine',gain:.16});},
     smash:(v)=>{noise(v,{dur:.45,gain:.45,filter:'lowpass',freq:900,to:150});tone(v,{freq:120,to:50,dur:.35,type:'square',gain:.18});for(let i=0;i<4;i++)noise(v,{dur:.05,delay:.08+i*.06,gain:.15,freq:2200-i*300,q:4});},
     glowbug:(v)=>{notes(v,[[1568,0,.06],[2093,.05,.08],[2637,.1,.22]],{type:'sine',gain:.22});tone(v,{freq:3136,delay:.1,dur:.3,type:'sine',gain:.06,wobble:40,wobbleRate:14});},

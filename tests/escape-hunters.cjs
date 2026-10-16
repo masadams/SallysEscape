@@ -225,3 +225,27 @@ test('a mantis snatches a pebble or a passing hunter, and Sally crosses while it
   let dazed=false;for(let i=0;i<120*8&&!dazed;i++){g.advance(1/120,{});dazed=snake.state==='steamed';}
   assert.ok(dazed,'the snake walking through its cone is snatched and dazed');assert.equal(g.status,'playing');assert.match(g.message,/mantis/);
 });
+test('a wasp nest stays calm for a soft walker, but a sprint nearby sends a swarm that catches Sally',()=>{
+  const walk=(g,s,input)=>{for(let i=0;i<120*s&&g.status==='playing';i++)g.advance(1/120,input);};
+  const calm=arena('wasp',[7,3],[2,5]);walk(calm.g,4,{x:1});assert.equal(calm.h.state,'nest','walking past leaves it be');assert.equal(calm.g.status,'playing');
+  const {g,h}=arena('wasp',[7,3],[4,5]);walk(g,.3,{x:1,sprint:true});assert.equal(h.state,'stir','running close stirs it');
+  walk(g,.5,{});assert.equal(h.state,'swarm');walk(g,3,{});assert.equal(g.status,'caught');assert.match(g.result.message,/wasp/);
+});
+test('the swarm loses Sally in leaves and drifts home, and a pebble sets it on a hunter instead',()=>{
+  const {g,h}=arena('wasp',[7,3],[7,6]);g.grid[6][7]='L';
+  h.state='swarm';h.swarm={x:7.5,y:3.5};h.phaseUntil=4;g.player.hidden=true;
+  for(let i=0;i<240&&g.status==='playing';i++){g.advance(1/120,{});}
+  assert.equal(g.status,'playing','hidden in leaves');assert.ok(['home','nest'].includes(h.state));
+  const t=arena('wasp',[7,3],[13,9]);const snake=t.g.makeHunter({kind:'snake',spawn:[8,5],facing:0,patrol:[[8,5]]});t.g.hunters.push(snake);t.g.motion.resetHunter(snake,1);snake.pauseUntil=100;
+  t.g.decoy={x:7.5,y:4.5,expires:6};let stung=false;for(let i=0;i<120*4&&!stung;i++){t.g.advance(1/120,{});stung=snake.state==='steamed';}
+  assert.ok(stung,'the swarm stung the snake');assert.equal(t.g.status,'playing');
+});
+test('a dragonfly darts its loop over any ground, hovering at corners; leaves do not hide Sally, timing gets her past',()=>{
+  const {g,h}=arena('dragonfly',[3,5],[9,8],{patrol:[[3,5],[11,5]]});g.grid[5][7]='_';g.grid[5][6]='U';
+  ticks(g,.3);assert.ok(h.x>4,'it is fast');ticks(g,1.6);assert.ok(Math.abs(h.x-11.5)<.01,'it crosses water and gaps and reaches its corner');
+  const t=h.hoverUntil;assert.ok(t>g.elapsed,'it hovers at the corner');
+  const hide=arena('dragonfly',[3,5],[8,5],{patrol:[[3,5],[11,5]]});hide.g.grid[5][8]='L';ticks(hide.g,2);assert.equal(hide.g.status,'caught','leaves do not hide Sally from it');assert.match(hide.g.result.message,/dragonfly/);
+  const timed=arena('dragonfly',[11,5],[8,8],{patrol:[[11,5],[3,5]]});
+  for(let i=0;i<120*.6;i++)timed.g.advance(1/120,{});for(let i=0;i<120*1.5&&timed.g.status==='playing';i++)timed.g.advance(1/120,{y:-1});
+  assert.equal(timed.g.status,'playing','crossed right behind it');assert.ok(timed.g.player.y<5,'and is across its lane');
+});

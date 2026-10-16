@@ -23,6 +23,8 @@
     {kind:'ants',name:'Ant column',icon:'🐜',job:'Moving wall',hunts:'Marches a fixed loop and catches anything it walks over.',tip:'Cross in the gaps between groups.'},
     {kind:'gecko',name:'Gecko',icon:'🦎',job:'Thief',hunts:'Steals the last treasure Sally picked up and runs for its burrow.',tip:'Catch it before it gets home.'},
     {kind:'mantis',name:'Praying mantis',icon:'🌿',job:'Ambusher',hunts:'Looks like a twig until Sally is close. Anything that moves into the short cone before it, a hunter included, is snatched after a quarter-second tell.',tip:'Look for the kinked twig. Cross behind it or while it recovers, or let it snatch a pebble or a hunter first.'},
+    {kind:'wasp',name:'Wasp nest',icon:'🐝',job:'Hornet’s nest',hunts:'Noise nearby, a pebble or a touch stirs the nest. After a buzz, a swarm chases the nearest creature for a few seconds, Sally or a hunter, then drifts home. A hunter it reaches is stung and dazed.',tip:'Walk softly past it. If it stirs, sprint away or duck into leaves or water. A pebble by the nest can set the swarm on a hunter.'},
+    {kind:'dragonfly',name:'Dragonfly',icon:'🪰',job:'Patrol flyer',hunts:'Darts round a fixed, marked loop over water, gaps and walls, far faster than Sally, hovering a blink at each corner. Leaves do not hide her and pebbles do not distract it.',tip:'Read the loop and cross just behind it. Swimming under the surface is safe.'},
     {kind:'fox',name:'Snow fox',icon:'🦊',job:'Ear hunter',hunts:'Hunts by sound. Footsteps, sprints or noisy ground and it pounces far and fast on the noise.',tip:'Stand still, walk on quiet ground, or toss a pebble to send its pounce elsewhere.'},
   ];
   // Where each creature first lives: the earliest escape that has it, worked out from the levels.

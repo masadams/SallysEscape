@@ -5,9 +5,9 @@
   const KEY='sally-escape-custom-v1',VERSION=2;
   const TILES={'#':'Wall','.':'Floor','L':'Leaves','N':'Gravel','B':'Cracked wall','M':'Mud','~':'Water','_':'Gap','c':'Crumbling floor','T':'Tangle vine','S':'Crack (Sally only)'};
   const MARKS={'@':'Sally','K':'Key','X':'Hatch','1':'Treasure 1','2':'Treasure 2','3':'Chest 3'};
-  const ENEMIES={snake:'Snake',beetle:'Beetle',scorpion:'Scorpion',toad:'Toad',spider:'Spider',cricket:'Cricket',moth:'Moth',mimic:'Mimic',millipede:'Millipede',cobra:'King cobra',flytrap:'Flytrap',crab:'Hermit crab',fox:'Snow fox',heron:'Bog heron',mantis:'Praying mantis'};
+  const ENEMIES={snake:'Snake',beetle:'Beetle',scorpion:'Scorpion',toad:'Toad',spider:'Spider',cricket:'Cricket',moth:'Moth',mimic:'Mimic',millipede:'Millipede',cobra:'King cobra',flytrap:'Flytrap',crab:'Hermit crab',fox:'Snow fox',heron:'Bog heron',mantis:'Praying mantis',wasp:'Wasp nest',dragonfly:'Dragonfly'};
   // Enemies that stay on their post; the rest walk their patrol.
-  const POSTED=new Set(['scorpion','toad','mimic','millipede','cobra','flytrap','crab','heron','mantis']);
+  const POSTED=new Set(['scorpion','toad','mimic','millipede','cobra','flytrap','crab','heron','mantis','wasp']);
   const LIMITS={minW:11,maxW:35,minH:9,maxH:21,doors:6,triggers:24,hazards:24,guards:24};
   // Doors and bridges come in six colours; each colour is one door and one bridge.
   const COLORS=[['Red',[226,96,96]],['Blue',[96,150,236]],['Gold',[240,196,80]],['Green',[110,200,120]],['Violet',[178,120,230]],['Teal',[80,200,196]]];
@@ -90,7 +90,7 @@
     const v=model.hazards.find(h=>h.type==='vent'&&same(h.at,[x,y]));if(v){v.dir=(v.dir+1)%4;return true;}return false;
   }
   // Patrol points are added in order; posted enemies keep their single post.
-  function addPatrol(model,index,x,y){const g=model.guards[index];if(!g||POSTED.has(g.kind)||!roamable(at(model,x,y)))return false;if(g.patrol.length>=6)g.patrol.shift();g.patrol.push([x,y]);return true;}
+  function addPatrol(model,index,x,y){const g=model.guards[index];if(!g||POSTED.has(g.kind)||!(g.kind==='dragonfly'?at(model,x,y)&&at(model,x,y)!=='#':roamable(at(model,x,y))))return false;if(g.patrol.length>=6)g.patrol.shift();g.patrol.push([x,y]);return true;}
   function clearPatrol(model,index){const g=model.guards[index];if(!g)return false;g.patrol=[g.spawn.slice()];return true;}
   // A sleeping enemy is not there at the start; a linked key or chest wakes it.
   function setSleep(model,id,sleep){const g=model.guards.find(q=>q.id===id);if(!g)return false;g.sleep=Boolean(sleep);return true;}
@@ -188,7 +188,7 @@
     for(const g of model.guards){if(!roamable(at(model,...g.spawn)))problems.push(ENEMIES[g.kind]+' stands on a wall.');
       if(!g.sleep&&Math.hypot(g.spawn[0]-start[0],g.spawn[1]-start[1])<4)problems.push(ENEMIES[g.kind]+' starts too close to Sally.');
       if(g.sleep&&!linksTo(model,g.id).length)problems.push('A sleeping '+ENEMIES[g.kind].toLowerCase()+' has nothing to wake it: link the key or a chest to it.');
-      for(const p of g.patrol)if(!seen.has(p.join())&&!seen.has(g.spawn.join()))problems.push(ENEMIES[g.kind]+' has a patrol point it cannot reach.');}
+      if(g.kind!=='dragonfly')for(const p of g.patrol)if(!seen.has(p.join())&&!seen.has(g.spawn.join()))problems.push(ENEMIES[g.kind]+' has a patrol point it cannot reach.');}
     for(const d of model.doors)if(d.mode!=='crumble'&&!linksTo(model,d.id).length)problems.push('The '+doorName(d).toLowerCase()+' has nothing linked to '+(d.mode==='shut'?'shut':'open')+' it.');
     for(const t of model.triggers){if(!linksFrom(model,t.id).length)problems.push('A '+TRIGGERS[t.type].toLowerCase()+' is not linked to anything.');
       if(t.type==='heavy'&&!model.guards.some(g=>g.kind==='beetle'&&!g.sleep&&g.patrol.some(p=>same(p,t.at))))problems.push('A heavy plate needs a beetle with a patrol point on it.');}
