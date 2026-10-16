@@ -2,8 +2,8 @@
 (function(root){
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const angleDelta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
-  const hiddenStates=new Set(['buried','dig','emerge','rooted']);
-  const urgentStates=new Set(['chase','charge','windup','sting','leap','lunge','swoop','rush','rear','follow','tongue']);
+  const hiddenStates=new Set(['buried','dig','emerge','rooted','shell','hide','lurking','sink']);
+  const urgentStates=new Set(['chase','charge','windup','sting','leap','lunge','swoop','rush','rear','follow','tongue','strike','snap','scuttle','crouch','pounce','aim','stab','dash','glare','raise']);
   class SallyCharacter{
     constructor({reducedMotion=false}={}){this.reducedMotion=reducedMotion;this.at=0;this.mood='calm';this.until=0;this.lastTongue=-Infinity;this.lostTailAt=-Infinity;this.tailCheckAt=-Infinity;this.tailCheckPending=false;this.lastGlance=-Infinity;this.cues=[];this.face={mood:'calm',look:0,wide:0,smile:0,blink:0,chew:0};}
     update(game,events=[]){

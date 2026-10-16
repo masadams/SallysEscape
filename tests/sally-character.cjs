@@ -58,3 +58,7 @@ test('reduced motion keeps expressions and gaze readable without pupil scanning 
   g.lookUntil=0;g.hunters=[];g.elapsed=1;c.update(g,['tongue']);g.elapsed=1.2;
   assert.equal(c.update(g,['treasure']).smile,1);assert.equal(c.face.chew,0);
 });
+test('newer creatures read right: a crab in its shell or a lurking angler stays hidden, a crouching fox or an aiming heron is danger',()=>{
+  const {g,h,c}=arena();h.kind='crab';h.state='shell';assert.equal(c.update(g).mood,'calm');h.kind='angler';h.state='lurking';assert.equal(c.update(g).mood,'calm');
+  h.kind='fox';h.state='crouch';assert.equal(c.update(g).mood,'alert');h.kind='heron';h.state='aim';assert.equal(c.update(g).mood,'alert');
+});
