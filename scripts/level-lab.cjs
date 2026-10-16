@@ -65,7 +65,7 @@ function main(argv){
   }
   if(mode==='replay'||mode==='stress'){
     if(!id||pos.length!==2)throw new Error('Supply one replay file');
-    const artifact=JSON.parse(fs.readFileSync(id,'utf8')),verified=Lab.verifyArtifact(artifact);
+    const artifact=JSON.parse(fs.readFileSync(id,'utf8')),verified=Lab.verifyArtifact(artifact,flags);
     const result=mode==='replay'?verified:Lab.stress(artifact.options,artifact.commands,flags);
     console.log(JSON.stringify(result,null,2));return mode==='replay'?(verified.won?0:1):(verified.won&&result.wins===result.trials?0:1);
   }

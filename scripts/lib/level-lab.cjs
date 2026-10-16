@@ -190,9 +190,9 @@ function solve(options,config={}){
   if(winner&&!verification.won)throw new Error('Search/replay disagreement: '+JSON.stringify(verification));
   return {schemaVersion:VERSION,status:winner?'solved':'unresolved',reason:winner?'verified-replay':reason,options,fingerprint:fingerprint(options),settings:cfg,search:{expanded,generated,depth,milliseconds:Date.now()-started},bestAttempt:summary((winner||best).g),failures:[...failures.values()].sort((a,b)=>b.count-a.count).slice(0,12),verification,memory,replay:commands?{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands}:null};
 }
-function verifyArtifact(artifact){
+function verifyArtifact(artifact,config={}){
   if(artifact.schemaVersion!==VERSION||!artifact.options||!Array.isArray(artifact.commands))throw new Error('Invalid level-lab replay');
   if(artifact.fingerprint!==fingerprint(artifact.options))throw new Error('Replay is stale: engine or level changed. Solve the level again.');
-  return replay(artifact.options,artifact.commands);
+  return replay(artifact.options,artifact.commands,config);
 }
 module.exports={ACTIONS,FPS,fingerprint,append,summary,replay,stress,settings,signature,candidates,execute,solve,verifyArtifact,validateCommands};

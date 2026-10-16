@@ -80,6 +80,27 @@ accepting it. `--trials 0` supplies no timing evidence.
 
 ## How the solver works
 
+### Whole-catalog benchmark
+
+Run `npm run level:benchmark -- --out work/benchmark` to evaluate every campaign
+level, challenge and hidden route. For each, it checks the existing recording
+when present, then runs independent discovery **without supplying that recording
+as a hint**. It saves per-level reports/replays and a summary table tagged by
+mechanics. Known replay failures fail the command; unresolved searches are
+reported as solver coverage gaps, not impossible maps. Missing reference
+recordings are reported separately.
+
+Defaults are 600 expanded states, width 8, a 20-second search budget and three
+timing variations per solved case. Options can increase those budgets. Split
+work reproducibly with `--shard 1 --shards 8` through shard 8. The dedicated
+GitHub Actions workflow runs all eight shards on relevant pull requests, where
+the full fixture and normal networking are available, and uploads the reports
+and replays. Its summary distinguishes reference verification from new search
+success. Compare equal settings across revisions; this is a measured baseline,
+not a required 100% solver success threshold.
+
+### Search implementation
+
 Bounded beam search keeps several alternate real-engine states. It explores
 walking, sprinting, short diagonal dodges, waits, directional pebble/tongue/
 burrow/seed actions, camouflage and look-back. Controls use digital movement,

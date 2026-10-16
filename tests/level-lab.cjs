@@ -5,6 +5,7 @@ const {escapeBuildCustom}=require('../public/escape-levels.js');
 const B=require('../public/escape-builder.js');
 const Lab=require('../scripts/lib/level-lab.cjs');
 const CLI=require('../scripts/level-lab.cjs');
+const Benchmark=require('../scripts/level-benchmark.cjs');
 const level=(map,extra={})=>escapeBuildCustom({id:'lab-fixture',name:'Lab fixture',map,guards:[],...extra});
 const room=()=>({level:level(['#########','#@..K..X#','#.......#','#.......#','#########'])});
 const config={budget:160,width:6,depth:40,seconds:30};
@@ -50,6 +51,11 @@ test('cloned simulation reads its own changed grid for creature geometry',()=>{
   const g=new EscapeAdventure(room()),r=Lab.execute(g,{type:'input',x:0,y:0,sprint:false,frames:1},Lab.settings(config));
   r.g.grid[2][2]='#';assert.equal(r.g.motion.floor(2,2),false);assert.equal(g.motion.floor(2,2),true);
 });
+test('normal tail recovery can win, while no-tail replay policy rejects that same run',()=>{
+  const options={level:level(['#########','#@..K..X#','#.......#','#########'],{tailDrop:true,guards:[{kind:'snake',spawn:[1,1],facing:0,patrol:[[1,1]]}]})};
+  const artifact={schemaVersion:1,options,fingerprint:Lab.fingerprint(options),commands:[{kind:'move',x:1,y:0,sprint:true,frames:220},{kind:'move',x:0,y:0,sprint:false,frames:120}]};
+  assert.equal(Lab.verifyArtifact(artifact).won,true);assert.equal(Lab.verifyArtifact(artifact).tailsDropped,1);assert.equal(Lab.verifyArtifact(artifact,{allowTail:false}).won,false);
+});
 test('replay rejects unavailable actions, malformed inputs and stale rules',()=>{
   const options=room();assert.equal(Lab.replay(options,[{kind:'burrow'}]).won,false);assert.equal(Lab.replay(options,[{kind:'burrow'}]).actionFailure.kind,'burrow');
   assert.throws(()=>Lab.replay(options,[{kind:'move',frames:Infinity,x:0,y:0,sprint:false}]),/Invalid/);
@@ -80,4 +86,19 @@ test('budgets and CLI arguments fail early on invalid values',()=>{
   assert.throws(()=>Lab.stress({},[],{trials:-1}),/Invalid/);
   assert.throws(()=>CLI.parse(['solve','quiet-vault','--typo','1']),/Unknown option/);
   assert.throws(()=>CLI.parse(['solve','--out']),/Missing value/);
+});
+test('benchmark shards cover every catalog case exactly once, including challenges and hidden levels',()=>{
+  const all=Benchmark.cases(),joined=Array.from({length:8},(_,i)=>Benchmark.shardCases(all,i+1,8)).flat();
+  assert.equal(joined.length,all.length);assert.equal(new Set(joined.map(c=>c.id)).size,all.length);assert.ok(all.some(c=>c.id.startsWith('challenge:')));assert.ok(all.some(c=>c.id.startsWith('hidden:')));
+  assert.throws(()=>Benchmark.shardCases(all,0,8),/shard/);
+});
+test('benchmark verifies a known witness separately without feeding it to independent search',()=>{
+  const options=room(),known=Lab.solve(options,config).replay.commands;
+  const item={id:'lab-fixture',options,level:options.level};
+  // matching uses catalog IDs; room options are a custom level, used here only
+  // as a small real-engine benchmark fixture.
+  const result=Benchmark.benchmarkCase(item,[{options,commands:known}],{...config,budget:1,trials:0});
+  assert.equal(result.reference.status,'verified');assert.equal(result.report.status,'unresolved');
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'sally-benchmark-'));
+  try{const {summary}=Benchmark.saveSummary(dir,[result],config);assert.equal(summary.totals.referenceVerified,1);assert.equal(summary.totals.independentlySolved,0);assert.equal(summary.totals.unresolved,1);}finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
