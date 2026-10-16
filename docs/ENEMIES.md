@@ -27,6 +27,7 @@ straight on is rarely enough: change direction, break line of sight, or hide.
 | Praying mantis | Ambusher | Looks like a faint twig until Sally is within a couple of tiles. Watches a short cone in front of it (always shown once revealed). Anything that moves into the cone, Sally, a pebble or another hunter, gets a quarter-second tell as the forelegs rise, then a snatch; it recovers for over a second. A snatched hunter reels back dazed and walks on. | Spot the kinked twig, cross behind it or while it recovers, or let it snatch a pebble or a hunter first. |
 | Wasp nest | Trap you can use | A paper nest. Noise within a few tiles, a pebble landing by it, a touch or a charging beetle stirs it: a buzz, then a swarm pours out and chases the nearest creature within six tiles of the nest for four seconds. A hunter it reaches is stung and dazed; Sally is caught. It loses anyone in leaves or water, then drifts home and settles. | Walk past it, never run. If it stirs, sprint out of range or duck into leaves or water. Throw a pebble by the nest when a hunter is near to set the swarm on it. |
 | Dragonfly | Timing | Darts round a fixed loop (always dotted on the ground) over water, gaps and walls, far faster than Sally, hovering for a blink at each corner. Leaves do not hide Sally and pebbles do not distract it. Swimming under the surface is safe. | Read the loop; cross just behind it. |
+| Mole | Tremor hunter | Blind; hunts by footsteps. Walking within 4.5 tiles (6 on gravel, 8 at a sprint) sends it tunnelling toward the sound, shown as a ripple of soil; when it is under Sally a shaking mound gives a 0.3-second tell and it bursts up. Footsteps on leaves, swimming, standing still and bounce-cap flights make no tremble; if the trail goes cold for half a second it surfaces where it is, sniffs and digs back down. A pebble's thud draws it. | Stop as soon as the ripple heads your way, keep to leaves, or sprint clear (though a sprint carries further). |
 | Hermit crab | Lane guard | Sits in its shell like any other on the beach. When Sally comes close in plain sight it peeks out, then scuttles sideways along its lane to cut her off and pinch. It never leaves its lane. A pebble landing by it sends it back into its shell for a few seconds. | Cross its lane at a sprint, while it is tucked in, or hidden; or toss a pebble first. |
 | Snow fox | Ear hunter | Hunts by ear, not by eye. Footsteps close by, a sprint or noisy ground further off, or a pebble, and it crouches for a blink and pounces on the sound, far and fast, with no warning mark. It sniffs about where it lands, then goes back to its rounds. | Stand still, keep to quiet ground and walk rather than run near it, or toss a pebble to send its pounce elsewhere. |
 | Ants | Moving wall | A column marches a fixed loop and catches anything it walks over. | Cross in the gaps between groups. |
@@ -45,6 +46,8 @@ Levels opt into each trap through their level data.
 | Crack | `S` in a text map | A narrow split in a wall. Sally slips through; no hunter can follow or see into it, so it ends a chase. |
 | Heavy plate | `heavy: true` on a timed gate | Ignores Sally. Only a big hunter's weight (a beetle on its rounds) presses it, opening the gate for its duration. Wait for the beetle, then sneak through. |
 | Thorns | `thorns: [{tiles, period, up, offset}]` | Tremble, then rise on a rhythm. They only catch Sally while raised. |
+| Spore puffball | `o` in a text map | Sally stepping on it, a hunter walking over it or a pebble landing by it bursts it into a spore cloud for about four and a half seconds. Inside the cloud Sally is hidden even while moving, and a hunter inside it cannot see. It regrows after ten seconds. |
+| Bounce cap | `caps: [{at, to}]` | Stepping onto the cap flings Sally in a half-second arc to its landing tile, over gaps, water or walls. She cannot be caught in the air, and the flight makes no footsteps. The arc is marked. |
 
 ## Text maps
 
@@ -52,7 +55,7 @@ Rebuilt routes are drawn as text, one character per tile:
 
 ```
 # wall   . floor   L leaf cover   N noisy gravel   B cracked wall   M mud   ~ water
-_ gap    c crumbling floor   T tangle vine   S crack   @ start   K key   X exit   1-5 treasure of that value
+_ gap    c crumbling floor   T tangle vine   S crack   o spore puffball   @ start   K key   X exit   1-5 treasure of that value
 ```
 
 Guards, gates and traps keep their own lists, with coordinates matching the map.
