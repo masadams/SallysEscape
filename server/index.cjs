@@ -11,5 +11,7 @@ function createServer(options={}){const levels=createLevelApi(options);return ht
  const file=path.resolve(root,'.'+(name==='/'?'/index.html':name));if(!file.startsWith(root+path.sep)){res.writeHead(404);res.end();return;}
  fs.stat(file,(error,stat)=>{if(error||!stat.isFile()){res.writeHead(404);res.end();return;}res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Content-Length':stat.size,'Cache-Control':file.includes(path.sep+'vendor'+path.sep)?'public, max-age=86400':'no-cache'});if(req.method==='HEAD'){res.end();return;}const stream=fs.createReadStream(file);stream.on('error',()=>res.destroy());stream.pipe(res);});
 });}
-if(require.main===module)createServer().listen(Number(process.env.PORT||8080),'0.0.0.0',()=>console.log("Sally's Escape ready"));
+if(require.main===module)createServer().listen(Number(process.env.PORT||8080),'0.0.0.0',()=>{console.log("Sally's Escape ready");
+ // Says whether the builder can be unlocked, without ever printing the password itself.
+ const pass=String(process.env.BUILDER_PASSWORD||'').normalize('NFC').trim();console.log(pass?'Level builder: password set ('+pass.length+' characters).':'Level builder: no BUILDER_PASSWORD set, so the builder stays locked.');});
 module.exports={createServer};

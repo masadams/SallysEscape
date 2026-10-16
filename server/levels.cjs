@@ -5,13 +5,19 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
 const Builder=require('../public/escape-builder.js');
 const MAX_LEVELS=200,MAX_BODY=64*1024,FAILS_PER_MINUTE=8;
 
+// Spaces, a stray Windows line ending or a different Unicode form must not make a correct password fail.
+const normal=text=>String(text??'').normalize('NFC').trim();
 function createLevelApi({dataDir=process.env.DATA_DIR||path.join(__dirname,'../data'),password=process.env.BUILDER_PASSWORD||''}={}){
+  password=normal(password);
   const file=path.join(dataDir,'community-levels.json'),fails=new Map();
   const digest=text=>crypto.createHash('sha256').update(String(text)).digest();
-  const passwordOk=given=>Boolean(password)&&typeof given==='string'&&crypto.timingSafeEqual(digest(given),digest(password));
-  // A few wrong passwords a minute per address, then a short wait.
-  const limited=ip=>{const now=Date.now(),recent=(fails.get(ip)||[]).filter(t=>now-t<60000);fails.set(ip,recent);return recent.length>=FAILS_PER_MINUTE;};
-  const failed=ip=>{fails.get(ip)?.push(Date.now())||fails.set(ip,[Date.now()]);};
+  const passwordOk=given=>Boolean(password)&&typeof given==='string'&&crypto.timingSafeEqual(digest(normal(given)),digest(password));
+  // A few wrong passwords a minute per visitor, then a short wait. Behind a reverse proxy every
+  // visitor shares the proxy's address, so the forwarded address tells them apart; a cap on all
+  // wrong tries together still stops guessing with made-up forwarded addresses.
+  const recent=key=>{const now=Date.now(),list=(fails.get(key)||[]).filter(t=>now-t<60000);fails.set(key,list);return list;};
+  const limited=ip=>recent(ip).length>=FAILS_PER_MINUTE||recent('*').length>=FAILS_PER_MINUTE*6;
+  const failed=ip=>{recent(ip).push(Date.now());recent('*').push(Date.now());};
   function load(){try{const list=JSON.parse(fs.readFileSync(file,'utf8'));return Array.isArray(list)?list:[];}catch(_){return [];}}
   function save(list){fs.mkdirSync(dataDir,{recursive:true});const tmp=file+'.'+process.pid+'.tmp';fs.writeFileSync(tmp,JSON.stringify(list));fs.renameSync(tmp,file);}
   const clean=level=>{const model=Builder.sanitize(level);return model&&!Builder.validate(model).length?model:null;};
@@ -23,12 +29,14 @@ function createLevelApi({dataDir=process.env.DATA_DIR||path.join(__dirname,'../d
   // Returns true when it handled the request.
   async function handle(req,res,pathname){
     if(!pathname.startsWith('/api/'))return false;
-    const ip=req.socket?.remoteAddress||'?',given=req.headers['x-builder-password'];
+    const ip=String(req.headers['x-forwarded-for']||'').split(',')[0].trim()||req.headers['x-real-ip']||req.socket?.remoteAddress||'?',given=(()=>{try{return decodeURIComponent(req.headers['x-builder-password']||'');}catch(_){return req.headers['x-builder-password'];}})();
     const maker=async()=>{if(!password){send(res,503,{error:'No builder password is set on this server.'});return false;}
       if(limited(ip)){send(res,429,{error:'Too many tries. Wait a minute.'});return false;}
       if(!passwordOk(given)){failed(ip);send(res,401,{error:'Wrong builder password.'});return false;}return true;};
     try{
       if(pathname==='/api/levels'&&['GET','HEAD'].includes(req.method)){const levels=load().map(l=>({...clean(l),publishedAt:l.publishedAt})).filter(l=>l.id);send(res,200,req.method==='HEAD'?undefined:{levels});return true;}
+      // Lets the lock screen say up front when the server has no builder password.
+      if(pathname==='/api/builder'&&['GET','HEAD'].includes(req.method)){send(res,200,req.method==='HEAD'?undefined:{enabled:Boolean(password)});return true;}
       if(pathname==='/api/builder/unlock'&&req.method==='POST'){
         if(!password){send(res,503,{error:'No builder password is set on this server.'});return true;}
         if(limited(ip)){send(res,429,{error:'Too many tries. Wait a minute.'});return true;}
@@ -43,6 +51,6 @@ function createLevelApi({dataDir=process.env.DATA_DIR||path.join(__dirname,'../d
       send(res,404,{error:'Not found.'});return true;
     }catch(error){send(res,error.status||500,{error:error.status===413?'That level is too large.':error.status===400?'That was not a level.':'The shelf could not be saved.'});return true;}
   }
-  return {handle};
+  return {handle,enabled:Boolean(password)};
 }
 module.exports={createLevelApi};

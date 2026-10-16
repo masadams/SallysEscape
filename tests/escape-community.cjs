@@ -29,3 +29,14 @@ test('a stored level that was tampered with on disk is not served',async t=>{
   const file=path.join(dataDir,'community-levels.json'),list=JSON.parse(fs.readFileSync(file,'utf8'));list.push({id:'custom-bad',map:['<img onerror=x>']});fs.writeFileSync(file,JSON.stringify(list));
   const shelf=await (await fetch(base+'/api/levels')).json();assert.equal(shelf.levels.length,1);
 });
+test('a correct password still works with stray spaces, a Windows line ending, accents, and behind a shared proxy',async t=>{
+  const {base}=await serve(t,{password:'  Lézard-pass\r\n'});
+  assert.deepEqual(await (await fetch(base+'/api/builder')).json(),{enabled:true});
+  assert.equal((await post(base,'/api/builder/unlock',{password:'Lézard-pass '})).status,204);
+  assert.equal((await post(base,'/api/levels',{level:level()},encodeURIComponent('Lézard-pass'))).status,201,'publishing sends the password safely encoded');
+  const guess=i=>fetch(base+'/api/builder/unlock',{method:'POST',headers:{'Content-Type':'application/json','X-Forwarded-For':'10.0.0.9'},body:JSON.stringify({password:'nope'+i})});
+  for(let i=0;i<8;i++)await guess(i);assert.equal((await guess(9)).status,429,'the guesser waits');
+  const friend=await fetch(base+'/api/builder/unlock',{method:'POST',headers:{'Content-Type':'application/json','X-Forwarded-For':'10.0.0.7'},body:JSON.stringify({password:'Lézard-pass'})});
+  assert.equal(friend.status,204,'another visitor behind the same proxy is not locked out');
+  const off=await serve(t,{password:''});assert.deepEqual(await (await fetch(off.base+'/api/builder')).json(),{enabled:false});
+});

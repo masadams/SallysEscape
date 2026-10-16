@@ -1,6 +1,21 @@
 # Level builder
 
-The builder is on the start menu. It asks for the **builder password**: the value of
+The builder is on the start menu.
+
+## Setting the password on the server
+1. Put the password in a `.env` file next to `compose.yaml` (or export it in the shell that runs
+   `docker compose`): `BUILDER_PASSWORD='your password'`. Use single quotes. Compose treats `$` as
+   the start of a variable, so a password with `$` in it arrives changed unless it is quoted like
+   that (or each `$` is doubled to `$$`).
+2. Recreate the container so it picks the password up: `docker compose pull && docker compose up -d`.
+   A plain restart keeps the old settings.
+3. Check the container log (`docker compose logs sallys-escape`). It says
+   `Level builder: password set (N characters).` If N is not the length you expect, the password was
+   changed on the way in; if it says no password is set, the container did not get it.
+
+Spaces around the password are ignored. Too many wrong tries make that visitor wait a minute.
+
+## Using the builder It asks for the **builder password**: the value of
 `BUILDER_PASSWORD` on the server (`compose.yaml` passes it through from your environment). With no
 password set the builder stays locked and nothing can be published. The password is remembered
 for the browser tab; **Lock** forgets it.
