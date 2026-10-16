@@ -15,7 +15,7 @@ const ESCAPE_BUILDER_ARROW=['→','↓','←','↑'];
 const escapeBuilderPassword=()=>ESCAPE_BUILDER_SESSION?.getItem(ESCAPE_BUILDER_PASS_KEY)||'';
 function escapeBuilderApi(path,options={}){
   const pass=escapeBuilderPassword();
-  return fetch('/api/'+path,{...options,headers:{'Content-Type':'application/json',...(pass?{'X-Builder-Password':pass}:{}),...(options.headers||{})}});
+  return fetch('/api/'+path,{...options,headers:{'Content-Type':'application/json',...(pass?{'X-Builder-Password':encodeURIComponent(pass)}:{}),...(options.headers||{})}});
 }
 function escapeBuilderShow(){
   escapeAbandonRun?.();resetGameState();gameState='builder';
@@ -38,6 +38,8 @@ function renderEscapeBuilderLock(message=''){
     (message?'<p class="builder-bad">'+escapeHtml(message)+'</p>':'')+'<p>Want to play levels others have made? Open <button type="button" id="builder-to-community" class="escape-secondary">Community levels</button></p></form>';
   document.getElementById('builder-back').onclick=closeEscapeBuilder;document.getElementById('builder-to-community').onclick=()=>openEscapeCommunity();
   const input=document.getElementById('builder-pass');input.focus?.();
+  // Say straight away when the server has no builder password, rather than after a wasted try.
+  if(!message)fetch('/api/builder').then(r=>r.ok?r.json():null).then(status=>{if(status&&!status.enabled&&document.getElementById('builder-lock'))renderEscapeBuilderLock('The builder is switched off on this server: no builder password has been set. Set BUILDER_PASSWORD where the server runs, then restart it.');}).catch(()=>{});
   document.getElementById('builder-lock').onsubmit=async e=>{e.preventDefault();const password=input.value;if(!password)return;
     try{const r=await fetch('/api/builder/unlock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});
       if(r.ok){ESCAPE_BUILDER_SESSION?.setItem(ESCAPE_BUILDER_PASS_KEY,password);openEscapeBuilder();return;}
