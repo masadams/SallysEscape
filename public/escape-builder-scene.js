@@ -1,50 +1,98 @@
 // The level builder screen: paint a map, place Sally, the key, the hatch, treasure, enemies,
 // doors and bridges with their triggers, hazards and cold ground; link triggers to what they
 // open or wake; then playtest, save in this browser, share as text, or publish to the
-// community shelf. The builder is locked behind the server's builder password; the community
-// shelf is open to every player.
+// community shelf. The builder needs an admin signed in with a passkey; the community shelf is
+// open to every player.
 let escapeBuilderModel=null,escapeBuilderTool='#',escapeBuilderColor=0,escapeBuilderPick=null,escapeBuilderPainting=false,escapeBuilderNote='';
 const ESCAPE_BUILDER_STORE=(()=>{try{return typeof localStorage==='undefined'?null:localStorage;}catch(_){return null;}})();
-const ESCAPE_BUILDER_SESSION=(()=>{try{return typeof sessionStorage==='undefined'?null:sessionStorage;}catch(_){return null;}})();
-const ESCAPE_BUILDER_PASS_KEY='sally-builder-pass';
 const ESCAPE_BUILDER_LOOK={'#':['#2d4a43',''],'.':['#183029',''],'L':['#2f6b45','❀'],'N':['#3b3a32','∴'],'B':['#3c5a5e','⟋'],'M':['#4a3a26','≈'],'~':['#1f5a76','~'],'_':['#07120f',''],'c':['#3d3424','⁘'],'T':['#24452a','෴'],'S':['#2d4a43','⦚'],'@':['#183029','🦎'],'K':['#183029','🔑'],'X':['#1d5a4f','⇩'],'1':['#183029','◆'],'2':['#183029','◆◆'],'3':['#183029','▣']};
 const ESCAPE_BUILDER_ENEMY={snake:'🐍',beetle:'🪲',scorpion:'🦂',toad:'🐸',spider:'🕷',cricket:'🦗',moth:'🦋',mimic:'🎁',millipede:'🐛',cobra:'👑',flytrap:'🌺',crab:'🦀',fox:'🦊',heron:'🦩'};
 const ESCAPE_BUILDER_TRIGGER={plate:'◉',heavy:'⬛',lever:'⚲'},ESCAPE_BUILDER_HAZARD={vent:'♨',thorns:'⋀',log:'●'};
 const ESCAPE_BUILDER_ARROW=['→','↓','←','↑'];
 
-const escapeBuilderPassword=()=>ESCAPE_BUILDER_SESSION?.getItem(ESCAPE_BUILDER_PASS_KEY)||'';
-function escapeBuilderApi(path,options={}){
-  const pass=escapeBuilderPassword();
-  return fetch('/api/'+path,{...options,headers:{'Content-Type':'application/json',...(pass?{'X-Builder-Password':encodeURIComponent(pass)}:{}),...(options.headers||{})}});
-}
+function escapeBuilderApi(path,options={}){return fetch('/api/'+path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});}
 function escapeBuilderShow(){
   escapeAbandonRun?.();resetGameState();gameState='builder';
   for(const id of ['start-menu-container','game-container','escape-select'])document.getElementById(id).style.display='none';
   document.getElementById('escape-result').style.display='none';document.getElementById('game-area').classList.remove('escape-results-open');
   const panel=document.getElementById('escape-builder');panel.style.display='block';updateToolbar();window.scrollTo?.(0,0);return panel;
 }
-function openEscapeBuilder(model){
-  escapeBuilderShow();
-  if(!escapeBuilderPassword()){renderEscapeBuilderLock();return;}
-  escapeBuilderModel=model||escapeBuilderModel||EscapeBuilder.blank();escapeBuilderPick=null;renderEscapeBuilder();
+// Whether this browser holds an admin session (the server's cookie), asked fresh each time a
+// locked screen opens, and remembered for the community shelf's admin buttons.
+let escapeAdminSignedIn=false;
+async function escapeAdminStatus(){try{const r=await escapeBuilderApi('admin/status');if(r.ok){const s=await r.json();escapeAdminSignedIn=Boolean(s.signedIn);return s;}}catch(_){}escapeAdminSignedIn=false;return null;}
+async function openEscapeBuilder(model){
+  const panel=escapeBuilderShow();if(model)escapeBuilderModel=model;
+  if(!escapeAdminSignedIn){panel.innerHTML='<p>Checking…</p>';const s=await escapeAdminStatus();if(!s?.signedIn){renderEscapeAdminLock({title:'Level builder',next:()=>openEscapeBuilder(),status:s});return;}}
+  escapeBuilderModel=escapeBuilderModel||EscapeBuilder.blank();escapeBuilderPick=null;renderEscapeBuilder();
 }
 function closeEscapeBuilder(){document.getElementById('escape-builder').style.display='none';document.getElementById('start-menu-container').style.display='';gameState='start';resetGameState();}
 
-// The builder asks for the password the server was started with (BUILDER_PASSWORD).
-function renderEscapeBuilderLock(message=''){
-  const panel=document.getElementById('escape-builder');
-  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Menu</button><h2>Level builder</h2></div>'+
-    '<form id="builder-lock" class="builder-lock"><p>The builder is for level makers. Enter the builder password to start building.</p><input id="builder-pass" type="password" autocomplete="current-password" maxlength="200" placeholder="Builder password"><button class="escape-primary" type="submit">Unlock</button>'+
-    (message?'<p class="builder-bad">'+escapeHtml(message)+'</p>':'')+'<p>Want to play levels others have made? Open <button type="button" id="builder-to-community" class="escape-secondary">Community levels</button></p></form>';
-  document.getElementById('builder-back').onclick=closeEscapeBuilder;document.getElementById('builder-to-community').onclick=()=>openEscapeCommunity();
-  const input=document.getElementById('builder-pass');input.focus?.();
-  // Say straight away when the server has no builder password, rather than after a wasted try.
-  if(!message)fetch('/api/builder').then(r=>r.ok?r.json():null).then(status=>{if(status&&!status.enabled&&document.getElementById('builder-lock'))renderEscapeBuilderLock('The builder is switched off on this server: no builder password has been set. Set BUILDER_PASSWORD where the server runs, then restart it.');}).catch(()=>{});
-  document.getElementById('builder-lock').onsubmit=async e=>{e.preventDefault();const password=input.value;if(!password)return;
-    try{const r=await fetch('/api/builder/unlock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});
-      if(r.ok){ESCAPE_BUILDER_SESSION?.setItem(ESCAPE_BUILDER_PASS_KEY,password);openEscapeBuilder();return;}
-      renderEscapeBuilderLock(r.status===503?'The builder is switched off on this server: no builder password has been set.':r.status===429?'Too many tries. Wait a minute and try again.':'That is not the builder password.');
-    }catch(_){renderEscapeBuilderLock('Could not reach the server to check the password.');}};
+// Passkeys: the browser's own sign-in (Face ID, a fingerprint, a PIN or a security key). The
+// server sends options with binary fields as base64url text; the browser wants them as bytes.
+const escapeFromB64url=s=>{s=String(s).replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;};
+const escapeToB64url=b=>{let s='';for(const c of new Uint8Array(b))s+=String.fromCharCode(c);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');};
+const escapePasskeysWork=()=>typeof window!=='undefined'&&Boolean(window.PublicKeyCredential&&navigator.credentials)&&window.isSecureContext!==false;
+async function escapePasskeyCreate(code,name){
+  const begin=await escapeBuilderApi('admin/register/begin',{method:'POST',body:JSON.stringify({code})});const options=await begin.json().catch(()=>({}));
+  if(!begin.ok)throw new Error(options.error||'The server refused.');
+  const pk=options.publicKey;pk.challenge=escapeFromB64url(pk.challenge);pk.user.id=escapeFromB64url(pk.user.id);pk.excludeCredentials=(pk.excludeCredentials||[]).map(c=>({...c,id:escapeFromB64url(c.id)}));
+  const cred=await navigator.credentials.create({publicKey:pk});
+  const credential={id:cred.id,rawId:escapeToB64url(cred.rawId),type:cred.type,response:{clientDataJSON:escapeToB64url(cred.response.clientDataJSON),attestationObject:escapeToB64url(cred.response.attestationObject)}};
+  const finish=await escapeBuilderApi('admin/register/finish',{method:'POST',body:JSON.stringify({credential,name})});const body=await finish.json().catch(()=>({}));
+  if(!finish.ok)throw new Error(body.error||'The passkey was not saved.');escapeAdminSignedIn=true;
+}
+async function escapePasskeySignIn(){
+  const begin=await escapeBuilderApi('admin/login/begin',{method:'POST',body:'{}'});const options=await begin.json().catch(()=>({}));
+  if(!begin.ok)throw new Error(options.error||'The server refused.');
+  const pk=options.publicKey;pk.challenge=escapeFromB64url(pk.challenge);pk.allowCredentials=(pk.allowCredentials||[]).map(c=>({...c,id:escapeFromB64url(c.id)}));
+  const cred=await navigator.credentials.get({publicKey:pk});
+  const credential={id:cred.id,rawId:escapeToB64url(cred.rawId),type:cred.type,response:{clientDataJSON:escapeToB64url(cred.response.clientDataJSON),authenticatorData:escapeToB64url(cred.response.authenticatorData),signature:escapeToB64url(cred.response.signature),userHandle:cred.response.userHandle?escapeToB64url(cred.response.userHandle):null}};
+  const finish=await escapeBuilderApi('admin/login/finish',{method:'POST',body:JSON.stringify({credential})});
+  if(!finish.ok){const body=await finish.json().catch(()=>({}));throw new Error(body.error||'That passkey was not accepted.');}escapeAdminSignedIn=true;
+}
+const escapePasskeyError=e=>e?.name==='NotAllowedError'?'The passkey prompt was closed or timed out. Try again.':e?.name==='InvalidStateError'?'This device already has a passkey here. Use Sign in instead.':e?.message||'Something went wrong.';
+
+// The locked screen for the builder and the admin area: sign in with a passkey, or create one
+// with the server's one-time setup code (first time) or an invite code from a signed-in admin.
+function renderEscapeAdminLock({title='Admin',next=()=>openEscapeAdmin(),status=null,message=''}={}){
+  const panel=document.getElementById('escape-builder'),setup=Boolean(status?.setupNeeded),works=escapePasskeysWork();
+  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Menu</button><h2>'+escapeHtml(title)+'</h2></div><div id="builder-lock" class="builder-lock">'+
+    (title==='Level builder'?'<p>The builder is for level makers. Sign in with your admin passkey to start building.</p>':'<p>Admins manage passkeys and the community shelf here.</p>')+
+    (!works?'<p class="builder-bad">Passkeys need the game opened over https (or on localhost) in a current browser.</p>':'')+
+    (status===null?'<p class="builder-bad">Could not reach the server.</p>':setup?'<p><b>First time:</b> no admin passkey exists yet. Enter the one-time setup code printed in the server log, then create a passkey on this device.</p>':'<button id="admin-signin" class="escape-primary">Sign in with passkey</button>')+
+    '<details'+(setup?' open':'')+'><summary>'+(setup?'Set up the first passkey':'Add this device with an invite code')+'</summary><div class="builder-lock">'+
+    '<input id="admin-code" autocomplete="one-time-code" autocapitalize="characters" maxlength="20" placeholder="'+(setup?'Setup code from the server log':'Invite code')+'">'+
+    '<input id="admin-name" maxlength="40" placeholder="Name for this device (e.g. My phone)"><button id="admin-create" class="escape-'+(setup?'primary':'secondary')+'">Create passkey</button></div></details>'+
+    (message?'<p class="builder-bad">'+escapeHtml(message)+'</p>':'')+'<p>Want to play levels others have made? Open <button type="button" id="builder-to-community" class="escape-secondary">Community levels</button></p></div>';
+  const $=id=>document.getElementById(id),again=m=>renderEscapeAdminLock({title,next,status,message:m});
+  $('builder-back').onclick=closeEscapeBuilder;$('builder-to-community').onclick=()=>openEscapeCommunity();
+  if($('admin-signin'))$('admin-signin').onclick=async()=>{try{await escapePasskeySignIn();next();}catch(e){again(escapePasskeyError(e));}};
+  $('admin-create').onclick=async()=>{const code=$('admin-code').value.trim();if(!code){$('admin-code').focus?.();return;}
+    try{await escapePasskeyCreate(code,$('admin-name').value.trim());next();}catch(e){again(escapePasskeyError(e));}};
+}
+
+// The admin area: passkeys (list, add another device, remove one), the community shelf, sign out.
+async function openEscapeAdmin(message=''){
+  const panel=escapeBuilderShow();panel.innerHTML='<p>Checking…</p>';
+  let list=null;try{const r=await escapeBuilderApi('admin/passkeys');if(r.ok){list=await r.json();escapeAdminSignedIn=true;}}catch(_){}
+  if(!list){const s=await escapeAdminStatus();renderEscapeAdminLock({title:'Admin',status:s});return;}
+  let levels=[];try{const r=await fetch('/api/levels');if(r.ok)levels=(await r.json()).levels||[];}catch(_){}
+  const day=t=>t?String(t).slice(0,10):'—';
+  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Menu</button><h2>Admin</h2><button id="admin-builder" class="escape-secondary">Level builder</button><button id="admin-signout" class="escape-secondary">Sign out</button></div>'+
+    (message?'<p class="builder-status">'+escapeHtml(message)+'</p>':'')+
+    '<h3>Passkeys</h3><div class="builder-list">'+list.passkeys.map(p=>'<div class="builder-saved"><b>'+escapeHtml(p.name)+'</b> <span>added '+day(p.createdAt)+' · last used '+day(p.lastUsedAt)+(p.id===list.current?' · this session':'')+'</span>'+
+      (list.passkeys.length>1?'<button data-premove="'+escapeHtml(p.id)+'">Remove</button>':'')+'</div>').join('')+'</div>'+
+    '<p><button id="admin-invite" class="escape-secondary">Invite another device</button> <button id="admin-here" class="escape-secondary">Add a passkey on this device</button></p><p id="admin-invite-out"></p>'+
+    '<h3>Community shelf</h3><p>'+levels.length+' published level'+(levels.length===1?'':'s')+'. <button id="admin-community" class="escape-secondary">Open the shelf</button> to play, copy or take levels down.</p>';
+  const $=id=>document.getElementById(id);
+  $('builder-back').onclick=closeEscapeBuilder;$('admin-builder').onclick=()=>openEscapeBuilder();$('admin-community').onclick=()=>openEscapeCommunity();
+  $('admin-signout').onclick=async()=>{try{await escapeBuilderApi('admin/logout',{method:'POST',body:'{}'});}catch(_){}escapeAdminSignedIn=false;closeEscapeBuilder();};
+  $('admin-invite').onclick=async()=>{const out=$('admin-invite-out');try{const r=await escapeBuilderApi('admin/invite',{method:'POST',body:'{}'});const b=await r.json();
+    out.innerHTML=r.ok?'Invite code: <b class="admin-code">'+escapeHtml(b.code)+'</b> — on the other device open Admin, choose “Add this device with an invite code” and enter it within '+b.minutes+' minutes. It works once.':'<span class="builder-bad">'+escapeHtml(b.error||'Could not make an invite.')+'</span>';}catch(_){out.textContent='Could not reach the server.';}};
+  $('admin-here').onclick=async()=>{try{await escapePasskeyCreate('',prompt('Name for this passkey','Another passkey')||'');openEscapeAdmin('Passkey added.');}catch(e){openEscapeAdmin(escapePasskeyError(e));}};
+  for(const b of document.querySelectorAll('[data-premove]'))b.onclick=async()=>{if(!confirm('Remove this passkey? It will no longer sign in.'))return;
+    let note='Passkey removed.';try{const r=await escapeBuilderApi('admin/passkeys/'+encodeURIComponent(b.dataset.premove),{method:'DELETE'});if(!r.ok)note=(await r.json().catch(()=>({}))).error||'Could not remove it.';}catch(_){note='Could not reach the server.';}openEscapeAdmin(note);};
 }
 
 const escapeBuilderGuardIndex=id=>escapeBuilderModel.guards.findIndex(g=>g.id===id);
@@ -122,7 +170,7 @@ function renderEscapeBuilder(){
     (escapeBuilderNote?'<p class="builder-note">'+escapeHtml(escapeBuilderNote)+'</p>':'')+
     '<p class="builder-status'+(problems.length?' builder-bad':'')+'">'+(problems.length?'⚠ '+problems.map(escapeHtml).join(' '):'✓ Ready to play. Treasure in level: '+B.treasureTotal(m)+'.')+'</p>'+
     '<div class="builder-actions"><button id="builder-play" class="escape-primary"'+(problems.length?' disabled':'')+'>▶ Playtest</button><button id="builder-save" class="escape-secondary">Save</button><button id="builder-publish" class="escape-secondary"'+(problems.length?' disabled':'')+'>⇪ Publish to community</button>'+
-    '<button id="builder-new" class="escape-secondary">New</button><button id="builder-share" class="escape-secondary">Share</button><button id="builder-import" class="escape-secondary">Import</button><button id="builder-community" class="escape-secondary">Community levels</button><button id="builder-lock-again" class="escape-secondary">Lock</button></div>'+
+    '<button id="builder-new" class="escape-secondary">New</button><button id="builder-share" class="escape-secondary">Share</button><button id="builder-import" class="escape-secondary">Import</button><button id="builder-community" class="escape-secondary">Community levels</button><button id="builder-admin" class="escape-secondary">Admin</button></div>'+
     '<textarea id="builder-text" class="builder-text" style="display:none" placeholder="Paste a shared level here, then press Import again."></textarea>'+
     '<h3>My levels</h3><div class="builder-list">'+(B.loadAll(ESCAPE_BUILDER_STORE).map(l=>'<div class="builder-saved"><b>'+escapeHtml(l.name)+'</b> <span>'+l.map[0].length+'×'+l.map.length+' · '+l.guards.length+' enemies</span><button data-play="'+l.id+'">Play</button><button data-edit="'+l.id+'">Edit</button><button data-delete="'+l.id+'">Delete</button></div>').join('')||'<p>No saved levels yet. Saved levels stay in this browser; publish one to share it with every player.</p>')+'</div>';
   wireEscapeBuilder();
@@ -187,22 +235,22 @@ function wireEscapeBuilder(){
   $('builder-save').onclick=()=>{const ok=B.saveOne(ESCAPE_BUILDER_STORE,m);rerender();$('builder-save').textContent=ok?'Saved ✓':'Could not save';};
   $('builder-publish').onclick=async()=>{const b=$('builder-publish');b.disabled=true;b.textContent='Publishing…';
     try{const r=await escapeBuilderApi('levels',{method:'POST',body:JSON.stringify({level:B.sanitize(m)})});const body=await r.json().catch(()=>({}));
-      if(r.status===401){ESCAPE_BUILDER_SESSION?.removeItem(ESCAPE_BUILDER_PASS_KEY);renderEscapeBuilderLock('The builder password has changed. Enter it again to publish.');return;}
+      if(r.status===401){escapeAdminSignedIn=false;renderEscapeAdminLock({title:'Level builder',next:()=>openEscapeBuilder(),status:await escapeAdminStatus(),message:'Your admin session ended. Sign in again to publish; your level is kept.'});return;}
       b.textContent=r.ok?'Published ✓':'Could not publish';if(!r.ok&&body.error){escapeBuilderNote=body.error;rerender();}}
     catch(_){b.textContent='Could not reach the server';}};
   $('builder-new').onclick=()=>{escapeBuilderModel=B.blank();escapeBuilderPick=null;rerender();};
   $('builder-share').onclick=()=>{const t=$('builder-text');t.style.display='block';t.value=B.exportText(m);t.select();try{navigator.clipboard?.writeText(t.value);}catch(_){}};
   $('builder-import').onclick=()=>{const t=$('builder-text');if(t.style.display!=='block'||!t.value.trim()){t.style.display='block';t.value='';t.focus();return;}const level=B.importText(t.value);if(!level){t.value='';t.placeholder='That text is not a Sally level. Paste the whole line that starts with SALLY';return;}escapeBuilderModel=level;escapeBuilderPick=null;rerender();};
   $('builder-community').onclick=()=>openEscapeCommunity();
-  $('builder-lock-again').onclick=()=>{ESCAPE_BUILDER_SESSION?.removeItem(ESCAPE_BUILDER_PASS_KEY);renderEscapeBuilderLock();};
+  $('builder-admin').onclick=()=>openEscapeAdmin();
   const saved=B.loadAll(ESCAPE_BUILDER_STORE),byId=id=>saved.find(l=>l.id===id);
   for(const b of document.querySelectorAll('[data-play]'))b.onclick=()=>{const l=byId(b.dataset.play);if(l&&!B.validate(l).length){escapeBuilderModel=l;startEscape({custom:B.toRoute(l),from:'builder'});}};
   for(const b of document.querySelectorAll('[data-edit]'))b.onclick=()=>{const l=byId(b.dataset.edit);if(l){escapeBuilderModel=l;escapeBuilderPick=null;rerender();}};
   for(const b of document.querySelectorAll('[data-delete]'))b.onclick=()=>{B.removeOne(ESCAPE_BUILDER_STORE,b.dataset.delete);rerender();};
 }
 
-// The community shelf: every published level, open to every player. Level makers (with the
-// builder unlocked) can also take a level down.
+// The community shelf: every published level, open to every player. A signed-in admin can also
+// copy a level into the builder or take it down.
 const ESCAPE_COMMUNITY_BEST='sally-escape-community-best';
 function escapeCommunityBest(){try{return JSON.parse(ESCAPE_BUILDER_STORE?.getItem(ESCAPE_COMMUNITY_BEST)||'{}')||{};}catch(_){return {};}}
 function escapeCommunityRecord(id,seconds){const best=escapeCommunityBest();if(!(best[id]<=seconds))best[id]=+seconds.toFixed(1);try{ESCAPE_BUILDER_STORE?.setItem(ESCAPE_COMMUNITY_BEST,JSON.stringify(best));}catch(_){}}
@@ -210,7 +258,7 @@ async function openEscapeCommunity(){
   const panel=escapeBuilderShow();panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Menu</button><h2>Community levels</h2></div><p>Loading…</p>';
   document.getElementById('builder-back').onclick=closeEscapeBuilder;
   let levels=null;try{const r=await fetch('/api/levels');if(r.ok)levels=(await r.json()).levels;}catch(_){}
-  const maker=Boolean(escapeBuilderPassword()),best=escapeCommunityBest(),B=EscapeBuilder;
+  await escapeAdminStatus();const maker=escapeAdminSignedIn,best=escapeCommunityBest(),B=EscapeBuilder;
   const clean=Array.isArray(levels)?levels.map(l=>({...B.sanitize(l),publishedAt:l.publishedAt})).filter(l=>l.id&&!B.validate(l).length):null;
   panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Menu</button><h2>Community levels</h2>'+(maker?'<button id="community-builder" class="escape-secondary">Level builder</button>':'')+'</div>'+
     (clean===null?'<p class="builder-bad">Could not reach the community shelf. Try again in a moment.</p>':!clean.length?'<p>No community levels yet. Level makers publish them from the level builder.</p>':

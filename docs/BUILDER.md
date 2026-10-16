@@ -2,23 +2,33 @@
 
 The builder is on the start menu.
 
-## Setting the password on the server
-1. Put the password in a `.env` file next to `compose.yaml` (or export it in the shell that runs
-   `docker compose`): `BUILDER_PASSWORD='your password'`. Use single quotes. Compose treats `$` as
-   the start of a variable, so a password with `$` in it arrives changed unless it is quoted like
-   that (or each `$` is doubled to `$$`).
-2. Recreate the container so it picks the password up: `docker compose pull && docker compose up -d`.
-   A plain restart keeps the old settings.
-3. Check the container log (`docker compose logs sallys-escape`). It says
-   `Level builder: password set (N characters).` If N is not the length you expect, the password was
-   changed on the way in; if it says no password is set, the container did not get it.
+## Signing in with a passkey
+The builder and the **Admin** area (a link under the start menu buttons) need an admin signed in
+with a passkey: Face ID, a fingerprint, the device PIN or a security key. There is no password.
+Playing **Community levels** needs nothing.
 
-Spaces around the password are ignored. Too many wrong tries make that visitor wait a minute.
+**First passkey (once):**
+1. Start the server with no passkeys. Its log prints a one-time code:
+   `Admin setup: no passkey yet. ... enter this one-time setup code: ABCD-EF23`
+   (`docker compose logs sallys-escape`, or the container's Logs tab in Portainer).
+2. Open the game over https, choose **Level builder** or **Admin**, enter the code and a name for the
+   device, and press **Create passkey**. The code then stops working.
 
-## Using the builder It asks for the **builder password**: the value of
-`BUILDER_PASSWORD` on the server (`compose.yaml` passes it through from your environment). With no
-password set the builder stays locked and nothing can be published. The password is remembered
-for the browser tab; **Lock** forgets it.
+**More devices:** signed in, open **Admin → Invite another device**. It shows a code that works once
+within 15 minutes; on the other device open **Admin → Add this device with an invite code**.
+**Add a passkey on this device** adds a second passkey (say, a security key) with no code.
+
+**Removing:** Admin lists every passkey with when it was added and last used. **Remove** one you
+have lost; the last one cannot be removed, so you are never locked out. If every passkey is lost,
+delete `admin-passkeys.json` from the data volume and restart: a new setup code is printed.
+
+A sign-in lasts 12 hours (**Sign out** in Admin ends it). Passkeys belong to one web address. Set
+`PUBLIC_ORIGIN` to the address players use (for example `https://mazebackend.masonrobert.com`) so
+they keep working whatever headers the proxy sends; without it the server uses the address each
+request came in on. Passkeys need https (or `localhost`).
+
+## Using the builder
+Signed in, the builder opens straight away. **Admin** in its toolbar goes to the admin area.
 
 ## Painting
 - **Tiles**: wall, floor, leaves (hide), gravel (noisy), cracked wall, mud, water, gap, crumbling
