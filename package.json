@@ -9,10 +9,12 @@
   "scripts": {
     "start": "node server/index.cjs",
     "prepare:static": "node scripts/prepare-static.cjs",
-    "test": "node --test tests/*.cjs"
+    "test": "node --test tests/*.cjs",
+    "level:lab": "node scripts/level-lab.cjs"
   },
   "devDependencies": {
     "p5": "1.11.2",
     "tone": "15.0.4"
   }
 }
+
