@@ -102,7 +102,7 @@ Luminous Depths stays dark, lit by glow plants, and brings in the angler, whose 
 - Glowcap Grotto: a grotto split by a chasm, with a timed bridge.
 - Tideglass Causeway or Pulse Garden: three islands whose swim lanes weave between lures, or hedged beds round a vault whose door will not stay open.
 - Spore Engine: a pump hall with a timed block and a flooded shaft.
-- Nightbloom Reach: a crescent of islands that closes the area. Its new layout is drawn but still needs a recorded winning run, so the old layout stays live for now (on the fix list).
+- Nightbloom Reach: three islands above black water, a swim under an angler's lure and a timed bridge; taking the key raises a bloom bridge home and wakes a moth.
 
 Living Labyrinth keeps its living garden (seeds, root doors, vine crossings) and adds the flytrap, the tangle vine, Sally-only cracks and a heavy plate only a beetle can press:
 - Sleeping Orchard: tree rows along a stream, root doors that swap when the key is taken, and a seed-grown crossing.
@@ -160,11 +160,10 @@ Steam Vents is the steepest climb, with king cobras in its hardest boilers:
 - Ant Furnace: an ant column that steam does not stop, and a furnace door that opens only while the beetle presses its slab.
 - The Great Boiler: two king cobras in the boiler hall, an owl, a fox and the ants outside; the key seals the boiler room and a crack is the way out.
 
-Every region now has text maps. The Lantern Marsh's Firefly Ford gained a bog heron, a rooted striker that stabs along its beak line and never sees a swimmer. Still on the fix list: the new Nightbloom Reach layout (the old one stays live until it has a winning run).
+Every region now has text maps. The Lantern Marsh's Firefly Ford gained a bog heron, a rooted striker that stabs along its beak line and never sees a swimmer. 
 
 ### Fix list
 Things flagged to come back to:
-- **Nightbloom Reach** (escape 42): the new text-map layout is drawn but has no winning run yet, so the old layout stays live.
 - **The Long Way Home** (mega bonus, opens with the first ten areas mastered): built on a work branch; its winning run is still being searched for. Bonus escapes only need a finish, so the run may use the tail drop or a chase.
 - **Level builder**: built out with doors, bridges, triggers and links, sleeping enemies, hazards, cold ground, a password and a community shelf (see `docs/BUILDER.md`). Next: try it out and decide what else it needs.
 
