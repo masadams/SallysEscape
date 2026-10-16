@@ -1446,7 +1446,7 @@
  "#..N.......................NX.#",
  "#1...........................2#",
  "###############################"]},
-{append:true,explore:false,tailDrop:true,id:"kelp-maze",name:"Kelp Maze",brief:"The maze floods and drains with the tide, and the snakes cannot swim.",hint:"The snake rooms open onto the shore only through tide flats. At high tide those doorways flood and the snakes are sealed in: slip along the shore then. At low tide they wander out.",pebbles:2,tongues:1,tide:{period:15,high:7,offset:2},guards:[{spawn:[9,3],facing:0,patrol:[[7,2],[11,3]]},{spawn:[21,3],facing:PI,patrol:[[19,2],[23,3]]},{spawn:[15,5],facing:0,patrol:[[13,5],[17,9]]},{spawn:[27,6],facing:PI,patrol:[[25,6],[28,7]]},{spawn:[20,13],facing:PI,patrol:[[5,13],[25,13]]}],map:[
+{append:true,explore:false,tailDrop:true,id:"kelp-maze",name:"Kelp Maze",brief:"The maze floods and drains with the tide, and eels wake in the shallows.",hint:"The shore floods with the tide. When it is in, eels wake in the shallows and lunge at anyone swimming past; when it is out they lie buried. Wait at the leaves and cross the shore at low tide.",pebbles:2,tongues:1,tide:{period:15,high:7,offset:12},guards:[{spawn:[9,3],facing:0,patrol:[[7,2],[11,3]]},{spawn:[21,3],facing:PI,patrol:[[19,2],[23,3]]},{spawn:[15,5],facing:0,patrol:[[13,5],[17,9]]},{spawn:[27,6],facing:PI,patrol:[[25,6],[28,7]]},{kind:"eel",spawn:[10,13],facing:0,patrol:[[10,13]]},{kind:"eel",spawn:[20,13],facing:0,patrol:[[20,13]]}],map:[
  "###############################",
  "#1....#.....#.....#.....#....1#",
  "#.@...#..N..#.....#..N..#.....#",
@@ -1458,9 +1458,9 @@
  "#.....#.....#.....#.....#.....#",
  "#..L..#######..3..#######..L..#",
  "#.X...#.1...#.....#...1.#...K.#",
- "#.....###t#####t#####t###.....#",
+ "#1....###t#####t#####t###....2#",
  "#ttttttttttttttttttttttttttttt#",
- "#1.....L....L.....L....L.....2#",
+ "#ttttttttttttttttttttttttttttt#",
  "###############################"]},
 {append:true,explore:false,tailDrop:true,id:"shoal-light",name:"Shoal Light",brief:"Out on the shoals, a dragonfly patrols the flats and eels wait in the pools.",hint:"The dragonfly loops the flats on a fixed path: cross just behind it. The eels in the rock pools never sleep, so keep a tile back from them.",pebbles:2,tongues:1,tide:{period:14,high:6,offset:0},guards:[{kind:"dragonfly",spawn:[9,2],facing:0,patrol:[[9,2],[23,2],[23,12],[9,12]],speed:4},{kind:"eel",spawn:[13,6],facing:0,patrol:[[13,6]]},{kind:"eel",spawn:[19,8],facing:0,patrol:[[19,8]]},{kind:"crab",spawn:[27,7],facing:0,patrol:[[27,7]],axis:"y",range:3},{spawn:[29,4],facing:PI,patrol:[[26,2],[30,5]]}],map:[
  "#################################",
