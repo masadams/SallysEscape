@@ -359,3 +359,11 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .builder-text { width:100%; min-height:70px; margin-top:8px; background:#10231f; color:#e4edd6; border:1px solid #789575; border-radius:6px; font:12px monospace; }
 .builder-list { display:grid; gap:6px; } .builder-saved { display:flex; gap:8px; align-items:center; flex-wrap:wrap; background:#17302b; border-radius:8px; padding:6px 10px; }
 .builder-saved span { color:#9fb59a; font-size:.8rem; margin-right:auto; } .builder-saved button { border:1px solid #789575; border-radius:6px; background:#21443f; color:#e4edd6; font:inherit; padding:4px 9px; }
+
+/* The toolbar menu: on phones the top bar keeps only Menu and Pause; the rest open under Menu. */
+#menu-button { display:none; }
+.mobile-game #menu-button { display:inline-block; }
+.mobile-game #game-toolbar > button:not(#menu-button):not(#pause-button) { display:none !important; }
+.mobile-game #game-toolbar.toolbar-open { flex-direction:column; align-items:stretch; padding:6px; border-radius:14px; background:rgba(12,30,30,.96); box-shadow:0 8px 24px #0008; z-index:30; }
+.mobile-game #game-toolbar.toolbar-open > button:not(#menu-button):not(#pause-button):not([style*="display: none"]):not([style*="display:none"]) { display:block !important; text-align:left; }
+.mobile-game #game-toolbar.toolbar-open #menu-button { order:-1; }

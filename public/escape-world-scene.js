@@ -49,7 +49,7 @@ function mountEscapeChrome(active){
 function openEscapeWorld(focusId){
   escapeLibraryOpen=false;escapeWorldHudSignature='';
   if(!escapeWorld)escapeWorld=new EscapeWorld(id=>escapeProgress.unlocked(id),focusId,()=>escapeProgress.hiddenOpen(EscapeWorld.chapters),id=>escapeProgress.bonusOpen(id,EscapeWorld.chapters));
-  else if(focusId){const node=escapeWorld.nodes.find(n=>n.id===focusId);if(node){escapeWorld.player.x=node.x;escapeWorld.player.y=node.y+1;escapeWorld.target=null;escapeWorld.motion.resetPlayer(escapeWorld.player);}}
+  else if(focusId){const node=escapeWorld.spotFor(focusId);if(node){escapeWorld.player.x=node.x;escapeWorld.player.y=node.y+1;escapeWorld.target=null;escapeWorld.motion.resetPlayer(escapeWorld.player);}}
   escapeWorld.found=new Set(escapeProgress.data.caches);escapeWorld.onCache=escapeWorldFoundCache;escapeWorld.onFly=escapeWorldCaughtFly;
   escapeWorld.refreshRegions();document.getElementById('escape-select').style.display='none';document.getElementById('game-container').style.display='block';
   document.getElementById('game-area').classList.add('escape-world-open');

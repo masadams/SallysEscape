@@ -44,7 +44,7 @@ test('regrowth bugs only feed a tailless Sally, by foot or by tongue',()=>{
 });
 test('the Shedding Hollow is a hard tail-drop region where a recorded escape loses and regrows the tail',()=>{
   const hollow=EscapeCatalog.levels.slice(49,53);assert.deepEqual(hollow.map(l=>l.id),['shedskin-gully','thornback-warren','moltwater-steps','old-shedding-tree']);
-  assert.equal(hollow[0].unlockAfter,'the-heartwood');for(const l of hollow){assert.ok(l.tailDrop);assert.ok(l.regrowth.length>=3);assert.ok(l.guards.length>=4);}
+  assert.equal(hollow[0].unlockAfter,undefined,'it follows Sun and Sea on the main trail');for(const l of hollow){assert.ok(l.tailDrop);assert.ok(l.regrowth.length>=3);assert.ok(l.guards.length>=4);}
   // A catch costs the tail; eating a glowing regrowth bug grows it back for the next one.
   const g=new EscapeAdventure({levelId:'shedskin-gully'}),h=g.hunters.find(h=>h.kind==='snake')||g.hunters[0];Object.assign(h,{x:g.player.x+.3,y:g.player.y});g.advance(1/120,{});
   assert.equal(g.status,'playing');assert.equal(g.tailsDropped,1);assert.equal(g.hasTail,false);

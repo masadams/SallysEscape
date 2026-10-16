@@ -44,9 +44,14 @@ function toggleEscapeTestUnlock(){
   escapeSound('click');return escapeProgress.unlockAll;
 }
 
+const ESCAPE_LAST_PLAYED_KEY='sally-escape-last-played';
 function showEscapeSelect(){
   escapeAbandonRun();
-  const current=escapeGame?.level.id,won=escapeGame?.status==='won',index=EscapeCatalog.levels.findIndex(l=>l.id===current),focus=won?EscapeCatalog.levels[index+1]?.id||current:current;
+  // Sally comes out on the map where she just was (the escape she played, or the last one she
+  // played before this visit), never jumped ahead to the next open escape across the map.
+  const played=escapeGame&&!escapeGame.level.custom?escapeGame.level.id:null;
+  if(played)try{localStorage.setItem(ESCAPE_LAST_PLAYED_KEY,played);}catch(_){}
+  let focus=played;if(!focus)try{focus=localStorage.getItem(ESCAPE_LAST_PLAYED_KEY)||undefined;}catch(_){}
   escapeProgress.read();
   resetGameState();gameMode='escape';gameState='escapeSelect';
   for(const id of ['start-menu-container','game-container'])document.getElementById(id).style.display='none';
@@ -298,8 +303,12 @@ function escapeFootsteps(p){
   escapeStepDistance+=Math.hypot(p.x-escapeStepFrom.x,p.y-escapeStepFrom.y);escapeStepFrom={x:p.x,y:p.y};
   if(escapeStepDistance>=(p.sprinting?.62:.48)){escapeStepDistance=0;escapeStepAlt=!escapeStepAlt;escapeSound(p.swimming?'paddle':'step',{sprint:p.sprinting,alt:escapeStepAlt});}
 }
+// Phones show a close, following view by default; the menu switches to the whole map.
+const ESCAPE_CLOSE_VIEW_KEY='sally-escape-close-view';
+function escapeCloseView(){try{return localStorage.getItem(ESCAPE_CLOSE_VIEW_KEY)!=='0';}catch(_){return true;}}
+function toggleEscapeCloseView(){try{localStorage.setItem(ESCAPE_CLOSE_VIEW_KEY,escapeCloseView()?'0':'1');}catch(_){}updateToolbar();}
 function drawEscapeVault(){
-  const g=escapeGame,top=mobile?45:height<=550?126:164,bottom=mobile?65:70,view=escapeCameraFor(g,width,height-top-bottom,escapeProgress.data.view==='overview');view.oy+=top;const {cell,ox,oy}=view;
+  const g=escapeGame,close=mobile&&escapeCloseView(),top=mobile?(close?8:45):height<=550?126:164,bottom=mobile?(close?8:65):70,view=escapeCameraFor(g,width,height-top-bottom,escapeProgress.data.view==='overview',close);view.oy+=top;const {cell,ox,oy}=view;
   const palettes=[[[16,30,36],[39,65,74],[65,93,101]],[[19,34,29],[48,74,56],[78,103,76]],[[33,29,26],[77,63,48],[108,89,66]],[[21,28,37],[46,61,80],[75,91,109]],[[22,24,41],[54,57,85],[86,89,124]],[[14,31,26],[38,68,49],[58,92,66]],[[34,29,20],[80,67,39],[123,102,60]],[[16,30,39],[34,61,73],[55,90,103]],[[26,22,37],[62,48,76],[100,81,116]]];
   const index=EscapeCatalog.levels.indexOf(g.level),deepPalettes=[[[21,30,26],[53,75,58],[94,112,79]],[[22,29,35],[51,69,82],[91,111,124]],[[35,27,24],[80,58,45],[125,91,63]],[[27,23,38],[66,51,82],[103,82,125]],[[29,27,20],[75,68,39],[118,106,62]],[[32,27,20],[82,65,40],[132,108,65]]];
   const wakingPalettes=[[[14,32,28],[47,76,52],[87,113,73]],[[25,19,35],[62,49,75],[103,81,127]],[[19,31,43],[58,80,92],[96,123,141]],[[33,24,23],[79,65,57],[121,101,81]],[[29,22,36],[72,56,91],[118,91,141]]];
@@ -441,9 +450,14 @@ function drawEscapeVault(){
     if(known){stroke(23,34,40);strokeWeight(.6);noFill();rect(x*cell+1,y*cell+1,cell-2,cell-2);}
   }
   pop();
-  if(view.follow)for(const h of g.hunters)if(['alert','chase','windup','charge','sting','leap'].includes(h.state)){
-    const x=h.x*cell+ox,y=h.y*cell+oy;
-    if(x<12||y<12||x>width-12||y>height-12){const px=Math.max(16,Math.min(width-16,x)),py=Math.max(16,Math.min(height-16,y));noStroke();fill(241,173,86);ellipse(px,py,24,24);fill(25,29,29);textSize(18);textAlign(CENTER,CENTER);text('!',px,py);}
+  // Hunters off the edge of a following view: an alerted one shows a bright '!', and in a phone's
+  // close view a nearby one on patrol shows a dim marker, so zooming in never hides danger.
+  if(view.follow)for(const h of g.hunters){
+    const alert=['alert','chase','windup','charge','sting','leap','rush','pounce','crouch'].includes(h.state),near=close&&!g.level.explore&&!['buried','rooted','shell','lurking','emerge'].includes(h.state)&&Math.hypot(h.x-g.player.x,h.y-g.player.y)<11;
+    if(!alert&&!near)continue;const x=h.x*cell+ox,y=h.y*cell+oy;
+    if(x<12||y<12||x>width-12||y>height-12){const px=Math.max(16,Math.min(width-16,x)),py=Math.max(16,Math.min(height-16,y));noStroke();
+      if(alert){fill(241,173,86);ellipse(px,py,24,24);fill(25,29,29);textSize(18);textAlign(CENTER,CENTER);text('!',px,py);}
+      else{const a=Math.atan2(y-height/2,x-width/2);push();translate(px,py);rotate(a);fill(232,214,170,170);triangle(9,0,-6,-7,-6,7);pop();}}
   }
 }
 // A snow fox: white, with a bushy tail and big ears. It flattens for a blink before it pounces,
