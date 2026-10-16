@@ -209,3 +209,19 @@ test('a snow fox ignores a still or hidden Sally, but sprinting gives her away f
   const loud=arena('fox',[12,6],[6,6]);loud.h.patrol=[loud.h.patrol[0]];ticks(loud.g,.4,{y:1,sprint:true});assert.ok(['crouch','pounce','sniff'].includes(loud.h.state),'a sprint is heard');
   const lure=arena('fox',[10,6],[3,10]);lure.h.patrol=[lure.h.patrol[0]];lure.g.decoy={x:13.5,y:6.5,expires:4};ticks(lure.g,.8);assert.ok(lure.h.x>10.6,'it pounced on the pebble');assert.equal(lure.g.status,'playing');
 });
+test('a praying mantis hides as a twig until Sally is close, then snatches whatever moves into its short cone',()=>{
+  const walk=(g,s,input={x:1})=>{for(let i=0;i<120*s&&g.status==='playing';i++)g.advance(1/120,input);};
+  const {g,h}=arena('mantis',[7,4],[1,5],{facing:Math.PI/2});assert.equal(h.state,'still');assert.equal(h.reach,1.7);
+  assert.equal(g.mantisShown(h),false,'from across the room it is only a twig');
+  walk(g,4);assert.equal(g.status,'caught');assert.match(g.result.message,/mantis/);
+  const behind=arena('mantis',[7,4],[1,3],{facing:Math.PI/2});walk(behind.g,4);assert.equal(behind.g.status,'playing','passing behind it is safe');assert.ok(behind.g.player.x>9);
+  const close=arena('mantis',[7,4],[5,4],{facing:Math.PI/2});ticks(close.g,.1);assert.equal(close.g.mantisShown(close.h),true,'up close it shows');
+});
+test('a mantis snatches a pebble or a passing hunter, and Sally crosses while it recovers',()=>{
+  const lure=arena('mantis',[7,4],[3,5],{facing:Math.PI/2});lure.g.decoy={x:7.5,y:5.5,expires:5};ticks(lure.g,.4);assert.equal(lure.h.state,'strike');
+  for(let i=0;i<120*1.5&&lure.g.status==='playing';i++)lure.g.advance(1/120,{x:1,sprint:true});assert.equal(lure.g.status,'playing');assert.ok(lure.g.player.x>8.5,'crossed while it recovered');
+  const {g,h}=arena('mantis',[7,4],[13,9],{facing:Math.PI/2});
+  const snake=g.makeHunter({kind:'snake',spawn:[3,5],facing:0,patrol:[[3,5],[12,5]]});g.hunters.push(snake);g.motion.resetHunter(snake,1);
+  let dazed=false;for(let i=0;i<120*8&&!dazed;i++){g.advance(1/120,{});dazed=snake.state==='steamed';}
+  assert.ok(dazed,'the snake walking through its cone is snatched and dazed');assert.equal(g.status,'playing');assert.match(g.message,/mantis/);
+});

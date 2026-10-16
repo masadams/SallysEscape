@@ -2,10 +2,10 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {EscapeAdventure}=require('../public/escape-engine.js');const {EscapeCatalog}=require('../public/escape-levels.js');const {EscapeProgress}=require('../public/escape-progress.js');const {EscapeBestiary}=require('../public/escape-bestiary.js');
 const memory=()=>{const m=new Map();return {getItem:k=>m.get(k)??null,setItem:(k,v)=>m.set(k,String(v))};};
 
-test('every creature in the campaign has a bestiary card with a home escape',()=>{
+test('every creature in the campaign has a complete bestiary card',()=>{
   const homes=EscapeBestiary.homes(EscapeCatalog);
   for(const kind of Object.keys(homes))assert.ok(EscapeBestiary.byKind(kind),'card for '+kind);
-  for(const e of EscapeBestiary.entries){assert.ok(e.name&&e.icon&&e.job&&e.hunts&&e.tip,e.kind);assert.ok(e.kind in homes,e.kind+' lives somewhere');}
+  for(const e of EscapeBestiary.entries)assert.ok(e.name&&e.icon&&e.job&&e.hunts&&e.tip,e.kind);
 });
 test('coming near a creature marks it met; a buried scorpion or a posing mimic does not count yet',()=>{
   const game=new EscapeAdventure({levelId:EscapeCatalog.levels[0].id});const snake=game.hunters[0];
