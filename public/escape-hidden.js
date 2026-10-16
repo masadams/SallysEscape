@@ -72,7 +72,37 @@
  "#.#.#.#.....#.#.....#...#...#..1#.#",
  "#.#.#.#.###.#######.###.###.#####.#",
  "#@#.......#..............1#.......#",
- "###################################"],guards:[{spawn:[17,13],facing:0,patrol:[[5,5],[17,9],[29,11],[17,17],[9,15]]},{kind:"millipede",spawn:[13,17],facing:PI,patrol:[[13,17]]},{kind:"flytrap",spawn:[32,1],facing:PI,patrol:[[32,1]]},{kind:"flytrap",spawn:[33,8],facing:-PI/2,patrol:[[33,8]]}]}
+ "###################################"],guards:[{spawn:[17,13],facing:0,patrol:[[5,5],[17,9],[29,11],[17,17],[9,15]]},{kind:"millipede",spawn:[13,17],facing:PI,patrol:[[13,17]]},{kind:"flytrap",spawn:[32,1],facing:PI,patrol:[[32,1]]},{kind:"flytrap",spawn:[33,8],facing:-PI/2,patrol:[[33,8]]}]},
+{id:"the-long-way-home",name:"The Long Way Home",brief:"Eight rooms, every danger the burrow knows, and no checkpoints. Then the way back.",hint:"No checkpoints. Meadow snakes, a timed bridge, a steam hall, a frozen room where a fox listens, rolling logs, a scorpion garden, a swim under a heron's gaze and a king cobra's vault. Taking the key wakes hunters for the way home. The hatch wants six treasure.",bonus:{areas:10},pebbles:3,tongues:2,seeds:0,explore:false,tailDrop:true,requiredTreasure:6,map:[
+ "#############################################",
+ "#..............#.....____.....#.............#",
+ "#.@.........1..#.....____.....#...........1.#",
+ "#.......L......#.....____.....#.............#",
+ "#..L.................____.........##........#",
+ "#....................____...................#",
+ "#...........L..#.....____.....#.......##....#",
+ "#........L.....#.....____...2.#.............#",
+ "#..............#.....____.....#.............#",
+ "########################################..###",
+ "#..............#..............#.............#",
+ "#.1...L........#..............#.1...........#",
+ "#..............#..............#.............#",
+ "#...........................................#",
+ "#...................................NNN.....#",
+ "#..............#..............#.....NNN.....#",
+ "#........L.....#..............#.............#",
+ "#...........L..#..............#.............#",
+ "#..............#..............#.............#",
+ "###..########################################",
+ "#........~~~..........#.....................#",
+ "#........~~~..........#..............L......#",
+ "#........~~~....L.....#.....#...........3...#",
+ "#........~~~................#...............#",
+ "#........~~~................................#",
+ "#........~~~.......L..#..........#..........#",
+ "#.X......~~~......1...#...L......#........K.#",
+ "#........~~~..........#.....................#",
+ "#############################################"],warm:[[35,12],[40,16],[32,17]],cold:[[31,10,43,18]],gates:[{id:"chasm",name:"Chasm bridge",color:[255,206,90],bridge:true,tiles:[[21,4],[22,4],[23,4],[24,4]],plates:[[20,4],[25,4]],duration:6}],vents:[{at:[33,0],dir:[0,1],length:4,period:4.4,on:1.5,offset:0},{at:[37,9],dir:[0,-1],length:4,period:4.4,on:1.5,offset:2.2}],logs:[{from:[19,10],to:[19,18],period:4.4,offset:0,speed:6},{from:[25,18],to:[25,10],period:4.4,offset:2.2,speed:6}],thorns:[{tiles:[[15,13],[15,14]],period:2.6,up:1.2}],reactions:[{id:"home-key",when:"key",spawn:["home-snake","home-spider"],message:"The vault shakes. Something wakes behind you.",objective:"Go back the way you came: the hatch is by the swim."}],reinforcements:[{id:"home-snake",spawn:[5,24],facing:0,patrol:[[3,22],[7,22],[7,26],[3,26]]},{id:"home-spider",kind:"spider",spawn:[30,24],facing:PI,patrol:[[26,21],[33,23]]}],guards:[{spawn:[6,7],facing:-PI/2,patrol:[[6,7],[6,1]]},{spawn:[11,1],facing:PI/2,patrol:[[11,1],[11,8]]},{kind:"toad",spawn:[27,1],facing:PI/2,patrol:[[27,1]]},{kind:"beetle",spawn:[36,7],facing:0,patrol:[[32,7],[42,7]]},{kind:"fox",spawn:[37,17],facing:PI,patrol:[[33,17],[42,17]]},{kind:"scorpion",spawn:[10,12],facing:PI,patrol:[[10,12]]},{kind:"scorpion",spawn:[11,17],facing:PI,buried:true,patrol:[[11,17]]},{kind:"spider",spawn:[7,11],facing:0,patrol:[[2,10],[13,10]]},{kind:"angler",spawn:[10,27],facing:-PI/2,patrol:[[10,27]],lure:[10,26]},{kind:"heron",spawn:[13,24],facing:-PI/2,looks:[-PI/2,PI],every:3.2,patrol:[[13,24]]},{kind:"cobra",spawn:[38,22],facing:PI,patrol:[[38,22]]},{spawn:[30,26],facing:PI,patrol:[[25,26],[35,26],[35,21],[25,21]]}]}
   ];
   root.EscapeHidden=routes;
   if(typeof module!=='undefined'&&module.exports)module.exports=routes;

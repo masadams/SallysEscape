@@ -123,7 +123,7 @@ The Shedding Hollow lets Sally spare a tail and regrow it by eating a glowing bu
 ### Bonus escapes
 Bonus escapes sit on the map behind a hedge that opens once the areas before them are mastered (every star, not just a clear). They keep their own records.
 - The Bramble Maze (north of the Deep Trials, opens with the first five areas mastered): a true, dark maze with loops, a hunting snake, tangle vines and flytraps at the dead ends.
-- A mega escape (about five minutes, no checkpoints) will open with the first ten areas mastered.
+- The Long Way Home (above the Living Labyrinth, opens with the first ten areas mastered): the mega escape. Eight wide rooms wind through three bands with no checkpoints: meadow snakes, a chasm bridge, a steam hall, a frozen room where a fox listens, rolling logs, a scorpion garden, a swim under a heron's gaze and a king cobra's vault. Taking the key wakes hunters for the way home.
 
 The Lantern Marsh brings owls, whose beams sweep the yards from their look-outs:
 - Firefly Ford: a dark black river with a plank ford, moths that follow glowing footprints, and an owl on the far bank.
@@ -164,7 +164,6 @@ Every region now has text maps. The Lantern Marsh's Firefly Ford gained a bog he
 
 ### Fix list
 Things flagged to come back to:
-- **The Long Way Home** (mega bonus, opens with the first ten areas mastered): built on a work branch; its winning run is still being searched for. Bonus escapes only need a finish, so the run may use the tail drop or a chase.
 - **Level builder**: built out with doors, bridges, triggers and links, sleeping enemies, hazards, cold ground, a password and a community shelf (see `docs/BUILDER.md`). Next: try it out and decide what else it needs.
 
 ### Area mastery (done)

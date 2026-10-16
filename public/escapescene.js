@@ -438,7 +438,7 @@ function drawEscapeVault(){
   drawingContext.clip();drawingContext.lineCap='round';drawingContext.lineJoin='round';
   // An angler's lure is a light, so it shows even in the dark; the angler itself only shows when it rises.
   g.hunters.filter(h=>h.kind==='angler').forEach(h=>drawEscapeAngler(h,cell,g.elapsed));
-  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='angler')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(h.kind==='millipede'?g.playerSees(h):!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
+  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='angler')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
   drawingContext.save();drawingContext.globalAlpha*=g.player.hidden?.48:1;
   for(const h of g.hunters)if(h.state==='clash'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noFill();stroke(255,193,107,180);strokeWeight(cell*.035);ellipse(h.x*cell,h.y*cell,cell*(.9+Math.sin(g.elapsed*14)*.08),cell*.75);}
   drawEscapeLizard(g.motion.lizard,cell,g.motion.clock,g.player.swimming,!g.hasTail,escapeCharacter?.face);
@@ -583,9 +583,11 @@ function drawEscapeTongue(g,cell){
   noStroke();fill(t.caught?255:246,t.caught?216:151,t.caught?112:178);ellipse(tip.x*cell,tip.y*cell,cell*.16,cell*.13);
   drawingContext.restore();
 }
-function drawEscapeMillipede(h,model,cell){
+function drawEscapeMillipede(h,model,cell,watched=true,clock=0){
   // Rounded armour and two pairs of legs per segment. Gait is driven by
   // travelled distance, so observation freezes every foot as well as the head.
+  // Out of Sally's gaze it is a dim shape creeping after her; once she faces it, it is solid and still.
+  drawingContext.save();if(!watched)drawingContext.globalAlpha*=h.state==='follow'?.42+.1*Math.sin(clock*6):.38;
   for(let i=model.joints.length-2;i>=0;i--){
     const p=model.joints[i],a=model.angles[i],w=.13*(1-i/model.joints.length*.35);
     push();translate(p.x*cell,p.y*cell);rotate(a);
@@ -600,6 +602,7 @@ function drawEscapeMillipede(h,model,cell){
   }
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);noStroke();fill(145,78,36);ellipse(cell*.02,0,cell*.32,cell*.3);
   stroke(225,177,106);strokeWeight(cell*.025);for(const side of [-1,1]){line(cell*.13,side*cell*.09,cell*.29,side*cell*.2);line(cell*.29,side*cell*.2,cell*.39,side*cell*.16);}pop();
+  drawingContext.restore();
 }
 function drawEscapeCricket(h,cell,clock){
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);

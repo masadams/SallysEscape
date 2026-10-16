@@ -17,7 +17,7 @@ straight on is rarely enough: change direction, break line of sight, or hide.
 | Cricket | Alarm | Harmless itself. When it sees or hears Sally it chirps, and every hunter in earshot heads for the spot. | Stay quiet and out of its sight, or let it chirp somewhere useless. |
 | Moth | Lantern | Its glow lights Sally up: leaves stop hiding her and every hunter sees further. It swoops on glowing footprints. | Keep out of its light; time crossings while it drifts away. |
 | Mimic | Greed trap | Looks like a treasure chest, with a slow breath and an occasional blink. When Sally reaches for it, it snaps toward where she is heading. | Learn the tell, or throw a pebble to make it snap first. |
-| Millipede | Lurker | Freezes while watched and follows when Sally looks away, a little slower than she walks. | Keep it in view while you back off. |
+| Millipede | Lurker | Freezes while watched and follows when Sally looks away, a little slower than she walks. Out of her gaze it shows as a dim shape creeping after her (with a scrape when it starts); once she faces it, it is solid and still. | Keep it in view while you back off. |
 | Owl | Searchlight | Turns between look-outs with a long narrow beam, glares, then swoops; the swoop bends toward Sally. | Hide in leaves or behind cover before it lands. |
 | Hawk | Sky | A shadow follows Sally and dives on a timer. | Shelter under an awning, in leaves, or blend in with camouflage. |
 | Gecko | Thief | Steals the last treasure Sally picked up and runs for its burrow. | Catch it before it gets there. |
