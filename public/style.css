@@ -388,3 +388,23 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .bestiary-icon { font-size:2rem; line-height:1; } .bestiary-job { display:inline-block; font-size:.68rem; letter-spacing:.06em; text-transform:uppercase; color:#ffd88a; }
 .bestiary-tip { color:#9ff5d0 !important; } .bestiary-unknown { opacity:.6; } .bestiary-unknown .bestiary-icon { color:#7d9a8c; font-weight:700; }
 .world-bestiary-button { cursor:pointer; font:inherit; background:none; border:1px solid #789575; border-radius:8px; padding:2px 8px; color:inherit; }
+
+/* Phone world map: the map comes first. Levels, colours and the main menu move into ☰ Menu;
+   the area panel folds to its name and stars until tapped. */
+.toolbar-world { display:none; }
+.mobile-game .escape-world-open #game-toolbar.toolbar-open > button.toolbar-world { display:block !important; }
+.mobile-game .escape-world-open .world-guide { background:none; box-shadow:none; border:0; padding:0; left:50%; transform:translateX(-50%); bottom:12px; max-width:60%; pointer-events:none; }
+.mobile-game .escape-world-open .world-guide>span,.mobile-game .escape-world-open .world-guide p:not(.world-toast),.mobile-game .escape-world-open .world-guide button { display:none !important; }
+.mobile-game .escape-world-open .world-toast:not(:empty) { display:block; margin:0; padding:6px 10px; border-radius:10px; background:#143032ed; text-align:center; }
+.mobile-game .escape-world-open .world-heading { top:8px; left:10px; padding:5px 10px; border-radius:12px; max-width:45%; }
+.mobile-game .escape-world-open .world-heading>span { display:none; }
+.mobile-game .escape-world-open .world-heading h2 { font-size:.85rem; margin:0; cursor:pointer; pointer-events:auto; }
+.mobile-game .escape-world-open .world-heading h2::after { content:' ▾'; font-size:.7rem; opacity:.7; }
+.mobile-game .escape-world-open .world-heading:not(.world-heading-open) .world-travel,
+.mobile-game .escape-world-open .world-heading:not(.world-heading-open) #world-journal { display:none; }
+.mobile-game .escape-world-open .world-heading:not(.world-heading-open) .world-totals { margin-top:2px; font-size:.7rem; }
+.mobile-game .escape-world-open .world-heading-open .world-travel { margin-top:6px; }
+.mobile-game .escape-world-open:has(#game-toolbar.toolbar-open) .world-route { display:none; }
+.mobile-game #game-toolbar.toolbar-open { display:grid; grid-template-columns:1fr 1fr; gap:5px; max-height:calc(100vh - 30px); overflow:auto; }
+.mobile-game #game-toolbar.toolbar-open #menu-button { grid-column:1 / -1; }
+.mobile-game #game-toolbar.toolbar-open > button { min-height:40px; padding:6px 10px !important; font-size:.72rem !important; }
