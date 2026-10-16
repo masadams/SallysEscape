@@ -22,6 +22,7 @@
     {kind:'hawk',name:'Hawk',icon:'🦅',job:'Sky',hunts:'Its shadow follows Sally across open ground and dives on a timer.',tip:'Shelter under an awning, in leaves, or with camouflage.'},
     {kind:'ants',name:'Ant column',icon:'🐜',job:'Moving wall',hunts:'Marches a fixed loop and catches anything it walks over.',tip:'Cross in the gaps between groups.'},
     {kind:'gecko',name:'Gecko',icon:'🦎',job:'Thief',hunts:'Steals the last treasure Sally picked up and runs for its burrow.',tip:'Catch it before it gets home.'},
+    {kind:'mantis',name:'Praying mantis',icon:'🌿',job:'Ambusher',hunts:'Looks like a twig until Sally is close. Anything that moves into the short cone before it, a hunter included, is snatched after a quarter-second tell.',tip:'Look for the kinked twig. Cross behind it or while it recovers, or let it snatch a pebble or a hunter first.'},
     {kind:'fox',name:'Snow fox',icon:'🦊',job:'Ear hunter',hunts:'Hunts by sound. Footsteps, sprints or noisy ground and it pounces far and fast on the noise.',tip:'Stand still, walk on quiet ground, or toss a pebble to send its pounce elsewhere.'},
   ];
   // Where each creature first lives: the earliest escape that has it, worked out from the levels.
