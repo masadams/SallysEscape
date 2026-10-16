@@ -123,7 +123,7 @@ The Shedding Hollow lets Sally spare a tail and regrow it by eating a glowing bu
 ### Bonus escapes
 Bonus escapes sit on the map behind a hedge that opens once the areas before them are mastered (every star, not just a clear). They keep their own records.
 - The Bramble Maze (north of the Deep Trials, opens with the first five areas mastered): a true, dark maze with loops, a hunting snake, tangle vines and flytraps at the dead ends.
-- A mega escape (about five minutes, no checkpoints) will open with the first ten areas mastered.
+- The Long Way Home (above the Living Labyrinth, opens with the first ten areas mastered): the mega escape, a long loop with no checkpoints through meadow lanes, a venom lane, a steam hall, a frozen room, a serpentine hedge maze and a king cobra's vault, then all the way back while new hunters wake behind Sally.
 
 The Lantern Marsh brings owls, whose beams sweep the yards from their look-outs:
 - Firefly Ford: a dark black river with a plank ford, moths that follow glowing footprints, and an owl on the far bank.

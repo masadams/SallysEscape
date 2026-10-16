@@ -40,6 +40,14 @@ test('the Bramble Maze grove is on the map behind a hedge that opens once the fi
   for(const l of EscapeCatalog.levels.slice(0,w.chapters[4].end))p.data.levels[l.id]={cleared:true,stars:3,bestTime:30};assert.equal(p.bonusOpen('bramble-maze',w.chapters),true);assert.equal(p.hiddenLevelOpen('bramble-maze',w.chapters),true);
   p.data.levels[EscapeCatalog.levels[3].id].stars=2;assert.equal(p.bonusOpen('bramble-maze',w.chapters),false,'every star, not just a clear');assert.equal(p.hiddenLevelOpen('gilded-gate',w.chapters),false);
 });
+test('the mega escape grove sits above the Living Labyrinth and opens once the first ten areas are mastered',()=>{
+  let open=false;const w=new EscapeWorld(()=>true,null,()=>false,()=>open);const node=w.bonusNodes[1];assert.equal(node.id,'the-long-way-home');assert.equal(node.bonus.areas,10);
+  const yard={x:w.chapters[9].x+.5,y:w.chapters[9].y-4.5};assert.equal(w.route({x:node.x+.5,y:node.y+.5},yard),null,'the hedge is shut');
+  open=true;assert.ok(w.route({x:node.x+.5,y:node.y+.5},yard),'a path leads up from the Living Labyrinth');w.player.x=node.x+.5;w.player.y=node.y+1;assert.equal(w.enter(),'hidden:the-long-way-home');
+  const p=new EscapeProgress(null);for(const l of EscapeCatalog.levels.slice(0,w.chapters[4].end))p.data.levels[l.id]={cleared:true,stars:3,bestTime:30};
+  assert.equal(p.bonusOpen('bramble-maze',w.chapters),true);assert.equal(p.bonusOpen('the-long-way-home',w.chapters),false,'five areas are not enough');
+  for(const l of EscapeCatalog.levels.slice(0,w.chapters[9].end))p.data.levels[l.id]={cleared:true,stars:3,bestTime:30};assert.equal(p.bonusOpen('the-long-way-home',w.chapters),true);
+});
 test('every hidden escape has a recorded winning run',()=>{
   const {EscapeCatalog}=require('../public/escape-levels.js'),recs=require('./fixtures/escape-playthroughs.json');
   for(const l of EscapeCatalog.hidden)assert.ok(recs.some(r=>r.options.hiddenId===l.id),l.id);
