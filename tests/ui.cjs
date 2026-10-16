@@ -63,6 +63,13 @@ function harness() {
   return {c:context,run,el:element,events,storage,setTime:value=>now=value,tick:fps=>{c.deltaTime=1000/fps;now+=c.deltaTime;c.frameCount++}};
 }
 test('the standalone world enters the real engine and renders the result in its existing playfield',()=>{const h=harness();h.run('showEscapeSelect();startEscape({levelId:"quiet-vault"});draw();escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.finish("won","escaped");draw();');assert.equal(h.run('gameState'),'escapeResult');assert.equal(h.el('game-container').style.display,'block');assert.equal(h.el('escape-result').style.display,'block');assert.equal(h.el('escape-menu-btn').textContent,'Explore the world');assert.equal(h.run('escapeProgress.unlocked("crumbling-hall")'),true);});
+test('Sally celebrates the finished run, keeps retry available, and resets her expression on retry',()=>{
+ const h=harness();h.run('startEscape({levelId:"quiet-vault",skipIntro:true});escapeGame.elapsed=20;escapeGame.treasure=8;escapeGame.finish("won","escaped");draw();');
+ assert.match(h.el('escape-character-celebration').innerHTML,/sally-proud/);assert.equal(h.el('escape-character-celebration').style.display,'');
+ h.el('escape-retry-btn').onclick();assert.equal(h.run('gameState'),'escape');assert.equal(h.run('escapeCharacter.face.mood'),'calm');
+ h.run('escapeGame.elapsed=2;escapeGame.finish("caught","caught");draw();');assert.equal(h.el('escape-character-celebration').style.display,'none');
+ assert.equal(h.el('escape-character-celebration').innerHTML,'');
+});
 test('arcade resources follow real pebble use, cooldown, depletion and retry on desktop and touch',()=>{
  const h=harness();h.run('escapeProgress.unlocked=()=>true;startEscape({levelId:"fern-cloister",skipIntro:true});escapeGame.player.facing={x:1,y:0};');
  const desktop=h.el('escape-decoy-action'),touch=h.el('touch-camo'),total=h.run('escapeGame.decoys');

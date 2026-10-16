@@ -7,7 +7,7 @@ function escapeRecordSummary(level,saved,challenge=false){
   return challenge?'✓ Complete · Best '+saved.bestTime.toFixed(1)+'s':'★'.repeat(saved.stars)+'☆'.repeat(3-saved.stars)+' · Best '+saved.bestTime.toFixed(1)+'s'+(saved.perfect?' · ✦ Perfect':saved.firstTry?' · ✓ First try':'');
 }
 function escapeToolkit(level){return [[level.camos||0,'camouflage'],[level.seeds||0,'seed pod'],[level.tongues||0,'tongue grab'],[level.burrows,'burrow'],[level.pebbles,'pebble']].filter(([n])=>n>0).map(([n,label])=>n+' '+label+(n>1&&label!=='camouflage'?'s':'')).concat(level.requiredTreasure?[level.requiredTreasure+' treasure to escape']:[],level.timeLimit?[level.timeLimit+' second escape']:[],level.tailDrop?['spare tail']:[],level.regrowth?.length?[level.regrowth.length+' regrowth bug'+(level.regrowth.length>1?'s':'')]:[],level.hawk?['hawk overhead']:[],level.antTrails?[level.antTrails.length+' ant column'+(level.antTrails.length>1?'s':'')]:[],level.guards.some(h=>h.kind==='gecko')?['gecko thief']:[],level.cold?['cold rooms']:[],level.vents?[level.vents.length+' steam vents']:[]);}
-let escapeGame=null,escapeIntroOpen=false;
+let escapeGame=null,escapeIntroOpen=false,escapeCharacter=null;
 // Leaving a route part-way counts as an attempt, so the first-try bonus stays honest.
 function escapeAbandonRun(){if(escapeGame&&escapeGame.status==='playing'&&!escapeGame.challenge&&escapeGame.elapsed>3){escapeProgress.attempt(escapeGame.level.id);escapeGame.status='abandoned';}}
 // Full cards always show the hint; otherwise only where an area teaches a new idea.
@@ -103,7 +103,7 @@ function startEscape(options={}){
   if(options.custom?false:options.hiddenId?!escapeProgress.hiddenLevelOpen(options.hiddenId,EscapeWorld.chapters):options.challengeId?!escapeProgress.challengeUnlocked(options.challengeId):!escapeProgress.unlocked(options.levelId||'quiet-vault')){showEscapeSelect();return;}
   // Now and then (about one escape in four, never in a challenge) glow bugs drift about as a bonus.
   if(options.glowbugs===undefined&&!options.challengeId&&!options.custom&&Math.random()<ESCAPE_GLOWBUG_CHANCE)options={...options,glowbugs:1+Math.floor(Math.random()*1e6)};
-  startRun('escape');escapeGame=new EscapeAdventure(options.custom?{level:escapeBuildCustom(options.custom)}:options);document.getElementById('escape-builder').style.display='none';escapeResultShown=false;escapeHudAt=-Infinity;
+  startRun('escape');escapeGame=new EscapeAdventure(options.custom?{level:escapeBuildCustom(options.custom)}:options);escapeCharacter=new SallyCharacter({reducedMotion:Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)});document.getElementById('escape-builder').style.display='none';escapeResultShown=false;escapeHudAt=-Infinity;
   escapeOptions=options.custom?{custom:options.custom,from:options.from||'builder'}:escapeGame.level.hidden?{hiddenId:escapeGame.level.id}:{levelId:escapeGame.level.id,challengeId:escapeGame.challenge?.id||null};
   gameState='escape';escapeLibraryOpen=false;document.getElementById('game-area').classList.remove('escape-world-open');mountEscapeChrome(true);
   document.getElementById('game-area').classList.toggle('escape-exploring',Boolean(escapeGame.level.explore));
@@ -133,7 +133,7 @@ function leaveEscape(){
   document.getElementById('escape-result').style.display='none';
   document.getElementById('escape-select').style.display='none';
   document.getElementById('game-area').classList.remove('escape-mode');
-  escapeGame=null;resetGameState();gameState='start';
+  escapeGame=null;escapeCharacter=null;resetGameState();gameState='start';
   const size=canvasDimensions();resizeCanvas(size.width,size.height);
   window.scrollTo?.(0,0);
 }
@@ -188,6 +188,8 @@ function playEscape(){
     escapeGame.advance(deltaTime/1000,{x,y,sprint});
   }
   const events=escapeGame.drainEvents();
+  escapeCharacter?.update(escapeGame,events);
+  for(const cue of escapeCharacter?.drainCues()||[])escapeSound(cue);
   // Each glow bug caught counts like a golden fly: a little bonus treasure on the world totals.
   for(const event of events)if(event==='glowbug')escapeProgress.catchGoldfly();
   for(const event of new Set(events))escapeSound(event==='treasure'&&escapeGame.message.startsWith('A whole')?'chest':event);
@@ -242,6 +244,9 @@ function showEscapeResult(){
   document.getElementById('game-area').classList.add('escape-results-open');
   document.getElementById('escape-result-location').textContent=r.levelName;
   document.getElementById('escape-result-title').textContent=won?(r.challengeId?'Challenge complete!':perfect?'Perfect escape! First try, every star, every treasure.':firstTry?'First try! Sally escaped!':'Sally escaped!'):r.status==='failed'?'Challenge missed':'Nearly… try another route';
+  const celebration=document.getElementById('escape-character-celebration'),pose=sallyCelebrationFor(r);
+  celebration.style.display=pose?'':'none';celebration.innerHTML=pose?sallyCelebrationSVG(r,escapeSkinPalette()):'';
+  celebration.setAttribute('aria-label',pose?.label||'');
   const rating=r.treasure===r.totalTreasure?'The vault is empty. Legendary escape.':r.treasure>=5?'A brave treasure haul.':r.treasure>0?'A little treasure and a clever escape.':'Safe and sound. Try a treasure detour next time.';
   const tailNote=r.tailsDropped?(r.hasTail?' Sally lost her tail and grew it back.':' Sally left her tail behind.'):'';
   // A failed attempt explains the catch; treasure only matters when Sally gets out.
@@ -423,7 +428,7 @@ function drawEscapeVault(){
   g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='angler')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(h.kind==='millipede'?g.playerSees(h):!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
   drawingContext.save();drawingContext.globalAlpha*=g.player.hidden?.48:1;
   for(const h of g.hunters)if(h.state==='clash'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noFill();stroke(255,193,107,180);strokeWeight(cell*.035);ellipse(h.x*cell,h.y*cell,cell*(.9+Math.sin(g.elapsed*14)*.08),cell*.75);}
-  drawEscapeLizard(g.motion.lizard,cell,g.motion.clock,g.player.swimming,!g.hasTail);
+  drawEscapeLizard(g.motion.lizard,cell,g.motion.clock,g.player.swimming,!g.hasTail,escapeCharacter?.face);
   drawingContext.restore();drawingContext.restore();
   if(g.player.camo){noFill();stroke(214,190,140,90+60*Math.sin(g.elapsed*6));strokeWeight(cell*.03);ellipse(g.player.x*cell,g.player.y*cell,cell*1.1,cell*1.1);}
   if(g.hawk)drawEscapeHawk(g.hawk,cell,g.elapsed);
@@ -752,7 +757,7 @@ function escapeSkinPalette(){
   const palette={body:k.body,dark:k.dark,light:k.light,spot:k.spot,leg:escapeShade(k.body,-.13),elbow:escapeShade(k.body,.12),head:escapeShade(k.body,.06),patch:escapeShade(k.light,-.02),toe:escapeShade(k.body,.15),toeLift:escapeShade(k.body,.35),nostril:escapeShade(k.spot,-.1)};
   escapeSkinCache={id,palette};return palette;
 }
-function drawEscapeLizard(model,cell,clock,swimming=false,tailless=false){
+function drawEscapeLizard(model,cell,clock,swimming=false,tailless=false,face=null){
   const skin=escapeSkinPalette();
   // A tailless Sally keeps her body and a short stump; the rig itself is unchanged.
   if(tailless)model={...model,joints:model.joints.slice(0,9),angles:model.angles.slice(0,9),widths:model.widths.slice(0,8).concat([model.widths[8]*.55])};
@@ -783,16 +788,26 @@ function drawEscapeLizard(model,cell,clock,swimming=false,tailless=false){
     const p=model.joints[i],a=model.angles[i]+side*Math.PI/2,r=model.widths[i]*.55;
     ellipse((p.x+Math.cos(a)*r)*cell,(p.y+Math.sin(a)*r)*cell,cell*.045,cell*.037);
   }
-  const head=model.joints[0];push();translate(head.x*cell,head.y*cell);rotate(model.headAngle);
+  const head=model.joints[0];push();translate(head.x*cell,head.y*cell);rotate(face?.headAngle??model.headAngle);
   fill(...skin.head);ellipse(cell*.015,0,cell*.37,cell*.27);
-  const blinkTime=clock%5.3,blink=blinkTime>5.12?Math.sin((blinkTime-5.12)/.18*Math.PI):0;
+  const blinkTime=clock%5.3,blink=face?.blink??(blinkTime>5.12?Math.sin((blinkTime-5.12)/.18*Math.PI):0);
+  const look=face?.look||0,wide=face?.wide||0,winded=face?.mood==='winded',eyeHeight=.065*(1+wide*.3)*(winded?.75:1);
   for(const side of [-1,1]){
-    fill(...skin.patch);ellipse(cell*.02,side*cell*.124,cell*.12,cell*.087);
-    fill(237,229,166);ellipse(cell*.035,side*cell*.124,cell*.075,cell*.065*(1-blink*.93));
-    fill(20,49,31);ellipse(cell*.049,side*cell*.124,cell*.027,cell*.054*(1-blink*.93));
-    if(blink<.7){fill(245,255,218);ellipse(cell*.035,side*cell*.134,cell*.018,cell*.018);}
+    fill(...skin.patch);ellipse(cell*.02,side*cell*.124,cell*(.12+wide*.018),cell*(.087+wide*.012));
+    fill(237,229,166);ellipse(cell*.035,side*cell*.124,cell*(.075+wide*.012),cell*eyeHeight*(1-blink*.93));
+    const px=cell*(.035+Math.cos(look)*.014),py=cell*(side*.124+Math.sin(look)*.021*(1-blink));
+    fill(20,49,31);ellipse(px,py,cell*(.027+wide*.009),cell*.054*(winded?.75:1)*(1-blink*.93));
+    if(blink<.7){fill(245,255,218);ellipse(px-cell*.012,py+side*cell*.01,cell*.018,cell*.018);}
+    if(face?.mood==='nervous'||face?.mood==='startled'){
+      stroke(...skin.dark);strokeWeight(cell*.014);line(-cell*.025,side*cell*.165,cell*.035,side*cell*.18);noStroke();
+    }
     fill(...skin.nostril);ellipse(cell*.155,side*cell*.035,cell*.017,cell*.015);
   }
+  // A tiny mouth changes expression; the head and body colliders never move.
+  noFill();stroke(...skin.dark);strokeWeight(cell*.012);
+  if(face?.smile){const chew=face.chew||0;bezier(cell*.09,-cell*.065,cell*(.17+chew*.012),-cell*.045,cell*(.17+chew*.012),cell*.045,cell*.09,cell*.065);}
+  else if(winded)ellipse(cell*.15,0,cell*.03,cell*.065);
+  else line(cell*.12,-cell*.04,cell*.14,cell*.04);
   pop();
 }
 

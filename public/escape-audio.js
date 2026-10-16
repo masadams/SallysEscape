@@ -45,6 +45,9 @@
     decoy:(v)=>{noise(v,{dur:.04,gain:.35,freq:2600,q:4});noise(v,{dur:.03,delay:.13,gain:.22,freq:2900,q:4});noise(v,{dur:.025,delay:.22,gain:.12,freq:3100,q:4});},
     distracted:(v)=>tone(v,{freq:700,to:760,dur:.18,type:'sine',gain:.25}),
     burrow:(v)=>{noise(v,{dur:.4,gain:.4,filter:'lowpass',freq:500,to:120});tone(v,{freq:90,to:55,dur:.3,type:'sine',gain:.4,delay:.05});},
+    // Sally's quiet two-note chirrup shares a voice with her pleased face.
+    sallyPleased:(v)=>notes(v,[[1175,0,.055],[1568,.065,.11]],{type:'sine',gain:.09}),
+    sallyGlance:(v)=>noise(v,{dur:.055,gain:.045,filter:'highpass',freq:2800}),
     tongue:(v)=>tone(v,{freq:260,to:1300,dur:.09,type:'sine',gain:.35}),
     tailDrop:(v)=>{noise(v,{dur:.05,gain:.4,freq:1800,q:2});tone(v,{freq:900,to:500,dur:.45,type:'square',gain:.1,wobble:120,wobbleRate:22,delay:.03});},
     regrow:(v)=>{tone(v,{freq:500,to:1400,dur:.5,type:'sine',gain:.3,wobble:30,wobbleRate:12});notes(v,[[1568,.35,.12],[2093,.45,.2]],{type:'sine',gain:.2});},
