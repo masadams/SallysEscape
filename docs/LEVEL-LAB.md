@@ -118,6 +118,71 @@ output directory, so an old plan cannot look like a newly discovered one.
 
 ## Working within a small compute budget
 
+### Persistent experience and bounded practice
+
+Run `npm run level:practice` for a CPU-only practice session capped at five
+minutes and 300,000 total simulation frames, whichever runs out first. It uses
+`work/experience/library.json` automatically. Defaults practice Kettle Works,
+Fern Cloister and Frozen Plates, and reserve Great Boiler and
+Eye of the Storm as held-out maps. Reports go to `work/practice`.
+
+```sh
+node scripts/level-practice.cjs --only fern-cloister,frozen-plates,great-boiler --holdout eye-of-the-storm --search-milliseconds 15000 --search-budget 600 --out work/hard-practice
+node scripts/level-practice.cjs --only leafy-crossroads --holdout none --test-seed 2027 --out work/continued-practice
+```
+
+Memory stores one verified policy per exact engine/map fingerprint and tail
+policy, along with training results and a bounded history of attempted changes.
+Retrieval is automatic **inside practice**; ordinary `level:lab solve` remains
+independent unless `--reuse` is explicitly provided. A retrieved policy is
+evaluated again. If its baseline genuinely fails, practice rejects it and tries
+independent discovery again. Changed fingerprints cause a cache miss. Corrupt
+libraries fail explicitly rather than silently replacing stored work.
+
+Practice refines only policies that already win. It can propose waits, sprint
+changes, short detours near failed decisions, and tools supplied by the level.
+Every proposal runs with the actual hunters, mechanisms, resources and collision
+rules. It retains only fully evaluated, baseline-verified improvements under the
+same training protocol: more successful trials, then shorter baseline duration
+as a tie-break. It stops experimenting when all training trials pass. This is
+per-level strategy search and experience reuse, **not trained transferable
+skills**, and a perfect training sample is not a fairness certificate.
+
+Finished experiments with matching policy, evaluator source fingerprint, seed,
+jitter and trial count are skipped on later sessions, including candidates whose
+baseline failed. Partial evaluations are not promoted or treated as finished.
+The last 256 attempts are retained; old attempts may be retried after eviction.
+Libraries allow up to 256 entries and 16 MiB. Saves use atomic replacement, and
+a lock prevents two practice sessions from writing the same library. After a
+forced process termination, check that no writer remains before removing a
+leftover `.lock` file.
+
+Training defaults to eight latency trials, jitter 6 and seed 1. Only after
+selection is frozen does practice evaluate initial and final strategies with a
+different test seed (1009 by default). These results never select the winner or
+update memory. If the policy did not change, one evaluation is shared in the
+before/after report, not counted as independent evidence twice. Held-out maps
+use independent discovery without reading or writing their solution memory.
+Vary the test seed between sessions to reduce repeated-test overfitting.
+
+One session ledger counts **all actual simulated frames** in discovery, memory
+verification, training trials, candidate checks and held-out tests, including
+fresh raw-input verification. Shared limits may interrupt a would-be winning
+search during verification; no replay or policy is accepted in that case.
+Individual discovery attempts also have a 10-second/200-expansion limit by
+default, configurable with `--search-milliseconds` and `--search-budget`. The
+practice beam defaults to width 4 so a mechanism detour can retain a slot.
+Wall time is checked at simulation boundaries and can overrun slightly during
+initialization, cloning or output work. Reports expose incomplete evaluations,
+budget use, cached retrieval, skipped attempts and unresolved discoveries.
+
+If discovery cannot solve a hard map, practice records that outcome but has no
+winning policy to refine. More runs do not automatically teach mechanism
+planning or improve unseen-map discovery. Treat these cases as evidence of the
+next planner limitation, never as proof that the maps are impossible. Ordinary
+completed sessions exit 0 even with unresolved cases; exhausting the overall
+session allowance exits 1 and invalid inputs exit 2.
+
 Start with `node --test tests/level-lab.cjs`, then
 `npm run level:smoke`. Reports go to `work/smoke`. The smoke benchmark checks three
 early encounters at width 2, at most 200 expansions and 10 seconds of search

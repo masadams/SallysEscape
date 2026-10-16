@@ -188,17 +188,21 @@ function solve(options,config={}){
   const cfg=settings(config),initial=new EscapeAdventure(options),evaluate=makeEvaluator(initial),started=Date.now();
   const root={g:initial,parent:null,commands:[],...evaluate(initial)};
   let beam=[root],best=root,expanded=0,generated=0,simulatedFrames=0,depth=0,winner=null,reason='depth-limit',memory=null;
-  const executionConfig={...cfg,consumeFrame:()=>{if(simulatedFrames>=cfg.frames)return false;simulatedFrames++;return true;}};
+  let sharedExhausted=false,verificationFrames=0;
+  const verifyFrame=()=>{if(config.consumeFrame&&!config.consumeFrame()){sharedExhausted=true;return false;}verificationFrames++;return true;};
+  const executionConfig={...cfg,consumeFrame:()=>{if(simulatedFrames>=cfg.frames)return false;if(config.consumeFrame&&!config.consumeFrame()){sharedExhausted=true;return false;}simulatedFrames++;return true;}};
   if(config.reuseCommands){
-    const check=replay(options,config.reuseCommands,{allowTail:cfg.allowTail});memory={attempted:true,...check};
-    if(check.won)return {schemaVersion:VERSION,status:'solved',reason:'reused-verified-replay',options,fingerprint:fingerprint(options),settings:cfg,search:{expanded:0,generated:0,depth:0,milliseconds:Date.now()-started},bestAttempt:check,failures:[],verification:check,memory,replay:{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands:config.reuseCommands}};
+    const check=replay(options,config.reuseCommands,{allowTail:cfg.allowTail,consumeFrame:verifyFrame});memory={attempted:true,...check};
+    if(check.won)return {schemaVersion:VERSION,status:'solved',reason:'reused-verified-replay',options,fingerprint:fingerprint(options),settings:cfg,search:{expanded:0,generated:0,simulatedFrames:0,verificationFrames,depth:0,milliseconds:Date.now()-started},bestAttempt:check,failures:[],verification:check,memory,replay:{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands:config.reuseCommands}};
   }
   const failures=new Map(),seen=new Set([signature(initial)]);
   outer:for(;depth<cfg.depth&&beam.length;depth++){
     const next=[];
     for(const node of beam){
+      if(sharedExhausted){reason='shared-budget';break outer;}
       if(expanded>=cfg.budget){reason='expansion-budget';break outer;}expanded++;
       for(const choice of candidates(node.g,cfg)){
+        if(sharedExhausted){reason='shared-budget';break outer;}
         if(simulatedFrames>=cfg.frames){reason='simulation-budget';break outer;}
         if(Date.now()-started>=cfg.milliseconds){reason='wall-time-budget';break outer;}
         const result=execute(node.g,choice,executionConfig);if(!result)continue;generated++;
@@ -226,9 +230,10 @@ function solve(options,config={}){
   }
   const commands=winner?commandsFor(winner):null;
   const choices=[];if(winner)for(let n=winner;n?.parent;n=n.parent)choices.unshift(n.choice);
-  const verification=commands?replay(options,commands,{allowTail:cfg.allowTail}):null;
-  if(winner&&!verification.won)throw new Error('Search/replay disagreement: '+JSON.stringify(verification));
-  return {schemaVersion:VERSION,status:winner?'solved':'unresolved',reason:winner?'verified-replay':reason,options,fingerprint:fingerprint(options),settings:cfg,search:{expanded,generated,simulatedFrames,depth,milliseconds:Date.now()-started},bestAttempt:summary((winner||best).g),failures:[...failures.values()].sort((a,b)=>b.count-a.count).slice(0,12),verification,memory,replay:commands?{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands}:null,policy:winner?{schemaVersion:1,kind:'feedback-policy',options,fingerprint:fingerprint(options),settings:{seconds:cfg.seconds,allowTail:cfg.allowTail},choices}:null};
+  const verification=commands?replay(options,commands,{allowTail:cfg.allowTail,consumeFrame:verifyFrame}):null;
+  if(winner&&!verification.won&&!verification.budgetExhausted)throw new Error('Search/replay disagreement: '+JSON.stringify(verification));
+  const solved=winner&&verification.won;
+  return {schemaVersion:VERSION,status:solved?'solved':'unresolved',reason:solved?'verified-replay':verification?.budgetExhausted?'verification-budget':reason,options,fingerprint:fingerprint(options),settings:cfg,search:{expanded,generated,simulatedFrames,verificationFrames,depth,milliseconds:Date.now()-started},bestAttempt:summary((winner||best).g),failures:[...failures.values()].sort((a,b)=>b.count-a.count).slice(0,12),verification,memory,replay:solved?{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands}:null,policy:solved?{schemaVersion:1,kind:'feedback-policy',options,fingerprint:fingerprint(options),settings:{seconds:cfg.seconds,allowTail:cfg.allowTail},choices}:null};
 }
 function verifyArtifact(artifact,config={}){
   if(artifact.schemaVersion!==VERSION||!artifact.options||!Array.isArray(artifact.commands))throw new Error('Invalid level-lab replay');

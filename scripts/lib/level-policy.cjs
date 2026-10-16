@@ -1,6 +1,7 @@
 'use strict';
 const Lab=require('./level-lab.cjs');
 const {EscapeAdventure}=require('../../public/escape-engine.js');
+const identity=artifact=>require('node:crypto').createHash('sha256').update(JSON.stringify([artifact.fingerprint,artifact.settings,artifact.choices])).digest('hex');
 
 function validate(artifact){
   if(!artifact||artifact.schemaVersion!==1||artifact.kind!=='feedback-policy'||!artifact.options||!artifact.settings||!Array.isArray(artifact.choices)||artifact.choices.length>1000)throw new Error('Invalid feedback policy');
@@ -29,22 +30,23 @@ function follow(artifact,config={}){
   const cfg=Lab.settings({...config,seconds:artifact.settings.seconds,allowTail:artifact.settings.allowTail!==false&&config.allowTail!==false});
   const controlFrames=config.controlFrames??1,delayFrames=config.delayFrames??0;
   if(!Number.isInteger(controlFrames)||controlFrames<1||controlFrames>61||!Number.isInteger(delayFrames)||delayFrames<0||delayFrames>60)throw new Error('Invalid policy control timing');
-  const started=Date.now(),commands=[];let frames=0,g=new EscapeAdventure(artifact.options),actionFailure=null;
+  const started=Date.now(),commands=[];let frames=0,g=new EscapeAdventure(artifact.options),actionFailure=null,decisionIndex=-1,sharedExhausted=false;
   const deadline=Math.min(started+cfg.milliseconds,config.deadline??Infinity);
-  const exhausted=()=>frames>=cfg.frames||Date.now()>=deadline;
-  const execution={...cfg,controlFrames,consumeFrame:()=>{if(exhausted())return false;frames++;return true;}};
+  const exhausted=()=>sharedExhausted||frames>=cfg.frames||Date.now()>=deadline;
+  const execution={...cfg,controlFrames,consumeFrame:()=>{if(exhausted())return false;if(config.consumeFrame&&!config.consumeFrame()){sharedExhausted=true;return false;}frames++;return true;}};
   const apply=choice=>{
     const result=Lab.execute(g,choice,execution);if(!result)return false;
     g=result.g;for(const c of result.commands)Lab.append(commands,c);return true;
   };
   for(let index=0;index<artifact.choices.length&&g.status==='playing'&&!exhausted();index++){
+    decisionIndex=index;
     if(delayFrames)apply({type:'input',x:0,y:0,sprint:false,frames:delayFrames});
     if(g.status!=='playing'||exhausted())break;
     if(!apply(artifact.choices[index])){actionFailure={index,message:g.message};break;}
   }
   const executionFrames=frames;
   const verification=g.status==='won'&&!actionFailure?Lab.replay(artifact.options,commands,{allowTail:cfg.allowTail,consumeFrame:execution.consumeFrame}):null;
-  return {...Lab.summary(g),won:verification?.won===true,reason:verification?.won?'verified-feedback-replay':exhausted()?'evaluation-budget':verification?'verification-failed':actionFailure?'action-failed':g.status==='playing'?'plan-ended':g.status,actionFailure,executionFrames,verificationFrames:frames-executionFrames,simulatedFrames:frames,milliseconds:Date.now()-started,verification,commands};
+  return {...Lab.summary(g),won:verification?.won===true,reason:verification?.won?'verified-feedback-replay':exhausted()?'evaluation-budget':verification?'verification-failed':actionFailure?'action-failed':g.status==='playing'?'plan-ended':g.status,actionFailure,decisionIndex,executionFrames,verificationFrames:frames-executionFrames,simulatedFrames:frames,milliseconds:Date.now()-started,verification,commands};
 }
 
 function stress(artifact,config={}){
@@ -55,16 +57,16 @@ function stress(artifact,config={}){
   // Shared limits apply to the entire batch, not a fresh allowance per trial.
   const cfg=Lab.settings({...config,frames:config.frames??100000,milliseconds:config.milliseconds??10000});
   let state=seed>>>0;const random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};
-  const runs=[],started=Date.now(),deadline=started+cfg.milliseconds;
-  const baselineResult=follow(artifact,{...cfg,deadline}),{commands:baselineCommands,...baseline}=baselineResult;
+  const runs=[],started=Date.now(),deadline=Math.min(started+cfg.milliseconds,config.deadline??Infinity);
+  const baselineResult=follow(artifact,{...cfg,deadline,consumeFrame:config.consumeFrame}),{commands:baselineCommands,...baseline}=baselineResult;
   let frames=baseline.simulatedFrames;
   for(let trial=0;baseline.won&&trial<trials;trial++){
     const remaining=cfg.milliseconds-(Date.now()-started);if(frames>=cfg.frames||remaining<1)break;
     const controlFrames=1+Math.floor(random()*(jitter+1)),delayFrames=Math.floor(random()*(jitter+1));
-    const result=follow(artifact,{...cfg,frames:cfg.frames-frames,milliseconds:remaining,deadline,controlFrames,delayFrames});
+    const result=follow(artifact,{...cfg,frames:cfg.frames-frames,milliseconds:remaining,deadline,controlFrames,delayFrames,consumeFrame:config.consumeFrame});
     frames+=result.simulatedFrames;
     const {commands,...outcome}=result;runs.push({trial,controlFrames,delayFrames,...outcome});
   }
-  return {kind:'closed-loop full-state latency stress; not a human win-rate estimate',trials,completedTrials:runs.filter(r=>r.reason!=='evaluation-budget').length,attemptedTrials:runs.length,jitterFrames:jitter,seed,wins:runs.filter(r=>r.won).length,simulatedFrames:frames,milliseconds:Date.now()-started,baseline,budgetExhausted:baseline.reason==='evaluation-budget'||(baseline.won&&runs.length<trials)||runs.some(r=>r.reason==='evaluation-budget'),runs};
+  return {kind:'closed-loop full-state latency stress; not a human win-rate estimate',policyHash:identity(artifact),trials,completedTrials:runs.filter(r=>r.reason!=='evaluation-budget').length,attemptedTrials:runs.length,jitterFrames:jitter,seed,wins:runs.filter(r=>r.won).length,simulatedFrames:frames,milliseconds:Date.now()-started,baseline,budgetExhausted:baseline.reason==='evaluation-budget'||(baseline.won&&runs.length<trials)||runs.some(r=>r.reason==='evaluation-budget'),runs};
 }
-module.exports={validate,follow,stress};
+module.exports={validate,follow,stress,identity};

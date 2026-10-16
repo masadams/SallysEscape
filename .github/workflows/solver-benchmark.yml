@@ -16,6 +16,7 @@ on:
       - 'tests/fixtures/escape-playthroughs.json'
       - 'tests/level-lab.cjs'
       - 'tests/level-policy.cjs'
+      - 'tests/level-practice.cjs'
       - 'package.json'
       - '.github/workflows/solver-benchmark.yml'
 
@@ -38,7 +39,7 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - name: Solver regressions
-        run: node --test tests/level-lab.cjs tests/level-policy.cjs
+        run: node --test tests/level-lab.cjs tests/level-policy.cjs tests/level-practice.cjs
       - name: Three-level development sample
         run: npm run level:smoke
       - name: Save smoke reports
