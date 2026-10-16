@@ -57,3 +57,6 @@ test('the map puts Sally back where she was: an escape, a bonus grove, or the fi
   const b=new EscapeWorld(()=>true,'bramble-maze',()=>false,()=>true);assert.equal(b.player.x,b.bonusNodes[0].x);
   const fresh=new EscapeWorld(()=>true,null);assert.equal(fresh.player.x,fresh.nodes[0].x);
 });
+test('sealed spots wait off the trail for later: unreachable clearings with markers, and room for the final stretch',()=>{const w=new EscapeWorld(()=>true);assert.ok(w.height>=131);
+  for(const s of w.secrets){assert.equal(w.grid[s.y][s.x],'.',s.id);const inside=w.chapters.some(c=>Math.abs(s.x-c.x)<=8&&Math.abs(s.y-c.y)<=7);if(!inside)assert.equal(w.route({x:s.x+.5,y:s.y+.5}),null,s.id+' is sealed');}
+  const fin=w.secrets.find(s=>s.area);assert.ok(fin.rx>=12,'the final stretch has room for seven escapes');});

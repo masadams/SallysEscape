@@ -16,9 +16,20 @@
   // One friendly local lives in every courtyard and chats when Sally is close.
   const folk=[['tortoise','Old Moss'],['snail','Pip'],['frog','Reed'],['beetle','Brass'],['tortoise','Gravel'],['frog','Dusty'],['snail','Murk'],['frog','Fern'],['beetle','Glimmer'],['snail','Bramble'],['frog','Coral'],['tortoise','Husk'],['beetle','Wick'],['frog','Tiles'],['beetle','Pincer'],['tortoise','Frostbite'],['snail','Rivet'],['frog','Morel'],['tortoise','Gale']];
   const npcs=chapters.map((c,i)=>({chapter:i,x:c.x+3,y:c.y+5,kind:folk[i][0],name:folk[i][1]}));
+  // Sealed spots for later: small clearings walled off from the trail, each marked with a standing
+  // stone (or, inside a courtyard, a fairy ring or a lightning-struck stump), plus the open space
+  // the final stretch of the trail will fill. None of them can be reached yet.
+  const secrets=[
+    {id:'star-garden',name:'Star Garden',x:79,y:68,rx:5,ry:4},{id:'cloud-nest',name:'Cloud Nest',x:70,y:4,rx:4,ry:2},
+    {id:'mossy-well',name:'Mossy Well',x:47,y:31,rx:3,ry:3},{id:'moss-den',name:'Old Moss\'s Den',x:25,y:56,rx:3,ry:3},
+    {id:'challenge-shrine',name:'Challenge Shrine',x:68,y:56,rx:3,ry:3},{id:'bestiary-grove',name:'Bestiary Grove',x:90,y:81,rx:3,ry:3},
+    {id:'ice-cave',name:'Ice Cave',x:14,y:111,rx:3,ry:3},{id:'sunken-wreck',name:'Sunken Wreck',x:3,y:80,rx:2,ry:2},
+    {id:'fairy-ring',name:'Fairy Ring',x:84,y:89,rx:0,ry:0},{id:'struck-oak',name:'Struck Oak',x:95,y:89,rx:0,ry:0},
+    {id:'final-stretch',name:'The Final Stretch',x:58,y:118,rx:14,ry:8,area:true},{id:'sallys-burrow',name:'Sally\'s Burrow',x:31,y:118,rx:4,ry:3}
+  ];
   class EscapeWorld{
     constructor(unlocked=()=>true,focusId=null,hiddenOpen=()=>false,bonusOpen=()=>false){
-      this.width=116;this.height=106;this.chapters=chapters;this.caches=caches;this.signs=signs;this.npcs=npcs;this.found=new Set();this.onCache=null;
+      this.width=116;this.height=131;this.secrets=secrets;this.chapters=chapters;this.caches=caches;this.signs=signs;this.npcs=npcs;this.found=new Set();this.onCache=null;
       // Golden flies drift in now and then; Sally can chase them down or grab one with her tongue.
       // The Gilded Burrow lies north of the Garden Ruins. It is solid rock until it opens.
       this.hiddenOpen=hiddenOpen;this.hiddenCarved=false;this.terrainVersion=0;
@@ -40,6 +51,7 @@
       for(const n of this.nodes)room(n.x-1,n.y-1,n.x+1,n.y+1);
       for(const n of this.bonusNodes){room(n.x-6,n.y-3,n.x+6,n.y+3);room(n.lock.x,n.y+4,n.lock.x,n.lock.y+1);for(const [dx,dy] of [[-5,-2],[5,-2],[-5,2],[5,2]])this.grid[n.y+dy][n.x+dx]='L';}
 
+      for(const s of secrets)if(s.rx)room(s.x-s.rx,s.y-s.ry,s.x+s.rx,s.y+s.ry);
       this.refreshRegions();this.tracks=[];
       const track=(a,b,side=false)=>{const from={x:a.x+.5,y:a.y+.5},to={x:b.x+.5,y:b.y+.5},path=this.route(to,from,true);if(path)this.tracks.push({points:[from,...path],side,from:a.id,to:b.id});};
       for(const c of chapters){const nodes=this.nodes.filter(n=>n.chapter===chapters.indexOf(c));for(let i=1;i<nodes.length;i++)track(nodes[i-1],nodes[i]);if(nodes.length>3&&!c.linear)track(nodes[1],nodes[3],true);}

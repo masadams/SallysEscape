@@ -245,6 +245,7 @@ function drawEscapeWorld(){
   const next=w.nodes.find(n=>escapeProgress.unlocked(n.id)&&!escapeProgress.data.levels[n.id]?.cleared&&w.regionOpen(n.chapter));
   if(next){const pulse=(sin(w.elapsed*3)+1)/2;noFill();stroke(255,226,120,90+pulse*130);strokeWeight(cell*.09);ellipse(next.x*cell,next.y*cell,cell*(1.9+pulse*.6),cell*(1.9+pulse*.6));}
   for(const gate of w.gates){if(w.regionOpen(gate.chapter))continue;const x=gate.x+.5,y=gate.y+.5;stroke(224,187,99);strokeWeight(cell*.1);for(const d of [-1.2,-.8,-.4,0,.4,.8,1.2]){if(gate.vertical)line((x+d)*cell,(y-.32)*cell,(x+d)*cell,(y+.32)*cell);else line((x-.32)*cell,(y+d)*cell,(x+.32)*cell,(y+d)*cell);}noStroke();fill(245,223,151);textAlign(CENTER,CENTER);const need=EscapeCatalog.levels[w.chapters[gate.chapter].start]?.unlockChallenges;textSize(cell*(need?.42:.34));text(need?'⚑'+need:'◇',x*cell,y*cell);}
+  for(const s of w.secrets||[])if(Math.abs(s.x-w.player.x)<width/cell+s.rx+4&&Math.abs(s.y-w.player.y)<height/cell+s.ry+4)drawEscapeWorldSecret(s,cell,w.elapsed);
   for(const sign of w.signs)if(w.regionOpen(sign.chapter))drawEscapeWorldSign(sign,w.chapters[sign.chapter],escapeRegionStars(sign.chapter),cell);
   for(const cache of w.caches)if(w.regionOpen(cache.chapter))drawEscapeWorldCache(cache,w.found.has(cache.id),cell,w.elapsed,Math.hypot(cache.x+.5-w.player.x,cache.y+.5-w.player.y));
   for(const n of w.nodes){const x=n.x*cell,y=n.y*cell,saved=escapeProgress.data.levels[n.id],unlocked=escapeProgress.unlocked(n.id);noStroke();fill(48,82,62,75);ellipse(x,y+cell*.35,cell*1.5,cell*.55);fill(unlocked?189:139,unlocked?202:156,unlocked?142:131);rect(x-cell*.65,y-cell*.65,cell*1.3,cell*1.3,cell*.22);fill(unlocked?55:100,unlocked?99:117,unlocked?70:99);rect(x-cell*.38,y-cell*.45,cell*.76,cell*.95,cell*.35);stroke(101,110,79);strokeWeight(cell*.045);line(x+cell*.5,y+cell*.3,x+cell*.5,y-cell*.7);noStroke();fill(...(saved?[70,147,90]:unlocked?[221,139,69]:[118,134,115]));triangle(x+cell*.5,y-cell*.7,x+cell*1.05,y-cell*.48,x+cell*.5,y-cell*.26);
@@ -313,6 +314,17 @@ function drawEscapeWorldWeather(w){
   // A wash of grey under heavy rain, and a cool haze under thick snow.
   if(kind==='rain'&&strength>.2){fill(40,60,80,Math.min(60,strength*45));rect(0,0,width,height);}
   if(kind==='snow'&&strength>.6){fill(230,240,250,(strength-.6)*70);rect(0,0,width,height);}
+}
+// Sealed spots: a mossy standing stone with a carved question mark and a faint glow; in a
+// courtyard a ring of tiny caps or a lightning-split stump; the final stretch under cloud.
+function drawEscapeWorldSecret(s,cell,clock){
+  const x=(s.x+.5)*cell,y=(s.y+.5)*cell,glow=.5+.5*Math.sin(clock*1.3+s.x);noStroke();
+  if(s.area){for(let i=0;i<4;i++)drawEscapeRegionCloud({x:s.x+[-8,8,-8,8][i],y:s.y+[-3,-3,4,4][i]},20+i,cell,clock);return;}
+  if(s.id==='fairy-ring'){for(let k=0;k<7;k++){const a=k*TWO_PI/7,px=x+Math.cos(a)*cell*.9,py=y+Math.sin(a)*cell*.6;fill(240,230,210);rect(px-cell*.03,py,cell*.06,cell*.1);fill(214,70,58);arc(px,py+cell*.02,cell*.2,cell*.16,PI,TWO_PI);}fill(220,200,255,40+50*glow);ellipse(x,y,cell*1.4,cell*1);return;}
+  if(s.id==='struck-oak'){fill(0,0,0,60);ellipse(x,y+cell*.3,cell*.9,cell*.25);fill(60,48,40);rect(x-cell*.22,y-cell*.4,cell*.18,cell*.7,cell*.04);rect(x+cell*.04,y-cell*.25,cell*.18,cell*.55,cell*.04);fill(30,24,22);triangle(x-cell*.04,y-cell*.4,x+cell*.04,y-cell*.4,x,y+cell*.1);fill(255,240,160,30+60*glow);ellipse(x,y-cell*.2,cell*.6,cell*.6);return;}
+  fill(170,230,200,25+45*glow);ellipse(x,y,cell*1.6,cell*1.6);fill(0,0,0,60);ellipse(x,y+cell*.42,cell*.9,cell*.25);
+  fill(120,128,118);beginShape();vertex(x-cell*.32,y+cell*.4);vertex(x-cell*.28,y-cell*.35);vertex(x,y-cell*.55);vertex(x+cell*.3,y-cell*.3);vertex(x+cell*.34,y+cell*.4);endShape(CLOSE);
+  fill(74,120,70);ellipse(x-cell*.1,y-cell*.32,cell*.32,cell*.16);ellipse(x+cell*.2,y+cell*.25,cell*.24,cell*.12);fill(60,64,60);textAlign(CENTER,CENTER);textSize(cell*.42);text('?',x,y);
 }
 function drawEscapeRegionCloud(c,i,cell,clock){
   noStroke();const puffs=[[0,0,9],[-5,-3,6.5],[5,-3,7],[-6,3,6],[6,3,6.5],[0,-5,6],[0,5,6.5],[-3,1,5.5],[3,-1,5.5]];
