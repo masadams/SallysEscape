@@ -266,6 +266,14 @@
     // A charging beetle breaks what it hits: leaf cover is flattened and a cracked wall opens for everyone.
     smash(x,y){const tile=this.grid[y]?.[x];if(tile!=='L'&&tile!=='B')return false;if(tile==='B'&&(x<=0||y<=0||x>=this.width-1||y>=this.height-1))return false;
       this.grid[y][x]='.';this.smashed=(this.smashed||0)+1;for(const h of this.hunters)h.path=[];this.events.push(tile==='B'?'smash':'rustle');if(tile==='B')this.notice('The beetle smashed through a cracked wall!','warning');this.visibilityAt=-Infinity;return true;}
+    // Creatures Sally has come near this run, for the bestiary. A buried scorpion or a mimic still
+    // posing as a chest does not count until it shows itself.
+    noteMet(){
+      if(this.elapsed<(this.metCheckAt||0))return;this.metCheckAt=this.elapsed+.25;this.met=this.met||new Set();const p=this.player;
+      for(const h of this.hunters)if(!this.met.has(h.kind)&&!h.buried&&!['buried','dig','emerge'].includes(h.state)&&!(h.kind==='mimic'&&h.state==='rooted')&&distance(p,h)<6)this.met.add(h.kind);
+      if(this.hawk?.shadow)this.met.add('hawk');
+      if(this.antTrails.length&&!this.met.has('ants')&&this.antAt(p,6))this.met.add('ants');
+    }
     notice(message,event){this.message=message;this.messageUntil=this.elapsed+2.5;if(event)this.events.push(event);}
     active(){return this.status==='playing'&&!this.paused;}
     burrow(){
@@ -456,6 +464,7 @@
       this.updateSeedGrowth();this.updateTimedGates();this.updateClosingGates();
       this.webs=this.webs.filter(w=>w.expires>this.elapsed&&(!w.owner||this.hunters.includes(w.owner)));this.updateTripwires();
       this.updateEmergences();
+      this.noteMet();
       // A tangle vine's grip stops Sally moving until it lets go.
       if(this.elapsed<this.heldUntil)input={};
       const p=this.player,old=copy(p),length=Math.hypot(input.x||0,input.y||0);

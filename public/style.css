@@ -379,3 +379,12 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .builder-lock input { font:inherit; padding:10px 12px; border-radius:8px; border:1px solid #4d7a68; background:#0f201b; color:#eaf6ef; }
 .builder-lock details > .builder-lock { margin-top:10px; }
 .world-route.world-route-idle { display:none; }
+/* Bestiary: a card per creature over the world map. */
+.world-bestiary { display:none; position:absolute; inset:16px; overflow:auto; z-index:30; padding:18px; border-radius:18px; background:#102a28f2; border:1px solid #668575; color:#e4edd6; }
+.bestiary-head { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:12px; } .bestiary-head h2 { margin:0; } .bestiary-head span { color:#b3c7ae; font-size:.85rem; flex:1; }
+.bestiary-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; }
+.bestiary-card { background:#1b3d38; border:1px solid #3f6a5c; border-radius:14px; padding:12px 14px; font-size:.78rem; line-height:1.45; }
+.bestiary-card h3 { margin:4px 0 2px; font-size:1rem; } .bestiary-card p { margin:6px 0; color:#cfdcc8; } .bestiary-card small { color:#9fb8a8; }
+.bestiary-icon { font-size:2rem; line-height:1; } .bestiary-job { display:inline-block; font-size:.68rem; letter-spacing:.06em; text-transform:uppercase; color:#ffd88a; }
+.bestiary-tip { color:#9ff5d0 !important; } .bestiary-unknown { opacity:.6; } .bestiary-unknown .bestiary-icon { color:#7d9a8c; font-weight:700; }
+.world-bestiary-button { cursor:pointer; font:inherit; background:none; border:1px solid #789575; border-radius:8px; padding:2px 8px; color:inherit; }

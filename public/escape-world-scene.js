@@ -5,15 +5,32 @@ let escapeJournalOpen=false;
 function renderEscapeWorldTotals(){
   const t=escapeProgress.totals(ESCAPE_CACHE_VALUE),el=document.getElementById('world-totals');if(!el)return;
   // Stars stay in view; the rest of the tally folds away under Journal so the panel stays small.
-  el.innerHTML='<span title="Best stars across every escape">★ '+t.stars+' / '+t.maxStars+'</span><button type="button" id="world-journal" class="world-journal-toggle" aria-expanded="'+escapeJournalOpen+'">Journal '+(escapeJournalOpen?'▴':'▾')+'</button><span class="world-journal-item" title="Best treasure from every escape plus hidden caches">◆ '+t.treasure+' treasure</span><span class="world-journal-item" title="Escapes won on the very first attempt">✓ '+t.firstTries+' first '+(t.firstTries===1?'try':'tries')+'</span><span class="world-journal-item" title="Extra challenges completed">⚑ '+t.challenges+' / '+t.maxChallenges+'</span><span class="world-journal-item" title="Hidden world caches found">✦ '+t.caches+' / '+escapeWorld.caches.length+' caches</span><span class="world-journal-item" title="Golden flies caught on the trail">✧ '+t.goldflies+' golden flies</span>';
+  el.innerHTML='<span title="Best stars across every escape">★ '+t.stars+' / '+t.maxStars+'</span><button type="button" id="world-journal" class="world-journal-toggle" aria-expanded="'+escapeJournalOpen+'">Journal '+(escapeJournalOpen?'▴':'▾')+'</button><span class="world-journal-item" title="Best treasure from every escape plus hidden caches">◆ '+t.treasure+' treasure</span><span class="world-journal-item" title="Escapes won on the very first attempt">✓ '+t.firstTries+' first '+(t.firstTries===1?'try':'tries')+'</span><span class="world-journal-item" title="Extra challenges completed">⚑ '+t.challenges+' / '+t.maxChallenges+'</span><span class="world-journal-item" title="Hidden world caches found">✦ '+t.caches+' / '+escapeWorld.caches.length+' caches</span><span class="world-journal-item" title="Golden flies caught on the trail">✧ '+t.goldflies+' golden flies</span><button type="button" id="world-bestiary-open" class="world-journal-item world-bestiary-button">📖 Bestiary '+EscapeBestiary.entries.filter(e=>escapeProgress.data.met.includes(e.kind)).length+' / '+EscapeBestiary.entries.length+'</button>';
   if(escapeProgress.unlockAll)el.innerHTML+='<span title="Ctrl+Alt+U turns test mode off">🔓 Test mode</span>';
   el.classList.toggle('world-journal-open',escapeJournalOpen);
+  const book=document.getElementById('world-bestiary-open');if(book)book.onclick=()=>{openEscapeBestiary();document.activeElement?.blur?.();};
   const journal=document.getElementById('world-journal');if(journal)journal.onclick=()=>{escapeJournalOpen=!escapeJournalOpen;renderEscapeWorldTotals();document.activeElement?.blur?.();};
   const library=document.getElementById('world-library'),waiting=EscapeCatalog.challenges.filter(c=>escapeProgress.challengeUnlocked(c.id)&&!escapeProgress.data.challenges[c.id]?.cleared).length;if(library)library.textContent='Levels & challenges'+(waiting?' · ⚑ '+waiting+' open':'');
   for(const option of document.getElementById('world-travel')?.options||[]){const i=Number(option.value),r=escapeRegionStars(i);option.textContent=(i+1)+' · '+escapeWorld.chapters[i].name+' · '+(r.stars===r.max&&r.max?'♛ ':'★')+r.stars+'/'+r.max;}
   const skin=document.getElementById('world-skin');if(skin){const chapters=EscapeWorld.chapters,owned=escapeProgress.skins(chapters);skin.textContent='Colours: '+ESCAPE_SKINS[escapeProgress.skin(chapters)].name+(owned.length>1?' ('+owned.length+')':' · ♛ 0');}
 }
 const ESCAPE_FOLK_TIPS=['Cracked walls are shortcuts. Face one and burrow!','Blue switches open blue gates. Watch where they lead.','A tongue can grab treasure across water. Walls still block it.','When the maze changes behind you, look for the new way out.','Some hatches want treasure before they will open.','From here on you can drop your tail once if something catches you.','Toads crouch before they leap. Leave their lane.','Crickets burst up from below. When the ground heaves, step away.','Your footprints glow in the dark, and moths love them.','Seeds grow cover, or brace a root door open.','Swimming is slow, but land hunters will not follow you in.','Pink bugs grow tails back. Every lizard here knows it.','Rival hunters fight when they meet. Let them.','Hawks hunt in the sun. Awnings and leaves keep you safe, or press X and keep still.','Ant columns march on worn trails and never stop. Cross in the gaps. Geckos steal—chase them down!','Cold rooms sap your warmth. Warm stones glow orange; snakes are sluggish on the ice.','Vents hiss before they blow. A jet will toss a hunter aside—lure one into the steam!'];
+// The bestiary page: a card per creature. Met ones show how they hunt and how to beat them;
+// the rest show only where they live, as a reason to go and look.
+let escapeBestiaryOpen=false;
+function openEscapeBestiary(){
+  const ui=document.getElementById('escape-world-ui');if(!ui)return;let page=document.getElementById('world-bestiary');
+  if(!page){page=document.createElement('section');page.id='world-bestiary';page.className='world-bestiary';ui.appendChild(page);}
+  const met=escapeProgress.data.met,homes=EscapeBestiary.homes(EscapeCatalog),chapterOf=i=>EscapeWorld.chapters.find(c=>i>=c.start&&i<c.end);
+  const count=EscapeBestiary.entries.filter(e=>met.includes(e.kind)).length;
+  page.innerHTML='<div class="bestiary-head"><h2>Bestiary</h2><span>'+count+' of '+EscapeBestiary.entries.length+' creatures met</span><button type="button" id="world-bestiary-close" class="escape-secondary">Close</button></div><div class="bestiary-grid">'+
+    EscapeBestiary.entries.map(e=>{const home=homes[e.kind],where=home===undefined?'Somewhere ahead':(chapterOf(home)?.name||'The trail')+' · escape '+(home+1);
+      return met.includes(e.kind)?'<article class="bestiary-card"><div class="bestiary-icon">'+e.icon+'</div><h3>'+escapeText(e.name)+'</h3><span class="bestiary-job">'+escapeText(e.job)+'</span><p>'+escapeText(e.hunts)+'</p><p class="bestiary-tip">Tip: '+escapeText(e.tip)+'</p><small>First met in '+escapeText(where)+'</small></article>'
+        :'<article class="bestiary-card bestiary-unknown"><div class="bestiary-icon">?</div><h3>Not met yet</h3><p>Lives in '+escapeText(where)+'.</p></article>';}).join('')+'</div>';
+  escapeBestiaryOpen=true;page.style.display='block';
+  const close=()=>{escapeBestiaryOpen=false;page.style.display='none';renderEscapeWorldTotals();};
+  document.getElementById('world-bestiary-close').onclick=close;page.onkeydown=e=>{if(e.key==='Escape')close();};document.getElementById('world-bestiary-close').focus?.();
+}
 function escapeNpcLine(npc){
   const w=escapeWorld,c=w.chapters[npc.chapter],r=escapeRegionStars(npc.chapter),here=w.caches.filter(k=>k.chapter===npc.chapter),found=here.filter(k=>w.found.has(k.id)).length;
   const lines=[ESCAPE_FOLK_TIPS[npc.chapter]||'Mind the hunters out there.'];
@@ -99,7 +116,7 @@ function renderEscapeWorldHUD(){
   const enter=document.getElementById('world-enter');enter.disabled=!unlocked;enter.innerHTML=unlocked?(saved?'Play again':'Enter escape')+' <span class="key-hint">[Enter]</span>':node?'Trail locked':'Find an entrance';
 }
 function playEscapeWorld(){
-  if(!escapeWorld||escapeLibraryOpen)return;if(!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){escapeWorld.advance(deltaTime/1000,escapeMovement());escapeFootsteps(escapeWorld.player);}drawEscapeWorld();renderEscapeWorldHUD();
+  if(!escapeWorld||escapeLibraryOpen)return;if(escapeBestiaryOpen){drawEscapeWorld();return;}if(!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){escapeWorld.advance(deltaTime/1000,escapeMovement());escapeFootsteps(escapeWorld.player);}drawEscapeWorld();renderEscapeWorldHUD();
 }
 // Per-tile floor and wall colours, averaged over nearby regions so borders blend over a few tiles.
 let escapeWorldShadeCache=null;
