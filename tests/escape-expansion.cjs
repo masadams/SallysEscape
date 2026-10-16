@@ -19,7 +19,7 @@ test('every route has closed borders; static gate puzzles have permanently opena
   // Bounce caps carry Sally across gaps, so they count as links when looking for a walking route.
   const capReach=(()=>{if(!g.caps.length)return null;const start=g.tileKey(g.player),seen=new Set([start]),q=[start];
     while(q.length){const [x,y]=q.shift().split(',').map(Number);const next=[[x+1,y],[x-1,y],[x,y+1],[x,y-1]].filter(([a,b])=>g.fits({x:a+.5,y:b+.5})).map(t=>t.join());for(const c of g.caps)if(c.key===x+','+y)next.push(c.to.join());for(const k of next)if(!seen.has(k)){seen.add(k);q.push(k);}}return seen;})();
-  const fliers=g.hunters.filter(h=>h.kind==='dragonfly');
+  const fliers=g.hunters.filter(h=>['dragonfly','bat'].includes(h.kind));
   for(const p of [g.key,g.exit,...g.loot,...g.hunters.filter(h=>!fliers.includes(h)),...g.hunters.filter(h=>!fliers.includes(h)).flatMap(h=>h.patrol)]){
    assert.ok(g.fits(p),'spawn and goals fit inside floor');
    const walkable=Math.hypot(g.player.x-p.x,g.player.y-p.y)<.01||g.route(g.player,p).length>0||Boolean(capReach?.has(Math.floor(p.x)+','+Math.floor(p.y)));
@@ -28,7 +28,8 @@ test('every route has closed borders; static gate puzzles have permanently opena
    assert.ok(walkable||grabbable||smashable&&open.route(g.player,p).length>0,'no mandatory burrow or unreachable treasure');
   }
   assert.equal(g.loot.reduce((n,item)=>n+item.value,0),10);
-  for(const h of g.hunters)if(h.patrol.length>1)for(let i=0;i<h.patrol.length;i++)assert.ok(g.route(h.patrol[i],h.patrol[(i+1)%h.patrol.length]).length);
+  // Dragonflies and bats fly their loops, over drops and gaps.
+  for(const h of g.hunters)if(h.patrol.length>1&&!['dragonfly','bat'].includes(h.kind))for(let i=0;i<h.patrol.length;i++)assert.ok(g.route(h.patrol[i],h.patrol[(i+1)%h.patrol.length]).length);
  }
 });
 test('each route resets its own resources and does not mutate shared definitions',()=>{

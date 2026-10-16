@@ -28,3 +28,12 @@ test('a gust that shoves Sally against a ledge over a gap blows her off it',()=>
   const wall=new EscapeAdventure({level:escapeBuildCustom({id:'custom-test',name:'T',map:rows,guards:[],wind:[{area:[2,2,14,3],dir:[0,1],period:5,on:2,offset:0}]})});
   Object.assign(wall.player,{x:5.5,y:2.5});ticks(wall,1.5);assert.equal(wall.status,'playing','over floor it only shoves');
 });
+test('Storm Heights follows the Mushroom Grotto with five escapes that teach wind, lightning and the echo bat',()=>{
+  const {EscapeCatalog}=require('../public/escape-levels.js'),{EscapeWorld}=require('../public/escape-world.js');
+  const storm=EscapeCatalog.levels.slice(83,88);assert.deepEqual(storm.map(l=>l.id),['gale-steps','thunder-ridge','belfry','kite-cliffs','eye-of-the-storm']);
+  assert.ok(EscapeCatalog.regions.includes(83));for(const l of storm){assert.equal(l.loot.reduce((n,t)=>n+t[2],0),10);assert.ok(l.tailDrop);}
+  assert.ok(storm[0].wind.length>=3);assert.ok(storm[1].storm);assert.ok(storm[2].guards.filter(g=>g.kind==='bat').length>=2);assert.ok(storm[3].wind&&storm[3].guards.some(g=>g.kind==='bat'));
+  assert.ok(storm[4].storm&&storm[4].wind&&storm[4].guards.some(g=>g.kind==='cobra'));assert.equal(storm[4].requiredTreasure,6);
+  const w=new EscapeWorld(),c=w.chapters.find(c=>c.theme==='storm');assert.equal(c.name,'Storm Heights');assert.equal(c.start,83);
+  assert.ok(w.paths.some(([a,b])=>w.chapters[a].theme==='grotto'&&w.chapters[b]===c),'Storm Heights opens off the Grotto');
+});
