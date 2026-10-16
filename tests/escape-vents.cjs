@@ -5,7 +5,7 @@ function ticks(g,seconds,input={}){for(let n=0;n<Math.round(seconds*120);n++)g.a
 function works(){const g=new EscapeAdventure({level:legacy['kettle-works']});g.tailDrop=false;g.vents=[g.vents[0]];for(const h of g.hunters){Object.assign(h,{x:25.5,y:10.5,patrol:[{x:25.5,y:10.5}]});}return g;}
 function untilActive(g,v,limit=12){for(let i=0;i<limit*120&&!v.active;i++)g.advance(1/120,{});return v.active;}
 test('Steam Vents branches off the Rooftops behind twelve challenges, mixing the hawk, owls and ants',()=>{
-  const vents=EscapeCatalog.levels.slice(73);assert.deepEqual(vents.map(l=>l.id),['kettle-works','pressure-pipes','boiler-owls','ant-furnace','great-boiler']);
+  const vents=EscapeCatalog.levels.slice(73,78);assert.deepEqual(vents.map(l=>l.id),['kettle-works','pressure-pipes','boiler-owls','ant-furnace','great-boiler']);
   assert.equal(vents[0].unlockAfter,'weathervane-spire');assert.equal(vents[0].unlockChallenges,12);for(const l of vents)assert.ok(l.vents.length>=4&&l.tailDrop);
   assert.ok(vents[1].hawk);assert.ok(vents[2].guards.some(h=>h.kind==='owl'));assert.ok(vents[3].antTrails);
   for(const l of vents){const g=new EscapeAdventure({levelId:l.id});for(const v of g.vents){assert.equal(g.floor(...v.at),false,'vents sit in walls');assert.ok(v.tiles.length>=2);}}

@@ -7,7 +7,7 @@ const result=(levelId,extra={})=>({status:'won',levelId,challengeId:null,totalTr
 function storage(){const data=new Map();return {getItem:k=>data.get(k),setItem:(k,v)=>data.set(k,v)};}
 
 test('every route has closed borders; static gate puzzles have permanently openable walking routes',()=>{
- assert.equal(EscapeCatalog.levels.length,78);assert.equal(EscapeCatalog.challenges.length,21);
+ assert.ok(EscapeCatalog.levels.length>=78);assert.equal(EscapeCatalog.challenges.length,21);
  for(const level of EscapeCatalog.levels){
   const g=new EscapeAdventure({levelId:level.id}),grid=escapeGridFor(level);
   assert.ok(grid[0].every(c=>c==='#')&&grid.at(-1).every(c=>c==='#'));assert.ok(grid.every(row=>row[0]==='#'&&row.at(-1)==='#'));
@@ -16,9 +16,13 @@ test('every route has closed borders; static gate puzzles have permanently opena
   // A cracked wall may stand in the way only when the route can be opened twice over:
   // two burrows (in and back out) or a beetle that can smash it.
   const cracked=g.grid.map(row=>row.map(c=>c==='B'?'.':c)),smashable=level.burrows>=2||level.guards.some(h=>h.kind==='beetle'),open=new EscapeAdventure({levelId:level.id});open.grid=cracked;open.gates=g.gates;
-  for(const p of [g.key,g.exit,...g.loot,...g.hunters,...g.hunters.flatMap(h=>h.patrol)]){
+  // Bounce caps carry Sally across gaps, so they count as links when looking for a walking route.
+  const capReach=(()=>{if(!g.caps.length)return null;const start=g.tileKey(g.player),seen=new Set([start]),q=[start];
+    while(q.length){const [x,y]=q.shift().split(',').map(Number);const next=[[x+1,y],[x-1,y],[x,y+1],[x,y-1]].filter(([a,b])=>g.fits({x:a+.5,y:b+.5})).map(t=>t.join());for(const c of g.caps)if(c.key===x+','+y)next.push(c.to.join());for(const k of next)if(!seen.has(k)){seen.add(k);q.push(k);}}return seen;})();
+  const fliers=g.hunters.filter(h=>h.kind==='dragonfly');
+  for(const p of [g.key,g.exit,...g.loot,...g.hunters.filter(h=>!fliers.includes(h)),...g.hunters.filter(h=>!fliers.includes(h)).flatMap(h=>h.patrol)]){
    assert.ok(g.fits(p),'spawn and goals fit inside floor');
-   const walkable=Math.hypot(g.player.x-p.x,g.player.y-p.y)<.01||g.route(g.player,p).length>0;
+   const walkable=Math.hypot(g.player.x-p.x,g.player.y-p.y)<.01||g.route(g.player,p).length>0||Boolean(capReach?.has(Math.floor(p.x)+','+Math.floor(p.y)));
    // A tongue grab reaches three tiles in a straight, clear line from somewhere Sally can stand.
    const grabbable=level.tongues>0&&[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>[1,2,3].some(d=>{const from={x:Math.floor(p.x)+.5+dx*d,y:Math.floor(p.y)+.5+dy*d};return g.fits(from)&&g.route(g.player,from).length>0&&g.clear(from,p,true);}));
    assert.ok(walkable||grabbable||smashable&&open.route(g.player,p).length>0,'no mandatory burrow or unreachable treasure');

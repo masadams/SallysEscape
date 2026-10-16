@@ -31,6 +31,7 @@
     lantern:{mood:'spooky',lead:'bell',bpm:82,groove:3,transpose:2},rooftops:{mood:'warm',lead:'melody',bpm:110,groove:1,transpose:2},
     ants:{mood:'desert',lead:'bell',bpm:104,groove:0,transpose:-2},frost:{mood:'frost',lead:'bell',bpm:88,groove:2},
     vents:{mood:'warm',lead:'pluck',bpm:96,groove:0,transpose:-4},
+    grotto:{mood:'dark',lead:'bell',bpm:90,groove:3,transpose:-1},
     gilded:{mood:'river',lead:'bell',bpm:92,groove:2,transpose:1}
   };
   const THEME_MOOD=Object.fromEntries(Object.entries(STYLES).map(([theme,style])=>[theme,style.mood]));

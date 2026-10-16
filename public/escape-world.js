@@ -6,15 +6,15 @@
     [0,5,'Sunny Meadow','meadow'],[5,9,'Garden Ruins','garden'],[9,13,'Reedbanks','river'],
     [13,17,'Restless Ruins','ruins'],[17,23,'Deep Trials','quarry'],[23,27,'Venom Depths','desert'],
     [27,32,'The Waking Maze','marsh'],[32,37,'Hollow Jungle','jungle'],[37,42,'Luminous Depths','glow'],
-    [42,47,'Living Labyrinth','orchard'],[47,49,'Sun and Sea','coast'],[49,53,'The Shedding Hollow','hollow'],[53,58,'The Lantern Marsh','lantern'],[58,63,'Sunbaked Rooftops','rooftops'],[63,68,'Ant Kingdom','ants'],[68,73,'Frost Hollow','frost'],[73,78,'Steam Vents','vents']
-  ].map(([start,end,name,theme],i)=>{const [x,y]=[[14,18],[36,18],[58,18],[80,18],[101,18],[101,43],[79,43],[57,43],[35,43],[14,43],[14,68],[36,68],[36,93],[57,68],[101,68],[14,93],[57,93]][i];return {start,end,name,theme,x,y,linear:['hollow','lantern','rooftops','ants','frost','vents'].includes(theme)};});
+    [42,47,'Living Labyrinth','orchard'],[47,49,'Sun and Sea','coast'],[49,53,'The Shedding Hollow','hollow'],[53,58,'The Lantern Marsh','lantern'],[58,63,'Sunbaked Rooftops','rooftops'],[63,68,'Ant Kingdom','ants'],[68,73,'Frost Hollow','frost'],[73,78,'Steam Vents','vents'],[78,83,'Mushroom Grotto','grotto']
+  ].map(([start,end,name,theme],i)=>{const [x,y]=[[14,18],[36,18],[58,18],[80,18],[101,18],[101,43],[79,43],[57,43],[35,43],[14,43],[14,68],[36,68],[36,93],[57,68],[101,68],[14,93],[57,93],[79,93]][i];return {start,end,name,theme,x,y,linear:['hollow','lantern','rooftops','ants','frost','vents','grotto'].includes(theme)};});
   // Two treasure caches hide in the far corners of every courtyard. They add to
   // Sally's lifetime hoard but never gate progress.
   const CACHE_VALUE=5,caches=chapters.flatMap((c,i)=>[[c.x+7,c.y-6],[c.x-7,c.y+6]].map(([x,y],n)=>({id:c.theme+'-'+(n?'south':'north'),chapter:i,x,y,value:CACHE_VALUE})));
   // Signposts greet Sally at each courtyard and report how many stars it holds.
   const signs=chapters.map((c,i)=>({chapter:i,x:c.x-3,y:c.y-6}));
   // One friendly local lives in every courtyard and chats when Sally is close.
-  const folk=[['tortoise','Old Moss'],['snail','Pip'],['frog','Reed'],['beetle','Brass'],['tortoise','Gravel'],['frog','Dusty'],['snail','Murk'],['frog','Fern'],['beetle','Glimmer'],['snail','Bramble'],['frog','Coral'],['tortoise','Husk'],['beetle','Wick'],['frog','Tiles'],['beetle','Pincer'],['tortoise','Frostbite'],['snail','Rivet']];
+  const folk=[['tortoise','Old Moss'],['snail','Pip'],['frog','Reed'],['beetle','Brass'],['tortoise','Gravel'],['frog','Dusty'],['snail','Murk'],['frog','Fern'],['beetle','Glimmer'],['snail','Bramble'],['frog','Coral'],['tortoise','Husk'],['beetle','Wick'],['frog','Tiles'],['beetle','Pincer'],['tortoise','Frostbite'],['snail','Rivet'],['frog','Morel']];
   const npcs=chapters.map((c,i)=>({chapter:i,x:c.x+3,y:c.y+5,kind:folk[i][0],name:folk[i][1]}));
   class EscapeWorld{
     constructor(unlocked=()=>true,focusId=null,hiddenOpen=()=>false,bonusOpen=()=>false){
@@ -31,7 +31,7 @@
       const spots=[[-6,3],[-4,-2],[0,-4],[4,-1],[6,4],[0,6]];
       this.nodes=catalog.levels.map((level,index)=>{const chapter=chapters.findIndex(c=>index>=c.start&&index<c.end),c=chapters[chapter],[x,y]=chapter===10&&index===48?[6,5]:spots[index-c.start];return {id:level.id,index,chapter,x:c.x+x,y:c.y+y,name:level.name};});
       const node=this.spotFor(focusId)||this.nodes[0];this.player={x:node.x,y:node.y+1,facing:{x:0,y:-1},moving:false,sprinting:false};
-      this.paths=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[7,13],[5,14],[12,15],[13,16]];
+      this.paths=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[7,13],[5,14],[12,15],[13,16],[16,17]];
       this.grid=Array.from({length:this.height},()=>Array(this.width).fill('#'));this.gates=[];
       const room=(x1,y1,x2,y2,t='.')=>{for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)if(this.grid[y]?.[x])this.grid[y][x]=t;};
       for(const c of chapters){room(c.x-8,c.y-7,c.x+8,c.y+7);if(['ruins','garden','quarry'].includes(c.theme)){room(c.x-1,c.y+1,c.x+1,c.y+1,'#');room(c.x,c.y+1,c.x,c.y+1);}else{room(c.x+1,c.y+2,c.x+2,c.y+2,'L');}for(const [dx,dy]of [[-6,1],[-5,1],[4,-1],[5,-1]])this.grid[c.y+dy][c.x+dx]='L';if(c.theme==='river')room(c.x+4,c.y-2,c.x+6,c.y+1,'P');if(c.theme==='coast')room(c.x+2,c.y+1,c.x+4,c.y+4,'P');}
