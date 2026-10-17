@@ -408,3 +408,10 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .mobile-game #game-toolbar.toolbar-open { display:grid; grid-template-columns:1fr 1fr; gap:5px; max-height:calc(100vh - 30px); overflow:auto; }
 .mobile-game #game-toolbar.toolbar-open #menu-button { grid-column:1 / -1; }
 .mobile-game #game-toolbar.toolbar-open > button { min-height:40px; padding:6px 10px !important; font-size:.72rem !important; }
+
+.builder-more { margin:8px 0; padding:6px 10px; border:1px solid #5d7a6288; border-radius:8px; background:#10241f; }
+.builder-more summary { cursor:pointer; font-weight:650; }
+.builder-sky { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:6px 0; font-size:.85rem; }
+.builder-sky input,.builder-hint textarea,.builder-inspector input:not([type=checkbox]) { background:#21443f; color:#e4edd6; border:1px solid #789575; border-radius:6px; padding:3px 6px; font:inherit; }
+.builder-sky input[type=number] { width:62px; }
+.builder-hint { display:flex; gap:8px; align-items:flex-start; font-size:.85rem; } .builder-hint textarea { flex:1; min-width:240px; }

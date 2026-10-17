@@ -3,12 +3,16 @@
 // open or wake; then playtest, save in this browser, share as text, or publish to the
 // community shelf. The builder needs an admin signed in with a passkey; the community shelf is
 // open to every player.
-let escapeBuilderModel=null,escapeBuilderTool='#',escapeBuilderColor=0,escapeBuilderPick=null,escapeBuilderPainting=false,escapeBuilderNote='';
+let escapeBuilderModel=null,escapeBuilderTool='#',escapeBuilderColor=0,escapeBuilderPick=null,escapeBuilderPainting=false,escapeBuilderNote='',escapeBuilderAnchor=null;
 const ESCAPE_BUILDER_STORE=(()=>{try{return typeof localStorage==='undefined'?null:localStorage;}catch(_){return null;}})();
 const ESCAPE_BUILDER_LOOK={'#':['#2d4a43',''],'.':['#183029',''],'L':['#2f6b45','❀'],'N':['#3b3a32','∴'],'B':['#3c5a5e','⟋'],'M':['#4a3a26','≈'],'~':['#1f5a76','~'],'_':['#07120f',''],'c':['#3d3424','⁘'],'T':['#24452a','෴'],'o':['#2a3a2a','●'],'t':['#5a5040','≋'],'S':['#2d4a43','⦚'],'@':['#183029','🦎'],'K':['#183029','🔑'],'X':['#1d5a4f','⇩'],'1':['#183029','◆'],'2':['#183029','◆◆'],'3':['#183029','▣']};
-const ESCAPE_BUILDER_ENEMY={snake:'🐍',beetle:'🪲',scorpion:'🦂',toad:'🐸',spider:'🕷',cricket:'🦗',moth:'🦋',mimic:'🎁',millipede:'🐛',cobra:'👑',flytrap:'🌺',crab:'🦀',fox:'🦊',heron:'🦩',mantis:'🌿',wasp:'🐝',dragonfly:'🪰',mole:'🐹',bat:'🦇',eel:'🪱'};
-const ESCAPE_BUILDER_TRIGGER={plate:'◉',heavy:'⬛',lever:'⚲'},ESCAPE_BUILDER_HAZARD={vent:'♨',thorns:'⋀',log:'●'};
+const ESCAPE_BUILDER_ENEMY={snake:'🐍',beetle:'🪲',scorpion:'🦂',toad:'🐸',spider:'🕷',cricket:'🦗',moth:'🦋',mimic:'🎁',millipede:'🐛',cobra:'👑',flytrap:'🌺',crab:'🦀',fox:'🦊',heron:'🦩',mantis:'🌿',wasp:'🐝',dragonfly:'🪰',mole:'🐹',bat:'🦇',eel:'🪱',angler:'🎣',fish:'🐟','sea-snake':'🌊',owl:'🦉',gecko:'🐾'};
+const ESCAPE_BUILDER_TRIGGER={plate:'◉',heavy:'⬛',lever:'⚲',switch:'▣'},ESCAPE_BUILDER_HAZARD={vent:'♨',thorns:'⋀',log:'●'};
 const ESCAPE_BUILDER_ARROW=['→','↓','←','↑'];
+// The extras placed on top of the map: what each tool is called and how it looks on the grid.
+const ESCAPE_BUILDER_EXTRAS={'layer:shade':['⛱','Awning: shade where the hawk cannot dive'],'layer:glowPlants':['✺','Glow plant: light in a dark level'],'layer:regrowth':['✿','Regrowth bug: grows back a lost tail'],
+  cap:['🍄','Bounce cap: click the cap, then where it throws Sally'],wind:['≋','Wind lane: click two opposite corners'],area:['▢','Trigger area: click two corners; walking in can open doors or wake enemies'],
+  ants:['🐜','Ant column: click the points of its loop in order'],seedbed:['🌱','Seed bed: click the two banks either side of a gap; a planted seed grows a crossing'],wheel:['✣','Root wheel'],rival:['⚔','Rivals: click two enemies who fight when they meet']};
 
 function escapeBuilderApi(path,options={}){return fetch('/api/'+path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});}
 function escapeBuilderShow(){
@@ -99,6 +103,7 @@ const escapeBuilderGuardIndex=id=>escapeBuilderModel.guards.findIndex(g=>g.id===
 function escapeBuilderLabel(id){
   const m=escapeBuilderModel,B=EscapeBuilder;
   if(id==='key')return 'the key';if(id.startsWith('chest:'))return 'the chest at '+id.slice(6);
+  if(id.startsWith('enter:')){const r=(m.regions||[]).find(q=>'enter:'+q.id===id);return r?'walking into the area '+r.area.slice(0,2).join(',')+'–'+r.area.slice(2).join(','):id;}
   const t=m.triggers.find(q=>q.id===id);if(t)return 'a '+B.TRIGGERS[t.type].toLowerCase()+' at '+t.at.join(',');
   const d=m.doors.find(q=>q.id===id);if(d)return 'the '+B.doorName(d).toLowerCase();
   const g=m.guards.find(q=>q.id===id);if(g)return 'the '+B.ENEMIES[g.kind].toLowerCase()+' at '+g.spawn.join(',');return id;
@@ -118,11 +123,35 @@ function escapeBuilderCell(x,y,ch,linked){
   if(t){const color=B.linksFrom(m,t.id).map(id=>m.doors.find(q=>q.id===id)).find(Boolean);glyph='<span style="color:'+(color?'rgb('+B.COLORS[color.color][1].join(',')+')':'#c9c9b8')+'">'+ESCAPE_BUILDER_TRIGGER[t.type]+'</span>';}
   if(g)glyph=ESCAPE_BUILDER_ENEMY[g.kind]+'<b class="builder-facing">'+ESCAPE_BUILDER_ARROW[((Math.round((g.facing??Math.PI)/(Math.PI/2))%4)+4)%4]+'</b>'+(g.sleep?'<i class="builder-zz">z</i>':'');
   if(cold)cls+=' builder-cold';
+  // Extras: layers, caps, wind, areas, ant trails, seed beds, the root wheel.
+  const hasAt=list=>(list||[]).some(q=>q[0]===x&&q[1]===y),inRect=a=>x>=a[0]&&x<=a[2]&&y>=a[1]&&y<=a[3];let shadow='';
+  if(hasAt(m.shade))shadow+='inset 0 -5px 0 #c96a48aa,';if(hasAt(m.glowPlants)&&!glyph)glyph='✺';if(hasAt(m.regrowth)&&!glyph)glyph='✿';
+  const wind=(m.wind||[]).find(z=>inRect(z.area));if(wind){bg='linear-gradient(#9ec4e033,#9ec4e033),'+bg;if(!glyph)glyph='<span style="opacity:.55">'+ESCAPE_BUILDER_ARROW[EscapeBuilder.DIRS.findIndex(([dx,dy])=>dx===wind.dir[0]&&dy===wind.dir[1])]+'</span>';}
+  if((m.regions||[]).some(r=>inRect(r.area)))shadow+='inset 0 0 0 2px #e8c45a88,';
+  const cap=(m.caps||[]).find(c=>c.at[0]===x&&c.at[1]===y);if(cap)glyph='🍄';else if((m.caps||[]).some(c=>c.to&&c.to[0]===x&&c.to[1]===y))glyph='◎';
+  const ant=(m.antTrails||[]).findIndex(t=>hasAt(t.path));if(ant>=0&&!glyph)glyph='<span style="color:#d79a60">∙</span>';
+  if((m.seedCrossings||[]).some(c=>hasAt(c.banks)))glyph='🌱';else if((m.seedCrossings||[]).some(c=>hasAt(c.tiles)))shadow+='inset 0 0 0 2px #8fc86a88,';
+  if(m.rootWheel&&m.rootWheel[0]===x&&m.rootWheel[1]===y)glyph='✣';
+  if(g&&(m.rivalries||[]).some(r=>r.includes(g.id)))glyph+='<i class="builder-zz">⚔</i>';
+  const lureOf=m.guards.find(q=>q.lure&&q.lure[0]===x&&q.lure[1]===y);if(lureOf&&!g)glyph='<span style="color:#9ff">✦</span>';
+  if(escapeBuilderAnchor&&escapeBuilderAnchor[0]===x&&escapeBuilderAnchor[1]===y)shadow+='inset 0 0 0 3px #fff,';
   const picked=p&&((p.kind==='guard'&&g?.id===p.id)||(p.kind==='door'&&d?.id===p.id)||(p.kind==='trigger'&&t?.id===p.id)||(p.kind==='hazard'&&h?.id===p.id)||(p.kind==='source'&&source===p.id&&!t));
   if(picked)cls+=' builder-selected';
   if((g&&linked.has(g.id))||(d&&linked.has(d.id))||(source&&linked.has(source)))cls+=' builder-linked';
   const patrolGuard=p?.kind==='guard'?m.guards.find(q=>q.id===p.id):null,step=patrolGuard?patrolGuard.patrol.findIndex(q=>q[0]===x&&q[1]===y):-1;
-  return '<div class="'+cls+'" data-x="'+x+'" data-y="'+y+'" style="background:'+bg+'">'+glyph+(step>=0?'<i>'+(step+1)+'</i>':'')+'</div>';
+  return '<div class="'+cls+'" data-x="'+x+'" data-y="'+y+'" style="background:'+bg+(shadow?';box-shadow:'+shadow.slice(0,-1):'')+'">'+glyph+(step>=0?'<i>'+(step+1)+'</i>':'')+'</div>';
+}
+// The settings only some enemies have.
+function escapeBuilderGuardExtras(g){
+  const n=(key,label,step=.1)=>' <label>'+label+' <input type="number" step="'+step+'" data-ginsp="'+key+'" value="'+(g[key]??'')+'"></label>';
+  if(g.kind==='angler')return '<br>Lure: '+(g.lure?g.lure.join(','):'not set')+' <button data-insp="set-lure">Pick the lure tile</button>';
+  if(g.kind==='crab')return '<br>Runs along <select data-ginsp="axis"><option value="">its facing</option><option value="x"'+(g.axis==='x'?' selected':'')+'>the row</option><option value="y"'+(g.axis==='y'?' selected':'')+'>the column</option></select>'+n('range','up to tiles',1);
+  if(g.kind==='heron')return '<br>Looks: '+ESCAPE_BUILDER_ARROW.map((a,i)=>'<label class="builder-check"><input type="checkbox" data-look="'+i+'"'+((g.looks||[]).some(v=>Math.abs((((Math.round(v/(Math.PI/2))%4)+4)%4)-i)<.1)?' checked':'')+'> '+a+'</label>').join('')+n('every','turns every s');
+  if(g.kind==='bat')return '<br>'+n('every','pings every s')+n('range','ring reaches tiles');
+  if(g.kind==='dragonfly')return '<br>'+n('speed','speed');
+  if(g.kind==='scorpion')return '<br><label class="builder-check"><input type="checkbox" data-ginsp="buried"'+(g.buried?' checked':'')+'> Buried until Sally is close</label>'+n('offset','tail rhythm delay s');
+  if(g.kind==='owl')return '<br>Its patrol points are its look-outs.';
+  return '';
 }
 function escapeBuilderInspector(){
   const m=escapeBuilderModel,B=EscapeBuilder,p=escapeBuilderPick;
@@ -132,19 +161,46 @@ function escapeBuilderInspector(){
   if(p.kind==='guard'){const g=m.guards.find(q=>q.id===p.id);if(!g)return '';
     html='<b>'+ESCAPE_BUILDER_ENEMY[g.kind]+' '+B.ENEMIES[g.kind]+'</b> at '+g.spawn.join(',')+' · faces '+ESCAPE_BUILDER_ARROW[((Math.round((g.facing??Math.PI)/(Math.PI/2))%4)+4)%4]+
       (B.POSTED.has(g.kind)?' · keeps its post':' · walks '+g.patrol.length+' patrol point'+(g.patrol.length===1?'':'s')+' <button data-insp="clear-patrol">Clear patrol</button>')+
-      '<label class="builder-check"><input type="checkbox" data-insp="sleep"'+(g.sleep?' checked':'')+'> Asleep until woken</label>'+(g.sleep?' Woken by: '+links(B.linksTo(m,g.id)):'');}
+      '<label class="builder-check"><input type="checkbox" data-insp="sleep"'+(g.sleep?' checked':'')+'> Asleep until woken</label>'+(g.sleep?' Woken by: '+links(B.linksTo(m,g.id)):'')+
+      escapeBuilderGuardExtras(g)+(m.rivalries||[]).filter(r=>r.includes(g.id)).map(r=>'<br>Rival of '+escapeHtml(escapeBuilderLabel(r[0]===g.id?r[1]:r[0]))).join('');}
   else if(p.kind==='door'){const d=m.doors.find(q=>q.id===p.id);if(!d)return '';
     html='<b>'+B.doorName(d)+'</b> ('+d.tiles.length+' tile'+(d.tiles.length===1?'':'s')+') <select data-insp="mode">'+Object.entries(B.MODES).filter(([k])=>k!=='crumble'||d.bridge).map(([k,v])=>'<option value="'+k+'"'+(d.mode===k?' selected':'')+'>'+v+'</option>').join('')+'</select>'+
-      (['timed','once'].includes(d.mode)?' <label>Seconds <input type="number" min="2" max="20" data-insp="seconds" value="'+d.seconds+'"></label>':'')+'<br>Triggered by: '+links(B.linksTo(m,d.id));}
+      (['timed','once'].includes(d.mode)?' <label>Seconds <input type="number" min="1" max="30" data-insp="seconds" value="'+d.seconds+'"></label>':'')+
+      ' <label class="builder-check"><input type="checkbox" data-insp="root"'+(d.root?' checked':'')+'> Roots (seeds can brace them)</label> <label>Name <input data-insp="dname" maxlength="30" value="'+escapeHtml(d.name||'')+'" placeholder="'+B.COLORS[d.color][0]+'"></label>'+
+      '<br>Triggered by: '+links(B.linksTo(m,d.id));}
   else if(p.kind==='trigger'){const t=m.triggers.find(q=>q.id===p.id);if(!t)return '';
     html='<b>'+ESCAPE_BUILDER_TRIGGER[t.type]+' '+B.TRIGGERS[t.type]+'</b> at '+t.at.join(',')+'<br>Opens or shuts: '+links(B.linksFrom(m,t.id));}
-  else if(p.kind==='source')html='<b>'+escapeHtml(escapeBuilderLabel(p.id))+'</b><br>Taking it affects: '+links(B.linksFrom(m,p.id));
+  else if(p.kind==='source'){const note=m.messages?.[p.id]||{},region=p.id.startsWith('enter:')&&(m.regions||[]).find(r=>'enter:'+r.id===p.id);
+    html='<b>'+escapeHtml(escapeBuilderLabel(p.id))+'</b>'+(region?' <label class="builder-check"><input type="checkbox" data-insp="needkey"'+(region.requiresKey?' checked':'')+'> Only once Sally has the key</label>':'')+
+      '<br>'+(region?'Walking in':'Taking it')+' affects: '+(B.linksFrom(m,p.id).map(id=>{const d=m.doors.find(q=>q.id===id);return escapeHtml(escapeBuilderLabel(id))+(d&&d.mode!=='shut'?' <label class="builder-check"><input type="checkbox" data-insp-close="'+id+'"'+(m.links.some(l=>l[0]===p.id&&l[1]===id&&l[2]==='close')?' checked':'')+'> closes it</label>':'');}).join(', ')||'nothing yet')+
+      '<br><label>Message <input data-insp="message" maxlength="160" size="50" value="'+escapeHtml(note.message||'')+'" placeholder="Somewhere, a passage changes."></label> <label>Objective <input data-insp="objective" maxlength="100" size="30" value="'+escapeHtml(note.objective||'')+'" placeholder="Find the hatch."></label>';}
   else if(p.kind==='hazard'){const h=m.hazards.find(q=>q.id===p.id);if(!h)return '';
     html='<b>'+ESCAPE_BUILDER_HAZARD[h.type]+' '+B.HAZARDS[h.type]+'</b> at '+h.at.join(',')+' <select data-insp="speed">'+Object.entries(B.SPEEDS).map(([k,v])=>'<option value="'+k+'"'+(h.speed===k?' selected':'')+'>'+v+'</option>').join('')+'</select>'+
       '<label class="builder-check"><input type="checkbox" data-insp="offset"'+(h.offset?' checked':'')+'> Half a beat later</label>'+
       (h.type==='vent'?' <label>Reach <input type="number" min="1" max="6" data-insp="length" value="'+h.length+'"></label> · ↻ Turn sets its direction':'')+
-      (h.type==='log'?' · '+(h.to?'rolls to '+h.to.join(','):'<b>click a tile in the same row or column to set where it rolls to</b>'):'');}
+      (h.type==='log'?' · '+(h.to?'rolls to '+h.to.join(','):'<b>click a tile in the same row or column to set where it rolls to</b>'):'')+
+      '<br>Exact timing (seconds, overrides the speed): <label>every <input type="number" step="0.1" min="0" max="30" data-insp="hperiod" value="'+(h.period??'')+'"></label><label>'+(h.type==='log'?'roll speed':h.type==='vent'?'blowing for':'up for')+' <input type="number" step="0.1" min="0" max="30" data-insp="hon" value="'+(h.on??'')+'"></label><label>delay <input type="number" step="0.1" min="0" max="30" data-insp="hdelay" value="'+(h.delay??'')+'"></label>';}
+  else if(p.kind==='wind'){const z=m.wind[p.index];if(!z)return '';const dir=B.DIRS.findIndex(([dx,dy])=>dx===z.dir[0]&&dy===z.dir[1]);
+    html='<b>≋ Wind lane</b> '+z.area.slice(0,2).join(',')+'–'+z.area.slice(2).join(',')+' blows <select data-insp="wdir">'+ESCAPE_BUILDER_ARROW.map((a,i)=>'<option value="'+i+'"'+(i===dir?' selected':'')+'>'+a+'</option>').join('')+'</select>'+
+      '<label>gust every <input type="number" step="0.1" data-insp="wperiod" value="'+z.period+'"></label><label>lasting <input type="number" step="0.1" data-insp="won" value="'+z.on+'"></label><label>delay <input type="number" step="0.1" data-insp="woffset" value="'+z.offset+'"></label>';}
+  else if(p.kind==='ants'){const t=m.antTrails[p.index];if(!t)return '';
+    html='<b>🐜 Ant column</b> marching '+t.path.length+' points <label>groups <input type="number" min="1" max="8" data-insp="agroups" value="'+t.groups+'"></label><label>ants per group <input type="number" min="1" max="8" data-insp="asize" value="'+t.size+'"></label><label>speed <input type="number" step="0.1" min="0.3" max="4" data-insp="aspeed" value="'+t.speed+'"></label> <button data-insp="anew">Start a new column</button>';}
+  else if(p.kind==='cap'){const c=m.caps[p.index];if(!c)return '';html='<b>🍄 Bounce cap</b> at '+c.at.join(',')+' · '+(c.to?'throws Sally to '+c.to.join(','):'<b>click where it throws Sally</b>');}
   return '<div class="builder-inspector">'+html+'</div>';
+}
+// Whole-level settings: tools, time, darkness, and the sky and weather.
+function escapeBuilderSettings(){
+  const m=escapeBuilderModel,num=(k,label,max=600,step=1)=>'<label>'+label+' <input type="number" min="0" max="'+max+'" step="'+step+'" data-set="'+k+'" value="'+(m[k]||0)+'"></label>',
+    check=(k,label)=>'<label class="builder-check"><input type="checkbox" data-set="'+k+'"'+(m[k]?' checked':'')+'> '+label+'</label>',
+    sky=(k,label,fields)=>'<div class="builder-sky"><label class="builder-check"><input type="checkbox" data-sky="'+k+'"'+(m[k]?' checked':'')+'> '+label+'</label>'+(m[k]?fields.map(([f,l])=>'<label>'+l+' <input type="number" step="0.1" min="0" max="120" data-skyf="'+k+'.'+f+'" value="'+m[k][f]+'"></label>').join(''):'')+'</div>';
+  return '<details class="builder-more"'+(escapeBuilderSettings.open?' open':'')+'><summary>Level settings and weather</summary><div class="builder-settings">'+
+    num('camos','Camouflage',5)+num('seeds','Seeds',5)+num('timeLimit','Time limit (s, 0 = none)')+num('sightRadius','Sight (tiles, 0 = default)',12)+
+    check('tailDrop','Spare tail (one catch forgiven)')+check('dark','Dark (glow plants light it)')+check('gaze','Sally sees only ahead')+check('living','Living garden')+check('abyss','Bottomless gaps')+
+    '<label class="builder-check"><input type="checkbox" data-set="biome"'+(m.biome==='desert'?' checked':'')+'> Desert sand</label></div>'+
+    sky('hawk','Hawk overhead',[['every','dives every s'],['warn','warning s'],['first','first dive at s']])+
+    sky('storm','Lightning storm',[['every','flash every s'],['warn','rumble warning s'],['first','first flash at s']])+
+    sky('tide','Tide on the flats',[['period','cycle s'],['high','high tide lasts s'],['offset','delay s']])+
+    '<label class="builder-hint">Hint <textarea data-set="hint" maxlength="400" rows="2">'+escapeHtml(m.hint||'')+'</textarea></label></details>';
 }
 function renderEscapeBuilder(){
   const m=escapeBuilderModel,B=EscapeBuilder,panel=document.getElementById('escape-builder'),w=m.map[0].length,h=m.map.length;
@@ -163,6 +219,8 @@ function renderEscapeBuilder(){
     '<span>Triggers</span>'+Object.entries(B.TRIGGERS).map(([k,v])=>tool('trig:'+k,ESCAPE_BUILDER_TRIGGER[k]+' '+v.split(' ')[0],v)).join('')+
     '<span>Hazards</span>'+Object.entries(B.HAZARDS).map(([k,v])=>tool('haz:'+k,ESCAPE_BUILDER_HAZARD[k]+' '+v.split(' ').at(-1),v+(k==='vent'?' (place it in a wall)':k==='log'?' (click its start, then where it rolls to)':''))).join('')+
     '<span>Ground</span>'+tool('cold','❄ Cold','Cold ground chills Sally')+tool('warm','◍ Warm stone','A warm stone thaws Sally')+'</div>'+
+    '<div class="builder-palette"><span>Extras</span>'+Object.entries(ESCAPE_BUILDER_EXTRAS).map(([k,[icon,title]])=>tool(k,icon+' '+title.split(':')[0],title)).join('')+'</div>'+
+    escapeBuilderSettings()+
     '<div class="builder-palette"><span>Tools</span>'+tool('select','☝ Select','Pick something to see and change its settings')+tool('link','🔗 Link','Click a trigger, the key or a chest, then click doors, bridges or enemies to link or unlink them')+
     tool('patrol','➜ Patrol','Click an enemy, then click the tiles it should walk to, in order')+tool('turn','↻ Turn','Turn an enemy or a vent a quarter turn')+tool('remove','✕ Remove','Remove an enemy, trigger, hazard, door tile or ground mark')+'</div>'+
     escapeBuilderInspector()+
@@ -180,10 +238,17 @@ function escapeHtml(text){return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;
 // The topmost thing on a tile, for Select and Link.
 function escapeBuilderPickAt(x,y){
   const m=escapeBuilderModel,B=EscapeBuilder,g=B.guardAt(m,x,y),t=B.triggerAt(m,x,y),h=B.hazardAt(m,x,y),d=B.doorAt(m,x,y),s=B.sourceAt(m,x,y);
-  return g?{kind:'guard',id:g.id}:t?{kind:'trigger',id:t.id}:s?{kind:'source',id:s}:h?{kind:'hazard',id:h.id}:d?{kind:'door',id:d.id}:null;
+  if(g)return {kind:'guard',id:g.id};if(t)return {kind:'trigger',id:t.id};
+  const cap=(m.caps||[]).findIndex(c=>c.at[0]===x&&c.at[1]===y);if(cap>=0)return {kind:'cap',index:cap};
+  const ant=(m.antTrails||[]).findIndex(q=>q.path.some(p=>p[0]===x&&p[1]===y));if(ant>=0)return {kind:'ants',index:ant};
+  if(s&&!s.startsWith('enter:'))return {kind:'source',id:s};if(h)return {kind:'hazard',id:h.id};if(d)return {kind:'door',id:d.id};
+  const wind=(m.wind||[]).findIndex(z=>x>=z.area[0]&&x<=z.area[2]&&y>=z.area[1]&&y<=z.area[3]);if(wind>=0&&!s)return {kind:'wind',index:wind};
+  return s?{kind:'source',id:s}:null;
 }
 function escapeBuilderApply(x,y){
   const m=escapeBuilderModel,B=EscapeBuilder,t=escapeBuilderTool,p=escapeBuilderPick;escapeBuilderNote='';
+  // Picking an angler's lure tile.
+  if(p?.kind==='lure'){B.setGuard(m,p.id,{lure:[x,y]});escapeBuilderPick={kind:'guard',id:p.id};return true;}
   if(t==='select'){escapeBuilderPick=escapeBuilderPickAt(x,y);return true;}
   if(t==='link'){
     const log=p?.kind==='hazard'&&m.hazards.find(q=>q.id===p.id&&q.type==='log');
@@ -194,7 +259,7 @@ function escapeBuilderApply(x,y){
     escapeBuilderPick=here;escapeBuilderNote='First click a trigger, the key or a chest, then the doors or enemies it should affect.';return true;
   }
   if(t==='patrol'){const g=B.guardAt(m,x,y);if(g){escapeBuilderPick={kind:'guard',id:g.id};return true;}const i=p?.kind==='guard'?escapeBuilderGuardIndex(p.id):-1;if(i<0){escapeBuilderNote='Click an enemy first.';return true;}return B.addPatrol(m,i,x,y);}
-  if(t==='remove'){const ok=B.removeAt(m,x,y);if(ok)escapeBuilderPick=null;return ok;}
+  if(t==='remove'){const ok=B.removeAt(m,x,y)||B.removeExtraAt(m,x,y);if(ok)escapeBuilderPick=null;return ok;}
   if(t==='turn')return B.turnEnemy(m,x,y);
   if(t.startsWith('enemy:')){const ok=B.addEnemy(m,t.slice(6),x,y);if(ok)escapeBuilderPick={kind:'guard',id:B.guardAt(m,x,y).id};return ok;}
   if(t==='door'||t==='bridge'){const ok=B.paintDoor(m,x,y,escapeBuilderColor,t==='bridge');if(ok)escapeBuilderPick={kind:'door',id:(t==='bridge'?'b':'d')+escapeBuilderColor};return ok;}
@@ -206,9 +271,24 @@ function escapeBuilderApply(x,y){
     else escapeBuilderNote=type==='vent'?'A vent sits in a wall tile next to open floor.':'Hazards go on open floor.';return true;
   }
   if(t==='cold'||t==='warm')return B.paintClimate(m,t,x,y);
+  if(t.startsWith('layer:'))return B.toggleLayer(m,t.slice(6),x,y);
+  if(t==='cap'){if((m.caps||[]).some(c=>!c.to)){if(!B.setCapEnd(m,x,y))escapeBuilderNote='Pick open floor for the landing.';else escapeBuilderPick={kind:'cap',index:m.caps.length-1};return true;}
+    if(!B.addCap(m,x,y)){escapeBuilderNote='Caps go on open floor.';return true;}escapeBuilderNote='Now click where the cap throws Sally.';return true;}
+  if(t==='wind'||t==='area'||t==='seedbed'){
+    if(!escapeBuilderAnchor){escapeBuilderAnchor=[x,y];escapeBuilderNote=t==='seedbed'?'Now click the other bank, in the same row or column.':'Now click the opposite corner.';return true;}
+    const [ax,ay]=escapeBuilderAnchor;escapeBuilderAnchor=null;
+    if(t==='wind'){B.addWind(m,ax,ay,x,y);escapeBuilderPick={kind:'wind',index:m.wind.length-1};escapeBuilderNote='Set which way it blows and how often below.';}
+    else if(t==='area'){const id=B.addRegion(m,ax,ay,x,y);if(id){escapeBuilderPick={kind:'source',id:'enter:'+id};escapeBuilderTool='link';escapeBuilderNote='Now click the doors or sleeping enemies walking in should affect.';}}
+    else if(!B.addSeedCrossing(m,[ax,ay],[x,y]))escapeBuilderNote='The two banks must be in the same row or column with a gap between.';
+    return true;}
+  if(t==='ants'){const ok=B.addAntPoint(m,x,y,escapeBuilderAnchor==='new');escapeBuilderAnchor=null;if(ok)escapeBuilderPick={kind:'ants',index:m.antTrails.length-1};return ok;}
+  if(t==='wheel')return B.setRootWheel(m,x,y);
+  if(t==='rival'){const g=B.guardAt(m,x,y);if(!g){escapeBuilderNote='Click an enemy.';return true;}
+    if(p?.kind==='guard'&&p.id!==g.id){B.toggleRival(m,p.id,g.id);escapeBuilderNote='Rivals: '+escapeBuilderLabel(p.id)+' and '+escapeBuilderLabel(g.id)+' (click the pair again to undo).';escapeBuilderPick=null;return true;}
+    escapeBuilderPick={kind:'guard',id:g.id};escapeBuilderNote='Now click its rival.';return true;}
   return B.paint(m,x,y,t);
 }
-const escapeBuilderDrags=t=>Object.keys(EscapeBuilder.TILES).includes(t)||['1','2','3','door','bridge','cold','warm'].includes(t);
+const escapeBuilderDrags=t=>Object.keys(EscapeBuilder.TILES).includes(t)||['1','2','3','door','bridge','cold','warm'].includes(t)||t.startsWith('layer:');
 function wireEscapeBuilder(){
   const m=escapeBuilderModel,B=EscapeBuilder,$=id=>document.getElementById(id),rerender=()=>renderEscapeBuilder();
   $('builder-back').onclick=closeEscapeBuilder;
@@ -217,7 +297,7 @@ function wireEscapeBuilder(){
   for(const input of document.querySelectorAll('[data-count]'))input.onchange=e=>{m[e.target.dataset.count]=Math.max(0,Math.min(5,Number(e.target.value)||0));rerender();};
   $('builder-toll').onchange=e=>{m.requiredTreasure=Math.max(0,Math.min(99,Number(e.target.value)||0));rerender();};
   $('builder-dark').onchange=e=>{m.explore=e.target.checked;};
-  for(const b of document.querySelectorAll('[data-tool]'))b.onclick=()=>{escapeBuilderTool=b.dataset.tool;escapeBuilderNote='';if(!['patrol','link','select','turn'].includes(escapeBuilderTool))escapeBuilderPick=null;rerender();};
+  for(const b of document.querySelectorAll('[data-tool]'))b.onclick=()=>{escapeBuilderTool=b.dataset.tool;escapeBuilderNote='';escapeBuilderAnchor=null;if(!['patrol','link','select','turn'].includes(escapeBuilderTool))escapeBuilderPick=null;rerender();};
   for(const b of document.querySelectorAll('[data-color]'))b.onclick=()=>{escapeBuilderColor=Number(b.dataset.color);if(!['door','bridge'].includes(escapeBuilderTool))escapeBuilderTool='door';rerender();};
   const p=escapeBuilderPick,insp=name=>document.querySelector('[data-insp="'+name+'"]');
   if(insp('clear-patrol'))insp('clear-patrol').onclick=()=>{B.clearPatrol(m,escapeBuilderGuardIndex(p.id));rerender();};
@@ -227,6 +307,25 @@ function wireEscapeBuilder(){
   if(insp('speed'))insp('speed').onchange=e=>{B.setHazard(m,p.id,{speed:e.target.value});rerender();};
   if(insp('offset'))insp('offset').onchange=e=>{B.setHazard(m,p.id,{offset:e.target.checked});rerender();};
   if(insp('length'))insp('length').onchange=e=>{B.setHazard(m,p.id,{length:e.target.value});rerender();};
+  const val=e=>e.target.value===''?null:Number(e.target.value);
+  for(const [k,f] of [['hperiod','period'],['hon','on'],['hdelay','delay']])if(insp(k))insp(k).onchange=e=>{const h=m.hazards.find(q=>q.id===p.id);B.setHazard(m,p.id,{[f]:val(e)});
+    if(h.period!==undefined&&(h.on===undefined||h.delay===undefined)){h.on=h.on??1;h.delay=h.delay??0;}if(val(e)===null&&f==='period'){delete h.on;delete h.delay;}rerender();};
+  if(insp('root'))insp('root').onchange=e=>{B.setDoor(m,p.id,{root:e.target.checked});rerender();};
+  if(insp('dname'))insp('dname').onchange=e=>{B.setDoor(m,p.id,{name:e.target.value});rerender();};
+  if(insp('needkey'))insp('needkey').onchange=e=>{B.setRegion(m,p.id.slice(6),{requiresKey:e.target.checked});rerender();};
+  for(const box of document.querySelectorAll('[data-insp-close]'))box.onchange=e=>{B.setLinkAction(m,p.id,box.dataset.inspClose,e.target.checked?'close':'open');rerender();};
+  if(insp('message'))insp('message').onchange=insp('objective').onchange=()=>{B.setMessage(m,p.id,insp('message').value,insp('objective').value);};
+  if(insp('set-lure'))insp('set-lure').onclick=()=>{escapeBuilderPick={kind:'lure',id:p.id};escapeBuilderTool='select';escapeBuilderNote='Click the tile where the lure dangles.';rerender();};
+  for(const el of document.querySelectorAll('[data-ginsp]'))el.onchange=e=>{const k=el.dataset.ginsp;B.setGuard(m,p.id,{[k]:k==='buried'?e.target.checked:k==='axis'?e.target.value:val(e)});rerender();};
+  const looks=document.querySelectorAll('[data-look]');for(const el of looks)el.onchange=()=>{B.setGuard(m,p.id,{looks:[...looks].filter(q=>q.checked).map(q=>Number(q.dataset.look)*Math.PI/2)});rerender();};
+  for(const [k,f] of [['wdir','dir'],['wperiod','period'],['won','on'],['woffset','offset']])if(insp(k))insp(k).onchange=e=>{B.setWind(m,p.index,{[f]:Number(e.target.value)});rerender();};
+  for(const [k,f] of [['agroups','groups'],['asize','size'],['aspeed','speed']])if(insp(k))insp(k).onchange=e=>{B.setAnts(m,p.index,{[f]:Number(e.target.value)});rerender();};
+  if(insp('anew'))insp('anew').onclick=()=>{escapeBuilderTool='ants';escapeBuilderAnchor='new';escapeBuilderNote='Click the first point of the new column.';rerender();};
+  const more=document.querySelector('.builder-more');if(more)more.ontoggle=()=>{escapeBuilderSettings.open=more.open;};
+  for(const el of document.querySelectorAll('[data-set]'))el.onchange=e=>{const k=el.dataset.set;B.setSettings(m,{[k]:el.type==='checkbox'?(k==='biome'?(e.target.checked?'desert':''):e.target.checked):el.tagName==='TEXTAREA'?e.target.value:Number(e.target.value)});rerender();};
+  const skyDefault={hawk:{every:9,warn:2.2,first:12},storm:{every:9,warn:1.6,first:8},tide:{period:14,high:6,offset:0}};
+  for(const el of document.querySelectorAll('[data-sky]'))el.onchange=e=>{B.setSettings(m,{[el.dataset.sky]:e.target.checked?skyDefault[el.dataset.sky]:null});rerender();};
+  for(const el of document.querySelectorAll('[data-skyf]'))el.onchange=e=>{const [k,f]=el.dataset.skyf.split('.');B.setSettings(m,{[k]:{...m[k],[f]:Number(e.target.value)}});rerender();};
   const grid=$('builder-grid'),cellAt=e=>{const el=document.elementFromPoint(e.clientX,e.clientY)?.closest?.('.builder-cell');return el?[Number(el.dataset.x),Number(el.dataset.y)]:null;};
   grid.onpointerdown=e=>{e.preventDefault();const c=cellAt(e);if(!c)return;escapeBuilderPainting=escapeBuilderDrags(escapeBuilderTool);if(escapeBuilderApply(...c))rerender();};
   grid.onpointermove=e=>{if(!escapeBuilderPainting||!e.buttons)return;const c=cellAt(e);if(c&&escapeBuilderModel.map[c[1]][c[0]]!==escapeBuilderTool&&escapeBuilderApply(...c))rerender();};
