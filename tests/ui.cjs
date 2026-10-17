@@ -107,3 +107,7 @@ test('a shared level cannot put markup on the intro card: its name, brief and hi
  const h=harness();h.run('introMode="full";const m=EscapeBuilder.blank();m.name="<h1>AUDIT</h1>";m.brief="<form action=x><button>Go</button></form>";startEscape({custom:EscapeBuilder.toRoute(m),from:"builder"});hideEscapeIntro();for(let i=0;i<30;i++)draw();');assert.equal(h.run('escapeGame.status'),'playing','a level with no enemies plays');
  const card=h.el('escape-intro').innerHTML;assert.doesNotMatch(card,/<h1>|<form/);assert.match(card,/&lt;h1&gt;AUDIT&lt;\/h1&gt;/);assert.match(card,/&lt;form action=x&gt;/);
 });
+test('walking the world map before any escape has run never touches a missing escape',()=>{
+  const h=harness();h.run('showEscapeSelect();escapeGame=null;gameState="escapeSelect";const p={x:1,y:1,moving:true,sprinting:true,crawling:false,swimming:false};escapeFootsteps(p);p.x=3;escapeFootsteps(p);p.x=5;escapeFootsteps(p);');
+  assert.equal(h.run('escapeFx.items.length'),0,'no step particles on the map');
+});

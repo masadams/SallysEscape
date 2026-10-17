@@ -426,9 +426,10 @@ function escapeFootsteps(p){
   if(!escapeStepFrom||!p.moving){escapeStepFrom={x:p.x,y:p.y};escapeStepDistance=0;return;}
   escapeStepDistance+=Math.hypot(p.x-escapeStepFrom.x,p.y-escapeStepFrom.y);escapeStepFrom={x:p.x,y:p.y};
   if(escapeStepDistance>=(p.sprinting?.62:p.crawling?.7:.48)){escapeStepDistance=0;escapeStepAlt=!escapeStepAlt;
-    const surface=typeof EscapeFeel!=='undefined'?EscapeFeel.surface(escapeGame):'floor';
+    // The world map walks on plain ground; inside an escape the ground decides the step.
+    const inRun=gameState==='escape'&&escapeGame&&typeof EscapeFeel!=='undefined',surface=inRun?EscapeFeel.surface(escapeGame):'floor';
     escapeSound(p.swimming?'paddle':p.crawling?'crawl':'step',{sprint:p.sprinting,alt:escapeStepAlt,surface});
-    if(typeof EscapeFeel!=='undefined'&&!p.swimming&&!p.crawling)EscapeFeel.step(escapeFx,escapeGame,{t:escapeFxClock,sprint:p.sprinting,alt:escapeStepAlt});}
+    if(inRun&&!p.swimming&&!p.crawling)EscapeFeel.step(escapeFx,escapeGame,{t:escapeFxClock,sprint:p.sprinting,alt:escapeStepAlt});}
 }
 // Feel: footprints, dust, leaves, sparks and noise rings, kept in one small pool per run. Rings
 // show how far a noise carries, so they stay on in Simple lighting; the rest is Full only.

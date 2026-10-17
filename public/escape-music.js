@@ -224,6 +224,7 @@
     tick(time){
       // A new style starts on the next bar, from the top of its own tune.
       if(this.nextStyle&&this.step%16===0){this.style=this.nextStyle;this.nextStyle=null;this.mood=this.style.mood;this.nextMood=null;this.step=0;this.tempo(.5);}
+      this.glideTempo();
       const now=this.context.currentTime;
       for(const e of events(this.mood,this.step,this.style,this.flavor)){const layer=this.layers.get(e.layer);if(!layer||layer.target===0&&now>layer.quietAt)continue;this.play(this.voices[e.voice],e,time);}
       this.step++;
@@ -240,7 +241,11 @@
       this.nextStyle=style;this.nextMood=style.mood;return true;
     }
     // Chases push the tempo up; it settles back when the danger passes.
-    tempo(seconds){const bpm=this.context?.transport?.bpm;if(!bpm)return;const target=(this.style.bpm||BPM)*(this.state==='chase'?1.22:1);if(bpm.rampTo)bpm.rampTo(target,seconds);else bpm.value=target;}
+        tempo(seconds){const bpm=this.context?.transport?.bpm;if(!bpm)return;this.bpmTarget=(this.style.bpm||BPM)*(this.state==='chase'?1.22:1);this.bpmGlide=Math.max(.05,seconds);}
+    // Each sixteenth eases the tempo toward its target. Tone's own tempo ramps break its transport
+    // clock (a 'reading time' crash) when they overlap, so the glide is done here, a step at a time.
+    glideTempo(){const bpm=this.context?.transport?.bpm;if(!bpm||this.bpmTarget===undefined)return;const now=bpm.value,diff=this.bpmTarget-now;if(Math.abs(diff)<.05)return;
+      const step=60/now/4;bpm.value=Math.abs(diff)<.5?this.bpmTarget:now+diff*Math.min(1,step/this.bpmGlide*2);}
     // Fade each layer toward the mix for this state; danger arrives fast and leaves slowly.
     setState(state,now=0){
       if(state===this.state)return false;
