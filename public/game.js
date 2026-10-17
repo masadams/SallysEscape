@@ -6,7 +6,8 @@ const touchInput={up:false,down:false,left:false,right:false,sprint:false,crawl:
 const controlCodes={ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40,Shift:16,c:67,l:76,z:90,w:87,a:65,s:83,d:68,q:81,e:69,r:82,f:70,g:71,' ':32,Enter:13};
 function gameKeyDown(code){return !suppressedKeys.has(code)&&keyIsDown(code);}
 function suppressHeldKeys(){Object.values(controlCodes).forEach(c=>suppressedKeys.add(c));}
-function getAudioContext(){return escapeAudio||(escapeAudio=new (window.AudioContext||window.webkitAudioContext)());}
+// A 'balanced' context uses bigger audio buffers than the default, so music and effects don't crackle when the game is busy.
+function getAudioContext(){if(escapeAudio)return escapeAudio;const A=window.AudioContext||window.webkitAudioContext;try{escapeAudio=new A({latencyHint:'balanced'});}catch(_){escapeAudio=new A();}return escapeAudio;}
 function unlockAudio(){try{const c=getAudioContext();c.resume();audioUnlocked=true;startEscapeMusic(c);}catch(_){}}
 function gameNow(){return (paused?pauseStartedAt:millis())-pausedDuration;}
 function isRunActive(){return gameState==='escape'&&!paused;}
@@ -67,7 +68,7 @@ const size=canvasDimensions();createCanvas(size.width,size.height).parent('game-
  window.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(e.target?.tagName))return;const code=controlCodes[e.key]||controlCodes[e.key.toLowerCase()];if(!e.repeat&&code)suppressedKeys.delete(code);if(e.key.startsWith('Arrow')||e.key===' '&&e.target?.tagName!=='BUTTON')e.preventDefault();});window.addEventListener('blur',()=>{clearTouchInput();suppressHeldKeys();if(isRunActive())togglePause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&isRunActive())togglePause();});updateToolbar();}
 function draw(){if(mobilePortraitBlocked()){clearTouchInput();if(isRunActive())togglePause();return;}if(millis()-toolbarAt>200){toolbarAt=millis();updateToolbar();}tickEscapeMusic();if(gameState==='escapeSelect')playEscapeWorld();else if(['escape','escapeResult'].includes(gameState)){playEscape();skipSimulationFrame=false;}else if(gameState==='builder'){}else{document.getElementById('start-menu-container').style.display='';document.getElementById('game-container').style.display='none';}}
 function keyReleased(){if(gameState==='escape'&&typeof escapeKeyReleased==='function')escapeKeyReleased();}
-function keyPressed(e){if(e?.repeat||['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName))return;if(keyCode===85&&keyIsDown(CONTROL)&&keyIsDown(ALT)){toggleEscapeTestUnlock();return false;}if(keyCode===27)togglePause();else if(String(key).toLowerCase()==='m')document.getElementById('mute-button').click();else escapeKeyPressed();}
+function keyPressed(e){if(e?.repeat||['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName))return;if(keyCode===27)togglePause();else if(String(key).toLowerCase()==='m')document.getElementById('mute-button').click();else escapeKeyPressed();}
 function windowResized(){clearTouchInput();suppressHeldKeys();mobile=isMobileDevice();const size=canvasDimensions();resizeCanvas(size.width,size.height,true);mobilePortraitBlocked();}
 
 // Options: sound, music, ambience, lighting, start cards and full screen, in one panel. Opening it
@@ -83,6 +84,9 @@ function playerChip(){const chip=document.getElementById('player-chip');if(!chip
 // The title: Sally on her warm stone in her chosen colours, where the adventure stands, and on an
 // iPhone (which cannot go full screen from a web page) how to play full screen.
 function titleScreen(sum){
+  // The title sky starts at the player's own time of day (noon is the start of its two-minute turn).
+  const now=new Date(),day=((now.getHours()+now.getMinutes()/60-12+24)%24)/24;
+  document.getElementById('start-menu-container')?.style.setProperty?.('--title-delay',-(day*120).toFixed(1)+'s');
   const art=document.getElementById('title-sally');
   if(art&&typeof sallyCelebrationSVG==='function'&&typeof escapeSkinPalette==='function')try{art.innerHTML=sallyCelebrationSVG({status:'won',treasure:0,totalTreasure:10,alarms:0,tailsDropped:0,hasTail:true},escapeSkinPalette());}catch(_){}
   const where=document.getElementById('play-where');

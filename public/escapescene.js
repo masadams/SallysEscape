@@ -48,14 +48,15 @@ let escapeResultShown=false;
 let escapeOptions={};
 let escapeMapOpen=false;
 const escapeProgress=new EscapeProgress(escapeStore);
-// Test mode: Ctrl+Alt+U (or ?unlock=all in the address) opens every escape and challenge.
+// Test mode opens every escape and challenge; it is switched on and off in the Admin panel,
+// behind the admin passkey.
 // It is remembered in this browser until toggled off, and never changes saved records.
 const ESCAPE_TEST_KEY='sally-escape-unlock-all';
-try{escapeProgress.unlockAll=localStorage.getItem(ESCAPE_TEST_KEY)==='1'||/[?&]unlock=all\b/.test(location.search);}catch(_){}
+try{escapeProgress.unlockAll=localStorage.getItem(ESCAPE_TEST_KEY)==='1';}catch(_){}
 function toggleEscapeTestUnlock(){
   escapeProgress.unlockAll=!escapeProgress.unlockAll;
   try{if(escapeProgress.unlockAll)localStorage.setItem(ESCAPE_TEST_KEY,'1');else localStorage.removeItem(ESCAPE_TEST_KEY);}catch(_){}
-  if(typeof escapeWorld!=='undefined'&&escapeWorld){escapeWorld.refreshRegions();escapeWorldHudSignature='';renderEscapeWorldTotals();escapeWorldToast(escapeProgress.unlockAll?'Test mode: every escape and challenge is open (Ctrl+Alt+U to turn off).':'Test mode off.');}
+  if(typeof escapeWorld!=='undefined'&&escapeWorld){escapeWorld.refreshRegions();escapeWorldHudSignature='';renderEscapeWorldTotals();escapeWorldToast(escapeProgress.unlockAll?'Test mode: every escape and challenge is open (turn it off in Admin).':'Test mode off.');}
   escapeSound('click');return escapeProgress.unlockAll;
 }
 
@@ -413,7 +414,7 @@ function tickEscapeMusic(){
   // Sound effects echo in caves and halls, never on the map.
   if(audioUnlocked&&typeof EscapeAudio!=='undefined'&&EscapeAudio.setSpace&&typeof EscapeFeel!=='undefined')EscapeAudio.setSpace(getAudioContext(),screen==='game'?EscapeFeel.space(special||chapter?.theme||'meadow',lvl):'open');
   if(escapeAmbience){const key=special||chapter?.theme||'meadow';escapeAmbience.setScape(screen==='menu'?'meadow':EscapeAmbience.SCAPES[key]?key:'meadow',screen==='game'?'level':'world');
-    escapeAmbience.setVolume(isMuted?0:ambienceVolume*.65*(screen==='menu'?.45:screen==='world'?.7:1)*(paused?.35:1)*(escapeMusic.state==='chase'?.5:1));escapeAmbience.tick();}
+    escapeAmbience.setVolume(isMuted?0:ambienceVolume*.33*(screen==='menu'?.45:screen==='world'?.7:1)*(paused?.35:1)*(escapeMusic.state==='chase'?.5:1));escapeAmbience.tick();}
 }
 function escapeSound(event,options={}){
   if(isMuted||paused||!audioUnlocked||soundVolume===0||typeof EscapeAudio==='undefined')return;
@@ -437,7 +438,7 @@ const escapeFx=typeof EscapeFeel!=='undefined'?new EscapeFeel.Particles():{items
 let escapeFxDecoy=null,escapeFxClock=0;
 function tickEscapeFx(g){
   escapeFxClock+=Math.min(.1,deltaTime/1000);escapeFx.update(escapeFxClock,deltaTime/1000);
-  if(g.decoy&&g.decoy!==escapeFxDecoy&&typeof EscapeFeel!=='undefined')EscapeFeel.land(escapeFx,g.decoy,escapeFxClock);escapeFxDecoy=g.decoy;
+  if(g.decoy&&g.decoy!==escapeFxDecoy&&typeof EscapeFeel!=='undefined')EscapeFeel.land(escapeFx,g.decoy,escapeFxClock,Math.random,g);escapeFxDecoy=g.decoy;
 }
 // Big moments. A catch freezes the scene for a beat (the hunters stop where they struck), the
 // camera leans in and "Caught!" pops up; an escape bursts with sparks and leaves before the results.
@@ -510,7 +511,12 @@ function drawEscapePrints(g,cell){
 function drawEscapeFx(g,cell){
   const full=escapeLightingFull();
   for(const p of escapeFx.items){const age=escapeFxClock-p.born,k=Math.max(0,1-age/p.life);
-    if(p.kind==='ring'){noFill();stroke(...p.color,150*k);strokeWeight(Math.max(1,cell*.035));const r=p.r*cell*(.25+.75*Math.min(1,age/p.life*1.6));ellipse(p.x*cell,p.y*cell,r*2,r*2);continue;}
+    // A noise ring: a faint line through the tips of its rays, easing out and fading. Where rays
+    // part (a wall between them, or a bounce) the line breaks instead of bridging the gap.
+    if(p.kind==='ring'){const f=Math.min(1,age/p.life),e=1-(1-f)*(1-f),fade=(1-f)*(1-f),n=p.rays?.length;if(!n)continue;
+      noFill();strokeWeight(Math.max(1,cell*.022));const at=ray=>ray[Math.min(ray.length-1,Math.round(e*(ray.length-1)))],gap=.8+e*p.r*.25;let prev=at(p.rays[n-1]);
+      for(let i=0;i<n;i++){const q=at(p.rays[i]);if(Math.abs(q[0]-prev[0])+Math.abs(q[1]-prev[1])<gap){stroke(...p.color,70*fade*Math.pow(.55,Math.max(q[2],prev[2])));line(prev[0]*cell,prev[1]*cell,q[0]*cell,q[1]*cell);}prev=q;}
+      continue;}
     if(!full||p.kind==='print')continue;noStroke();
     if(p.kind==='dust'){fill(...p.color,120*k);ellipse(p.x*cell,p.y*cell,cell*p.size*(1+age*2),cell*p.size*(1+age*2));}
     else if(p.kind==='leaf'){push();translate(p.x*cell,p.y*cell);rotate(p.angle);fill(...p.color,220*k);ellipse(0,0,cell*p.size*1.6,cell*p.size*.8);pop();}

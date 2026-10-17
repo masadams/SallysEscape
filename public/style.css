@@ -456,12 +456,29 @@ body:not(.mobile-game) #game-toolbar.toolbar-open #menu-button { order:-1; }
 .great-map .map-dark { fill:#0f2420; } .great-map .map-garden { fill:#2c2a1e; } .great-map .map-lit { fill:#e8d27a; stroke:#fff3b0; }
 .great-map text { fill:#c9d8b8; font-size:12px; } .great-map .map-lit + text { fill:#3b2f1c; }
 
-/* Title screen: Sally on her warm stone under a night sky of glow bugs, with the menu beside her. */
+/* Title screen: Sally on her warm stone under a turning sky (day, dusk, glow-bug night), with the menu beside her. */
 #start-menu-container { position:relative; overflow:hidden; display:grid; grid-template-columns:minmax(0,1fr) minmax(300px,460px); align-items:center; gap:clamp(8px,3vw,40px);
   width:min(1160px,100%); max-width:none; min-height:min(720px,calc(100vh - 24px)); margin:0 auto; padding:clamp(16px,4vw,56px); text-align:left;
   border:1px solid #3f6a55; border-radius:28px; background:radial-gradient(ellipse at 22% 18%,#3d6a62 0%,#1d3f3b 38%,#0c1f20 78%); box-shadow:0 30px 80px #0009; }
 .title-scene { position:absolute; inset:0; pointer-events:none; }
-.title-moon { position:absolute; left:9%; top:9%; width:clamp(48px,7vw,90px); aspect-ratio:1; border-radius:50%; background:radial-gradient(circle at 40% 40%,#fff8d6,#e9dfa8 60%,#c9bd80); box-shadow:0 0 60px 18px #f3e7a833; }
+/* The sky turns from day to dusk to night and back: one turn every two minutes, starting at the
+   player's own time of day (game.js titleScreen sets --title-delay). Noon is 0%, midnight 50%. */
+.title-sky, .title-night, .title-stars { position:absolute; inset:0; }
+.title-sky, .title-night, .title-orbit, .title-hill { animation-duration:120s; animation-timing-function:linear; animation-iteration-count:infinite; animation-delay:var(--title-delay,-60s); }
+.title-sky-day { background:linear-gradient(#7ec4e6 0%,#b6e0ee 55%,#e4f0d8 100%); animation-name:title-day; }
+.title-sky-dusk { background:linear-gradient(#3b3f78 0%,#c9667a 50%,#f4b26a 100%); animation-name:title-dusk; }
+.title-night { animation-name:title-night; }
+.title-stars { background-image:radial-gradient(1.5px 1.5px at 12% 14%,#fff,transparent),radial-gradient(1px 1px at 24% 30%,#fff,transparent),radial-gradient(1.5px 1.5px at 38% 9%,#fff,transparent),radial-gradient(1px 1px at 52% 24%,#fff,transparent),radial-gradient(1.5px 1.5px at 66% 12%,#fff,transparent),radial-gradient(1px 1px at 78% 32%,#fff,transparent),radial-gradient(1.5px 1.5px at 90% 18%,#fff,transparent),radial-gradient(1px 1px at 6% 40%,#fff,transparent),radial-gradient(1px 1px at 46% 40%,#fff,transparent),radial-gradient(1px 1px at 84% 6%,#fff,transparent); opacity:.8; }
+.title-orbit { position:absolute; left:50%; top:96%; width:0; height:0; animation-name:title-turn; }
+.title-sun, .title-moon { position:absolute; width:clamp(48px,7vw,90px); aspect-ratio:1; border-radius:50%; translate:-50% -50%; left:0; }
+.title-sun { top:calc(-1 * clamp(200px,min(46vw,82vh),620px)); background:radial-gradient(circle,#fffbe0,#ffe27a 55%,#f6b94a); box-shadow:0 0 70px 26px #ffe58a66; }
+.title-moon { top:clamp(200px,min(46vw,82vh),620px); background:radial-gradient(circle at 40% 40%,#fff8d6,#e9dfa8 60%,#c9bd80); box-shadow:0 0 60px 18px #f3e7a833; }
+.title-hill { animation-name:title-hills; }
+@keyframes title-turn { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+@keyframes title-day { 0%,18%,82%,100% { opacity:1; } 28%,72% { opacity:0; } }
+@keyframes title-dusk { 0%,14%,36%,64%,86%,100% { opacity:0; } 25% { opacity:1; } 75% { opacity:.8; } }
+@keyframes title-night { 0%,24%,76%,100% { opacity:0; } 34%,66% { opacity:1; } }
+@keyframes title-hills { 0%,18%,82%,100% { filter:brightness(1.35) saturate(1.1); } 34%,66% { filter:brightness(.85); } }
 .title-hill { position:absolute; left:-10%; right:-10%; border-radius:50% 50% 0 0; }
 .title-hill-back { bottom:-18%; height:58%; background:linear-gradient(#24483a,#16302a); }
 .title-hill-front { bottom:-32%; height:56%; left:-30%; right:20%; background:linear-gradient(#2f5a40,#173326); }
@@ -489,7 +506,7 @@ body:not(.mobile-game) #game-toolbar.toolbar-open #menu-button { order:-1; }
 .title-touch { display:none; } .mobile-game .title-keys { display:none; } .mobile-game .title-touch { display:block; }
 .title-ios { margin:0; font-size:.78rem; color:#f0d98a; text-align:center; }
 .title-admin { position:absolute; right:18px; bottom:12px; z-index:2; font-size:.8rem; opacity:.7; }
-@media (prefers-reduced-motion: reduce) { .title-glow { animation:none; opacity:.7; } }
+@media (prefers-reduced-motion: reduce) { .title-glow { animation:none; opacity:.7; } .title-sky, .title-night, .title-orbit, .title-hill { animation-play-state:paused; } }
 /* Phones held sideways: art and menu side by side, everything on one screen. */
 @media (max-height:520px) and (orientation:landscape) {
   body:has(.title-screen) { padding:0; }

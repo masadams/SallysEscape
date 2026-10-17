@@ -161,10 +161,15 @@
   let space='open',send=null,convolver=null;
   function impulse(ctx,{length,decay}){const n=Math.ceil(ctx.sampleRate*length),b=ctx.createBuffer(2,n,ctx.sampleRate);let seed=3;
     for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<n;i++){seed=(seed*16807)%2147483647;d[i]=(seed/1073741823.5-1)*Math.pow(1-i/n,decay);}}return b;}
+  let unhook=null;
   function setSpace(ctx,kind){
     if(!ctx?.createConvolver)return false;setup(ctx);const spec=SPACE[kind];if(kind===space&&(!spec||send?.context===ctx))return false;space=spec?kind:'open';
-    if(!spec){if(send)send.gain.setTargetAtTime(0,ctx.currentTime,.3);return true;}
-    if(!send||send.context!==ctx){send=ctx.createGain();send.gain.value=0;convolver=ctx.createConvolver();master.connect(send);send.connect(convolver);convolver.connect(ctx.destination);}
+    // Out in the open the echo fades and then comes off the graph: a running reverb costs a phone
+    // real work even when it is silent, and that is what makes sound crackle and lag.
+    clearTimeout(unhook);
+    if(!spec){if(send){send.gain.setTargetAtTime(0,ctx.currentTime,.3);const s=send;unhook=setTimeout(()=>{try{master.disconnect(s);}catch(_){}s.hooked=false;},1800);}return true;}
+    if(!send||send.context!==ctx){send=ctx.createGain();send.gain.value=0;convolver=ctx.createConvolver();send.connect(convolver);convolver.connect(ctx.destination);}
+    if(!send.hooked){master.connect(send);send.hooked=true;}
     convolver.buffer=impulse(ctx,spec);send.gain.setTargetAtTime(spec.wet,ctx.currentTime,.3);return true;
   }
   function play(ctx,name,volume=.25,options={}){

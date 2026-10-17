@@ -180,6 +180,8 @@
       try{
         if(context&&context!==T.getContext()&&context!==T.getContext().rawContext)T.setContext(context);
         this.context=T.getContext(); // Remember it: callbacks may run while another context is current.
+        // Notes are scheduled a quarter second ahead, so a slow frame (a busy phone) never makes the music stutter.
+        try{this.context.lookAhead=.25;}catch(_){}
         this.master=new T.Gain({gain:this.muted?0:this.volume}).connect(new T.Limiter(-6).toDestination());
         const reverb=new T.Reverb({decay:3.2,wet:.28}).connect(this.master);await reverb.ready;
         // Tone treats new Gain(0) as the default gain of 1, so silent gains are passed as options.
