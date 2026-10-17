@@ -12,6 +12,7 @@
     "test": "node --test tests/*.cjs",
     "level:lab": "node scripts/level-lab.cjs",
     "level:benchmark": "node scripts/level-benchmark.cjs",
+    "level:overnight": "node scripts/level-overnight.cjs",
     "level:practice": "node scripts/level-practice.cjs",
     "level:smoke": "node scripts/level-benchmark.cjs --only quiet-vault,leafy-crossroads,fern-cloister --width 2 --budget 200 --milliseconds 10000 --trials 0 --out work/smoke"
   },

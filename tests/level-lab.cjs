@@ -142,3 +142,37 @@ test('benchmark verifies a known witness separately without feeding it to indepe
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'sally-benchmark-'));
   try{const {summary}=Benchmark.saveSummary(dir,[result],config);assert.equal(summary.totals.referenceVerified,1);assert.equal(summary.totals.independentlySolved,0);assert.equal(summary.totals.unresolved,1);}finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+test('benchmark checkpoints resume completed cases and reject changed inputs or damaged reports',()=>{
+  const options=room(),report=Lab.solve(options,config),item={id:'lab-fixture',options,level:options.level};
+  const row={id:item.id,tags:[],reference:{status:'missing'},report},metadata={node:process.version,solverFingerprint:'test',recordingsFingerprint:'test',...config};
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'sally-resume-'));
+  try{
+    CLI.writeOutputs(path.join(dir,item.id),report);Benchmark.saveSummary(dir,[row],metadata);
+    const before=fs.statSync(path.join(dir,item.id,'report.json')).mtimeMs;
+    const resumed=Benchmark.resumeResults(dir,metadata,[item]);assert.equal(resumed.length,1);assert.equal(resumed[0].report.status,'solved');
+    assert.equal(fs.statSync(path.join(dir,item.id,'report.json')).mtimeMs,before);
+    assert.throws(()=>Benchmark.resumeResults(dir,{...metadata,width:1},[item]),/settings changed/);
+    assert.throws(()=>Benchmark.resumeResults(dir,{...metadata,recordingsFingerprint:'changed'},[item]),/recordings/);
+    assert.throws(()=>Benchmark.resumeResults(dir,metadata,[]),/checkpoint case/);
+    fs.writeFileSync(path.join(dir,item.id,'report.json'),JSON.stringify({...report,reason:'damaged'}));
+    assert.throws(()=>Benchmark.resumeResults(dir,metadata,[item]),/inconsistent/);
+    const unresolved=Lab.solve(options,{frames:1});row.report=unresolved;CLI.writeOutputs(path.join(dir,item.id),unresolved);Benchmark.saveSummary(dir,[row],metadata);
+    assert.equal(Benchmark.resumeResults(dir,metadata,[item])[0].report.status,'unresolved');
+    const source=JSON.parse(fs.readFileSync(path.join(dir,'summary.json')));source.cases[0].fingerprint='old';fs.writeFileSync(path.join(dir,'summary.json'),JSON.stringify(source));
+    assert.throws(()=>Benchmark.resumeResults(dir,metadata,[item]),/stale/);
+  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+test('overnight runs one child at a time and includes its full work in the wall allowance',()=>{
+  const Overnight=require('../scripts/level-overnight.cjs'),calls=[];let clock=0;
+  assert.equal(Overnight.parse([]).minutes,120);assert.throws(()=>Overnight.parse(['--minutes','0']),/minutes/);
+  assert.throws(()=>Overnight.parse(['--gpu']),/Unknown/);
+  const result=Overnight.run({minutes:1,out:'work/test-overnight'},{now:()=>clock,spawn:(executable,args,options)=>{
+    calls.push({args,options});clock+=20000;return {status:0};
+  }});
+  assert.equal(result.status,'paused');assert.equal(calls.length,3);assert.deepEqual(calls.map(c=>c.options.timeout),[60000,40000,20000]);
+  assert.ok(calls.every(c=>c.args.includes('--resume')&&c.args[c.args.indexOf('--trials')+1]==='0'));
+  const cut=Overnight.run({minutes:1,out:'work/test-overnight'},{now:()=>0,spawn:()=>({error:{code:'ETIMEDOUT'}})});assert.equal(cut.status,'paused');assert.equal(cut.completedShards,0);
+  const broken=Overnight.run({minutes:1,out:'work/test-overnight'},{now:()=>0,spawn:()=>({status:2})});assert.equal(broken.status,'failed');assert.equal(broken.code,2);
+});

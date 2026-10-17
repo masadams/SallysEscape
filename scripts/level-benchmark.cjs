@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-const fs=require('node:fs'),path=require('node:path');
+const fs=require('node:fs'),path=require('node:path'),os=require('node:os');
 const crypto=require('node:crypto');
 const Lab=require('./lib/level-lab.cjs');
 const {EscapeCatalog}=require('../public/escape-levels.js');
@@ -36,16 +36,37 @@ function benchmarkCase(item,recordings,config){
   if(report.replay)report.stress=Lab.stress(item.options,report.replay.commands,config);
   return {id:item.id,tags:tags(item.level),reference,report};
 }
+function resumeResults(out,metadata,selected){
+  const checkpoint=path.join(out,'summary.json');if(!fs.existsSync(checkpoint))return [];
+  const previous=JSON.parse(fs.readFileSync(checkpoint,'utf8'));
+  if(JSON.stringify(previous.settings)!==JSON.stringify(metadata))throw new Error('Cannot resume: solver, recordings, runtime, machine or settings changed; use a new output directory');
+  if(!Array.isArray(previous.cases))throw new Error('Invalid benchmark checkpoint');
+  const seen=new Set();
+  return previous.cases.map(entry=>{
+    const item=selected.find(item=>item.id===entry.id);
+    if(!item||seen.has(entry.id))throw new Error('Invalid benchmark checkpoint case');seen.add(entry.id);
+    const report=JSON.parse(fs.readFileSync(path.join(out,item.id.replace(':','-'),'report.json'),'utf8'));
+    const reportHash=crypto.createHash('sha256').update(JSON.stringify(report)).digest('hex');
+    if(entry.reportHash!==reportHash||entry.fingerprint!==Lab.fingerprint(item.options)||report.fingerprint!==entry.fingerprint||JSON.stringify(report.options)!==JSON.stringify(item.options)||report.status!==entry.searchStatus||!['solved','unresolved'].includes(report.status))throw new Error('Cannot resume: stale or inconsistent case '+item.id);
+    return {id:item.id,tags:entry.tags,reference:entry.reference,report};
+  });
+}
 function saveSummary(out,results,config){
-  const summary={settings:config,cases:results.map(({id,tags,reference,report})=>({id,tags,reference,fingerprint:report.fingerprint,searchStatus:report.status,reason:report.reason,search:report.search,stress:report.stress?{wins:report.stress.wins,trials:report.stress.trials}:null})),totals:{levels:results.length,referenceVerified:results.filter(r=>r.reference.status==='verified').length,referenceFailed:results.filter(r=>['failed','invalid'].includes(r.reference.status)).length,referenceMissing:results.filter(r=>r.reference.status==='missing').length,independentlySolved:results.filter(r=>r.report.status==='solved').length,unresolved:results.filter(r=>r.report.status==='unresolved').length,searchMilliseconds:results.reduce((n,r)=>n+r.report.search.milliseconds,0),expanded:results.reduce((n,r)=>n+r.report.search.expanded,0),generated:results.reduce((n,r)=>n+r.report.search.generated,0)}};
+  const summary={settings:config,cases:results.map(({id,tags,reference,report})=>({id,tags,reference,fingerprint:report.fingerprint,reportHash:crypto.createHash('sha256').update(JSON.stringify(report)).digest('hex'),searchStatus:report.status,reason:report.reason,search:report.search,stress:report.stress?{wins:report.stress.wins,trials:report.stress.trials}:null})),totals:{levels:results.length,referenceVerified:results.filter(r=>r.reference.status==='verified').length,referenceFailed:results.filter(r=>['failed','invalid'].includes(r.reference.status)).length,referenceMissing:results.filter(r=>r.reference.status==='missing').length,independentlySolved:results.filter(r=>r.report.status==='solved').length,unresolved:results.filter(r=>r.report.status==='unresolved').length,searchMilliseconds:results.reduce((n,r)=>n+r.report.search.milliseconds,0),expanded:results.reduce((n,r)=>n+r.report.search.expanded,0),generated:results.reduce((n,r)=>n+r.report.search.generated,0)}};
   const rows=summary.cases.map(r=>`| ${r.id} | ${r.reference.status} | ${r.searchStatus} | ${r.reason} | ${r.search.expanded} | ${r.stress?r.stress.wins+'/'+r.stress.trials:'—'} | ${r.tags.join(', ')} |`);
   const markdown=['# Sally solver benchmark','','Known recordings and independent search are evaluated separately. Unresolved is not impossible. Timing stress is not a human success rate.','',`Cases: ${summary.totals.levels}. Verified references: ${summary.totals.referenceVerified}. Independently solved: ${summary.totals.independentlySolved}. Unresolved: ${summary.totals.unresolved}.`,'','| Level | Existing replay | New search | Stop reason | Expanded | Timing stress | Mechanics |','| --- | --- | --- | --- | --- | --- | --- |',...rows,''].join('\n');
-  fs.mkdirSync(out,{recursive:true});fs.writeFileSync(path.join(out,'summary.json'),JSON.stringify(summary,null,2)+'\n');fs.writeFileSync(path.join(out,'summary.md'),markdown);
+  fs.mkdirSync(out,{recursive:true});
+  // Commit the checkpoint after the case report. An interrupted next case is
+  // rerun, while an interruption during this write preserves the old summary.
+  const checkpoint=path.join(out,'summary.json'),temporary=checkpoint+'.tmp';
+  fs.writeFileSync(temporary,JSON.stringify(summary,null,2)+'\n');fs.renameSync(temporary,checkpoint);
+  fs.writeFileSync(path.join(out,'summary.md'),markdown);
   return {summary,markdown};
 }
 function main(argv){
   const config={budget:600,width:8,depth:160,seconds:120,milliseconds:20000,frames:1000000,trials:3,jitter:6,seed:1,macro:true,planning:true},flags={shard:1,shards:1};
   for(let i=0;i<argv.length;i++){
+    if(argv[i]==='--resume'){flags.resume=true;continue;}
     if(argv[i]==='--no-macro'){config.macro=false;continue;}
     if(argv[i]==='--no-planning'){config.planning=false;continue;}
     const key=argv[i].slice(2);if(!argv[i].startsWith('--')||!['out','only','shard','shards',...Object.keys(config).filter(k=>!['macro','planning'].includes(k))].includes(key))throw new Error('Unknown benchmark option '+argv[i]);
@@ -56,11 +77,13 @@ function main(argv){
   Lab.settings(config);Lab.stress({},[],{trials:0,jitter:config.jitter,seed:config.seed});
   if(!Number.isInteger(config.trials)||config.trials<0||config.trials>100)throw new Error('Invalid trials');
   const selected=shardCases(selectCases(cases(),flags.only),flags.shard,flags.shards);
-  const recordings=JSON.parse(fs.readFileSync(path.join(__dirname,'../tests/fixtures/escape-playthroughs.json'),'utf8'));
+  const recordingSource=fs.readFileSync(path.join(__dirname,'../tests/fixtures/escape-playthroughs.json'),'utf8'),recordings=JSON.parse(recordingSource);
   const solverFingerprint=crypto.createHash('sha256').update(['lib/level-lab.cjs','lib/level-goals.cjs','lib/level-policy.cjs','level-lab.cjs','level-benchmark.cjs','route-solver.cjs'].map(file=>fs.readFileSync(path.join(__dirname,file),'utf8')).join('\0')).digest('hex');
-  const metadata={...config,shard:flags.shard,shards:flags.shards,only:flags.only||null,node:process.version,solverFingerprint};
-  const results=[];
+  const metadata={...config,shard:flags.shard,shards:flags.shards,only:flags.only||null,node:process.version,machine:{platform:process.platform,arch:process.arch,cpu:os.cpus()[0]?.model||'unknown'},solverFingerprint,recordingsFingerprint:crypto.createHash('sha256').update(recordingSource).digest('hex')};
+  const results=flags.resume?resumeResults(flags.out,metadata,selected):[],completed=new Set(results.map(r=>r.id));
+  if(results.length)console.log('Resuming '+results.length+' completed cases (including unresolved searches); no fresh simulation of cached cases');
   for(const item of selected){
+    if(completed.has(item.id))continue;
     const result=benchmarkCase(item,recordings,config);results.push(result);
     writeOutputs(path.join(flags.out,item.id.replace(':','-')),result.report);
     saveSummary(flags.out,results,metadata);
@@ -73,4 +96,4 @@ function main(argv){
   return final.summary.totals.referenceFailed?1:0;
 }
 if(require.main===module){try{process.exitCode=main(process.argv.slice(2));}catch(error){console.error(error.message);process.exitCode=2;}}
-module.exports={cases,selectCases,shardCases,matchingRecording,tags,benchmarkCase,saveSummary,main};
+module.exports={cases,selectCases,shardCases,matchingRecording,tags,benchmarkCase,resumeResults,saveSummary,main};

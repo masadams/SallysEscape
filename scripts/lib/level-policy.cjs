@@ -9,7 +9,7 @@ function validate(artifact){
   Lab.settings(artifact.settings);
   const point=p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&Math.abs(p.x)<=4096&&Math.abs(p.y)<=4096;
   for(const c of artifact.choices){
-    if(!c||typeof c!=='object'||(c.lookBack!==undefined&&typeof c.lookBack!=='boolean')||(c.finishExit!==undefined&&typeof c.finishExit!=='boolean'))throw new Error('Invalid policy choice');
+    if(!c||typeof c!=='object'||(c.lookBack!==undefined&&typeof c.lookBack!=='boolean')||(c.finishExit!==undefined&&typeof c.finishExit!=='boolean')||(c.recoverRoute!==undefined&&typeof c.recoverRoute!=='boolean'))throw new Error('Invalid policy choice');
     if(c.type==='tile'||c.type==='route'){
       if(typeof c.sprint!=='boolean')throw new Error('Invalid policy sprint');
       if(c.type==='tile'?!point(c.target):!Array.isArray(c.waypoints)||c.waypoints.length<1||c.waypoints.length>6||!c.waypoints.every(point))throw new Error('Invalid policy waypoint');

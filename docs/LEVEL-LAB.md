@@ -219,6 +219,40 @@ failures; good level design still needs playtesting and encounter-specific tests
 
 ## How the solver works
 
+### Longer runs on a spare computer
+
+With Node 24 and this checkout, run:
+
+```sh
+npm run level:overnight -- --minutes 120 --out work/laptop-benchmark
+```
+
+This runs one CPU process at a time across the eight catalog shards, with
+width 4, 300 expansions, 45 seconds and 60,000 search frames per case. It checks
+known recordings separately and disables timing trials for this first coverage
+pass. A parent process enforces the selected wall allowance across reference
+checks, search and winning verification together. The default allowance is two
+hours; `--minutes` accepts 1–720. It starts no GPU jobs, practice or model training.
+This is additional test coverage, not automatic improvement from more compute.
+
+Repeat the same command to resume. A completed case, including an unresolved
+search, is skipped without fresh simulation. `summary.json` is replaced atomically
+after each case report. An interrupted case is rerun. Each shard keeps its own
+reports under the selected output directory. This supports restarting after a
+time limit or interruption; it does not resume the middle of a search.
+
+`level:benchmark --resume` also works for a manually chosen shard or `--only`
+sample. Resume rejects changed solver sources, recordings, runtime, settings,
+machine attributes, engine/map fingerprints or damaged case reports. Use a new output directory for
+a new revision, different budgets, or deliberately repeating unresolved cases.
+Run only one writer per output directory. Resume is cached evidence from the
+recorded runtime, not a fresh regression test. A broken reference stops the
+overnight driver; unresolved independent searches remain normal results.
+
+Keep the laptop on power and leave its vents clear. Start with a short allowance
+to check sustained load before choosing a longer run. Collect the shard folders
+for comparison; solver coverage and replay validity do not measure fun or fairness.
+
 ### Whole-catalog benchmark
 
 Run `npm run level:benchmark -- --out work/benchmark` to evaluate every campaign
@@ -304,6 +338,17 @@ three waypoints once the exit is unlocked, then perform the engine's exit hold.
 These extra frames count against the same work allowance. Saved feedback plans
 record this terminal-completion choice, and fresh raw-input verification still
 checks the whole run. Ordinary key/treasure route segments cannot trigger it.
+
+New route macros on vent maps also record `recoverRoute: true`. If a steam blast
+displaces Sally or the saved segment is interrupted, the controller can replan
+to that segment's original endpoint using current walkable geometry. It allows
+at most two replans and ten extra waypoints per decision. When an active jet
+blocks the next step, it can idle outside the jet for at most 180 frames per
+decision, within the usual 240-frame limit per waypoint. All waits, repair
+movement, hunters, timers, collision geometry and final replay remain real and
+budgeted. It cannot open a blocked gate or survive a lethal catch. Older saved
+choices without this flag retain their previous execution behavior. Recovery
+does not select a new treasure target, replace tools or guarantee a safe route.
 
 With `--trace`, `attempt.json` contains the best candidate's actual commands,
 selected objective, gate states and fired reactions. It is explicitly labeled

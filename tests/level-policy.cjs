@@ -4,6 +4,7 @@ const Lab=require('../scripts/lib/level-lab.cjs');
 const Policy=require('../scripts/lib/level-policy.cjs');
 const CLI=require('../scripts/level-lab.cjs');
 const {escapeBuildCustom}=require('../public/escape-levels.js');
+const {EscapeAdventure}=require('../public/escape-engine.js');
 const level=(map,extra={})=>escapeBuildCustom({id:'policy-fixture',name:'Policy fixture',map,guards:[],...extra});
 const options={level:level(['#########','#@..#..X#','###.#.###','#...#...#','#.#####.#','#...K...#','#########'])};
 const solved=Lab.solve(options,{budget:80,width:4,depth:40,seconds:30});
@@ -77,6 +78,40 @@ test('policy artifacts reject stale rules, oversized plans and malformed movemen
   assert.throws(()=>Policy.follow({...solved.policy,choices:[{type:'route',waypoints:Array(7).fill({x:1,y:1}),sprint:true}]}),/waypoint/);
   assert.throws(()=>Policy.follow({...solved.policy,choices:[{type:'input',frames:100000,x:0,y:0,sprint:false}]}),/exceeds/);
   assert.throws(()=>Policy.follow(solved.policy,{controlFrames:0}),/timing/);
+  assert.throws(()=>Policy.follow({...solved.policy,choices:[{type:'route',waypoints:[{x:1,y:1}],sprint:true,recoverRoute:'yes'}]}),/choice/);
+});
+
+test('route recovery waits outside active steam and verifies the resulting real inputs',()=>{
+  const options={level:level(['#############','#@....K....X#','#...........#','#############'],{vents:[{at:[4,0],dir:[0,1],length:1,period:2,on:1,offset:.5}]})};
+  const policy={...solved.policy,options,fingerprint:Lab.fingerprint(options),choices:[
+    {type:'route',waypoints:[{x:4.5,y:1.5},{x:7.5,y:1.5}],sprint:false,recoverRoute:true},
+    {type:'route',waypoints:[{x:8.5,y:1.5},{x:11.5,y:1.5}],sprint:false,recoverRoute:true,finishExit:true}
+  ]};
+  const result=Policy.follow(policy,{frames:5000});assert.equal(result.won,true);assert.equal(result.verification.won,true);
+  assert.ok(result.commands.some(c=>c.kind==='move'&&c.x===0&&c.y===0));
+  assert.equal(Lab.replay(options,result.commands).won,true);
+  const interrupted=Policy.follow(policy,{frames:50});assert.equal(interrupted.simulatedFrames,50);assert.equal(interrupted.won,false);assert.equal(interrupted.reason,'evaluation-budget');
+});
+
+test('route recovery cannot bypass a sealed passage or lethal hunter',()=>{
+  for(const extra of [
+    {gates:[{id:'sealed',tiles:[[4,1]],initialOpen:false}]},
+    {guards:[{kind:'snake',spawn:[3,1],facing:Math.PI,patrol:[[3,1]]}]}
+  ]){
+    const options={level:level(['#########','#@..K..X#','#########'],extra)};
+    const policy={...solved.policy,options,fingerprint:Lab.fingerprint(options),choices:[{type:'route',waypoints:[{x:4.5,y:1.5},{x:7.5,y:1.5}],sprint:false,recoverRoute:true,finishExit:true}]};
+    const result=Policy.follow(policy,{frames:3000});assert.equal(result.won,false);assert.equal(result.verification,null);assert.ok(result.simulatedFrames<=3000);
+    if(extra.guards)assert.equal(result.status,'caught');
+  }
+});
+
+test('a steam displacement reconnects to the saved endpoint through real geometry',()=>{
+  const options={level:level(['#############','#...........#','#@....K....X#','#############'],{vents:[{at:[0,2],dir:[1,0],length:4,period:3,on:2,offset:.7}]})};
+  const choice={type:'route',waypoints:[{x:2.5,y:2.5},{x:3.5,y:2.5},{x:4.5,y:2.5},{x:7.5,y:2.5}],sprint:false,recoverRoute:true};
+  const result=Lab.execute(new EscapeAdventure(options),choice,Lab.settings());
+  assert.ok(result.g.blasts>0);assert.equal(result.g.hasKey,true);assert.ok(Math.hypot(result.g.player.x-7.5,result.g.player.y-2.5)<.1);
+  const finish=Lab.execute(result.g,{type:'route',waypoints:[{x:8.5,y:2.5},{x:11.5,y:2.5}],sprint:false,recoverRoute:true,finishExit:true},Lab.settings());
+  assert.equal(finish.g.status,'won');assert.equal(Lab.replay(options,[...result.commands,...finish.commands]).won,true);
 });
 
 test('outputs remove stale policies when a run is unresolved or only reuses raw inputs',()=>{

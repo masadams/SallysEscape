@@ -130,8 +130,9 @@ function goalRoutes(g,objective){
     if(!waypoints.length)continue;
     const key=JSON.stringify(waypoints);if(unique.has(key))continue;unique.add(key);
     const finishing=g.exitUnlocked()&&target.x===g.exit.x&&target.y===g.exit.y?{finishExit:true}:{};
-    for(const sprint of [true,false])routes.push({type:'route',waypoints,sprint,...finishing});
-    if(g.level.gaze)routes.push({type:'route',waypoints,sprint:true,lookBack:true,...finishing});
+    const recovery=g.vents.length?{recoverRoute:true}:{};
+    for(const sprint of [true,false])routes.push({type:'route',waypoints,sprint,...recovery,...finishing});
+    if(g.level.gaze)routes.push({type:'route',waypoints,sprint:true,lookBack:true,...recovery,...finishing});
   }
   return routes;
 }
@@ -159,7 +160,9 @@ function execute(parent,choice,config){
   const tick=(x,y,sprint)=>{if(g.status!=='playing'||g.elapsed>=config.seconds)return false;if(config.consumeFrame&&!config.consumeFrame())return false;g.advance(1/FPS,{x,y,sprint});append(commands,{kind:'move',frames:1,x,y,sprint});return true;};
   const wait=frames=>{for(let i=0;i<frames;i++)if(!tick(0,0,false))break;};
   if(choice.lookBack){if(!g.lookBack())return null;commands.push({kind:'lookBack'});}
+  let waited=0;
   const walk=target=>{
+    const blasts=g.blasts;
     for(let n=0;n<240&&g.status==='playing'&&g.elapsed<config.seconds;){
       const dx=target.x-g.player.x,dy=target.y-g.player.y;
       if(Math.hypot(dx,dy)<.09)return true;
@@ -168,14 +171,35 @@ function execute(parent,choice,config){
       // than oscillating past it; each held frame still consumes the budget.
       const hold=Math.min(config.controlFrames||1,Math.max(1,Math.floor(Math.hypot(dx,dy)*FPS/4)),240-n);
       for(let i=0;i<hold;i++,n++)if(!tick(Math.abs(dx)>.055?Math.sign(dx):0,Math.abs(dy)>.055?Math.sign(dy):0,choice.sprint))return false;
-      if(n>20&&!g.player.moving&&!g.player.flight)break;
+      if(choice.recoverRoute&&g.blasts!==blasts)return false;
+      if(n>20&&!g.player.moving&&!g.player.flight){
+        // The engine blocks entry into an active jet. Wait only outside it,
+        // with live hunters and timers, and charge every idle frame normally.
+        const next={x:g.player.x+Math.sign(dx)*.25,y:g.player.y+Math.sign(dy)*.25};
+        if(choice.recoverRoute&&!g.inJet(g.player)&&g.inJet(next)&&waited<180){
+          if(!tick(0,0,false))return false;waited++;n++;continue;
+        }
+        break;
+      }
     }
     return false;
   };
   if(choice.type==='tile'){
     walk(choice.target);
   }else if(choice.type==='route'){
-    for(const target of choice.waypoints)if(!walk(target))break;
+    let interrupted=false;
+    for(const target of choice.waypoints)if(!walk(target)){interrupted=true;break;}
+    if(choice.recoverRoute&&interrupted){
+      // Recover the saved segment's endpoint, not an invented new objective.
+      // Limit both replans and extra waypoints; unreachable passages stay shut.
+      const target=choice.waypoints.at(-1);let remaining=10;
+      for(let attempt=0;attempt<2&&remaining>0&&g.status==='playing';attempt++){
+        const route=g.route(g.player,target);if(!route.length||route.length>remaining)break;
+        let reached=true;
+        for(const point of route){remaining--;if(!walk(point)){reached=false;break;}}
+        if(reached)break;
+      }
+    }
     if(choice.finishExit&&g.status==='playing'&&g.exitUnlocked()){
       // Connect a nearly finished exit route instead of spending another
       // whole beam layer on two final tiles. Geometry and catches stay real.
