@@ -6,7 +6,8 @@ const touchInput={up:false,down:false,left:false,right:false,sprint:false,crawl:
 const controlCodes={ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40,Shift:16,c:67,l:76,z:90,w:87,a:65,s:83,d:68,q:81,e:69,r:82,f:70,g:71,' ':32,Enter:13};
 function gameKeyDown(code){return !suppressedKeys.has(code)&&keyIsDown(code);}
 function suppressHeldKeys(){Object.values(controlCodes).forEach(c=>suppressedKeys.add(c));}
-function getAudioContext(){return escapeAudio||(escapeAudio=new (window.AudioContext||window.webkitAudioContext)());}
+// A 'balanced' context uses bigger audio buffers than the default, so music and effects don't crackle when the game is busy.
+function getAudioContext(){if(escapeAudio)return escapeAudio;const A=window.AudioContext||window.webkitAudioContext;try{escapeAudio=new A({latencyHint:'balanced'});}catch(_){escapeAudio=new A();}return escapeAudio;}
 function unlockAudio(){try{const c=getAudioContext();c.resume();audioUnlocked=true;startEscapeMusic(c);}catch(_){}}
 function gameNow(){return (paused?pauseStartedAt:millis())-pausedDuration;}
 function isRunActive(){return gameState==='escape'&&!paused;}

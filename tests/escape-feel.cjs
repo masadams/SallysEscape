@@ -30,7 +30,7 @@ test('steps leave prints on soft ground, dust when sprinting, leaves from leaves
   const g=game(),fx=new F.Particles();
   g.player.x=2.5;g.player.noisy=true;g.player.loud=false;let made=F.step(fx,g,{t:0,sprint:false,rand:()=>.5});
   const ring=made.find(p=>p.kind==='ring');assert.equal(ring.r,F.RINGS.gravel);
-  g.player.x=1.5;g.player.noisy=false;g.player.loud=true;made=F.step(fx,g,{t:0,sprint:true,rand:()=>.5});
+  g.player.x=1.5;g.player.noisy=false;g.player.loud=true;made=F.step(fx,g,{t:1,sprint:true,rand:()=>.5});
   assert.ok(made.some(p=>p.kind==='dust'));assert.equal(made.find(p=>p.kind==='ring').r,F.RINGS.sprint);
   g.player.x=3.5;g.player.loud=false;made=F.step(fx,g,{t:0,sprint:false,rand:()=>.5});assert.ok(made.some(p=>p.kind==='leaf'));assert.ok(!made.some(p=>p.kind==='ring'),'a quiet step makes no ring');
   g.player.x=5.5;made=F.step(fx,g,{t:0,sprint:false,rand:()=>.5});assert.ok(made.some(p=>p.kind==='print'),'mud keeps a print');
@@ -43,4 +43,16 @@ test('a phone buzzes for being caught, spotted, a dropped tail and the key, and 
   const got=[],nav={vibrate:p=>got.push(p)};
   assert.equal(F.buzz(['step','caught','key'],nav),'caught');assert.equal(F.buzz(['key'],nav),'key');assert.equal(F.buzz(['treasure','step'],nav),null);
   assert.deepEqual(got,[F.BUZZ.caught,F.BUZZ.key]);assert.equal(F.buzz(['caught'],{}),null,'no vibration support, no buzz');
+});
+
+test('a noise ring stops at walls and bounces back off them, and sprinting makes only an occasional one',()=>{
+  const m=B.blank(30,20);for(let y=0;y<20;y++)B.paint(m,12,y,'#');B.paint(m,9,10,'@');const g=new EscapeAdventure({level:escapeBuildCustom(B.toRoute(m))});
+  const rays=F.rays(g,9.5,10.5,F.RINGS.sprint);
+  assert.ok(rays.every(r=>r.every(([x])=>x<12)),'no ray passes through the wall');
+  assert.ok(rays.some(r=>r.at(-1)[2]>0),'rays that reach a wall bounce');
+  assert.ok(rays.some(r=>r.at(-1)[2]===0),'rays with open ground ahead run their full length');
+  const fx=new F.Particles();g.player.loud=true;
+  const rings=t=>F.step(fx,g,{t,sprint:true,rand:()=>.5}).filter(p=>p.kind==='ring').length;
+  assert.equal(rings(0)+rings(.3)+rings(.6),1,'one ring for a burst of sprinting steps');
+  assert.equal(rings(F.RING_GAP+.01),1,'then another once the last has faded');
 });
