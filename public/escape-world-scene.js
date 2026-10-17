@@ -32,10 +32,22 @@ function openEscapeTrophies(){
     card('⚑','Challenges',p.challengesCleared()+' / '+EscapeCatalog.challenges.length)+
     card('📖','Creatures met',met+' / '+p.creatureKinds().length)+
     card('✨','Golden flies',String(t.goldflies))+
-    card('🎨','Colours',skins.length+' / '+(chapters.length+1),skins.map(k=>ESCAPE_SKINS[k]?.name).filter(Boolean).join(', '))+
+    card('🎨','Colours',skins.length+' / '+(chapters.length+2),skins.map(k=>ESCAPE_SKINS[k]?.name).filter(Boolean).join(', '))+
     card('🗝','Secret spots',opened+' / '+spots.length,bonusDone+' of '+hidden.length+' bonus escapes cleared')+
     '</div>';
   escapeBestiaryOpen=true;page.style.display='block';escapeSound('cache');
+  const close=()=>{escapeBestiaryOpen=false;page.style.display='none';renderEscapeWorldTotals();};
+  document.getElementById('world-bestiary-close').onclick=close;page.onkeydown=e=>{if(e.key==='Escape')close();};document.getElementById('world-bestiary-close').focus?.();
+}
+// Old Moss's Den: his lost things back on the shelf, a story, and his colours for Sally.
+function openEscapeMossDen(){
+  const ui=document.getElementById('escape-world-ui');if(!ui)return;let page=document.getElementById('world-bestiary');
+  if(!page){page=document.createElement('section');page.id='world-bestiary';page.className='world-bestiary';ui.appendChild(page);}
+  const fresh=escapeProgress.visitMossDen();
+  page.innerHTML='<div class="bestiary-head"><h2>Old Moss\u2019s Den</h2><span>Spectacles on his nose, watch on its chain, scarf round his neck.</span><button type="button" id="world-bestiary-close" class="escape-secondary">Close</button></div>'+
+    '<div class="bestiary-grid"><article class="bestiary-card"><div class="bestiary-icon">🐢</div><h3>Old Moss</h3><p>\u201cI was a trail-runner once, you know. Quick as a lizard, quiet as moss. That is how I got the name. These old things were all I kept from those days, and you brought every one of them home.\u201d</p>'+
+    '<p class="bestiary-tip">\u201cTake my colours. Mossy green, with a little gold where the sun used to catch me.\u201d</p><small>'+(fresh?'New colours for Sally: Old Moss.':'Sally wears Old Moss\u2019s colours whenever she likes.')+'</small></article></div>';
+  escapeBestiaryOpen=true;page.style.display='block';escapeSound('cache');renderEscapeWorldTotals();
   const close=()=>{escapeBestiaryOpen=false;page.style.display='none';renderEscapeWorldTotals();};
   document.getElementById('world-bestiary-close').onclick=close;page.onkeydown=e=>{if(e.key==='Escape')close();};document.getElementById('world-bestiary-close').focus?.();
 }
@@ -55,6 +67,9 @@ function openEscapeBestiary(){
 function escapeNpcLine(npc){
   const w=escapeWorld,c=w.chapters[npc.chapter],r=escapeRegionStars(npc.chapter),here=w.caches.filter(k=>k.chapter===npc.chapter),found=here.filter(k=>w.found.has(k.id)).length;
   const lines=[ESCAPE_FOLK_TIPS[npc.chapter]||'Mind the hunters out there.'];
+  // Once the secret world is revealed, Old Moss asks for help finding what he lost.
+  if(npc.name==='Old Moss'&&w.revealed()){const items=EscapeProgress.SECRET_RULES['moss-den'].items,left=items.filter(i=>!escapeProgress.data.items.includes(i)).length;
+    return npc.name+': '+(left?['I have lost my spectacles, my pocket watch and my scarf somewhere on the trail. Ruins, jungle and snow, I think…','If you find my things, bring them to my den, west of the river. '+left+' still missing.'][Math.floor(w.elapsed/4.5)%2]:escapeProgress.data.secrets.includes('moss-den')?'Thank you, Sally. Wear my colours well.':'You found them all! Come to my den, west of the river. The door is open.');}
   if(found<here.length)lines.push('I saw something glinting in the far corners of '+c.name+'.');
   lines.push(r.stars===r.max?'Every star in '+c.name+'! The whole marsh is talking about you.':r.stars?'You have '+r.stars+' of '+r.max+' stars here. Treasure and staying unseen earn the rest.':'Welcome to '+c.name+', Sally. The flags mark the escapes.');
   lines.push('Golden flies love warm paths. Run into one, or press R to grab it.');
@@ -71,6 +86,20 @@ function escapeWorldAnnounceRegions(){
   if(before&&fresh.length){escapeWorldToast('A new path has opened: '+escapeWorld.chapters[fresh.at(-1)].name+'!');escapeSound('key');return;}
   const challenges=escapeProgress.announceChallenges();
   if(challenges.length){const c=challenges.at(-1),level=EscapeCatalog.levels.find(l=>l.id===c.levelId);escapeWorldToast(challenges.length>1?challenges.length+' new challenges are open — look for the glowing ⚑ flags.':'New challenge open: '+c.name+' at '+level.name+'. Look for the glowing ⚑.');escapeSound('glimmer');}
+}
+// Old Moss's lost things, and the two secret caches (fairy ring, struck oak).
+function escapeWorldFoundItem(item){
+  if(!escapeProgress.findItem(item.id))return;const left=EscapeProgress.SECRET_RULES['moss-den'].items.filter(i=>!escapeProgress.data.items.includes(i)).length;
+  escapeWorldToast('Found '+item.name+'!'+(left?' '+left+' more to find.':' That is everything: take them back to his den.'));escapeSound('cache');escapeWorld.terrainVersion++;
+}
+function escapeWorldFoundSecretCache(id){
+  if(!escapeProgress.findSecretCache(id))return;escapeWorldToast((id==='fairy-ring'?'The fairy ring glows bright and opens!':'Lightning lights the oak, and a hollow full of treasure!')+' +'+EscapeProgress.SECRET_RULES[id].cache+' treasure.');
+  escapeSound('cache');renderEscapeWorldTotals();
+}
+// The first time the Gilded Burrow opens, the rest of the secret world stirs too.
+function escapeWorldAnnounceSecrets(){
+  if(!escapeWorld?.revealed()||escapeProgress.data.masterySeen.includes('secrets'))return;escapeProgress.read();escapeProgress.data.masterySeen.push('secrets');escapeProgress.write();
+  escapeWorldToast('Somewhere a door of gold has opened, and all over the map, other hidden places stir…');
 }
 // A cracked hedge gives way when Sally pushes into it.
 function escapeWorldBumpSecret(door){
@@ -97,7 +126,7 @@ function openEscapeWorld(focusId){
   escapeLibraryOpen=false;escapeWorldHudSignature='';
   if(!escapeWorld)escapeWorld=new EscapeWorld(id=>escapeProgress.unlocked(id),focusId,()=>escapeProgress.hiddenOpen(EscapeWorld.chapters),id=>escapeProgress.bonusOpen(id,EscapeWorld.chapters),id=>escapeProgress.secretOpen(id,EscapeWorld.chapters));
   else if(focusId){const node=escapeWorld.spotFor(focusId);if(node){escapeWorld.player.x=node.x;escapeWorld.player.y=node.y+1;escapeWorld.target=null;escapeWorld.motion.resetPlayer(escapeWorld.player);}}
-  escapeWorld.found=new Set(escapeProgress.data.caches);escapeWorld.onCache=escapeWorldFoundCache;escapeWorld.onSecretBump=escapeWorldBumpSecret;escapeWorld.onFly=escapeWorldCaughtFly;
+  escapeWorld.found=new Set(escapeProgress.data.caches);escapeWorld.onCache=escapeWorldFoundCache;escapeWorld.onSecretBump=escapeWorldBumpSecret;escapeWorld.itemsFound=new Set(escapeProgress.data.items);escapeWorld.onItem=escapeWorldFoundItem;escapeWorld.onSecretCache=escapeWorldFoundSecretCache;escapeWorld.onFly=escapeWorldCaughtFly;
   escapeWorld.refreshRegions();document.getElementById('escape-select').style.display='none';document.getElementById('game-container').style.display='block';
   document.getElementById('game-area').classList.add('escape-world-open');
   mountEscapeChrome(true);document.getElementById('escape-world-ui').style.display='block';document.getElementById('escape-world-portals').style.display='block';
@@ -116,7 +145,7 @@ function openEscapeLibrary(){
   escapeLibraryOpen=true;clearTouchInput();suppressHeldKeys();document.getElementById('game-area').classList.remove('escape-world-open');
   document.getElementById('game-container').style.display='none';document.getElementById('escape-select').style.display='block';document.getElementById('world-list-back').focus();updateToolbar();
 }
-function enterEscapeWorld(){const id=escapeWorld?.enter();if(id==='room:sallys-burrow'){openEscapeTrophies();return;}if(id?.startsWith('hidden:'))startEscape({hiddenId:id.slice(7)});else if(id)startEscape({levelId:id});}
+function enterEscapeWorld(){const id=escapeWorld?.enter();if(id==='room:sallys-burrow'){openEscapeTrophies();return;}if(id==='room:moss-den'){openEscapeMossDen();return;}if(id?.startsWith('hidden:'))startEscape({hiddenId:id.slice(7)});else if(id)startEscape({levelId:id});}
 // The Gilded Burrow's three escapes, shown only to those who found it.
 function renderEscapeHiddenHUD(node){
   document.getElementById('world-route')?.classList.remove('world-route-idle');
@@ -130,8 +159,9 @@ function renderEscapeHiddenHUD(node){
 }
 function renderEscapeWorldHUD(){
   const w=escapeWorld,c=w.chapters[w.chapterAt()]||w.chapters[0],node=w.nearby();if(node?.hidden){renderEscapeHiddenHUD(node);return;}const level=node&&EscapeCatalog.levels[node.index],saved=node&&escapeProgress.data.levels[node.id],unlocked=node&&escapeProgress.unlocked(node.id);
-  const door=w.nearbySecretDoor?.();if(door){const t=document.getElementById('world-toast'),info=escapeProgress.secret(door.id,EscapeWorld.chapters);if(t&&info)t.textContent=info.hint+(info.need>1?' ('+Math.min(info.have,info.need)+' / '+info.need+')':'');}
-  if(w.nearbyRoom?.()){const t=document.getElementById('world-toast');if(t)t.textContent='Sally\u2019s Burrow. Press Enter to go inside.';}
+  escapeWorldAnnounceSecrets();const door=w.nearbySecretDoor?.();if(door){const t=document.getElementById('world-toast'),info=escapeProgress.secret(door.id,EscapeWorld.chapters);if(t&&info?.hint)t.textContent=info.hint+(info.need>1?' ('+Math.min(info.have,info.need)+' / '+info.need+')':'');}
+  const room=w.nearbyRoom?.();if(room){const t=document.getElementById('world-toast');if(t)t.textContent=room.name+'. Press Enter to go inside.';}
+  if(w.revealed()){const ring=w.secrets.find(s=>s.id==='fairy-ring');if(!escapeProgress.data.secrets.includes('fairy-ring')&&Math.hypot(ring.x+.5-w.player.x,ring.y+.5-w.player.y)<3.5){const t=document.getElementById('world-toast');if(t)t.textContent=EscapeProgress.SECRET_RULES['fairy-ring'].clue+' Press R by each one.';}}
   const lock=w.nearbyBonusLock?.();if(lock){const t=document.getElementById('world-toast');if(t)t.textContent='A thorny hedge. Earn every star in the first '+lock.bonus.areas+' areas to open '+lock.name+'.';}
   const toast=document.getElementById('world-toast');if(!lock&&toast&&millis()>escapeWorldToastUntil){const ci=w.chapters.indexOf(c),here=w.caches.filter(k=>k.chapter===ci),found=here.filter(k=>w.found.has(k.id)).length;toast.textContent=found<here.length?'Treasure caches hidden in '+c.name+': '+found+' / '+here.length+' found.':'Every cache in '+c.name+' found.';}
   const challenge=node&&EscapeCatalog.challenges.find(ch=>ch.levelId===node.id),challengeSaved=challenge&&escapeProgress.data.challenges[challenge.id];
@@ -279,7 +309,7 @@ function drawEscapeWorld(){
   const next=w.nodes.find(n=>escapeProgress.unlocked(n.id)&&!escapeProgress.data.levels[n.id]?.cleared&&w.regionOpen(n.chapter));
   if(next){const pulse=(sin(w.elapsed*3)+1)/2;noFill();stroke(255,226,120,90+pulse*130);strokeWeight(cell*.09);ellipse(next.x*cell,next.y*cell,cell*(1.9+pulse*.6),cell*(1.9+pulse*.6));}
   for(const gate of w.gates){if(w.regionOpen(gate.chapter))continue;const x=gate.x+.5,y=gate.y+.5;stroke(224,187,99);strokeWeight(cell*.1);for(const d of [-1.2,-.8,-.4,0,.4,.8,1.2]){if(gate.vertical)line((x+d)*cell,(y-.32)*cell,(x+d)*cell,(y+.32)*cell);else line((x-.32)*cell,(y+d)*cell,(x+.32)*cell,(y+d)*cell);}noStroke();fill(245,223,151);textAlign(CENTER,CENTER);const need=EscapeCatalog.levels[w.chapters[gate.chapter].start]?.unlockChallenges;textSize(cell*(need?.42:.34));text(need?'⚑'+need:'◇',x*cell,y*cell);}
-  for(const s of w.secrets||[])if(Math.abs(s.x-w.player.x)<width/cell+s.rx+4&&Math.abs(s.y-w.player.y)<height/cell+s.ry+4)drawEscapeWorldSecret(s,cell,w.elapsed,w.secretOpen?.(s.id));
+  for(const s of w.secrets||[])if(Math.abs(s.x-w.player.x)<width/cell+s.rx+4&&Math.abs(s.y-w.player.y)<height/cell+s.ry+4){if(s.id!=='sallys-burrow'&&!w.revealed?.())continue;drawEscapeWorldSecret(s,cell,w.elapsed,w.secretOpen?.(s.id));}
   for(const sign of w.signs)if(w.regionOpen(sign.chapter))drawEscapeWorldSign(sign,w.chapters[sign.chapter],escapeRegionStars(sign.chapter),cell);
   for(const cache of w.caches)if(w.regionOpen(cache.chapter))drawEscapeWorldCache(cache,w.found.has(cache.id),cell,w.elapsed,Math.hypot(cache.x+.5-w.player.x,cache.y+.5-w.player.y));
   for(const n of w.nodes){const x=n.x*cell,y=n.y*cell,saved=escapeProgress.data.levels[n.id],unlocked=escapeProgress.unlocked(n.id);noStroke();fill(48,82,62,75);ellipse(x,y+cell*.35,cell*1.5,cell*.55);fill(unlocked?189:139,unlocked?202:156,unlocked?142:131);rect(x-cell*.65,y-cell*.65,cell*1.3,cell*1.3,cell*.22);fill(unlocked?55:100,unlocked?99:117,unlocked?70:99);rect(x-cell*.38,y-cell*.45,cell*.76,cell*.95,cell*.35);stroke(101,110,79);strokeWeight(cell*.045);line(x+cell*.5,y+cell*.3,x+cell*.5,y-cell*.7);noStroke();fill(...(saved?[70,147,90]:unlocked?[221,139,69]:[118,134,115]));triangle(x+cell*.5,y-cell*.7,x+cell*1.05,y-cell*.48,x+cell*.5,y-cell*.26);
@@ -295,13 +325,19 @@ function drawEscapeWorld(){
     noStroke();fill(160,220,120,open?40+pulse*50:18);ellipse(x,y,cell*(1.8+pulse*.3),cell*(1.8+pulse*.3));fill(44,84,40);rect(x-cell*.5,y-cell*.5,cell,cell,cell*.2);fill(open?190:110,open?230:140,open?140:110);rect(x-cell*.38,y-cell*.38,cell*.76,cell*.76,cell*.16);fill(30,60,30);textAlign(CENTER,CENTER);textSize(cell*.42);text(open?(n.bonus.areas>5?'✹':'✣'):'🔒',x,y);
     if(saved){textSize(cell*.36);for(let i=0;i<3;i++){fill(...(i<saved.stars?[255,196,40]:[40,58,46,160]));text('★',x+(i-1)*cell*.36,y+cell*1.02);}}}
   // Secret doors: a cracked hedge to push through, or a thorny hedge until the spot opens.
-  for(const d of w.secretDoors||[])if(!w.secretOpen(d.id)){const x=d.x*cell,y=d.y*cell,bump=EscapeProgress.SECRET_RULES[d.id]?.bump;noStroke();fill(46,92,52);rect(x-cell*.05,y-cell*.05,cell*1.1,cell*1.1,cell*.25);
+  for(const d of w.secretDoors||[])if(!w.secretOpen(d.id)&&(d.id==='sallys-burrow'||w.revealed())){const x=d.x*cell,y=d.y*cell,bump=EscapeProgress.SECRET_RULES[d.id]?.bump;noStroke();fill(46,92,52);rect(x-cell*.05,y-cell*.05,cell*1.1,cell*1.1,cell*.25);
     if(bump){stroke(24,48,28);strokeWeight(cell*.06);line(x+cell*.3,y+cell*.1,x+cell*.5,y+cell*.45);line(x+cell*.5,y+cell*.45,x+cell*.35,y+cell*.8);line(x+cell*.5,y+cell*.45,x+cell*.75,y+cell*.6);noStroke();}
     else{fill(196,70,90);for(let k=0;k<3;k++)ellipse(x+cell*(.2+k*.3),y+cell*(.3+(k%2)*.4),cell*.16,cell*.16);}}
   for(const n of w.secretNodes||[]){if(!w.secretOpen(n.secret))continue;const x=n.x*cell,y=n.y*cell,saved=escapeProgress.data.hidden[n.id],open=escapeProgress.hiddenLevelOpen(n.id,EscapeWorld.chapters),pulse=(sin(w.elapsed*1.8+n.index)+1)/2;
     noStroke();fill(150,200,255,open?40+pulse*50:16);ellipse(x,y,cell*(1.8+pulse*.3),cell*(1.8+pulse*.3));fill(40,60,96);rect(x-cell*.5,y-cell*.5,cell,cell,cell*.2);fill(open?170:100,open?200:120,open?255:140);rect(x-cell*.38,y-cell*.38,cell*.76,cell*.76,cell*.16);fill(24,36,70);textAlign(CENTER,CENTER);textSize(cell*.42);text(open?'✿':'🔒',x,y);
     if(!open&&n.stars){textSize(cell*.28);fill(30,48,38,210);const label=n.stars+'★';rect(x-cell*.4,y-cell*.95,cell*.8,cell*.34,cell*.1);fill(255,236,170);text(label,x,y-cell*.78);}
     if(saved){textSize(cell*.36);for(let i=0;i<3;i++){fill(...(i<saved.stars?[255,196,40]:[40,58,46,160]));text('★',x+(i-1)*cell*.36,y+cell*1.02);}}}
+  // Old Moss's lost things glint where they fell; the fairy caps glow in turn; the oak shows only in a flash.
+  if(w.revealed?.()){
+    for(const it of w.lostItems)if(!w.itemsFound.has(it.id)){const x=(it.x+.5)*cell,y=(it.y+.5)*cell,tw=(sin(w.elapsed*3+it.x)+1)/2;noStroke();fill(255,240,180,40+tw*60);ellipse(x,y,cell*1.1,cell*1.1);textAlign(CENTER,CENTER);textSize(cell*.6);text({spectacles:'👓','pocket-watch':'⌚',scarf:'🧣'}[it.id],x,y);}
+    if(!escapeProgress.data.secrets.includes('fairy-ring')){const lit=Math.floor(w.elapsed*1.2)%(w.fairyCaps.length+1);w.fairyCaps.forEach((c,i)=>{const x=(c.x+.5)*cell,y=(c.y+.5)*cell,on=i===lit;noStroke();fill(200,170,255,on?150:30);ellipse(x,y,cell*(on?1.2:.8),cell*(on?1.2:.8));fill(240,230,210);rect(x-cell*.05,y,cell*.1,cell*.22);fill(on?250:190,on?120:90,on?255:200);arc(x,y+cell*.02,cell*.5,cell*.4,PI,TWO_PI);});}
+    if(w.stormFlash()){const c=w.chapters.find(c=>c.theme==='storm');noStroke();fill(235,240,255,70);rect((c.x-8)*cell,(c.y-7)*cell,17*cell,15*cell);if(!escapeProgress.data.secrets.includes('struck-oak')){const x=(w.oak.x+.5)*cell,y=(w.oak.y+.5)*cell;fill(255,236,140,200);ellipse(x,y-cell*.2,cell*.9,cell*.9);textAlign(CENTER,CENTER);textSize(cell*.5);text('✦',x,y-cell*.2);}}
+  }
   if(w.hiddenCarved)for(const n of w.hiddenNodes){const x=n.x*cell,y=n.y*cell,saved=escapeProgress.data.hidden[n.id],pulse=(sin(w.elapsed*2+n.index)+1)/2;noStroke();fill(255,206,90,40+pulse*50);ellipse(x,y,cell*(1.8+pulse*.3),cell*(1.8+pulse*.3));fill(120,86,24);rect(x-cell*.5,y-cell*.5,cell,cell,cell*.2);fill(255,214,100);rect(x-cell*.38,y-cell*.38,cell*.76,cell*.76,cell*.16);fill(90,60,10);textAlign(CENTER,CENTER);textSize(cell*.42);text('✦',x,y);
     if(saved){textSize(cell*.36);for(let i=0;i<3;i++){fill(...(i<saved.stars?[255,196,40]:[40,58,46,160]));text('★',x+(i-1)*cell*.36,y+cell*1.02);}}}
   for(const npc of w.npcs)if(w.regionOpen(npc.chapter))drawEscapeWorldNpc(npc,cell,w.elapsed);
@@ -366,6 +402,7 @@ function drawEscapeWorldSecret(s,cell,clock,open=false){
   if(open&&EscapeProgress.SECRET_RULES?.[s.id])return;
   if(s.area){for(let i=0;i<4;i++)drawEscapeRegionCloud({x:s.x+[-8,8,-8,8][i],y:s.y+[-3,-3,4,4][i]},20+i,cell,clock);return;}
   if(s.id==='fairy-ring'){for(let k=0;k<7;k++){const a=k*TWO_PI/7,px=x+Math.cos(a)*cell*.9,py=y+Math.sin(a)*cell*.6;fill(240,230,210);rect(px-cell*.03,py,cell*.06,cell*.1);fill(214,70,58);arc(px,py+cell*.02,cell*.2,cell*.16,PI,TWO_PI);}fill(220,200,255,40+50*glow);ellipse(x,y,cell*1.4,cell*1);return;}
+  if(s.id==='struck-oak'&&!escapeWorld?.stormFlash?.())return;
   if(s.id==='struck-oak'){fill(0,0,0,60);ellipse(x,y+cell*.3,cell*.9,cell*.25);fill(60,48,40);rect(x-cell*.22,y-cell*.4,cell*.18,cell*.7,cell*.04);rect(x+cell*.04,y-cell*.25,cell*.18,cell*.55,cell*.04);fill(30,24,22);triangle(x-cell*.04,y-cell*.4,x+cell*.04,y-cell*.4,x,y+cell*.1);fill(255,240,160,30+60*glow);ellipse(x,y-cell*.2,cell*.6,cell*.6);return;}
   fill(170,230,200,25+45*glow);ellipse(x,y,cell*1.6,cell*1.6);fill(0,0,0,60);ellipse(x,y+cell*.42,cell*.9,cell*.25);
   fill(120,128,118);beginShape();vertex(x-cell*.32,y+cell*.4);vertex(x-cell*.28,y-cell*.35);vertex(x,y-cell*.55);vertex(x+cell*.3,y-cell*.3);vertex(x+cell*.34,y+cell*.4);endShape(CLOSE);

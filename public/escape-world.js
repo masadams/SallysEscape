@@ -59,6 +59,12 @@
       this.secretDoors=[];for(const s of secrets)if(s.rx){const door=this.carveSecretWay(s);if(door)this.secretDoors.push({id:s.id,...door});}
       // Escapes inside a secret spot stand in a row across its clearing.
       this.secretNodes=(catalog.hidden||[]).map((level,i)=>({id:level.id,hidden:true,secret:level.secret,stars:level.stars||0,index:i,name:level.name})).filter(n=>n.secret).map(n=>{const s=secrets.find(s=>s.id===n.secret),row=(catalog.hidden||[]).filter(l=>l.secret===n.secret),k=row.findIndex(l=>l.id===n.id);return {...n,x:s.x+Math.round((k-(row.length-1)/2)*3),y:s.y};});
+      // The secret world, once revealed: Old Moss's lost things lie on open ground in three far-apart
+      // courtyards, three caps glow in turn around the fairy ring, and the struck oak waits in the storm.
+      const at=(theme,dx,dy)=>{const c=chapters.find(c=>c.theme===theme);return {x:c.x+dx,y:c.y+dy};};
+      this.lostItems=[{id:'spectacles',name:'Old Moss\u2019s spectacles',...at('ruins',-6,-4)},{id:'pocket-watch',name:'Old Moss\u2019s pocket watch',...at('jungle',6,-4)},{id:'scarf',name:'Old Moss\u2019s scarf',...at('frost',-6,5)}];
+      const ring=secrets.find(s=>s.id==='fairy-ring');this.fairyCaps=[[-2,-1],[2,-1],[0,2]].map(([dx,dy])=>({x:ring.x+dx,y:ring.y+dy}));this.fairyStep=0;
+      this.oak=secrets.find(s=>s.id==='struck-oak');this.itemsFound=new Set();this.onItem=null;this.onSecretCache=null;
       this.refreshRegions();this.tracks=[];
       const track=(a,b,side=false)=>{const from={x:a.x+.5,y:a.y+.5},to={x:b.x+.5,y:b.y+.5},path=this.route(to,from,true);if(path)this.tracks.push({points:[from,...path],side,from:a.id,to:b.id});};
       for(const c of chapters){const nodes=this.nodes.filter(n=>n.chapter===chapters.indexOf(c));for(let i=1;i<nodes.length;i++)track(nodes[i-1],nodes[i]);if(nodes.length>3&&!c.linear)track(nodes[1],nodes[3],true);}
@@ -98,7 +104,13 @@
     }
     catchFly(){if(!this.fly)return false;const fly=this.fly;this.fly=null;this.flyAt=this.elapsed+22+this.rng()*20;this.onFly?.(fly);return true;}
     tongue(){
-      if(!this.fly||Math.hypot(this.fly.x-this.player.x,this.fly.y-this.player.y)>2.6)return false;
+      if(!this.fly||Math.hypot(this.fly.x-this.player.x,this.fly.y-this.player.y)>2.6){
+        // Around the fairy ring, licking the glowing caps in the order they glow opens its cache.
+        const cap=this.revealed()&&this.fairyCaps.find(c=>Math.hypot(c.x+.5-this.player.x,c.y+.5-this.player.y)<=2.6);if(!cap)return false;
+        this.lick={x:cap.x+.5,y:cap.y+.5,until:this.elapsed+.25};const i=this.fairyCaps.indexOf(cap);
+        if(i===this.fairyStep){this.fairyStep++;if(this.fairyStep===this.fairyCaps.length){this.fairyStep=0;this.onSecretCache?.('fairy-ring');}}else this.fairyStep=i===0?1:0;
+        return true;
+      }
       this.lick={x:this.fly.x,y:this.fly.y,until:this.elapsed+.25};return this.catchFly();
     }
     updateFly(dt){
@@ -115,9 +127,13 @@
     nearbyBonusLock(){return this.bonusNodes.find(n=>!this.bonusOpen(n.id)&&Math.hypot(n.lock.x+.5-this.player.x,n.lock.y+.5-this.player.y)<=2.5)||null;}
     // The door of a secret spot that is still shut, when Sally stands by it.
     nearbySecretDoor(){return this.secretDoors.find(d=>!this.secretOpen(d.id)&&Math.hypot(d.x+.5-this.player.x,d.y+.5-this.player.y)<=2.2)||null;}
-    // Sally's Burrow is a room, not an escape: standing at its heart lets her go inside.
-    nearbyRoom(){const s=secrets.find(s=>s.id==='sallys-burrow');return this.secretOpen(s.id)&&Math.hypot(s.x+.5-this.player.x,s.y+.5-this.player.y)<=1.6?s:null;}
-    enter(){if(this.nearbyRoom())return 'room:sallys-burrow';const node=this.nearby();return node?.bonus&&!this.bonusOpen(node.id)?null:node?.hidden?'hidden:'+node.id:node&&this.unlocked(node.id)?node.id:null;}
+    // Sally's Burrow and Old Moss's Den are rooms, not escapes: standing at the heart of one lets her go inside.
+    nearbyRoom(){return secrets.find(s=>['sallys-burrow','moss-den'].includes(s.id)&&this.secretOpen(s.id)&&Math.hypot(s.x+.5-this.player.x,s.y+.5-this.player.y)<=1.6)||null;}
+    // The secret world shows itself once the Gilded Burrow is found.
+    revealed(){return Boolean(this.hiddenOpen());}
+    // In Storm Heights, lightning flashes every eleven seconds; only then does the struck oak show its glint.
+    stormFlash(){return this.revealed()&&chapters[this.chapterAt()]?.theme==='storm'&&this.elapsed%11<.45;}
+    enter(){const room=this.nearbyRoom();if(room)return 'room:'+room.id;const node=this.nearby();return node?.bonus&&!this.bonusOpen(node.id)?null:node?.hidden?'hidden:'+node.id:node&&this.unlocked(node.id)?node.id:null;}
     walkTo(id){this.refreshRegions();const n=this.nodes.find(n=>n.id===id);if(!n)return false;const route=this.route({x:n.x,y:n.y+1});if(!route)return false;route.push({x:n.x,y:n.y+1});this.target=route;return true;}
     travel(chapter){this.refreshRegions();const c=chapters[chapter];if(!c||!this.regionOpen(chapter))return false;const node=this.nodes.filter(n=>n.chapter===chapter).find(n=>this.unlocked(n.id))||this.nodes[c.start];this.player.x=node.x;this.player.y=node.y+1;this.player.facing={x:0,y:-1};this.target=null;this.accumulator=0;this.motion.resetPlayer(this.player);return true;}
     advance(seconds,input={}){
@@ -135,6 +151,10 @@
       // Pushing into a cracked hedge breaks it open.
       if(length){const d=this.secretDoors.find(d=>!this.secretOpen(d.id)&&Math.hypot(d.x+.5-this.player.x,d.y+.5-this.player.y)<=1.05);if(d)this.onSecretBump?.(d);}
       const cache=this.nearbyCache();if(cache){this.found.add(cache.id);this.onCache?.(cache);}
+      if(this.revealed()){
+        const item=this.lostItems.find(i=>!this.itemsFound.has(i.id)&&Math.hypot(i.x+.5-this.player.x,i.y+.5-this.player.y)<=.8);if(item){this.itemsFound.add(item.id);this.onItem?.(item);}
+        if(this.stormFlash()&&Math.hypot(this.oak.x+.5-this.player.x,this.oak.y+.5-this.player.y)<=1.6)this.onSecretCache?.('struck-oak');
+      }
       this.updateFly(dt);if(this.lick&&this.elapsed>this.lick.until)this.lick=null;
       this.player.moving=Math.hypot(old.x-this.player.x,old.y-this.player.y)>1e-6;this.player.sprinting=Boolean(input.sprint&&this.player.moving);this.motion.update(dt,this);
     }
