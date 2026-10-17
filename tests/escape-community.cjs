@@ -57,3 +57,13 @@ test('pages send a policy that blocks form posts, plugins and powerful device fe
   assert.match(csp,/form-action 'none'/);assert.match(csp,/object-src 'none'/);assert.match(csp,/script-src 'self'/);assert.equal(r.headers.get('cross-origin-opener-policy'),'same-origin');
   assert.match(r.headers.get('permissions-policy'),/camera=\(\)/);assert.match(r.headers.get('permissions-policy'),/publickey-credentials-get=\(self\)/);
 });
+test('the starter levels ship on the shelf, are all playable, and stay down once an admin takes one down',async t=>{
+  const seedFile=path.join(__dirname,'../server/community-seed.json'),seeds=JSON.parse(fs.readFileSync(seedFile,'utf8'));
+  assert.equal(seeds.length,10);for(const s of seeds){const m=B.sanitize(s);assert.ok(m,s.name);assert.deepEqual(B.validate(m),[],s.name);}
+  const {base,cookie}=await adminCookie(t,{seedFile});
+  let shelf=await (await fetch(base+'/api/levels')).json();assert.equal(shelf.levels.length,10);assert.ok(shelf.levels.every(l=>l.seed&&l.author==='Claude'));
+  const m=level();assert.equal((await post(base,'/api/levels',{level:m},cookie)).status,201);
+  shelf=await (await fetch(base+'/api/levels')).json();assert.equal(shelf.levels.length,11);assert.equal(shelf.levels[0].name,'Shelf test','own levels come first');
+  assert.equal((await fetch(base+'/api/levels/'+seeds[0].id,{method:'DELETE',headers:{Cookie:cookie}})).status,204);
+  shelf=await (await fetch(base+'/api/levels')).json();assert.equal(shelf.levels.length,10);assert.ok(!shelf.levels.some(l=>l.id===seeds[0].id),'a starter level taken down stays down');
+});
