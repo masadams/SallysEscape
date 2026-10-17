@@ -1,0 +1,178 @@
+const test=require('node:test'),assert=require('node:assert/strict');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const {EscapeAdventure}=require('../public/escape-engine.js');
+const {escapeBuildCustom}=require('../public/escape-levels.js');
+const B=require('../public/escape-builder.js');
+const Lab=require('../scripts/lib/level-lab.cjs');
+const CLI=require('../scripts/level-lab.cjs');
+const Benchmark=require('../scripts/level-benchmark.cjs');
+const level=(map,extra={})=>escapeBuildCustom({id:'lab-fixture',name:'Lab fixture',map,guards:[],...extra});
+const room=()=>({level:level(['#########','#@..K..X#','#.......#','#.......#','#########'])});
+const config={budget:160,width:6,depth:40,seconds:30};
+test('finds and independently replays a solution with no supplied hints',()=>{
+  const options=room(),result=Lab.solve(options,config);
+  assert.equal(result.status,'solved');assert.equal(result.verification.won,true);
+  assert.equal(Lab.verifyArtifact(result.replay).won,true);
+  for(const c of result.replay.commands)if(c.kind==='move'){assert.ok([-1,0,1].includes(c.x));assert.ok([-1,0,1].includes(c.y));}
+  const a=Lab.stress(options,result.replay.commands,{trials:3,jitter:0,seed:7});assert.equal(a.wins,3);
+  assert.deepEqual(Lab.stress(options,result.replay.commands,{trials:3,seed:7}),Lab.stress(options,result.replay.commands,{trials:3,seed:7}));
+});
+test('discovers a legal burrow across a wall that ordinary pathfinding cannot cross',()=>{
+  const options={level:level(['#########','#@#..K.X#','#.#.....#','#.#.....#','#########'],{burrows:1})};
+  const result=Lab.solve(options,config);assert.equal(result.status,'solved');
+  assert.ok(result.replay.commands.some(c=>c.kind==='burrow'));assert.equal(Lab.replay(options,result.replay.commands).won,true);
+});
+test('unreachable objective is unresolved, never a fabricated win or impossibility claim',()=>{
+  const options={level:level(['#########','#@#..K.X#','#.#.....#','#.#.....#','#########'])};
+  const result=Lab.solve(options,{...config,budget:10});assert.equal(result.status,'unresolved');assert.equal(result.replay,null);assert.equal(result.verification,null);assert.equal(result.reason,'expansion-budget');
+});
+test('collects an isolated key by tongue and required treasure before escaping',()=>{
+  const options={level:level(['#########','#@._K_..#','#..###..#','#1.....X#','#########'],{tongues:1,requiredTreasure:1})};
+  const result=Lab.solve(options,{...config,budget:240,width:8});assert.equal(result.status,'solved');assert.ok(result.replay.commands.some(c=>c.kind==='tongue'));assert.equal(result.verification.treasure,1);
+});
+test('searches away from the key to activate a closed gate',()=>{
+  const options={level:level(['#########','#@...K.X#','#...#...#','#...#...#','#########'],{gates:[{id:'lab-door',name:'Lab door',tiles:[[4,1]],switch:[1,3]}]})};
+  const result=Lab.solve(options,{...config,budget:240,width:12});assert.equal(result.status,'solved');assert.equal(result.verification.won,true);
+});
+test('reuses a saved solution only after checking it against the current map',()=>{
+  const options=room(),first=Lab.solve(options,config),again=Lab.solve(options,{...config,reuseCommands:first.replay.commands});assert.equal(again.reason,'reused-verified-replay');assert.equal(again.search.expanded,0);
+  const changed={level:level(['#########','#@#K...X#','#.#.....#','#.#.....#','#########'])};
+  const result=Lab.solve(changed,{...config,budget:1,reuseCommands:first.replay.commands});assert.equal(result.memory.won,false);assert.equal(result.status,'unresolved');
+});
+test('look-back uses the real action and changes facing without fabricated movement',()=>{
+  const options={level:level(['#########','#@..K..X#','#.......#','#.......#','#########'],{gaze:true})},g=new EscapeAdventure(options),facing={...g.player.facing};
+  assert.ok(Lab.candidates(g).some(c=>c.lookBack));
+  const r=Lab.execute(g,{type:'tool',kind:'lookBack'},Lab.settings(config));
+  assert.deepEqual(r.g.player.facing,{x:-facing.x||0,y:-facing.y||0});assert.equal(r.commands[0].kind,'lookBack');
+  assert.deepEqual(r.g.player.x,g.player.x);assert.equal(g.elapsed,0);
+  assert.equal(Lab.replay(options,r.commands).actionFailure,null);
+});
+test('cloned simulation reads its own changed grid for creature geometry',()=>{
+  const g=new EscapeAdventure(room()),r=Lab.execute(g,{type:'input',x:0,y:0,sprint:false,frames:1},Lab.settings(config));
+  r.g.grid[2][2]='#';assert.equal(r.g.motion.floor(2,2),false);assert.equal(g.motion.floor(2,2),true);
+});
+test('normal tail recovery can win, while no-tail replay policy rejects that same run',()=>{
+  const options={level:level(['#########','#@..K..X#','#.......#','#########'],{tailDrop:true,guards:[{kind:'snake',spawn:[1,1],facing:0,patrol:[[1,1]]}]})};
+  const artifact={schemaVersion:1,options,fingerprint:Lab.fingerprint(options),commands:[{kind:'move',x:1,y:0,sprint:true,frames:220},{kind:'move',x:0,y:0,sprint:false,frames:120}]};
+  assert.equal(Lab.verifyArtifact(artifact).won,true);assert.equal(Lab.verifyArtifact(artifact).tailsDropped,1);assert.equal(Lab.verifyArtifact(artifact,{allowTail:false}).won,false);
+});
+test('replay rejects unavailable actions, malformed inputs and stale rules',()=>{
+  const options=room();assert.equal(Lab.replay(options,[{kind:'burrow'}]).won,false);assert.equal(Lab.replay(options,[{kind:'burrow'}]).actionFailure.kind,'burrow');
+  assert.throws(()=>Lab.replay(options,[{kind:'move',frames:Infinity,x:0,y:0,sprint:false}]),/Invalid/);
+  assert.throws(()=>Lab.replay(options,[{kind:'move',frames:1,x:2,y:0,sprint:false}]),/Invalid/);
+  assert.throws(()=>Lab.replay(options,[{kind:'teleport'}]),/Unknown/);
+  assert.throws(()=>Lab.verifyArtifact({schemaVersion:1,options,fingerprint:'old',commands:[]}),/stale/);
+});
+test('real hunters remain lethal during search and failure locations are reported',()=>{
+  const options={level:level(['#########','#@..K..X#','#########'],{guards:[{kind:'snake',spawn:[1,1],facing:0,patrol:[[1,1]]}]})};
+  const result=Lab.solve(options,{...config,budget:10});assert.equal(result.status,'unresolved');assert.ok(result.failures.length);assert.ok(result.failures[0].tile);
+});
+test('builder version-2 exports and route JSON load without editing their files',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'sally-lab-'));
+  try{
+    const model=B.blank(),file=path.join(dir,'export.txt'),text=B.exportText(model);assert.ok(text.startsWith('SALLY2:'));fs.writeFileSync(file,text);
+    assert.equal(CLI.loadOptions(undefined,{custom:file}).level.custom,true);assert.equal(fs.readFileSync(file,'utf8'),text);
+    const route=path.join(dir,'route.json');fs.writeFileSync(route,JSON.stringify(B.toRoute(model)));assert.equal(CLI.loadOptions(undefined,{route}).level.custom,true);
+    assert.throws(()=>CLI.loadOptions('quiet-vault',{custom:file}),/Choose one/);
+  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+test('reports cannot accidentally retain a previous successful replay',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'sally-lab-'));
+  try{fs.writeFileSync(path.join(dir,'replay.json'),'old');const result=Lab.solve(room(),{...config,budget:1});CLI.writeOutputs(dir,result);assert.equal(fs.existsSync(path.join(dir,'replay.json')),false);assert.match(fs.readFileSync(path.join(dir,'report.md'),'utf8'),/NOT proof/);}
+  finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+test('budgets and CLI arguments fail early on invalid values',()=>{
+  for(const cfg of [{budget:NaN},{width:0},{seconds:-1},{depth:1.5}])assert.throws(()=>Lab.settings(cfg),/Invalid/);
+  assert.throws(()=>Lab.stress({},[],{trials:-1}),/Invalid/);
+  assert.throws(()=>CLI.parse(['solve','quiet-vault','--typo','1']),/Unknown option/);
+  assert.throws(()=>CLI.parse(['solve','--out']),/Missing value/);
+});
+
+test('goal routes solve a long corridor within a budget that local stepping cannot',()=>{
+  const options={level:level(['#####################','#@...........K.....X#','#####################'])};
+  const budget={...config,budget:3,width:1};
+  assert.equal(Lab.solve(options,{...budget,macro:false}).status,'unresolved');
+  const result=Lab.solve(options,budget);
+  assert.equal(result.status,'solved');assert.equal(result.verification.won,true);
+  assert.ok(result.search.expanded<=3);
+});
+
+test('goal routes respect closed geometry, execute real collisions, and preserve their parent',()=>{
+  const options={level:level(['#########','#@..K..X#','#########'],{guards:[{kind:'snake',spawn:[3,1],facing:Math.PI,patrol:[[3,1]]}]})};
+  const g=new EscapeAdventure(options),before=Lab.signature(g);
+  const choice=Lab.goalRoutes(g)[0],result=Lab.execute(g,choice,Lab.settings(config));
+  assert.equal(result.g.status,'caught');assert.equal(Lab.signature(g),before);
+  assert.equal(Lab.replay(options,result.commands).status,'caught');
+  const blocked=new EscapeAdventure({level:level(['#########','#@..G.KX#','#########'],{gates:[{id:'closed',tiles:[[4,1]],switch:[2,1]}]})});
+  for(const route of Lab.goalRoutes(blocked))assert.ok(route.waypoints.every(p=>p.x<4));
+});
+
+test('goal routes turn through a winding corridor and exact replay reproduces the win',()=>{
+  const options={level:level(['#########','#@..#..X#','###.#.###','#...#...#','#.#####.#','#...K...#','#########'])};
+  const result=Lab.solve(options,{...config,budget:80,width:4});
+  assert.equal(result.status,'solved');assert.equal(Lab.verifyArtifact(result.replay).won,true);
+  assert.deepEqual(CLI.parse(['solve','quiet-vault','--no-macro']).flags,{macro:false});
+});
+
+test('simulation budget stops inside a route and also counts discarded tool attempts',()=>{
+  const result=Lab.solve(room(),{...config,frames:1});
+  assert.equal(result.status,'unresolved');assert.equal(result.reason,'simulation-budget');
+  assert.equal(result.search.simulatedFrames,1);assert.equal(result.replay,null);
+  let frames=0;
+  const g=new EscapeAdventure(room());
+  assert.equal(Lab.execute(g,{type:'tool',kind:'burrow',x:1,y:0},{...Lab.settings(config),consumeFrame:()=>{frames++;return true;}}),null);
+  assert.equal(frames,1);assert.equal(g.elapsed,0);
+  assert.throws(()=>Lab.settings({frames:0}),/Invalid frames/);
+});
+test('benchmark shards cover every catalog case exactly once, including challenges and hidden levels',()=>{
+  const all=Benchmark.cases(),joined=Array.from({length:8},(_,i)=>Benchmark.shardCases(all,i+1,8)).flat();
+  assert.equal(joined.length,all.length);assert.equal(new Set(joined.map(c=>c.id)).size,all.length);assert.ok(all.some(c=>c.id.startsWith('challenge:')));assert.ok(all.some(c=>c.id.startsWith('hidden:')));
+  assert.throws(()=>Benchmark.shardCases(all,0,8),/shard/);
+  assert.deepEqual(Benchmark.selectCases(all,'quiet-vault,challenge:ghost-run').map(c=>c.id),['quiet-vault','challenge:ghost-run']);
+  assert.throws(()=>Benchmark.selectCases(all,'quiet-vault,typo'),/Unknown benchmark level typo/);
+  assert.throws(()=>Benchmark.selectCases(all,''+'missing'),/Unknown/);
+});
+test('benchmark verifies a known witness separately without feeding it to independent search',()=>{
+  const options=room(),known=Lab.solve(options,config).replay.commands;
+  const item={id:'lab-fixture',options,level:options.level};
+  // matching uses catalog IDs; room options are a custom level, used here only
+  // as a small real-engine benchmark fixture.
+  const result=Benchmark.benchmarkCase(item,[{options,commands:known}],{...config,budget:1,trials:0});
+  assert.equal(result.reference.status,'verified');assert.equal(result.report.status,'unresolved');
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'sally-benchmark-'));
+  try{const {summary}=Benchmark.saveSummary(dir,[result],config);assert.equal(summary.totals.referenceVerified,1);assert.equal(summary.totals.independentlySolved,0);assert.equal(summary.totals.unresolved,1);}finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+test('benchmark checkpoints resume completed cases and reject changed inputs or damaged reports',()=>{
+  const options=room(),report=Lab.solve(options,config),item={id:'lab-fixture',options,level:options.level};
+  const row={id:item.id,tags:[],reference:{status:'missing'},report},metadata={node:process.version,solverFingerprint:'test',recordingsFingerprint:'test',...config};
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'sally-resume-'));
+  try{
+    CLI.writeOutputs(path.join(dir,item.id),report);Benchmark.saveSummary(dir,[row],metadata);
+    const before=fs.statSync(path.join(dir,item.id,'report.json')).mtimeMs;
+    const resumed=Benchmark.resumeResults(dir,metadata,[item]);assert.equal(resumed.length,1);assert.equal(resumed[0].report.status,'solved');
+    assert.equal(fs.statSync(path.join(dir,item.id,'report.json')).mtimeMs,before);
+    assert.throws(()=>Benchmark.resumeResults(dir,{...metadata,width:1},[item]),/settings changed/);
+    assert.throws(()=>Benchmark.resumeResults(dir,{...metadata,recordingsFingerprint:'changed'},[item]),/recordings/);
+    assert.throws(()=>Benchmark.resumeResults(dir,metadata,[]),/checkpoint case/);
+    fs.writeFileSync(path.join(dir,item.id,'report.json'),JSON.stringify({...report,reason:'damaged'}));
+    assert.throws(()=>Benchmark.resumeResults(dir,metadata,[item]),/inconsistent/);
+    const unresolved=Lab.solve(options,{frames:1});row.report=unresolved;CLI.writeOutputs(path.join(dir,item.id),unresolved);Benchmark.saveSummary(dir,[row],metadata);
+    assert.equal(Benchmark.resumeResults(dir,metadata,[item])[0].report.status,'unresolved');
+    const source=JSON.parse(fs.readFileSync(path.join(dir,'summary.json')));source.cases[0].fingerprint='old';fs.writeFileSync(path.join(dir,'summary.json'),JSON.stringify(source));
+    assert.throws(()=>Benchmark.resumeResults(dir,metadata,[item]),/stale/);
+  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+test('overnight runs one child at a time and includes its full work in the wall allowance',()=>{
+  const Overnight=require('../scripts/level-overnight.cjs'),calls=[];let clock=0;
+  assert.equal(Overnight.parse([]).minutes,120);assert.throws(()=>Overnight.parse(['--minutes','0']),/minutes/);
+  assert.throws(()=>Overnight.parse(['--gpu']),/Unknown/);
+  const result=Overnight.run({minutes:1,out:'work/test-overnight'},{now:()=>clock,spawn:(executable,args,options)=>{
+    calls.push({args,options});clock+=20000;return {status:0};
+  }});
+  assert.equal(result.status,'paused');assert.equal(calls.length,3);assert.deepEqual(calls.map(c=>c.options.timeout),[60000,40000,20000]);
+  assert.ok(calls.every(c=>c.args.includes('--resume')&&c.args[c.args.indexOf('--trials')+1]==='0'));
+  const cut=Overnight.run({minutes:1,out:'work/test-overnight'},{now:()=>0,spawn:()=>({error:{code:'ETIMEDOUT'}})});assert.equal(cut.status,'paused');assert.equal(cut.completedShards,0);
+  const broken=Overnight.run({minutes:1,out:'work/test-overnight'},{now:()=>0,spawn:()=>({status:2})});assert.equal(broken.status,'failed');assert.equal(broken.code,2);
+});

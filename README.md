@@ -33,7 +33,10 @@ For private images, use your existing GitHub Container Registry credentials in P
 
 ## Development
 
+For AI-assisted map creation and review, run `npm run level:lab -- solve quiet-vault --out work/lab/quiet-vault`. The tool searches the real game, saves verified replays and reports timing sensitivity. See [the level lab guide](docs/LEVEL-LAB.md) for custom maps, saved-strategy reuse and the required AI review workflow. An unresolved search does not mean a map is impossible.
+
 Node 24. Run `npm ci`, `npm run prepare:static`, `npm test`, then `npm start`. The only development dependency is p5; the production server uses Node’s built-in HTTP and filesystem libraries.
 
 The music direction is mysterious folk adventure, written in code rather than shipped as audio files. Music and progression notes are in `docs/`.
+
 

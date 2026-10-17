@@ -10,6 +10,7 @@ for(const recording of recordings)test('recorded legal escape with real guards: 
     else if(command.kind==='burrow')assert.equal(g.burrow(),true);
     else if(command.kind==='seed')assert.equal(g.plantSeed(),true);
     else if(command.kind==='tongue')assert.equal(g.useTongue(),true);
+    else if(command.kind==='lookBack')assert.equal(g.lookBack(),true);
     else assert.fail('Unknown input command');
   }
   assert.equal(g.status,'won');assert.equal(g.hasKey,true);assert.ok(g.elapsed>1&&g.elapsed<180);
@@ -31,3 +32,4 @@ for(const recording of recordings)test('recorded legal escape with real guards: 
   if(g.level.hawk)assert.ok(g.hawk.strikes>0,'the hawk really dived during the escape');
   if(g.level.biome==='lagoon')assert.ok(g.swimDistance>10,'the recorded escape includes real swimming');
 });
+

@@ -1,0 +1,77 @@
+name: Solver benchmark
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/level-*.cjs'
+      - 'scripts/lib/level-*.cjs'
+      - 'scripts/route-solver.cjs'
+      - 'public/escape-engine.js'
+      - 'public/escape-levels.js'
+      - 'public/escape-rebuilt.js'
+      - 'public/escape-hidden.js'
+      - 'public/creature-rig.js'
+      - 'tests/fixtures/escape-playthroughs.json'
+      - 'tests/level-lab.cjs'
+      - 'tests/level-policy.cjs'
+      - 'tests/level-practice.cjs'
+      - 'tests/level-goals.cjs'
+      - 'package.json'
+      - '.github/workflows/solver-benchmark.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: solver-benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Bounded solver smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Solver regressions
+        run: node --test tests/level-lab.cjs tests/level-policy.cjs tests/level-practice.cjs tests/level-goals.cjs
+      - name: Three-level development sample
+        run: npm run level:smoke
+      - name: Save smoke reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: solver-smoke
+          path: work/smoke/
+          retention-days: 14
+
+  benchmark:
+    if: github.event_name == 'workflow_dispatch'
+    name: Catalog shard ${{ matrix.shard }} of 8
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Verify reference solutions and benchmark independent discovery
+        run: node scripts/level-benchmark.cjs --out work/solver-benchmark --shard ${{ matrix.shard }} --shards 8
+      - name: Save reports and replays
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: solver-benchmark-${{ matrix.shard }}
+          path: work/solver-benchmark/
+          retention-days: 14

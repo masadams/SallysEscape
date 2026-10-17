@@ -11,7 +11,7 @@
 // changes wherever the real hunters would catch Sally, keeping whatever gets furthest.
 const path=require('path');
 const {EscapeAdventure}=require(path.join(__dirname,'../public/escape-engine.js'));
-const ACT={pebble:'throwDecoy',burrow:'burrow',tongue:'useTongue',seed:'plantSeed',camo:'camouflage'};
+const ACT={pebble:'throwDecoy',burrow:'burrow',tongue:'useTongue',seed:'plantSeed',camo:'camouflage',lookBack:'lookBack'};
 const optionsFor=id=>id.startsWith('challenge:')?{challengeId:id.slice(10)}:id.startsWith('hidden:')?{hiddenId:id.slice(7)}:{levelId:id};
 
 // Deep clone that keeps prototypes, Maps, Sets and shared references; frozen catalog data is shared.
@@ -153,3 +153,4 @@ if(require.main===module){
   console.error(JSON.stringify(options),ok?'SOLVED':'FAILED',((Date.now()-t)/1000).toFixed(1)+'s');
   if(ok)console.log(JSON.stringify({options,commands}));else process.exit(1);
 }
+
