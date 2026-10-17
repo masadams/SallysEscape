@@ -74,6 +74,21 @@ levels.
 it to set the direction and strength), **Echo hall** (two corners) and **Burrow pair** (click one
 mound, then its partner). Level settings set **Spore pouches** (0–5).
 
+## Quick build
+
+Open **⚡ Quick build** above the level settings, choose a size, theme (meadow, marsh, desert, frost,
+glow grotto, jungle, ruins), difficulty and, if you like, a creature to feature, then press **Build**.
+It replaces what is in the builder with a first draft that follows the game's rules: rooms joined by
+corridors with loops, the key and hatch far from the start, ten treasure with the best in dead ends,
+leaves never more than a few steps away, nothing near the start and nothing posted on the only way
+through. Each theme adds its extras (cold rooms and warm stones, darkness and glow plants, desert sand
+and a hawk with awnings, an echo hall). Every draft is checked before you see it: the builder's checks,
+and fifteen seconds standing still at the start without being seen.
+
+The same settings and seed always build the same level; **🎲 Another one** keeps the settings and picks
+a new seed. The draft is an ordinary level: move, add or remove anything, playtest, save or publish.
+The generator is `public/escape-quickbuild.js`.
+
 ## Playing, saving and sharing
 The status line explains anything that stops a level being playable (no way to the key, a door
 with nothing linked, a heavy plate with no beetle…). **▶ Playtest** runs it. **Save** keeps it in
