@@ -14,6 +14,7 @@ let escapeGame=null,escapeIntroOpen=false,escapeCharacter=null;
 const escapeDevice=()=>typeof mobile!=='undefined'&&mobile?'touch':'desk';
 function escapeRecordQuit(){if(typeof EscapePlayData!=='undefined'&&escapeGame?.status==='playing'&&escapeGame.elapsed>3)EscapePlayData.record(escapeGame,'quit',escapeDevice());}
 if(typeof window!=='undefined'&&typeof EscapePlayData!=='undefined'){window.addEventListener('pagehide',()=>{escapeRecordQuit();EscapePlayData.flush(true);});if(typeof setTimeout==='function')setTimeout(()=>EscapePlayData.flush(),8000);}
+function escapeRestart(){if(paused)togglePause();startEscape({...escapeOptions,skipIntro:true,quick:true});}
 function escapeAbandonRun(){escapeRecordQuit();if(escapeGame&&escapeGame.status==='playing'&&!escapeGame.challenge&&escapeGame.elapsed>3){escapeProgress.attempt(escapeGame.level.id);escapeGame.status='abandoned';}}
 // Full cards always show the hint; otherwise only where an area teaches a new idea.
 // The opening tip repeats the hint in game, so it follows the same rule.
@@ -149,7 +150,7 @@ function tickEscapeCrawlTip(g){
 }
 function startEscape(options={}){
   escapeAbandonRun();
-  escapeFx.clear();escapeFxDecoy=null;
+  escapeFx.clear();escapeFxDecoy=null;escapeMoment=null;escapeCurtain={at:millis(),ms:options.quick?260:620,seed:Math.random()*10};
   if(options.custom?false:options.hiddenId?!escapeProgress.hiddenLevelOpen(options.hiddenId,EscapeWorld.chapters):options.challengeId?!escapeProgress.challengeUnlocked(options.challengeId):!escapeProgress.unlocked(options.levelId||'quiet-vault')){showEscapeSelect();return;}
   // Now and then (about one escape in four, never in a challenge) glow bugs drift about as a bonus.
   if(options.glowbugs===undefined&&!options.challengeId&&!options.custom&&Math.random()<ESCAPE_GLOWBUG_CHANCE)options={...options,glowbugs:1+Math.floor(Math.random()*1e6)};
@@ -233,9 +234,12 @@ function useEscapeLook(){if(gameState==='escape'&&!paused&&escapeGame){escapeGam
 function useEscapeSeed(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.plantSeed();renderEscapeHUD(true);}}
 function escapeKeyPressed(){
   const k=String(key).toLowerCase();
+  if(gameState==='escape'&&escapeMoment&&!escapeResultShown){skipEscapeMoment(k);return;}
+  // A quick restart from the pause menu: R starts the escape again at once.
+  if(gameState==='escape'&&paused&&k==='r'){escapeRestart();return;}
   if(gameState==='escapeSelect'&&!escapeLibraryOpen&&(k==='r'||k==='t')){if(escapeWorld?.tongue())escapeSound('tongue');return;}
   if(gameState==='escapeSelect'){if(!escapeLibraryOpen&&(keyCode===13||k==='enter')&&document.activeElement?.tagName!=='BUTTON')enterEscapeWorld();return;}
-  if(gameState==='escapeResult'&&k==='r'){startEscape({...escapeOptions,skipIntro:true});return;}
+  if(gameState==='escapeResult'&&k==='r'){startEscape({...escapeOptions,skipIntro:true,quick:true});return;}
   if(gameState==='escape'&&k==='g'){toggleEscapeMap();return;}
   if(gameState!=='escape'||paused)return;
   if(escapeIntroOpen){if(k==='h'&&revealEscapeHint())return;hideEscapeIntro();return;}
@@ -288,13 +292,13 @@ function playEscape(){
   const open=escapeGame.hasKey&&escapeGame.treasure>=escapeGame.requiredTreasure;
   if(open&&!escapeHatchCued&&escapeGame.requiredTreasure>0){escapeHatchCued=true;if(!events.includes('key'))escapeMusic?.cue('hatch');}
   if(!open)escapeHatchCued=false;
-  if(gameState==='escape'&&!paused){escapeFootsteps(escapeGame.player);tickEscapeFx(escapeGame);}
+  if(gameState==='escape'&&!paused){if(escapeGame.status==='playing')escapeFootsteps(escapeGame.player);tickEscapeFx(escapeGame);escapeShakeFor(events);}
   if(mobile&&typeof EscapeFeel!=='undefined'&&events.length)EscapeFeel.buzz(events);
-  drawEscapeVault();renderEscapeHUD();
+  drawEscapeVault();drawEscapeMoment();drawEscapeCurtain();renderEscapeHUD();
   // A creature met for the first time joins the bestiary, with a short note at the top.
   if(escapeGame.met&&escapeGame.met.size!==escapeMetCount&&!escapeGame.level.custom){escapeMetCount=escapeGame.met.size;const fresh=escapeProgress.meet([...escapeGame.met]);const first=fresh.map(k=>EscapeBestiary.byKind(k)).find(Boolean);if(first)escapeBestiaryNote={text:'📖 New in the bestiary: '+first.name,until:millis()+3500};}
   if(escapeBestiaryNote&&millis()<escapeBestiaryNote.until){push();textAlign(CENTER,CENTER);const size=width<600?13:16;textSize(size);const w=escapeBestiaryNote.text.length*size*.56+28,a=Math.min(1,(escapeBestiaryNote.until-millis())/600);noStroke();fill(20,44,40,220*a);rect(width/2-w/2,54,w,32,16);fill(255,236,170,255*a);text(escapeBestiaryNote.text,width/2,70);pop();}
-  if(escapeGame.status!=='playing' && !escapeResultShown)showEscapeResult();
+  if(escapeGame.status!=='playing'&&!escapeResultShown){if(!escapeMoment)startEscapeMoment(escapeGame);else if(millis()-escapeMoment.at>=escapeMoment.hold)showEscapeResult();}
 }
 function renderEscapeHUD(force=false){
   if(!escapeGame||(!force&&gameNow()-escapeHudAt<100))return;escapeHudAt=gameNow();
@@ -354,7 +358,12 @@ function showEscapeResult(){
   const best=!r.challengeId&&escapeProgress.data.levels[r.levelId];
   document.getElementById('escape-result-summary').textContent=won?rating+tailNote+' Treasure '+r.treasure+' / '+r.totalTreasure+' · '+r.time.toFixed(1)+'s':r.message+tailNote;
   if(r.glowbugs)document.getElementById('escape-result-summary').textContent+=' · ✦ '+r.glowbugs+' glow bug'+(r.glowbugs>1?'s':'')+' caught';
-  document.getElementById('escape-result-medals').textContent=won?(r.challengeId?'✓ '+escapeGame.challenge.name:'★'.repeat(r.stars)+'☆'.repeat(3-r.stars)+' · ✓ Escape · '+(r.treasure>=Math.ceil(r.totalTreasure*.6)?'✓':'○')+' Collect '+Math.ceil(r.totalTreasure*.6)+'+ treasure · '+(r.alarms===0&&r.hasTail!==false?'✓':'○')+' No alarm'+(r.hasTail===false?' · tail lost':'')+(firstTry?' · ✓ First try bonus':'')):(best?'Your best here: '+escapeRecordSummary(escapeGame.level,best)+'.':'Every attempt teaches a new route.');
+  document.getElementById('escape-result-medals').textContent=won?(r.challengeId?'✓ '+escapeGame.challenge.name:' · ✓ Escape · '+(r.treasure>=Math.ceil(r.totalTreasure*.6)?'✓':'○')+' Collect '+Math.ceil(r.totalTreasure*.6)+'+ treasure · '+(r.alarms===0&&r.hasTail!==false?'✓':'○')+' No alarm'+(r.hasTail===false?' · tail lost':'')+(firstTry?' · ✓ First try bonus':'')):(best?'Your best here: '+escapeRecordSummary(escapeGame.level,best)+'.':'Every attempt teaches a new route.');
+  // The stars pop in one at a time, each with a chime that climbs.
+  if(won&&!r.challengeId){const medals=document.getElementById('escape-result-medals'),row=document.createElement('span');row.className='escape-stars';
+    for(let i=0;i<3;i++){const star=document.createElement('span');star.className=i<r.stars?'star-pop':'star-pop star-empty';star.style.animationDelay=(.25+i*.3)+'s';star.textContent=i<r.stars?'★':'☆';row.appendChild(star);
+      if(i<r.stars&&typeof setTimeout==='function')setTimeout(()=>{if(gameState==='escapeResult')escapeSound('ping',{gain:.8+i*.2});},250+i*300);}
+    medals.prepend?.(row);}
   const next=escapeGame.level.hidden||escapeGame.level.custom?null:EscapeCatalog.levels[EscapeCatalog.levels.indexOf(escapeGame.level)+1],nextButton=document.getElementById('escape-next-btn');
   // Point at any challenge this win opened, so it is not missed on the map.
   const opened=won?escapeProgress.announceChallenges():[],openedText=opened.map(c=>c.name+(c.levelId===r.levelId?'':' ('+EscapeCatalog.levels.find(l=>l.id===c.levelId).name+')')).join(', ');
@@ -369,7 +378,7 @@ function showEscapeResult(){
   nextButton.onclick=next?()=>startEscape({levelId:next.id}):community?()=>openEscapeCommunity():escapeGame.level.custom?()=>openEscapeBuilder():showEscapeSelect;
   if(escapeGame.level.custom){nextButton.style.display='inline-block';nextButton.textContent=community?'Back to community levels':'Back to the builder';}
   document.getElementById('escape-result').style.display='block';
-  document.getElementById('escape-retry-btn').onclick=()=>startEscape({...escapeOptions,skipIntro:true});
+  document.getElementById('escape-retry-btn').onclick=()=>startEscape({...escapeOptions,skipIntro:true,quick:true});
   document.getElementById('escape-retry-btn').className=won&&!r.challengeId?'escape-secondary':'escape-primary';
   document.getElementById('escape-menu-btn').onclick=showEscapeSelect;document.getElementById('escape-menu-btn').textContent='Explore the world';document.getElementById('escape-menu-btn').className=won?'escape-primary':'escape-secondary';
   (won&&!r.challengeId?nextButton:document.getElementById('escape-retry-btn')).focus();renderEscapeHUD(true);
@@ -414,23 +423,87 @@ function escapeFootsteps(p){
   if(escapeStepDistance>=(p.sprinting?.62:p.crawling?.7:.48)){escapeStepDistance=0;escapeStepAlt=!escapeStepAlt;
     const surface=typeof EscapeFeel!=='undefined'?EscapeFeel.surface(escapeGame):'floor';
     escapeSound(p.swimming?'paddle':p.crawling?'crawl':'step',{sprint:p.sprinting,alt:escapeStepAlt,surface});
-    if(typeof EscapeFeel!=='undefined'&&!p.swimming&&!p.crawling)EscapeFeel.step(escapeFx,escapeGame,{t:escapeGame.elapsed,sprint:p.sprinting,alt:escapeStepAlt});}
+    if(typeof EscapeFeel!=='undefined'&&!p.swimming&&!p.crawling)EscapeFeel.step(escapeFx,escapeGame,{t:escapeFxClock,sprint:p.sprinting,alt:escapeStepAlt});}
 }
 // Feel: footprints, dust, leaves, sparks and noise rings, kept in one small pool per run. Rings
 // show how far a noise carries, so they stay on in Simple lighting; the rest is Full only.
 const escapeFx=typeof EscapeFeel!=='undefined'?new EscapeFeel.Particles():{items:[],add(){},update(){},clear(){}};
-let escapeFxDecoy=null;
+let escapeFxDecoy=null,escapeFxClock=0;
 function tickEscapeFx(g){
-  escapeFx.update(g.elapsed,deltaTime/1000);
-  if(g.decoy&&g.decoy!==escapeFxDecoy&&typeof EscapeFeel!=='undefined')EscapeFeel.land(escapeFx,g.decoy,g.elapsed);escapeFxDecoy=g.decoy;
+  escapeFxClock+=Math.min(.1,deltaTime/1000);escapeFx.update(escapeFxClock,deltaTime/1000);
+  if(g.decoy&&g.decoy!==escapeFxDecoy&&typeof EscapeFeel!=='undefined')EscapeFeel.land(escapeFx,g.decoy,escapeFxClock);escapeFxDecoy=g.decoy;
+}
+// Big moments. A catch freezes the scene for a beat (the hunters stop where they struck), the
+// camera leans in and "Caught!" pops up; an escape bursts with sparks and leaves before the results.
+// Any key skips ahead, and R goes straight to another try.
+let escapeMoment=null;
+if(typeof document!=='undefined')document.addEventListener('pointerdown',()=>{if(gameState==='escape'&&escapeMoment&&!escapeResultShown)skipEscapeMoment('');});
+const escapeReducedMotion=()=>typeof window!=='undefined'&&Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
+function startEscapeMoment(g){
+  const won=g.status==='won';escapeMoment={kind:g.status,at:millis(),hold:won?1150:850};
+  if(won&&typeof EscapeFeel!=='undefined'){const p=g.player;for(let i=0;i<22;i++){const a=i/22*Math.PI*2;escapeFx.add(i%3?'spark':'leaf',p.x,p.y,{t:escapeFxClock,life:1.1,size:i%3?.09:.12,vx:Math.cos(a)*(2+i%4),vy:Math.sin(a)*(2+i%4)-1.5,angle:a,spin:5,color:i%3?[255,226,140]:[150,200,110]});}}
+  else escapeShake(7,300);
+}
+function skipEscapeMoment(k){
+  if(!escapeMoment||escapeResultShown)return false;
+  if(k==='r'&&escapeMoment.kind!=='won'){startEscape({...escapeOptions,skipIntro:true,quick:true});return true;}
+  showEscapeResult();return true;
+}
+function drawEscapeMoment(){
+  if(!escapeMoment||escapeResultShown)return;const t=(millis()-escapeMoment.at)/1000,won=escapeMoment.kind==='won',fade=Math.max(0,1-t/(escapeMoment.hold/1000));
+  push();noStroke();
+  if(!won){const ctx=drawingContext,grad=ctx.createRadialGradient?.(width/2,height/2,Math.min(width,height)*.25,width/2,height/2,Math.max(width,height)*.7);
+    if(grad){grad.addColorStop(0,'rgba(120,20,20,0)');grad.addColorStop(1,'rgba(150,30,30,'+(.45*fade).toFixed(3)+')');ctx.fillStyle=grad;ctx.fillRect(0,0,width,height);}}
+  const grow=t<.16?t/.16*1.25:Math.max(1,1.25-(t-.16)*1.6),size=Math.min(64,width/9)*grow;
+  textAlign(CENTER,CENTER);textStyle(BOLD);textSize(size);fill(20,30,30,200*Math.min(1,fade*3));text(won?'Escaped!':escapeMoment.kind==='failed'?'Missed!':'Caught!',width/2+3,height*.36+3);
+  fill(...(won?[255,226,140]:[255,170,150]),255*Math.min(1,fade*3));text(won?'Escaped!':escapeMoment.kind==='failed'?'Missed!':'Caught!',width/2,height*.36);
+  if(!won){textStyle(NORMAL);textSize(Math.max(13,size*.24));fill(236,240,226,210*Math.min(1,fade*3));text(mobile?'Tap to continue':'R to try again · any key to continue',width/2,height*.36+size*.75);}
+  textStyle(NORMAL);pop();
+}
+// The camera leans a little ahead of Sally as she moves, pulls back when a hunter gives chase,
+// leans in on a catch, and shakes for a beetle's crash, thunder or a catch (never with reduced motion).
+let escapeCam={g:null,lx:0,ly:0,zoom:1,shakeUntil:0,shakeFor:1,shakeAmp:0};
+function escapeShake(amp,ms){if(escapeReducedMotion())return;if(millis()+ms>escapeCam.shakeUntil||amp>escapeCam.shakeAmp){escapeCam.shakeAmp=amp;escapeCam.shakeFor=ms;escapeCam.shakeUntil=millis()+ms;}}
+function escapeShakeFor(events){if(events.includes('thunder'))escapeShake(5,450);else if(events.some(e=>e==='clash'||e==='smash'||e==='rumble'))escapeShake(3.5,250);}
+function escapeCameraMotion(view,g,w,h){
+  const dt=Math.min(.05,(deltaTime||16)/1000),k=1-Math.exp(-dt*3);if(escapeCam.g!==g){escapeCam.g=g;escapeCam.lx=escapeCam.ly=0;escapeCam.zoom=1;}
+  const p=g.player,chasing=g.status==='playing'&&g.hunters.some(q=>q.state==='chase'&&Math.hypot(q.x-p.x,q.y-p.y)<10);
+  if(view.follow&&!escapeReducedMotion()){
+    const lead=p.moving&&g.status==='playing'?(p.sprinting?1.6:.9):0;escapeCam.lx+=((p.facing?.x||0)*lead-escapeCam.lx)*k;escapeCam.ly+=((p.facing?.y||0)*lead-escapeCam.ly)*k;
+    escapeCam.zoom+=((escapeMoment&&escapeMoment.kind!=='won'?1.1:chasing?.86:1)-escapeCam.zoom)*k;
+    const clamp=(n,a,b)=>b<a?(a+b)/2:Math.max(a,Math.min(b,n)),cell=view.cell*escapeCam.zoom;
+    const cx=clamp((w/2-view.ox)/view.cell+escapeCam.lx,w/(2*cell),g.width-w/(2*cell)),cy=clamp((h/2-view.oy)/view.cell+escapeCam.ly,h/(2*cell),g.height-h/(2*cell));
+    view.cell=cell;view.ox=w/2-cx*cell;view.oy=h/2-cy*cell;
+  }
+  if(millis()<escapeCam.shakeUntil){const a=escapeCam.shakeAmp*(escapeCam.shakeUntil-millis())/escapeCam.shakeFor;view.ox+=(Math.random()-.5)*2*a;view.oy+=(Math.random()-.5)*2*a;}
+}
+// Into an escape: two leafy curtains part from the middle (quicker on a retry).
+let escapeCurtain=null;
+function drawEscapeCurtain(){
+  if(!escapeCurtain)return;const t=(millis()-escapeCurtain.at)/escapeCurtain.ms;if(t>=1||escapeReducedMotion()){escapeCurtain=null;return;}
+  const open=1-Math.pow(1-t,3),half=width/2*(1-open);push();noStroke();
+  for(const side of [-1,1]){const edge=side<0?half:width-half;fill(22,44,34);rect(side<0?0:edge,0,half,height);
+    fill(58,96,62);for(let y=-20;y<height+40;y+=34){const wob=Math.sin(y*.05+escapeCurtain.seed)*8;push();translate(edge+wob*side,y);rotate(side*(.6+Math.sin(y)*.2));ellipse(0,0,46,20);pop();}}
+  pop();
+}
+// The mark over a hunter: "?" while it is unsure, with a ring filling as it grows surer, then a
+// "!" that pops when it gives chase; a note while it chases a pebble; dots while it searches.
+const escapeMarkPops=new WeakMap();
+function escapeHunterMark(h,cell,g){
+  const mark=h.state==='alert'?'?':['chase','windup','charge','sting','leap','glimmer','swoop','reveal','lunge','snap','peek','scuttle','aim','raise','stir','surface','ripple'].includes(h.state)?'!':h.state==='decoy'?'♪':'…';
+  let seen=escapeMarkPops.get(h);if(!seen||seen.mark!==mark){seen={mark,at:escapeFxClock};escapeMarkPops.set(h,seen);}
+  const age=escapeFxClock-seen.at,scale=mark==='!'&&age<.3?1+.6*Math.sin(Math.min(1,age/.3)*Math.PI):1,y=(h.y-.65)*cell;
+  if(mark==='?'&&h.awareness>0){noFill();stroke(255,214,133,90);strokeWeight(Math.max(1.5,cell*.06));ellipse(h.x*cell,y,cell*.62,cell*.62);
+    stroke(255,Math.round(214-90*h.awareness),Math.round(133-70*h.awareness),230);arc(h.x*cell,y,cell*.62,cell*.62,-HALF_PI,-HALF_PI+TWO_PI*h.awareness);}
+  noStroke();fill(...(h.state==='decoy'?[195,182,255]:mark==='!'?[255,170,96]:[255,214,133]));textSize(cell*.65*scale);text(mark,h.x*cell,y);
 }
 function drawEscapePrints(g,cell){
   if(!escapeLightingFull())return;noStroke();
-  for(const p of escapeFx.items){if(p.kind!=='print')continue;const k=1-(g.elapsed-p.born)/p.life;push();translate(p.x*cell,p.y*cell);rotate(p.angle);fill(...p.color,110*k);ellipse(0,0,cell*p.size*1.5,cell*p.size);pop();}
+  for(const p of escapeFx.items){if(p.kind!=='print')continue;const k=1-(escapeFxClock-p.born)/p.life;push();translate(p.x*cell,p.y*cell);rotate(p.angle);fill(...p.color,110*k);ellipse(0,0,cell*p.size*1.5,cell*p.size);pop();}
 }
 function drawEscapeFx(g,cell){
   const full=escapeLightingFull();
-  for(const p of escapeFx.items){const age=g.elapsed-p.born,k=Math.max(0,1-age/p.life);
+  for(const p of escapeFx.items){const age=escapeFxClock-p.born,k=Math.max(0,1-age/p.life);
     if(p.kind==='ring'){noFill();stroke(...p.color,150*k);strokeWeight(Math.max(1,cell*.035));const r=p.r*cell*(.25+.75*Math.min(1,age/p.life*1.6));ellipse(p.x*cell,p.y*cell,r*2,r*2);continue;}
     if(!full||p.kind==='print')continue;noStroke();
     if(p.kind==='dust'){fill(...p.color,120*k);ellipse(p.x*cell,p.y*cell,cell*p.size*(1+age*2),cell*p.size*(1+age*2));}
@@ -588,7 +661,7 @@ function drawEscapeLightningShadows(g,cell){
     quad(x*cell,(y+1)*cell,(x+1)*cell,(y+1)*cell,(x+1+dx)*cell,(y+1+dy)*cell,(x+dx)*cell,(y+1+dy)*cell);quad((x+1)*cell,y*cell,(x+1)*cell,(y+1)*cell,(x+1+dx)*cell,(y+1+dy)*cell,(x+1+dx)*cell,(y+dy)*cell);}
 }
 function drawEscapeVault(){
-  const g=escapeGame,close=mobile&&escapeCloseView(),top=mobile?(close?8:45):height<=550?126:164,bottom=mobile?(close?8:65):70,view=escapeCameraFor(g,width,height-top-bottom,escapeProgress.data.view==='overview',close);view.oy+=top;const {cell,ox,oy}=view;
+  const g=escapeGame,close=mobile&&escapeCloseView(),top=mobile?(close?8:45):height<=550?126:164,bottom=mobile?(close?8:65):70,view=escapeCameraFor(g,width,height-top-bottom,escapeProgress.data.view==='overview',close);escapeCameraMotion(view,g,width,height-top-bottom);view.oy+=top;const {cell,ox,oy}=view;
   const palettes=[[[16,30,36],[39,65,74],[65,93,101]],[[19,34,29],[48,74,56],[78,103,76]],[[33,29,26],[77,63,48],[108,89,66]],[[21,28,37],[46,61,80],[75,91,109]],[[22,24,41],[54,57,85],[86,89,124]],[[14,31,26],[38,68,49],[58,92,66]],[[34,29,20],[80,67,39],[123,102,60]],[[16,30,39],[34,61,73],[55,90,103]],[[26,22,37],[62,48,76],[100,81,116]]];
   const index=EscapeCatalog.levels.indexOf(g.level),deepPalettes=[[[21,30,26],[53,75,58],[94,112,79]],[[22,29,35],[51,69,82],[91,111,124]],[[35,27,24],[80,58,45],[125,91,63]],[[27,23,38],[66,51,82],[103,82,125]],[[29,27,20],[75,68,39],[118,106,62]],[[32,27,20],[82,65,40],[132,108,65]]];
   const wakingPalettes=[[[14,32,28],[47,76,52],[87,113,73]],[[25,19,35],[62,49,75],[103,81,127]],[[19,31,43],[58,80,92],[96,123,141]],[[33,24,23],[79,65,57],[121,101,81]],[[29,22,36],[72,56,91],[118,91,141]]];
@@ -733,7 +806,7 @@ function drawEscapeVault(){
   if(g.hawk)drawEscapeHawk(g.hawk,cell,g.elapsed);
   for(const h of g.hunters)if(h.kind==='cloudray')drawEscapeCloudRay(h,cell,g.elapsed);
   if(g.player.frozenUntil>g.elapsed){const p=g.player,k=Math.min(1,(g.player.frozenUntil-g.elapsed)/1.6);noStroke();fill(200,236,250,120*k);ellipse(p.x*cell,p.y*cell,cell*.9,cell*.9);stroke(235,250,255,200*k);strokeWeight(Math.max(1,cell*.035));for(let a=0;a<6;a++){const r=a*Math.PI/3;line(p.x*cell,p.y*cell,(p.x+Math.cos(r)*.45)*cell,(p.y+Math.sin(r)*.45)*cell);}}
-  for(const h of g.hunters)if(h.kind!=='millipede'&&h.state!=='rooted'&&h.state!=='patrol'&&!(['angler','flytrap'].includes(h.kind)&&h.state!=='snap')&&!(h.kind==='heron'&&h.state!=='aim')&&!(h.kind==='mantis'&&h.state!=='raise')&&!(h.kind==='wasp'&&h.state!=='stir')&&h.kind!=='dragonfly'&&h.kind!=='cloudray'&&h.kind!=='sentinel'&&!(h.kind==='mole'&&h.state!=='surface')&&!(h.kind==='bat'&&h.state!=='dive')&&!(h.kind==='eel'&&h.state!=='ripple')&&!(h.kind==='crab'&&!['peek','scuttle'].includes(h.state))&&h.kind!=='fox'&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))){fill(h.state==='decoy'?195:255, h.state==='decoy'?182:214, h.state==='decoy'?255:133);noStroke();textSize(cell*.65);text(h.state==='alert'?'?':['chase','windup','charge','sting','leap','glimmer','swoop','reveal','lunge','snap','peek','scuttle','aim','raise','stir','surface','ripple'].includes(h.state)?'!':h.state==='decoy'?'♪':'…',h.x*cell,(h.y-.65)*cell);}
+  for(const h of g.hunters)if(h.kind!=='millipede'&&h.state!=='rooted'&&h.state!=='patrol'&&!(['angler','flytrap'].includes(h.kind)&&h.state!=='snap')&&!(h.kind==='heron'&&h.state!=='aim')&&!(h.kind==='mantis'&&h.state!=='raise')&&!(h.kind==='wasp'&&h.state!=='stir')&&h.kind!=='dragonfly'&&h.kind!=='cloudray'&&h.kind!=='sentinel'&&!(h.kind==='mole'&&h.state!=='surface')&&!(h.kind==='bat'&&h.state!=='dive')&&!(h.kind==='eel'&&h.state!=='ripple')&&!(h.kind==='crab'&&!['peek','scuttle'].includes(h.state))&&h.kind!=='fox'&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y))))escapeHunterMark(h,cell,g);
   drawEscapeFx(g,cell);
   const place=escapePlace(g.level),mood=place?EscapeLighting.moodFor(place.key,place.step):null;
   drawEscapeLights(g,cell,mood);
