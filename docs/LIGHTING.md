@@ -1,0 +1,32 @@
+# Lighting
+
+Lighting is purely visual: what creatures see, and what Sally can see, is decided by the engine.
+`public/escape-lighting.js` holds the data; `escapescene.js` draws it.
+
+## Full and Simple
+
+**Lighting: Full / Simple** in the toolbar is saved per browser. Simple is the plain, flat look.
+Full drops to Simple on its own (shown as "Simple (auto)") if frames run slower than about 30 fps
+for three seconds, until the player picks again.
+
+## Darkness
+
+In fogged and dark levels, what Sally cannot see is darkened through a one-pixel-per-tile
+canvas scaled up smoothly, so darkness fades across tile edges instead of stepping. Remembered
+ground shows its layout, dimmed; creatures and objects out of sight are never drawn.
+
+## Light sources
+
+`lightSources(game)` lists what glows, each with a colour, a radius and a gentle flicker: glow
+plants and thrown glow mushrooms (cyan), moths (warm), anglers' lures, glow bugs, warm stones,
+active steam vents, the hatch once it is open, and in the dark a soft glow round Sally. Only
+sources the player can see glow. They are drawn additively before the darkness, full strength
+in fogged, dark and night areas and softer elsewhere.
+
+## Moods
+
+`MOODS` gives every area, secret spot, the Gilded Burrow, the bonus maze and the finale a mood:
+a soft-light colour **grade**, a time-of-day **wash** from one side (morning from the top in the
+meadow, an orange glow from below in the vents, a golden sunset over the Road Home that warms
+escape by escape), a **vignette**, and whether it is a **night** area (light sources glow
+brighter). Grades stay subtle (alpha under 0.4) so the play area always reads clearly.

@@ -245,6 +245,7 @@ function toggleEscapeMap(){
 function playEscape(){
   if(!escapeGame)return;
   escapeGame.paused=paused;
+  if(!paused&&gameState==='escape')escapeWatchFrameRate(deltaTime);
   if(escapeIntroOpen&&gameState==='escape'&&!paused){const m=escapeMovement();if(m.x||m.y)hideEscapeIntro();}
   if(gameState==='escape'&&!paused&&!skipSimulationFrame&&!escapeIntroOpen){
     let {x,y,sprint,crawl}=escapeMovement();
@@ -437,6 +438,58 @@ function drawEscapeTiles(g,cell,palette,index){
       noStroke();fill(22,99,121);rect(x*cell,y*cell,cell,cell);stroke(112,213,211,100);strokeWeight(cell*.035);const tide=Math.sin(g.elapsed*1.4+x*.5+y)*.05;for(const dy of [.3,.7])line((x+.15)*cell,(y+dy+tide)*cell,(x+.85)*cell,(y+dy-tide)*cell);
     }
 }
+// Lighting: Full (soft darkness, glowing light sources, each area's mood) or Simple (the plain,
+// flat look). Full drops to Simple by itself if the frame rate sags, until the player picks again.
+let escapeLightingMode='full',escapeLightingAuto=false,escapeFrameAvg=16,escapeSlowFrames=0,escapeFogCanvas=null;
+function escapeLightingFull(){return escapeLightingMode==='full'&&!escapeLightingAuto&&typeof document!=='undefined'&&Boolean(drawingContext?.createRadialGradient&&drawingContext.drawImage);}
+function escapeWatchFrameRate(dt){
+  if(escapeLightingMode!=='full'||escapeLightingAuto||!dt)return;escapeFrameAvg=escapeFrameAvg*.95+Math.min(100,dt)*.05;
+  escapeSlowFrames=escapeFrameAvg>30?escapeSlowFrames+1:0;if(escapeSlowFrames>180){escapeLightingAuto=true;updateToolbar();}
+}
+// Where a level sits, for its mood: its region (and how far into it), or a place of its own.
+function escapePlace(level){
+  if(!level||level.custom)return null;
+  if(level.secret)return {key:'secret:'+level.secret,step:0};
+  if(level.id==='the-long-way-home'||level.id==='home')return {key:'finale',step:0};
+  if(level.bonus)return {key:'hollow',step:0};if(level.hidden)return {key:'gilded',step:0};
+  const index=EscapeCatalog.levels.findIndex(l=>l.id===level.id),chapter=EscapeWorld.chapters.find(c=>index>=c.start&&index<c.end);
+  return chapter?{key:chapter.theme,step:index-chapter.start}:null;
+}
+// Light sources glow (additively) over the lit ground, before the darkness goes on top.
+function drawEscapeLights(g,cell,mood){
+  if(!escapeLightingFull())return;const strength=g.level.dark||g.level.explore||mood?.night?1:.55,ctx=drawingContext;ctx.save();ctx.globalCompositeOperation='lighter';
+  for(const s of EscapeLighting.lightSources(g)){const x=s.x*cell,y=s.y*cell,r=s.r*cell,[R,G,B]=s.color,a=s.alpha*strength,grad=ctx.createRadialGradient(x,y,0,x,y,r);
+    grad.addColorStop(0,'rgba('+R+','+G+','+B+','+a+')');grad.addColorStop(.45,'rgba('+R+','+G+','+B+','+a*.45+')');grad.addColorStop(1,'rgba('+R+','+G+','+B+',0)');ctx.fillStyle=grad;ctx.fillRect(x-r,y-r,r*2,r*2);}
+  ctx.restore();
+}
+// Darkness over what Sally cannot see. Simple: flat remembered tiles. Full: one pixel per tile,
+// scaled up smoothly, so darkness fades across tile edges instead of stepping. Either way memory
+// shows layout only; creatures and objects out of sight are never drawn.
+function drawEscapeFog(g,cell){
+  if(!escapeLightingFull()){
+    for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(!g.visibleTile(x,y)){
+      noStroke();const known=g.discovered.has(x+','+y);fill(...(known&&g.level.dark?[5,10,16]:known?(['P','U'].includes(g.grid[y][x])?[12,30,44]:g.floor(x,y)?[16,28,31]:[31,43,49]):[7,15,22]));rect(x*cell,y*cell,cell,cell);
+      if(known){stroke(23,34,40);strokeWeight(.6);noFill();rect(x*cell+1,y*cell+1,cell-2,cell-2);}
+    }
+    return;
+  }
+  const w=g.width,h=g.height;if(!escapeFogCanvas)escapeFogCanvas=document.createElement('canvas');if(escapeFogCanvas.width!==w||escapeFogCanvas.height!==h){escapeFogCanvas.width=w;escapeFogCanvas.height=h;}
+  const c=escapeFogCanvas.getContext('2d'),img=c.createImageData(w,h),d=img.data,dark=g.level.dark;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;if(g.visibleTile(x,y)){d[i+3]=0;continue;}
+    const known=g.discovered.has(x+','+y),[r,gr,b,a]=known?(dark?[4,8,14,236]:[8,16,22,172]):[6,12,18,255];d[i]=r;d[i+1]=gr;d[i+2]=b;d[i+3]=a;}
+  c.putImageData(img,0,0);const ctx=drawingContext;ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(escapeFogCanvas,0,0,w*cell,h*cell);ctx.restore();
+}
+// The area's mood over the whole view: a soft-light colour grade, a time-of-day wash from one
+// side, and a vignette.
+function drawEscapeGrade(mood){
+  if(!mood||!escapeLightingFull())return;const ctx=drawingContext,W=width,H=height;ctx.save();
+  const [r,gr,b,a]=mood.grade;ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba('+r+','+gr+','+b+','+Math.min(1,a*2)+')';ctx.fillRect(0,0,W,H);
+  if(mood.wash){const w=mood.wash,[wr,wg,wb]=w.color,grad=w.from==='left'?ctx.createLinearGradient(0,0,W*.8,0):w.from==='bottom'?ctx.createLinearGradient(0,H,0,H*.25):ctx.createLinearGradient(0,0,0,H*.75);
+    grad.addColorStop(0,'rgba('+wr+','+wg+','+wb+','+Math.min(1,w.alpha*2)+')');grad.addColorStop(1,'rgba('+wr+','+wg+','+wb+',0)');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);}
+  ctx.globalCompositeOperation='source-over';
+  if(mood.vignette){const grad=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.hypot(W,H)*.55);grad.addColorStop(0,'rgba(0,0,0,0)');grad.addColorStop(1,'rgba(0,0,0,'+(mood.vignette*.55)+')');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);}
+  ctx.restore();
+}
 function drawEscapeVault(){
   const g=escapeGame,close=mobile&&escapeCloseView(),top=mobile?(close?8:45):height<=550?126:164,bottom=mobile?(close?8:65):70,view=escapeCameraFor(g,width,height-top-bottom,escapeProgress.data.view==='overview',close);view.oy+=top;const {cell,ox,oy}=view;
   const palettes=[[[16,30,36],[39,65,74],[65,93,101]],[[19,34,29],[48,74,56],[78,103,76]],[[33,29,26],[77,63,48],[108,89,66]],[[21,28,37],[46,61,80],[75,91,109]],[[22,24,41],[54,57,85],[86,89,124]],[[14,31,26],[38,68,49],[58,92,66]],[[34,29,20],[80,67,39],[123,102,60]],[[16,30,39],[34,61,73],[55,90,103]],[[26,22,37],[62,48,76],[100,81,116]]];
@@ -580,13 +633,11 @@ function drawEscapeVault(){
   if(g.hawk)drawEscapeHawk(g.hawk,cell,g.elapsed);
   for(const h of g.hunters)if(h.kind!=='millipede'&&h.state!=='rooted'&&h.state!=='patrol'&&!(['angler','flytrap'].includes(h.kind)&&h.state!=='snap')&&!(h.kind==='heron'&&h.state!=='aim')&&!(h.kind==='mantis'&&h.state!=='raise')&&!(h.kind==='wasp'&&h.state!=='stir')&&h.kind!=='dragonfly'&&!(h.kind==='mole'&&h.state!=='surface')&&!(h.kind==='bat'&&h.state!=='dive')&&!(h.kind==='eel'&&h.state!=='ripple')&&!(h.kind==='crab'&&!['peek','scuttle'].includes(h.state))&&h.kind!=='fox'&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))){fill(h.state==='decoy'?195:255, h.state==='decoy'?182:214, h.state==='decoy'?255:133);noStroke();textSize(cell*.65);text(h.state==='alert'?'?':['chase','windup','charge','sting','leap','glimmer','swoop','reveal','lunge','snap','peek','scuttle','aim','raise','stir','surface','ripple'].includes(h.state)?'!':h.state==='decoy'?'♪':'…',h.x*cell,(h.y-.65)*cell);}
   if(g.player.noisy&&!g.player.sprinting){noFill();stroke(221,195,149,80);strokeWeight(1);const pulse=(g.elapsed%.6)/.6;ellipse(g.player.x*cell,g.player.y*cell,cell*(.55+pulse),cell*(.55+pulse));}
-  // Opaque remembered terrain hides creatures and objects outside current
-  // sight. Memory shows layout; it never reports hidden enemy positions.
-  if(view.follow)for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(!g.visibleTile(x,y)){
-    noStroke();const known=g.discovered.has(x+','+y);fill(...(known&&g.level.dark?[5,10,16]:known?(['P','U'].includes(g.grid[y][x])?[12,30,44]:g.floor(x,y)?[16,28,31]:[31,43,49]):[7,15,22]));rect(x*cell,y*cell,cell,cell);
-    if(known){stroke(23,34,40);strokeWeight(.6);noFill();rect(x*cell+1,y*cell+1,cell-2,cell-2);}
-  }
+  const place=escapePlace(g.level),mood=place?EscapeLighting.moodFor(place.key,place.step):null;
+  drawEscapeLights(g,cell,mood);
+  if(view.follow)drawEscapeFog(g,cell);
   pop();
+  drawEscapeGrade(mood);
   // Storm: the sky darkens while thunder rumbles, then a white flash lights everything for a moment.
   if(g.storm){const toFlash=g.storm.nextAt-g.elapsed;if(toFlash<g.storm.warn){noStroke();fill(10,14,30,90*(1-toFlash/g.storm.warn));rect(0,0,width,height);}
     if(g.elapsed<g.flashUntil){noStroke();fill(235,240,255,170*(g.flashUntil-g.elapsed)/.4);rect(0,0,width,height);}}
