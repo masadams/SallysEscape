@@ -53,8 +53,8 @@
     scuttle:{filter:'bandpass',freq:3000,q:3,rate:11,depth:.6,gain:.35},
     hum:{tone:[55,110],gain:.25}
   };
-  // Weather beds: heard on the world map (a touch under their full level), never inside an escape.
-  const WEATHER=new Set(['breeze','wind','hotwind','icewind','rain','surf']),WEATHER_TRIM=.88;
+  // Weather beds: heard on the world map (at under half their full level), never inside an escape.
+  const WEATHER=new Set(['breeze','wind','hotwind','icewind','rain','surf']),WEATHER_TRIM=.44;
   // What a scape sounds like on the map ('world') or inside an escape ('level').
   function scapeFor(key,place='world'){
     const s=SCAPES[key];if(!s)return null;

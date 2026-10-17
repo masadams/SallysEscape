@@ -58,7 +58,7 @@ test('the weather stays on the world map: inside an escape only the place\'s own
   for(const key of Object.keys(SCAPES)){const level=scapeFor(key,'level'),world=scapeFor(key,'world');
     assert.ok(level.beds.every(([k])=>!WEATHER.has(k)),key+' has no weather in an escape');
     assert.equal(level.calls.length,SCAPES[key].calls.length,key+' keeps its calls');
-    for(const [k,l] of world.beds){const base=SCAPES[key].beds.find(b=>b[0]===k)[1];assert.ok(WEATHER.has(k)?l<base*.9&&l>base*.85:l===base,key+' '+k);}}
+    for(const [k,l] of world.beds){const base=SCAPES[key].beds.find(b=>b[0]===k)[1];assert.ok(WEATHER.has(k)?l<base*.46&&l>base*.42:l===base,key+' '+k);}}
   assert.equal(scapeFor('storm','level').beds.length,0,'no rain or wind inside a storm escape');
   const a=new EscapeAmbience();a.start(fakeContext());assert.equal(a.setScape('storm','world'),true);assert.equal(a.setScape('storm','level'),true,'entering an escape switches the scape');
   assert.equal(a.setScape('storm','level'),false);
