@@ -100,9 +100,10 @@ function escapeResourcePips(left,total){
 function renderEscapeAbility(button,kind,label,key,left,total,ready=true,active=false){
   const description=label+(total===null?'':': '+left+' remaining')+(active?' · Active':!left&&total!==null?' · Empty':!ready?' · Recharging':'')+(key?' ['+key+']':'');
   const markup=escapeAbilityIcon(kind)+'<span class="escape-ability-name">'+label+'</span>'+(total===null?'<span class="escape-ability-state">'+(active?'Active':'Ready')+'</span>':escapeResourcePips(left,total))+(key?'<kbd>'+key+'</kbd>':'');
-  if(button.innerHTML!==markup)button.innerHTML=markup;
+  // Compare with what was last written: reading innerHTML back serialises the button every time.
+  if(button._markup!==markup){button.innerHTML=markup;button._markup=markup;}
   const help={burrow:'Face a thin cracked wall to burrow through it.',decoy:'Hold to throw further; release to throw. While held, aim with the arrows or stick. Pebbles bank off walls and clack where they hit.',glow:'Hold to throw further; release to throw. It banks off walls and lights the ground where it lands for a while.',tongue:'Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.',seed:'Plant cover, brace an open doorway, or grow a marked vine crossing.',camo:'Blend into the ground while keeping still.',look:'Turn your gaze behind you briefly, even while moving.'};
-  button.setAttribute('aria-label',description);button.title=description+'. '+help[kind];
+  if(button._description!==description){button._description=description;button.setAttribute('aria-label',description);button.title=description+'. '+help[kind];}
   button.classList.toggle('escape-empty',total!==null&&!left&&!active);
   button.classList.toggle('escape-cooling',Boolean(left)&&!ready&&!active);
   button.classList.toggle('escape-ability-active',active);
@@ -431,7 +432,7 @@ function drawEscapeTiles(g,cell,palette,index){
   // Without a real p5 sketch (the test harness) the tiles are simply drawn every frame.
   if(!p5.instance?._renderer||!drawingContext.drawImage)drawEscapeStillTiles(g,cell,palette,index);
   else{if(escapeTileCache?.key!==key){
-    if(!escapeTileCache||escapeTileCache.w!==w||escapeTileCache.h!==h){escapeTileCache?.layer.remove();escapeTileCache={layer:createGraphics(w,h),w,h};}
+    if(!escapeTileCache||escapeTileCache.w!==w||escapeTileCache.h!==h||escapeTileCache.d!==pixelDensity()){escapeTileCache?.layer.remove();escapeTileCache={layer:createGraphics(w,h),w,h,d:pixelDensity()};}
     const layer=escapeTileCache.layer,host=p5.instance,renderer=host._renderer;layer.clear();
     // Point the drawing calls at the layer for one pass, then back at the screen.
     host._renderer=layer._renderer;try{push();drawEscapeStillTiles(g,cell,palette,index);pop();}finally{host._renderer=renderer;}
@@ -448,7 +449,9 @@ let escapeLightingMode='full',escapeLightingAuto=false,escapeFrameAvg=16,escapeS
 function escapeLightingFull(){return escapeLightingMode==='full'&&!escapeLightingAuto&&typeof document!=='undefined'&&Boolean(drawingContext?.createRadialGradient&&drawingContext.drawImage);}
 function escapeWatchFrameRate(dt){
   if(escapeLightingMode!=='full'||escapeLightingAuto||!dt)return;escapeFrameAvg=escapeFrameAvg*.95+Math.min(100,dt)*.05;
-  escapeSlowFrames=escapeFrameAvg>30?escapeSlowFrames+1:0;if(escapeSlowFrames>180){escapeLightingAuto=true;updateToolbar();}
+  // Three seconds of slow frames steps quality down: sharpness first (2× to 1.5× to 1×), then Simple lighting.
+  escapeSlowFrames=escapeFrameAvg>30?escapeSlowFrames+Math.min(100,dt):0;if(escapeSlowFrames<3000)return;escapeSlowFrames=0;escapeFrameAvg=16;
+  const density=pixelDensity();if(density>1){pixelDensity(density>1.5?1.5:1);return;}escapeLightingAuto=true;updateToolbar();
 }
 // Where a level sits, for its mood: its region (and how far into it), or a place of its own.
 function escapePlace(level){
