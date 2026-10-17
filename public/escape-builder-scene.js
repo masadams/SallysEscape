@@ -105,6 +105,30 @@ async function openEscapeAdmin(message=''){
 // test-in-game switch swaps drafts in for their escapes here, and Export hands them over to be
 // brought into the game with scripts/apply-level-edits.cjs.
 let escapeBuilderWorkshop=null,escapeBuilderOwnModel=null;
+// Quick build: the settings stay put between builds, and the panel stays open while it is in use.
+let escapeQuickOptions={size:'medium',theme:'meadow',difficulty:2,feature:'',seed:0},escapeQuickOpen=false;
+function escapeQuickPanel(){
+  if(typeof EscapeQuickBuild==='undefined')return '';
+  const Q=EscapeQuickBuild,o=escapeQuickOptions,sel=(k,entries)=>'<select data-quick="'+k+'">'+entries.map(([v,l])=>'<option value="'+v+'"'+(String(o[k])===String(v)?' selected':'')+'>'+escapeHtml(l)+'</option>').join('')+'</select>';
+  return '<details class="builder-more" id="quick-panel"'+(escapeQuickOpen?' open':'')+'><summary>⚡ Quick build: a playable first draft to edit</summary><div class="builder-settings">'+
+    '<label>Size '+sel('size',Object.entries(Q.SIZES).map(([k,v])=>[k,v.name+' ('+v.w+'×'+v.h+')']))+'</label>'+
+    '<label>Theme '+sel('theme',Object.entries(Q.THEMES).map(([k,v])=>[k,v.name]))+'</label>'+
+    '<label>Difficulty '+sel('difficulty',Object.entries(Q.DIFFICULTY).map(([k,v])=>[k,v.name]))+'</label>'+
+    '<label>Featured creature '+sel('feature',[['','Any'],...Q.FEATURES.map(k=>[k,EscapeBuilder.ENEMIES[k]])])+'</label>'+
+    '<label>Seed <input type="number" min="1" max="999999" data-quick="seed" style="width:84px" value="'+(o.seed||'')+'" placeholder="any"></label>'+
+    '<button id="quick-build" class="escape-primary">Build</button><button id="quick-reroll" class="escape-secondary" title="Same settings, a new seed">🎲 Another one</button></div>'+
+    '<p class="builder-hint">Rooms, corridors with more than one way round, the key and hatch far from the start, ten treasure, leaves never far away and hunters to match. The same seed always builds the same level. It replaces what is in the builder; then move, add or remove anything.</p></details>';
+}
+function escapeQuickBuild(fresh){
+  const o=escapeQuickOptions,m=escapeBuilderModel,blank=EscapeBuilder.blank(m.map[0].length,m.map.length);
+  const edited=m.guards.length||m.doors.length||m.triggers.length||m.map.join('')!==blank.map.join('');
+  if(edited&&!escapeQuickBuild.ok&&typeof confirm==='function'&&!confirm('Replace the level in the builder with a quick build? Save it first if you want to keep it.'))return;
+  escapeQuickBuild.ok=true;if(fresh||!o.seed)o.seed=EscapeQuickBuild.newSeed();
+  const r=EscapeQuickBuild.generate(o);o.seed=r.seed;escapeQuickOpen=true;
+  escapeBuilderModel=r.model;escapeBuilderPick=null;escapeBuilderAnchor=null;
+  escapeBuilderNote=r.problems.length?'This draft has problems to fix: '+r.problems.join(' '):'Quick build, seed '+r.seed+': '+r.model.guards.length+' hunter'+(r.model.guards.length===1?'':'s')+'. Playtest it, then make it yours.';
+  renderEscapeBuilder();
+}
 function escapeLeaveWorkshop(){if(!escapeBuilderWorkshop)return;escapeBuilderWorkshop=null;escapeBuilderModel=escapeBuilderOwnModel;escapeBuilderOwnModel=null;escapeBuilderPick=null;}
 function escapeWorkshopLabel(key){const [kind,id]=key.split(':'),l=escapeGameLevel(key);if(!l)return key;return (kind==='hidden'?'★ ':(EscapeCatalog.levels.findIndex(x=>x.id===id)+1)+' · ')+l.name;}
 function escapeWorkshopEdit(key){
@@ -273,7 +297,7 @@ function renderEscapeBuilder(){
     '<span>Hazards</span>'+Object.entries(B.HAZARDS).map(([k,v])=>tool('haz:'+k,ESCAPE_BUILDER_HAZARD[k]+' '+v.split(' ').at(-1),v+(k==='vent'?' (place it in a wall)':k==='log'?' (click its start, then where it rolls to)':''))).join('')+
     '<span>Ground</span>'+tool('cold','❄ Cold','Cold ground chills Sally')+tool('warm','◍ Warm stone','A warm stone thaws Sally')+'</div>'+
     '<div class="builder-palette"><span>Extras</span>'+Object.entries(ESCAPE_BUILDER_EXTRAS).map(([k,[icon,title]])=>tool(k,icon+' '+title.split(':')[0],title)).join('')+'</div>'+
-    escapeBuilderSettings()+
+    (ws?'':escapeQuickPanel())+escapeBuilderSettings()+
     '<div class="builder-palette"><span>Tools</span>'+tool('select','☝ Select','Pick something to see and change its settings')+tool('link','🔗 Link','Click a trigger, the key or a chest, then click doors, bridges or enemies to link or unlink them')+
     tool('patrol','➜ Patrol','Click an enemy, then click the tiles it should walk to, in order')+tool('turn','↻ Turn','Turn an enemy or a vent a quarter turn')+tool('remove','✕ Remove','Remove an enemy, trigger, hazard, door tile or ground mark')+'</div>'+
     escapeBuilderInspector()+
@@ -406,6 +430,10 @@ function wireEscapeBuilder(){
       if(r.status===401){escapeAdminSignedIn=false;renderEscapeAdminLock({title:'Level builder',next:()=>openEscapeBuilder(),status:await escapeAdminStatus(),message:'Your admin session ended. Sign in again to publish; your level is kept.'});return;}
       b.textContent=r.ok?'Published ✓':'Could not publish';if(!r.ok&&body.error){escapeBuilderNote=body.error;rerender();}}
     catch(_){b.textContent='Could not reach the server';}};
+  for(const input of document.querySelectorAll('[data-quick]'))input.onchange=e=>{const k=e.target.dataset.quick;escapeQuickOptions[k]=k==='difficulty'||k==='seed'?Number(e.target.value)||0:e.target.value;};
+  if($('quick-panel'))$('quick-panel').ontoggle=e=>{escapeQuickOpen=e.target.open;};
+  if($('quick-build'))$('quick-build').onclick=()=>escapeQuickBuild(false);
+  if($('quick-reroll'))$('quick-reroll').onclick=()=>escapeQuickBuild(true);
   $('builder-new').onclick=()=>{escapeBuilderModel=B.blank();escapeBuilderPick=null;rerender();};
   $('builder-share').onclick=()=>{const t=$('builder-text');t.style.display='block';t.value=B.exportText(m);t.select();try{navigator.clipboard?.writeText(t.value);}catch(_){}};
   $('builder-import').onclick=()=>{const t=$('builder-text');if(t.style.display!=='block'||!t.value.trim()){t.style.display='block';t.value='';t.focus();return;}const level=B.importText(t.value);if(!level){t.value='';t.placeholder='That text is not a Sally level. Paste the whole line that starts with SALLY';return;}escapeBuilderModel=level;escapeBuilderPick=null;rerender();};
