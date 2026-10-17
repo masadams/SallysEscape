@@ -905,6 +905,7 @@ const ESCAPE_SKINS={
   ants:{name:'Fire ant',body:[188,58,42],dark:[64,16,12],light:[244,150,96],spot:[40,20,18]},
   frost:{name:'Snowdrift',body:[214,232,246],dark:[70,96,124],light:[255,255,255],spot:[140,180,214]},
   vents:{name:'Ember',body:[70,62,64],dark:[20,16,18],light:[255,150,70],spot:[240,96,40]},
+  moss:{name:'Old Moss',body:[96,140,70],dark:[34,52,30],light:[214,200,120],spot:[230,190,80]},
   home:{name:'Homecoming',body:[214,150,90],dark:[70,44,40],light:[255,226,170],spot:[120,90,150]},
   tide:{name:'Rockpool',body:[200,170,120],dark:[60,46,30],light:[150,230,230],spot:[240,110,90]},
   storm:{name:'Thundercloud',body:[96,108,124],dark:[30,34,44],light:[230,236,255],spot:[255,230,120]},
