@@ -511,11 +511,14 @@ function drawEscapePrints(g,cell){
 function drawEscapeFx(g,cell){
   const full=escapeLightingFull();
   for(const p of escapeFx.items){const age=escapeFxClock-p.born,k=Math.max(0,1-age/p.life);
-    // A noise ring: a faint line through the tips of its rays, easing out and fading. Where rays
-    // part (a wall between them, or a bounce) the line breaks instead of bridging the gap.
-    if(p.kind==='ring'){const f=Math.min(1,age/p.life),e=1-(1-f)*(1-f),fade=(1-f)*(1-f),n=p.rays?.length;if(!n)continue;
-      noFill();strokeWeight(Math.max(1,cell*.022));const at=ray=>ray[Math.min(ray.length-1,Math.round(e*(ray.length-1)))],gap=.8+e*p.r*.25;let prev=at(p.rays[n-1]);
-      for(let i=0;i<n;i++){const q=at(p.rays[i]);if(Math.abs(q[0]-prev[0])+Math.abs(q[1]-prev[1])<gap){stroke(...p.color,70*fade*Math.pow(.55,Math.max(q[2],prev[2])));line(prev[0]*cell,prev[1]*cell,q[0]*cell,q[1]*cell);}prev=q;}
+    // A noise ring: a soft shimmer through the tips of its rays, like a vibration in the air rather
+    // than a line, easing out and fading, with a fainter echo just behind it. Where rays part (a wall
+    // between them, or a bounce) it breaks instead of bridging the gap.
+    if(p.kind==='ring'){const n=p.rays?.length;if(!n)continue;const life=age/p.life;noFill();
+      for(const [lag,wide,thin] of [[0,30,60],[.14,16,24]]){const f=Math.min(1,Math.max(0,life-lag)),e=1-(1-f)*(1-f),fade=(1-f)*(1-f)*Math.min(1,f*8);if(!fade)continue;
+        const at=(ray,i)=>{const q=ray[Math.min(ray.length-1,Math.round(e*(ray.length-1)))],w=.05*Math.sin(i*1.7+age*40)*(1-f);return [q[0]+w,q[1]+w,q[2]];},gap=.8+e*p.r*.25;
+        for(const [weight,alpha] of [[cell*.16,wide],[Math.max(1,cell*.018),thin]]){if(!alpha)continue;strokeWeight(weight);let prev=at(p.rays[n-1],n-1);
+          for(let i=0;i<n;i++){const q=at(p.rays[i],i);if(Math.abs(q[0]-prev[0])+Math.abs(q[1]-prev[1])<gap){stroke(...p.color,alpha*fade*Math.pow(.75,Math.max(q[2],prev[2])));line(prev[0]*cell,prev[1]*cell,q[0]*cell,q[1]*cell);}prev=q;}}}
       continue;}
     if(!full||p.kind==='print')continue;noStroke();
     if(p.kind==='dust'){fill(...p.color,120*k);ellipse(p.x*cell,p.y*cell,cell*p.size*(1+age*2),cell*p.size*(1+age*2));}

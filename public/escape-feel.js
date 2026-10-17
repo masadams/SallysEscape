@@ -33,7 +33,7 @@
     clear(){this.items=[];}
   }
   // A noise ring as rays running out from the sound. Sound crosses only open ground: a ray that
-  // meets a wall bounces off it (fainter for each bounce) instead of passing through the stone.
+  // meets a wall bounces off it (a little fainter for each bounce) instead of passing through the stone.
   // Each ray is its path, a point every RAY_STEP tiles, with the bounces so far.
   const RAY_STEP=.2;
   function rays(g,x,y,r,n=36){
