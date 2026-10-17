@@ -132,6 +132,8 @@
     attempt(levelId){if(!catalog.levels.some(l=>l.id===levelId))return false;this.read();this.data.attempts[levelId]=(this.data.attempts[levelId]||0)+1;this.write();return true;}
     record(result){
       this.lastFirstTry=false;this.lastPerfect=false;
+      // Workshop drafts are for testing: they never count.
+      if(result?.draft)return false;
       if(result&&!result.challengeId&&['caught','failed'].includes(result.status))this.attempt(result.levelId);
       if(result?.hidden){
         const level=(catalog.hidden||[]).find(l=>l.id===result.levelId);if(!level||result.status!=='won'||!validTime(result.time)||!Number.isInteger(result.stars)||result.stars<1||result.stars>3)return false;

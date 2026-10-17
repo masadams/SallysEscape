@@ -8735,6 +8735,8 @@
   //   # wall  . floor  L leaf cover  N noisy gravel  B cracked wall  M mud  ~ water
   //   _ gap   c crumbling floor  @ start  K key  X exit  1-5 treasure of that value
   //   o spore puffball  t tide flat (dry at low tide, water at high tide)
+  // What an edited escape keeps from the game's own copy: its place on the trail and its ties.
+  const EDIT_KEEP=['unlockAfter','unlockChallenges','unlockAny','expedition','hidden','bonus','secret','stars','revision'];
   function fromMap(level){
     const rows=level.map,tiles=(chars)=>{const out=[];rows.forEach((row,y)=>[...row].forEach((ch,x)=>{if(chars.includes(ch))out.push([x,y]);}));return out;};
     const one=ch=>{const found=tiles(ch);if(found.length!==1)throw new Error(level.id+' needs exactly one '+ch);return found[0];};
@@ -8775,9 +8777,19 @@
   // The Gilded Burrow sits outside the trail: its escapes never count toward stars or unlocks.
   const hiddenRoutes=typeof module!=='undefined'&&module.exports?require('./escape-hidden.js'):root.EscapeHidden||[];
   const hidden=hiddenRoutes.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,...route,hidden:true,revision:1}));
+  // Workshop drafts (escape-edits.js), only while its test-in-game switch is on in this browser.
+  // A draft keeps its escape's place: id, unlock rules, secret and bonus ties stay the game's.
+  // A draft that fails to build is skipped, so a bad edit can never stop the game loading.
+  const edits=root.EscapeEdits?.overrides?.()||{},originals={};
+  for(const [list,prefix] of [[levels,'level:'],[hidden,'hidden:']])list.forEach((old,i)=>{const route=edits[prefix+old.id];if(!route)return;
+    try{list[i]=applyEdit(old,route);originals[prefix+old.id]=freeze(old);}catch(e){if(typeof console!=='undefined')console.warn('Workshop draft for '+old.id+' skipped: '+e.message);}});
   const catalog=freeze({levels,challenges,regions,hidden});
   // Custom levels from the builder go through the same text-map path as every rebuilt route.
+  function applyEdit(old,route){const keep={};for(const k of EDIT_KEEP)if(old[k]!==undefined)keep[k]=old[k];
+    return fromMap({burrows:0,pebbles:0,tongues:0,...JSON.parse(JSON.stringify(route)),...keep,id:old.id,draft:true});}
   const buildCustom=route=>freeze(fromMap({burrows:0,pebbles:0,tongues:0,...JSON.parse(JSON.stringify(route)),custom:true,revision:1}));
   root.EscapeCatalog=catalog;root.escapeGridFor=gridFor;root.escapeBuildCustom=buildCustom;
-  if(typeof module!=='undefined'&&module.exports)module.exports={EscapeCatalog:catalog,escapeGridFor:gridFor,escapeBuildCustom:buildCustom};
+  // The game's own copy of an escape, even while a workshop draft stands in for it.
+  const gameLevel=key=>{const [kind,id]=key.split(':');return originals[key]||(kind==='hidden'?hidden:levels).find(l=>l.id===id)||null;};root.escapeGameLevel=gameLevel;
+  if(typeof module!=='undefined'&&module.exports)module.exports={EscapeCatalog:catalog,escapeGridFor:gridFor,escapeBuildCustom:buildCustom,escapeGameLevel:gameLevel,EDIT_KEEP};
 })(typeof globalThis!=='undefined'?globalThis:this);

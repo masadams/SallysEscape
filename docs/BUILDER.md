@@ -74,3 +74,22 @@ this browser. **Share** gives one line of text (`SALLY2:…`) to paste into **Im
 
 **Community levels** (start menu) lists every published level for every player, with each
 player's best time. Level makers can copy a community level into the builder or take it down.
+
+## The level workshop (game levels)
+**Admin → Open the level workshop** lists every escape in the game, the Gilded Burrow and the bonus
+escapes. **Edit** opens one in the builder with everything it has. **Save draft** keeps the draft in
+this browser only: drafts never go to the community shelf and change nothing for players.
+**Back to the game's version** reloads the original; **Discard draft** deletes the draft.
+
+**Test drafts in game** (in the workshop) swaps each draft in for its escape in this browser, so it
+plays from the map with its unlocks and ties unchanged, marked ✎. Runs on a draft never count
+toward stars or progress. Turning it on or off reloads the page.
+
+**Export** (one draft or all) downloads a `sally-level-edits-<date>.json` file and shows the same
+text to copy. To bring an export into the game:
+
+    node scripts/apply-level-edits.cjs edits.json           # check: builds, lint, recorded run
+    node scripts/apply-level-edits.cjs edits.json --write   # write into escape-rebuilt.js / escape-hidden.js
+
+An edited escape keeps its id and revision, so players' records stand. If the check says the
+recorded winning run no longer wins, record a new one before the tests pass again.

@@ -30,7 +30,7 @@ async function openEscapeBuilder(model){
   if(!escapeAdminSignedIn){panel.innerHTML='<p>Checking…</p>';const s=await escapeAdminStatus();if(!s?.signedIn){renderEscapeAdminLock({title:'Level builder',next:()=>openEscapeBuilder(),status:s});return;}}
   escapeBuilderModel=escapeBuilderModel||EscapeBuilder.blank();escapeBuilderPick=null;renderEscapeBuilder();
 }
-function closeEscapeBuilder(){document.getElementById('escape-builder').style.display='none';document.getElementById('start-menu-container').style.display='';gameState='start';resetGameState();}
+function closeEscapeBuilder(){escapeLeaveWorkshop();document.getElementById('escape-builder').style.display='none';document.getElementById('start-menu-container').style.display='';gameState='start';resetGameState();}
 
 // Passkeys: the browser's own sign-in (Face ID, a fingerprint, a PIN or a security key). The
 // server sends options with binary fields as base64url text; the browser wants them as bytes.
@@ -88,15 +88,59 @@ async function openEscapeAdmin(message=''){
     '<h3>Passkeys</h3><div class="builder-list">'+list.passkeys.map(p=>'<div class="builder-saved"><b>'+escapeHtml(p.name)+'</b> <span>added '+day(p.createdAt)+' · last used '+day(p.lastUsedAt)+(p.id===list.current?' · this session':'')+'</span>'+
       (list.passkeys.length>1?'<button data-premove="'+escapeHtml(p.id)+'">Remove</button>':'')+'</div>').join('')+'</div>'+
     '<p><button id="admin-invite" class="escape-secondary">Invite another device</button> <button id="admin-here" class="escape-secondary">Add a passkey on this device</button></p><p id="admin-invite-out"></p>'+
+    '<h3>Game levels</h3><p>Edit the game’s own escapes behind the scenes: drafts stay in this browser and never reach players. '+(Object.keys(EscapeEdits.all()).length?Object.keys(EscapeEdits.all()).length+' draft'+(Object.keys(EscapeEdits.all()).length===1?'':'s')+' saved'+(EscapeEdits.active()?', testing in game':'')+'. ':'')+'<button id="admin-workshop" class="escape-secondary">Open the level workshop</button></p>'+
     '<h3>Community shelf</h3><p>'+levels.length+' published level'+(levels.length===1?'':'s')+'. <button id="admin-community" class="escape-secondary">Open the shelf</button> to play, copy or take levels down.</p>';
   const $=id=>document.getElementById(id);
-  $('builder-back').onclick=closeEscapeBuilder;$('admin-builder').onclick=()=>openEscapeBuilder();$('admin-community').onclick=()=>openEscapeCommunity();
+  $('builder-back').onclick=closeEscapeBuilder;$('admin-builder').onclick=()=>{escapeLeaveWorkshop();openEscapeBuilder();};$('admin-workshop').onclick=()=>openEscapeWorkshop();$('admin-community').onclick=()=>openEscapeCommunity();
   $('admin-signout').onclick=async()=>{try{await escapeBuilderApi('admin/logout',{method:'POST',body:'{}'});}catch(_){}escapeAdminSignedIn=false;closeEscapeBuilder();};
   $('admin-invite').onclick=async()=>{const out=$('admin-invite-out');try{const r=await escapeBuilderApi('admin/invite',{method:'POST',body:'{}'});const b=await r.json();
     out.innerHTML=r.ok?'Invite code: <b class="admin-code">'+escapeHtml(b.code)+'</b> — on the other device open Admin, choose “Add this device with an invite code” and enter it within '+b.minutes+' minutes. It works once.':'<span class="builder-bad">'+escapeHtml(b.error||'Could not make an invite.')+'</span>';}catch(_){out.textContent='Could not reach the server.';}};
   $('admin-here').onclick=async()=>{try{await escapePasskeyCreate('',prompt('Name for this passkey','Another passkey')||'');openEscapeAdmin('Passkey added.');}catch(e){openEscapeAdmin(escapePasskeyError(e));}};
   for(const b of document.querySelectorAll('[data-premove]'))b.onclick=async()=>{if(!confirm('Remove this passkey? It will no longer sign in.'))return;
     let note='Passkey removed.';try{const r=await escapeBuilderApi('admin/passkeys/'+encodeURIComponent(b.dataset.premove),{method:'DELETE'});if(!r.ok)note=(await r.json().catch(()=>({}))).error||'Could not remove it.';}catch(_){note='Could not reach the server.';}openEscapeAdmin(note);};
+}
+
+// The level workshop: every escape in the game, opened in the builder for behind-the-scenes
+// edits. A draft is saved per escape in this browser (escape-edits.js), never published; the
+// test-in-game switch swaps drafts in for their escapes here, and Export hands them over to be
+// brought into the game with scripts/apply-level-edits.cjs.
+let escapeBuilderWorkshop=null,escapeBuilderOwnModel=null;
+function escapeLeaveWorkshop(){if(!escapeBuilderWorkshop)return;escapeBuilderWorkshop=null;escapeBuilderModel=escapeBuilderOwnModel;escapeBuilderOwnModel=null;escapeBuilderPick=null;}
+function escapeWorkshopLabel(key){const [kind,id]=key.split(':'),l=escapeGameLevel(key);if(!l)return key;return (kind==='hidden'?'★ ':(EscapeCatalog.levels.findIndex(x=>x.id===id)+1)+' · ')+l.name;}
+function escapeWorkshopEdit(key){
+  const draft=EscapeEdits.get(key),model=draft?.model&&EscapeBuilder.sanitize(draft.model);
+  if(!escapeBuilderWorkshop)escapeBuilderOwnModel=escapeBuilderModel;
+  escapeBuilderWorkshop={key};escapeBuilderModel=model||EscapeBuilder.fromRoute(escapeGameLevel(key));escapeBuilderPick=null;escapeBuilderNote=draft?'Opened your saved draft.':'Opened the game’s version.';openEscapeBuilder();
+}
+// Download the drafts as a file and show the same text to copy (phones may not keep downloads).
+function escapeWorkshopExport(keys,out){
+  const data=EscapeEdits.exportFile(keys),text=JSON.stringify(data);if(!data.edits.length)return;
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.download='sally-level-edits-'+data.exportedAt.slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}catch(_){}
+  if(out){out.style.display='block';out.value=text;out.select?.();}try{navigator.clipboard?.writeText(text);}catch(_){}
+}
+async function openEscapeWorkshop(message=''){
+  const panel=escapeBuilderShow();escapeLeaveWorkshop();
+  if(!escapeAdminSignedIn){panel.innerHTML='<p>Checking…</p>';const s=await escapeAdminStatus();if(!s?.signedIn){renderEscapeAdminLock({title:'Admin',next:()=>openEscapeWorkshop(),status:s});return;}}
+  const drafts=EscapeEdits.all(),on=EscapeEdits.active(),live=[...EscapeCatalog.levels,...EscapeCatalog.hidden].filter(l=>l.draft).length,day=t=>String(t||'').slice(0,16).replace('T',' ');
+  const row=key=>{const d=drafts[key];return '<div class="builder-saved"><b>'+escapeHtml(escapeWorkshopLabel(key))+'</b> <span>'+(d?'✎ draft saved '+day(d.savedAt)+(d.route?'':' · has problems, not playable in game'):'')+'</span><button data-wedit="'+key+'">Edit</button>'+
+    (d?'<button data-wexport="'+key+'">Export</button><button data-wdiscard="'+key+'">Discard</button>':'')+'</div>';};
+  let list='';EscapeCatalog.levels.forEach((l,i)=>{const chapter=EscapeWorld?.chapters?.find(c=>c.start===i);if(chapter)list+='<h4>'+escapeHtml(chapter.name)+'</h4>';list+=row('level:'+l.id);});
+  list+='<h4>The Gilded Burrow and bonus escapes</h4>'+EscapeCatalog.hidden.map(l=>row('hidden:'+l.id)).join('');
+  const count=Object.keys(drafts).length;
+  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Admin</button><h2>Level workshop</h2></div>'+(message?'<p class="builder-status">'+escapeHtml(message)+'</p>':'')+
+    '<p>Edit any escape behind the scenes. Drafts stay in this browser: they never reach the community shelf and change nothing for players until you export them and they are brought into the game.</p>'+
+    '<label class="builder-check"><input type="checkbox" id="workshop-live"'+(on?' checked':'')+'> <b>Test drafts in game</b> (this browser only): each draft replaces its escape on the map and in the level list, marked ✎. Runs on a draft never count toward stars or progress.</label>'+
+    '<p class="builder-hint">'+(on?live+' draft'+(live===1?'':'s')+' in game now.':'Drafts are not in the game right now.')+(on&&live!==Object.values(drafts).filter(d=>d.route).length?' <button id="workshop-reload" class="escape-secondary">Reload to apply your latest drafts</button>':'')+'</p>'+
+    '<p><button id="workshop-export" class="escape-secondary"'+(count?'':' disabled')+'>Export all drafts ('+count+')</button></p><textarea id="workshop-text" class="builder-text" style="display:none" readonly></textarea>'+
+    '<div class="builder-list">'+list+'</div>';
+  const $=id=>document.getElementById(id),out=$('workshop-text');
+  $('builder-back').onclick=()=>openEscapeAdmin();
+  $('workshop-live').onchange=e=>{EscapeEdits.setActive(e.target.checked);location.reload();};
+  if($('workshop-reload'))$('workshop-reload').onclick=()=>location.reload();
+  $('workshop-export').onclick=()=>escapeWorkshopExport(null,out);
+  for(const b of document.querySelectorAll('[data-wedit]'))b.onclick=()=>escapeWorkshopEdit(b.dataset.wedit);
+  for(const b of document.querySelectorAll('[data-wexport]'))b.onclick=()=>escapeWorkshopExport([b.dataset.wexport],out);
+  for(const b of document.querySelectorAll('[data-wdiscard]'))b.onclick=()=>{if(!confirm('Discard your draft of '+escapeWorkshopLabel(b.dataset.wdiscard)+'?'))return;EscapeEdits.remove(b.dataset.wdiscard);openEscapeWorkshop('Draft discarded.');};
 }
 
 const escapeBuilderGuardIndex=id=>escapeBuilderModel.guards.findIndex(g=>g.id===id);
@@ -206,7 +250,8 @@ function renderEscapeBuilder(){
   const m=escapeBuilderModel,B=EscapeBuilder,panel=document.getElementById('escape-builder'),w=m.map[0].length,h=m.map.length;
   const tool=(id,label,title)=>'<button class="builder-tool'+(escapeBuilderTool===id?' builder-tool-on':'')+'" data-tool="'+id+'" title="'+escapeHtml(title)+'">'+label+'</button>';
   const problems=B.validate(m),linked=escapeBuilderLinked();
-  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Menu</button><h2>Level builder</h2>'+
+  const ws=escapeBuilderWorkshop;
+  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">'+(ws?'← Workshop':'← Menu')+'</button><h2>'+(ws?'✎ '+escapeHtml(escapeWorkshopLabel(ws.key)):'Level builder')+'</h2>'+
     '<label>Name <input id="builder-name" maxlength="40" value="'+escapeHtml(m.name)+'"></label><label>Brief <input id="builder-brief" maxlength="140" value="'+escapeHtml(m.brief)+'"></label><label>Made by <input id="builder-author" maxlength="30" value="'+escapeHtml(m.author||'')+'"></label></div>'+
     '<div class="builder-settings"><label>Width <input id="builder-w" type="number" min="'+B.LIMITS.minW+'" max="'+B.LIMITS.maxW+'" value="'+w+'"></label><label>Height <input id="builder-h" type="number" min="'+B.LIMITS.minH+'" max="'+B.LIMITS.maxH+'" value="'+h+'"></label>'+
     ['burrows','pebbles','tongues'].map(k=>'<label>'+k[0].toUpperCase()+k.slice(1)+' <input data-count="'+k+'" type="number" min="0" max="5" value="'+m[k]+'"></label>').join('')+
@@ -227,10 +272,13 @@ function renderEscapeBuilder(){
     '<div id="builder-grid" class="builder-grid" style="grid-template-columns:repeat('+w+',1fr)">'+m.map.map((row,y)=>[...row].map((ch,x)=>escapeBuilderCell(x,y,ch,linked)).join('')).join('')+'</div>'+
     (escapeBuilderNote?'<p class="builder-note">'+escapeHtml(escapeBuilderNote)+'</p>':'')+
     '<p class="builder-status'+(problems.length?' builder-bad':'')+'">'+(problems.length?'⚠ '+problems.map(escapeHtml).join(' '):'✓ Ready to play. Treasure in level: '+B.treasureTotal(m)+'.')+'</p>'+
+    (ws?'<div class="builder-actions"><button id="builder-play" class="escape-primary"'+(problems.length?' disabled':'')+'>▶ Playtest</button><button id="workshop-save" class="escape-secondary">Save draft</button><button id="workshop-export1" class="escape-secondary"'+(EscapeEdits.get(ws.key)?'':' disabled')+'>Export draft</button>'+
+      '<button id="workshop-revert" class="escape-secondary">Back to the game’s version</button>'+(EscapeEdits.get(ws.key)?'<button id="workshop-discard" class="escape-secondary">Discard draft</button>':'')+'</div><textarea id="builder-text" class="builder-text" style="display:none" readonly></textarea>'+
+      '<p class="builder-hint">Workshop draft: saved only in this browser, never published. '+(EscapeEdits.active()?'Test drafts in game is on: reload after saving to play it from the map.':'Turn on “Test drafts in game” in the workshop to play it from the map.')+'</p>':
     '<div class="builder-actions"><button id="builder-play" class="escape-primary"'+(problems.length?' disabled':'')+'>▶ Playtest</button><button id="builder-save" class="escape-secondary">Save</button><button id="builder-publish" class="escape-secondary"'+(problems.length?' disabled':'')+'>⇪ Publish to community</button>'+
     '<button id="builder-new" class="escape-secondary">New</button><button id="builder-share" class="escape-secondary">Share</button><button id="builder-import" class="escape-secondary">Import</button><button id="builder-community" class="escape-secondary">Community levels</button><button id="builder-admin" class="escape-secondary">Admin</button></div>'+
     '<textarea id="builder-text" class="builder-text" style="display:none" placeholder="Paste a shared level here, then press Import again."></textarea>'+
-    '<h3>My levels</h3><div class="builder-list">'+(B.loadAll(ESCAPE_BUILDER_STORE).map(l=>'<div class="builder-saved"><b>'+escapeHtml(l.name)+'</b> <span>'+l.map[0].length+'×'+l.map.length+' · '+l.guards.length+' enemies</span><button data-play="'+l.id+'">Play</button><button data-edit="'+l.id+'">Edit</button><button data-delete="'+l.id+'">Delete</button></div>').join('')||'<p>No saved levels yet. Saved levels stay in this browser; publish one to share it with every player.</p>')+'</div>';
+    (ws?'':'<h3>My levels</h3><div class="builder-list">'+(B.loadAll(ESCAPE_BUILDER_STORE).map(l=>'<div class="builder-saved"><b>'+escapeHtml(l.name)+'</b> <span>'+l.map[0].length+'×'+l.map.length+' · '+l.guards.length+' enemies</span><button data-play="'+l.id+'">Play</button><button data-edit="'+l.id+'">Edit</button><button data-delete="'+l.id+'">Delete</button></div>').join('')||'<p>No saved levels yet. Saved levels stay in this browser; publish one to share it with every player.</p>')+'</div>'));
   wireEscapeBuilder();
 }
 function escapeHtml(text){return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -290,8 +338,8 @@ function escapeBuilderApply(x,y){
 }
 const escapeBuilderDrags=t=>Object.keys(EscapeBuilder.TILES).includes(t)||['1','2','3','door','bridge','cold','warm'].includes(t)||t.startsWith('layer:');
 function wireEscapeBuilder(){
-  const m=escapeBuilderModel,B=EscapeBuilder,$=id=>document.getElementById(id),rerender=()=>renderEscapeBuilder();
-  $('builder-back').onclick=closeEscapeBuilder;
+  const m=escapeBuilderModel,B=EscapeBuilder,$=id=>document.getElementById(id),rerender=()=>renderEscapeBuilder(),ws=escapeBuilderWorkshop;
+  $('builder-back').onclick=ws?()=>openEscapeWorkshop():closeEscapeBuilder;
   $('builder-name').onchange=e=>{m.name=e.target.value;};$('builder-brief').onchange=e=>{m.brief=e.target.value;};$('builder-author').onchange=e=>{m.author=e.target.value;};
   $('builder-w').onchange=$('builder-h').onchange=()=>{escapeBuilderModel=B.resize(m,Number($('builder-w').value),Number($('builder-h').value));escapeBuilderPick=null;rerender();};
   for(const input of document.querySelectorAll('[data-count]'))input.onchange=e=>{m[e.target.dataset.count]=Math.max(0,Math.min(5,Number(e.target.value)||0));rerender();};
@@ -331,6 +379,14 @@ function wireEscapeBuilder(){
   grid.onpointermove=e=>{if(!escapeBuilderPainting||!e.buttons)return;const c=cellAt(e);if(c&&escapeBuilderModel.map[c[1]][c[0]]!==escapeBuilderTool&&escapeBuilderApply(...c))rerender();};
   document.onpointerup=()=>{escapeBuilderPainting=false;};
   $('builder-play').onclick=()=>{if(!B.validate(m).length)startEscape({custom:B.toRoute(m),from:'builder'});};
+  if(ws){
+    $('workshop-save').onclick=()=>{const model=B.sanitize(m),ok=model&&EscapeEdits.save(ws.key,model,B.validate(model).length?null:B.toRoute(model));
+      escapeBuilderNote=!ok?'Could not save the draft.':B.validate(model).length?'Draft saved. Fix the problems below before it can be played in game.':'Draft saved'+(EscapeEdits.active()?'. Reload to play it from the map.':'.');rerender();};
+    $('workshop-export1').onclick=()=>escapeWorkshopExport([ws.key],$('builder-text'));
+    $('workshop-revert').onclick=()=>{if(!confirm('Load the game’s version into the builder? Your saved draft stays until you save over it or discard it.'))return;escapeBuilderModel=B.fromRoute(escapeGameLevel(ws.key));escapeBuilderPick=null;escapeBuilderNote='Loaded the game’s version.';rerender();};
+    if($('workshop-discard'))$('workshop-discard').onclick=()=>{if(!confirm('Discard your saved draft?'))return;EscapeEdits.remove(ws.key);escapeBuilderModel=B.fromRoute(escapeGameLevel(ws.key));escapeBuilderPick=null;escapeBuilderNote='Draft discarded; this is the game’s version.';rerender();};
+    return;
+  }
   $('builder-save').onclick=()=>{const ok=B.saveOne(ESCAPE_BUILDER_STORE,m);rerender();$('builder-save').textContent=ok?'Saved ✓':'Could not save';};
   $('builder-publish').onclick=async()=>{const b=$('builder-publish');b.disabled=true;b.textContent='Publishing…';
     try{const r=await escapeBuilderApi('levels',{method:'POST',body:JSON.stringify({level:B.sanitize(m)})});const body=await r.json().catch(()=>({}));
