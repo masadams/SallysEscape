@@ -33,6 +33,7 @@
     vents:{mood:'warm',lead:'pluck',bpm:96,groove:0,transpose:-4},
     grotto:{mood:'dark',lead:'bell',bpm:90,groove:3,transpose:-1},
     tide:{mood:'warm',lead:'flute',bpm:88,groove:2,transpose:1},
+    home:{mood:'warm',lead:'flute',bpm:80,groove:1,transpose:-2},
     storm:{mood:'sneaky',lead:'ghost',bpm:102,groove:1,transpose:-3},
     gilded:{mood:'river',lead:'bell',bpm:92,groove:2,transpose:1}
   };
