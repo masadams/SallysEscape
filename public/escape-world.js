@@ -25,18 +25,18 @@
     {id:'challenge-shrine',name:'Challenge Shrine',x:68,y:56,rx:3,ry:3},{id:'bestiary-grove',name:'Bestiary Grove',x:90,y:81,rx:3,ry:3},
     {id:'ice-cave',name:'Ice Cave',x:14,y:111,rx:3,ry:3},{id:'sunken-wreck',name:'Sunken Wreck',x:3,y:80,rx:2,ry:2},
     {id:'fairy-ring',name:'Fairy Ring',x:84,y:89,rx:0,ry:0},{id:'struck-oak',name:'Struck Oak',x:95,y:89,rx:0,ry:0},
-    {id:'sallys-burrow',name:'Sally\'s Burrow',x:31,y:118,rx:4,ry:3}
+    {id:'sallys-burrow',name:'Sally\'s Burrow',x:31,y:118,rx:4,ry:3,via:'home'}
   ];
   class EscapeWorld{
-    constructor(unlocked=()=>true,focusId=null,hiddenOpen=()=>false,bonusOpen=()=>false){
+    constructor(unlocked=()=>true,focusId=null,hiddenOpen=()=>false,bonusOpen=()=>false,secretOpen=()=>false){
       this.width=116;this.height=131;this.secrets=secrets;this.chapters=chapters;this.caches=caches;this.signs=signs;this.npcs=npcs;this.found=new Set();this.onCache=null;
       // Golden flies drift in now and then; Sally can chase them down or grab one with her tongue.
       // The Gilded Burrow lies north of the Garden Ruins. It is solid rock until it opens.
       this.hiddenOpen=hiddenOpen;this.hiddenCarved=false;this.terrainVersion=0;
-      this.hiddenNodes=(catalog.hidden||[]).map((level,i)=>({id:level.id,hidden:true,index:i,x:[31,36,41][i],y:[5,3,5][i],name:level.name})).filter(n=>!catalog.hidden[n.index].bonus);
+      this.hiddenNodes=(catalog.hidden||[]).map((level,i)=>({id:level.id,hidden:true,index:i,x:[31,36,41][i],y:[5,3,5][i],name:level.name})).filter(n=>!catalog.hidden[n.index].bonus&&!catalog.hidden[n.index].secret);
       // Bonus escapes are no secret: their grove is always on the map, behind a hedge that opens
       // once the areas before it are mastered. The Bramble Maze sits north of the Deep Trials.
-      this.bonusOpen=bonusOpen;
+      this.bonusOpen=bonusOpen;this.secretOpen=secretOpen;this.onSecretBump=null;
       this.bonusNodes=(catalog.hidden||[]).map((level,i)=>({id:level.id,hidden:true,bonus:level.bonus,index:i,name:level.name})).filter(n=>n.bonus).map((n,k)=>({...n,...[{x:101,y:4,lock:{x:101,y:9},sign:{x:99,y:11}},{x:14,y:30,lock:{x:14,y:35},sign:{x:12,y:37}}][k]}));
       this.rng=Math.random;this.fly=null;this.flyAt=10;this.onFly=null;this.lick=null;this.unlocked=unlocked;this.hunters=[];this.elapsed=0;this.target=null;this.accumulator=0;
       const spots=[[-6,3],[-4,-2],[0,-4],[4,-1],[6,4],[0,6]],
@@ -54,11 +54,27 @@
       for(const n of this.bonusNodes){room(n.x-6,n.y-3,n.x+6,n.y+3);room(n.lock.x,n.y+4,n.lock.x,n.lock.y+1);for(const [dx,dy] of [[-5,-2],[5,-2],[-5,2],[5,2]])this.grid[n.y+dy][n.x+dx]='L';}
 
       for(const s of secrets)if(s.rx)room(s.x-s.rx,s.y-s.ry,s.x+s.rx,s.y+s.ry);
+      // Each secret clearing is joined to the nearest open ground by a narrow way, stopped by a door
+      // (a hedge, a crack or a rockfall) until whatever opens it is done.
+      this.secretDoors=[];for(const s of secrets)if(s.rx){const door=this.carveSecretWay(s);if(door)this.secretDoors.push({id:s.id,...door});}
+      // Escapes inside a secret spot stand in a row across its clearing.
+      this.secretNodes=(catalog.hidden||[]).map((level,i)=>({id:level.id,hidden:true,secret:level.secret,stars:level.stars||0,index:i,name:level.name})).filter(n=>n.secret).map(n=>{const s=secrets.find(s=>s.id===n.secret),row=(catalog.hidden||[]).filter(l=>l.secret===n.secret),k=row.findIndex(l=>l.id===n.id);return {...n,x:s.x+Math.round((k-(row.length-1)/2)*3),y:s.y};});
       this.refreshRegions();this.tracks=[];
       const track=(a,b,side=false)=>{const from={x:a.x+.5,y:a.y+.5},to={x:b.x+.5,y:b.y+.5},path=this.route(to,from,true);if(path)this.tracks.push({points:[from,...path],side,from:a.id,to:b.id});};
       for(const c of chapters){const nodes=this.nodes.filter(n=>n.chapter===chapters.indexOf(c));for(let i=1;i<nodes.length;i++)track(nodes[i-1],nodes[i]);if(nodes.length>3&&!c.linear)track(nodes[1],nodes[3],true);}
       for(const [a,b]of this.paths)track(this.nodes[chapters[a].end-1],this.nodes[chapters[b].start],b===13||b===14||b===16);
       this.motion=new Motion(this);
+    }
+    // The shortest narrow way from a clearing out to open ground (or into the courtyard it names);
+    // returns its door, the last tile before the open ground.
+    carveSecretWay(s){
+      const inside=(x,y)=>Math.abs(x-s.x)<=s.rx&&Math.abs(y-s.y)<=s.ry,via=chapters.find(c=>c.theme===s.via),open=(x,y)=>['.','L'].includes(this.grid[y]?.[x])&&!secrets.some(o=>o.rx&&Math.abs(x-o.x)<=o.rx&&Math.abs(y-o.y)<=o.ry)&&(!via||Math.abs(x-via.x)<=8&&Math.abs(y-via.y)<=7);
+      const queue=[[s.x,s.y]],previous=new Map([[s.x+','+s.y,null]]);
+      for(let i=0;i<queue.length;i++){const [x,y]=queue[i];
+        for(const [dx,dy] of [[0,1],[0,-1],[1,0],[-1,0]]){const nx=x+dx,ny=y+dy,k=nx+','+ny;if(previous.has(k)||nx<1||ny<1||nx>=this.width-1||ny>=this.height-1)continue;previous.set(k,[x,y]);
+          if(open(nx,ny)&&!inside(nx,ny)){const way=[];let p=[x,y];while(p&&!inside(...p)){way.push(p);p=previous.get(p.join(','));}for(const [wx,wy] of way)this.grid[wy][wx]='.';return way.length?{x:way[0][0],y:way[0][1]}:null;}
+          queue.push([nx,ny]);}}
+      return null;
     }
     refreshRegions(){this.openRegions=this.chapters.map((_,i)=>this.nodes.some(n=>n.chapter===i&&this.unlocked(n.id)));if(!this.hiddenCarved&&this.hiddenNodes.length&&this.hiddenOpen())this.carveHidden();}
     carveHidden(){
@@ -67,9 +83,9 @@
       this.hiddenCarved=true;this.terrainVersion++;
     }
     // Where Sally stands for an escape: its node, or a bonus or hidden grove (a hidden one only once carved).
-    spotFor(id){return id?this.nodes.find(n=>n.id===id)||this.bonusNodes.find(n=>n.id===id)||(this.hiddenCarved?this.hiddenNodes.find(n=>n.id===id):null):null;}
+    spotFor(id){return id?this.nodes.find(n=>n.id===id)||this.bonusNodes.find(n=>n.id===id)||this.secretNodes.find(n=>n.id===id)||(this.hiddenCarved?this.hiddenNodes.find(n=>n.id===id):null):null;}
     regionOpen(i){return Boolean(this.openRegions?.[i]);}
-    floor(x,y){x=Math.floor(x);y=Math.floor(y);if(!['.','L'].includes(this.grid[y]?.[x]))return false;for(const [i,c]of chapters.entries())if(Math.abs(x-c.x)<=8&&Math.abs(y-c.y)<=7&&!this.regionOpen(i))return false;if(this.bonusNodes.some(n=>x===n.lock.x&&y===n.lock.y&&!this.bonusOpen(n.id)))return false;return !this.gates.some(g=>!this.regionOpen(g.chapter)&&(g.vertical?y===g.y&&Math.abs(x-g.x)<=1:x===g.x&&Math.abs(y-g.y)<=1));}
+    floor(x,y){x=Math.floor(x);y=Math.floor(y);if(!['.','L'].includes(this.grid[y]?.[x]))return false;for(const [i,c]of chapters.entries())if(Math.abs(x-c.x)<=8&&Math.abs(y-c.y)<=7&&!this.regionOpen(i))return false;if(this.bonusNodes.some(n=>x===n.lock.x&&y===n.lock.y&&!this.bonusOpen(n.id)))return false;if(this.secretDoors?.some(d=>x===d.x&&y===d.y&&!this.secretOpen(d.id)))return false;return !this.gates.some(g=>!this.regionOpen(g.chapter)&&(g.vertical?y===g.y&&Math.abs(x-g.x)<=1:x===g.x&&Math.abs(y-g.y)<=1));}
     route(to,from=this.player,ignoreLocks=false){const sx=Math.floor(from.x),sy=Math.floor(from.y),tx=Math.floor(to.x),ty=Math.floor(to.y),queue=[[sx,sy]],previous=new Map([[sx+','+sy,null]]);for(let i=0;i<queue.length;i++){const [x,y]=queue[i];if(x===tx&&y===ty){const out=[];let p=[x,y];while(p){out.unshift({x:p[0]+.5,y:p[1]+.5});p=previous.get(p.join(','));}out.shift();return out;}for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy,k=nx+','+ny;if((ignoreLocks?['.','L'].includes(this.grid[ny]?.[nx]):this.floor(nx,ny))&&!previous.has(k)){previous.set(k,[x,y]);queue.push([nx,ny]);}}}return null;}
     chapterAt(p=this.player){return chapters.reduce((best,c,i)=>Math.hypot(c.x-p.x,c.y-p.y)<Math.hypot(chapters[best].x-p.x,chapters[best].y-p.y)?i:best,0);}
     nearbyNpc(){return this.npcs.find(n=>this.regionOpen(n.chapter)&&Math.hypot(n.x+.5-this.player.x,n.y+.5-this.player.y)<=1.8)||null;}
@@ -94,10 +110,14 @@
       if(Math.hypot(f.x-p.x,f.y-p.y)<.55)this.catchFly();
     }
     nearbyCache(){return this.caches.find(c=>!this.found.has(c.id)&&Math.hypot(c.x+.5-this.player.x,c.y+.5-this.player.y)<=.8)||null;}
-    nearby(){return this.nodes.find(n=>Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5)||this.bonusNodes.find(n=>Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5)||(this.hiddenCarved?this.hiddenNodes.find(n=>Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5):null)||null;}
+    nearby(){return this.nodes.find(n=>Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5)||this.bonusNodes.find(n=>Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5)||this.secretNodes.find(n=>this.secretOpen(n.secret)&&Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5)||(this.hiddenCarved?this.hiddenNodes.find(n=>Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.5):null)||null;}
     // The hedge before a bonus grove that is still shut, when Sally stands by it.
     nearbyBonusLock(){return this.bonusNodes.find(n=>!this.bonusOpen(n.id)&&Math.hypot(n.lock.x+.5-this.player.x,n.lock.y+.5-this.player.y)<=2.5)||null;}
-    enter(){const node=this.nearby();return node?.bonus&&!this.bonusOpen(node.id)?null:node?.hidden?'hidden:'+node.id:node&&this.unlocked(node.id)?node.id:null;}
+    // The door of a secret spot that is still shut, when Sally stands by it.
+    nearbySecretDoor(){return this.secretDoors.find(d=>!this.secretOpen(d.id)&&Math.hypot(d.x+.5-this.player.x,d.y+.5-this.player.y)<=2.2)||null;}
+    // Sally's Burrow is a room, not an escape: standing at its heart lets her go inside.
+    nearbyRoom(){const s=secrets.find(s=>s.id==='sallys-burrow');return this.secretOpen(s.id)&&Math.hypot(s.x+.5-this.player.x,s.y+.5-this.player.y)<=1.6?s:null;}
+    enter(){if(this.nearbyRoom())return 'room:sallys-burrow';const node=this.nearby();return node?.bonus&&!this.bonusOpen(node.id)?null:node?.hidden?'hidden:'+node.id:node&&this.unlocked(node.id)?node.id:null;}
     walkTo(id){this.refreshRegions();const n=this.nodes.find(n=>n.id===id);if(!n)return false;const route=this.route({x:n.x,y:n.y+1});if(!route)return false;route.push({x:n.x,y:n.y+1});this.target=route;return true;}
     travel(chapter){this.refreshRegions();const c=chapters[chapter];if(!c||!this.regionOpen(chapter))return false;const node=this.nodes.filter(n=>n.chapter===chapter).find(n=>this.unlocked(n.id))||this.nodes[c.start];this.player.x=node.x;this.player.y=node.y+1;this.player.facing={x:0,y:-1};this.target=null;this.accumulator=0;this.motion.resetPlayer(this.player);return true;}
     advance(seconds,input={}){
@@ -112,6 +132,8 @@
       if(length)this.player.facing=Math.abs(x)>=Math.abs(y)?{x:Math.sign(x),y:0}:{x:0,y:Math.sign(y)};
       const max=this.target?Math.hypot(this.target[0].x-this.player.x,this.target[0].y-this.player.y):Infinity;
       const step=Math.min(speed,max);const nx=this.player.x+x*step,ny=this.player.y+y*step;if(this.floor(nx-.2,this.player.y)&&this.floor(nx+.2,this.player.y))this.player.x=nx;if(this.floor(this.player.x,ny-.2)&&this.floor(this.player.x,ny+.2))this.player.y=ny;
+      // Pushing into a cracked hedge breaks it open.
+      if(length){const d=this.secretDoors.find(d=>!this.secretOpen(d.id)&&Math.hypot(d.x+.5-this.player.x,d.y+.5-this.player.y)<=1.05);if(d)this.onSecretBump?.(d);}
       const cache=this.nearbyCache();if(cache){this.found.add(cache.id);this.onCache?.(cache);}
       this.updateFly(dt);if(this.lick&&this.elapsed>this.lick.until)this.lick=null;
       this.player.moving=Math.hypot(old.x-this.player.x,old.y-this.player.y)>1e-6;this.player.sprinting=Boolean(input.sprint&&this.player.moving);this.motion.update(dt,this);

@@ -31,16 +31,27 @@ function goals(g){
   if(g.treasure<g.requiredTreasure&&out[0]?.what==='key'&&loot[0]&&Math.hypot(loot[0].x-g.player.x,loot[0].y-g.player.y)<Math.hypot(g.key.x-g.player.x,g.key.y-g.player.y))out.unshift(out.splice(out.indexOf(out.find(o=>o.what==='treasure')),1)[0]);
   return out;
 }
+// The quickest way rather than the shortest: swimming is slow, so water costs more than land and
+// the path hops from island to island the way a player would.
+function costPath(g,from,to){
+  const [sx,sy]=tile(from),[tx,ty]=tile(to),key=(x,y)=>y*g.width+x,dist=new Map([[key(sx,sy),0]]),prev=new Map(),open=[[0,sx,sy]];
+  while(open.length){let b=0;for(let i=1;i<open.length;i++)if(open[i][0]<open[b][0])b=i;const [d,x,y]=open.splice(b,1)[0];if(d>dist.get(key(x,y)))continue;
+    if(x===tx&&y===ty){const out=[];let k=key(x,y);while(k!==undefined){out.unshift({x:k%g.width+.5,y:Math.floor(k/g.width)+.5});k=prev.get(k);}out.shift();return out;}
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(!g.actorFloor(nx,ny,null))continue;const nd=d+(g.grid[ny][nx]==='U'?2.5:1),k=key(nx,ny);if(nd<(dist.get(k)??Infinity)){dist.set(k,nd);prev.set(k,key(x,y));open.push([nd,nx,ny]);}}}
+  return [];
+}
 // The hops toward a goal: every piece of cover the path passes beside becomes a resting place.
 function hops(g,goal){
-  const path=g.route(g.player,goal);if(!path.length)return [{x:goal.x,y:goal.y,hatch:goal.what==='hatch'}];
+  const path=costPath(g,g.player,goal);if(!path.length)return [{x:goal.x,y:goal.y,hatch:goal.what==='hatch'}];
   const out=[],seen=new Set([Math.floor(g.player.x)+','+Math.floor(g.player.y)]);
   path.forEach((p,i)=>{
     for(const [dx,dy] of NEAR){const x=Math.floor(p.x)+dx,y=Math.floor(p.y)+dy,t=g.grid[y]?.[x];
       if((t==='L'||t==='N')&&!seen.has(x+','+y)&&i<path.length-1){seen.add(x+','+y);
         // Only cover that brings Sally nearer the goal; never a step back.
-        const left=g.route({x:x+.5,y:y+.5},goal).length;if(left<path.length-1)out.push({x:x+.5,y:y+.5,cover:true,left});}}
+        const left=costPath(g,{x:x+.5,y:y+.5},goal).length;if(left<path.length-1)out.push({x:x+.5,y:y+.5,cover:true,left});}}
   });
+  // Climbing out of the water onto an island is a rest too: fish cannot follow.
+  path.forEach((p,i)=>{const [x,y]=tile(p),prev=path[i-1]&&tile(path[i-1]);if(i<path.length-1&&prev&&g.grid[prev[1]][prev[0]]==='U'&&g.grid[y][x]!=='U'&&!seen.has(x+','+y)){seen.add(x+','+y);out.push({x:x+.5,y:y+.5,cover:true,left:path.length-1-i});}});
   out.sort((a,b)=>b.left-a.left);out.push({x:goal.x,y:goal.y,hatch:goal.what==='hatch'});return out;
 }
 // Walk to a spot along the engine's route, recording frames; false if caught on the way.
