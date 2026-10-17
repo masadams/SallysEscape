@@ -53,6 +53,7 @@
     for(const l of g.lights||[]){const fade=Math.max(0,Math.min(1,(l.until-clock)/3,(clock-l.born)*4));add(l.x,l.y,l.r*1.15*flicker(l.x),[120,236,214],.3*fade);}
     for(const h of g.hunters||[]){
       if(h.kind==='moth')add(h.x,h.y,2.7*flicker(h.x,.08),[255,214,140],.26);
+      if(h.kind==='sentinel')add(h.x,h.y,h.state==='glare'?2:1.3,[170,226,255],h.state==='glare'?.34:.2);
       if(h.kind==='angler'&&h.lure&&h.state==='lurking')add(h.lure.x,h.lure.y,1.4*flicker(h.lure.x,.1),[120,240,220],.3);
     }
     for(const b of g.glowbugs||[])if(!b.caught)add(b.x,b.y,.9*flicker(b.x,.12),[220,255,140],.24);

@@ -8721,6 +8721,7 @@
     if(level.abyss)for(let y=1;y<grid.length-1;y++)for(let x=1;x<grid[0].length-1;x++)grid[y][x]='P';
     for(const [x1,y1,x2,y2] of level.rooms)for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)grid[y][x]='.';
     for(const [x,y] of level.walls||[])grid[y][x]='#';
+    for(const [x,y] of level.ice||[])grid[y][x]='#';
     for(const [x,y] of level.mud||[])grid[y][x]='M';
     for(const [kind,tiles] of [['B',level.cracks],['L',level.cover],['N',level.gravel]])for(const [x,y] of tiles)grid[y][x]=kind;
     for(const [x,y] of level.gaps||[])grid[y][x]='P';
@@ -8734,7 +8735,7 @@
   // easy to author. The map fills in the same fields older routes list by hand:
   //   # wall  . floor  L leaf cover  N noisy gravel  B cracked wall  M mud  ~ water
   //   _ gap   c crumbling floor  @ start  K key  X exit  1-5 treasure of that value
-  //   o spore puffball  t tide flat (dry at low tide, water at high tide)  m moss (silent)
+  //   o spore puffball  t tide flat (dry at low tide, water at high tide)  m moss (silent)  I ice wall (reflects a sentinel's gaze)
   // What an edited escape keeps from the game's own copy: its place on the trail and its ties.
   const EDIT_KEEP=['unlockAfter','unlockChallenges','unlockAny','expedition','hidden','bonus','secret','stars','revision'];
   function fromMap(level){
@@ -8742,7 +8743,7 @@
     const one=ch=>{const found=tiles(ch);if(found.length!==1)throw new Error(level.id+' needs exactly one '+ch);return found[0];};
     level.width=Math.max(...rows.map(r=>r.length));level.height=rows.length;level.rooms=[];
     rows.forEach((row,y)=>{let start=null;[...row,'#'].forEach((ch,x)=>{const open=ch!=='#'&&ch!==' ';if(open&&start===null)start=x;if(!open&&start!==null){level.rooms.push([start,y,x-1,y]);start=null;}});});
-    level.cover=tiles('L');level.gravel=tiles('N');level.cracks=tiles('B');level.mud=tiles('M');level.water=tiles('~');level.gaps=tiles('_');level.crumble=tiles('c');level.vines=tiles('T');level.slits=tiles('S');level.puffballs=tiles('o');level.moss=tiles('m');level.tideFlats=tiles('t');
+    level.cover=tiles('L');level.gravel=tiles('N');level.cracks=tiles('B');level.mud=tiles('M');level.water=tiles('~');level.gaps=tiles('_');level.crumble=tiles('c');level.vines=tiles('T');level.slits=tiles('S');level.puffballs=tiles('o');level.moss=tiles('m');level.ice=tiles('I');level.tideFlats=tiles('t');
     level.spawn=one('@');level.key=one('K');level.exit=one('X');
     level.loot=[];rows.forEach((row,y)=>[...row].forEach((ch,x)=>{if(/[1-5]/.test(ch))level.loot.push([x,y,Number(ch)]);}));
     return level;
