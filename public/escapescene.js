@@ -108,12 +108,27 @@ function renderEscapeAbility(button,kind,label,key,left,total,ready=true,active=
 }
 
 const ESCAPE_GLOWBUG_CHANCE=.25;
+// Once, on the first escape with something crawling helps against: gravel, or a creature that
+// hunts by ear or springs from close by.
+function escapeCrawlTip(g){
+  const KEY='sally-escape-crawl-tip';try{if(localStorage.getItem(KEY))return;}catch(_){return;}
+  if(!g.level.gravel?.length&&!g.hunters.some(h=>['fox','mole','cricket','scorpion','wasp','flytrap','mimic','gecko'].includes(h.kind)))return;
+  escapeCrawlTipPending=true;
+}
+// The tip waits a few seconds into the run and for any other message to clear first.
+let escapeCrawlTipPending=false;
+function tickEscapeCrawlTip(g){
+  if(!escapeCrawlTipPending||g.elapsed<3||g.messageUntil>g.elapsed||g.status!=='playing')return;
+  escapeCrawlTipPending=false;g.notice(mobile?'Hold Crawl to creep: slow, but silent, and slower to be spotted.':'Hold C to crawl: slow, but silent, and slower to be spotted.');g.messageUntil=g.elapsed+5;
+  try{localStorage.setItem('sally-escape-crawl-tip','1');}catch(_){}
+}
 function startEscape(options={}){
   escapeAbandonRun();
   if(options.custom?false:options.hiddenId?!escapeProgress.hiddenLevelOpen(options.hiddenId,EscapeWorld.chapters):options.challengeId?!escapeProgress.challengeUnlocked(options.challengeId):!escapeProgress.unlocked(options.levelId||'quiet-vault')){showEscapeSelect();return;}
   // Now and then (about one escape in four, never in a challenge) glow bugs drift about as a bonus.
   if(options.glowbugs===undefined&&!options.challengeId&&!options.custom&&Math.random()<ESCAPE_GLOWBUG_CHANCE)options={...options,glowbugs:1+Math.floor(Math.random()*1e6)};
   startRun('escape');escapeGame=new EscapeAdventure(options.custom?{level:escapeBuildCustom(options.custom)}:options);escapeMetCount=0;escapeBestiaryNote=null;escapeCharacter=new SallyCharacter({reducedMotion:Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)});document.getElementById('escape-builder').style.display='none';escapeResultShown=false;escapeHudAt=-Infinity;
+  escapeCrawlTipPending=false;escapeCrawlTip(escapeGame);
   escapeOptions=options.custom?{custom:options.custom,from:options.from||'builder'}:escapeGame.level.hidden?{hiddenId:escapeGame.level.id}:{levelId:escapeGame.level.id,challengeId:escapeGame.challenge?.id||null};
   gameState='escape';escapeLibraryOpen=false;document.getElementById('game-area').classList.remove('escape-world-open');mountEscapeChrome(true);
   document.getElementById('game-area').classList.toggle('escape-exploring',Boolean(escapeGame.level.explore));
@@ -172,7 +187,7 @@ function escapeKeyPressed(){
   if(k==='q')useEscapeDecoy();
   if(k==='r'||k==='t')useEscapeTongue();
   if(k==='v'||k===' '&&document.activeElement?.tagName!=='BUTTON')useEscapeLook();
-  if(k==='f'||k==='c')useEscapeSeed();
+  if(k==='f')useEscapeSeed();
 }
 function toggleEscapeMap(){
   if(gameState!=='escape'||!escapeGame?.level.explore)return;
@@ -194,8 +209,8 @@ function playEscape(){
   escapeGame.paused=paused;
   if(escapeIntroOpen&&gameState==='escape'&&!paused){const m=escapeMovement();if(m.x||m.y)hideEscapeIntro();}
   if(gameState==='escape'&&!paused&&!skipSimulationFrame&&!escapeIntroOpen){
-    let {x,y,sprint}=escapeMovement();
-    escapeGame.advance(deltaTime/1000,{x,y,sprint});
+    let {x,y,sprint,crawl}=escapeMovement();
+    escapeGame.advance(deltaTime/1000,{x,y,sprint,crawl});tickEscapeCrawlTip(escapeGame);
   }
   const events=escapeGame.drainEvents();
   escapeCharacter?.update(escapeGame,events);
@@ -309,7 +324,7 @@ let escapeStepFrom=null,escapeStepDistance=0,escapeStepAlt=false;
 function escapeFootsteps(p){
   if(!escapeStepFrom||!p.moving){escapeStepFrom={x:p.x,y:p.y};escapeStepDistance=0;return;}
   escapeStepDistance+=Math.hypot(p.x-escapeStepFrom.x,p.y-escapeStepFrom.y);escapeStepFrom={x:p.x,y:p.y};
-  if(escapeStepDistance>=(p.sprinting?.62:.48)){escapeStepDistance=0;escapeStepAlt=!escapeStepAlt;escapeSound(p.swimming?'paddle':'step',{sprint:p.sprinting,alt:escapeStepAlt});}
+  if(escapeStepDistance>=(p.sprinting?.62:p.crawling?.7:.48)){escapeStepDistance=0;escapeStepAlt=!escapeStepAlt;if(!p.crawling||p.swimming)escapeSound(p.swimming?'paddle':'step',{sprint:p.sprinting,alt:escapeStepAlt});}
 }
 // Phones show a close, following view by default; the menu switches to the whole map.
 const ESCAPE_CLOSE_VIEW_KEY='sally-escape-close-view';
@@ -486,13 +501,17 @@ function drawEscapeVault(){
   // An angler's lure is a light, so it shows even in the dark; the angler itself only shows when it rises.
   g.hunters.filter(h=>h.kind==='angler').forEach(h=>drawEscapeAngler(h,cell,g.elapsed));
   g.motion.refresh?.();
+  for(const h of g.hunters)if(h.kind==='flytrap')drawEscapeDew(g,h,cell,view);
   g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='angler')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='wasp'?drawEscapeWaspNest(h,cell,g.elapsed):h.kind==='dragonfly'?drawEscapeDragonfly(h,cell,g.elapsed):h.kind==='mole'?drawEscapeMole(h,cell,g.elapsed):h.kind==='bat'?drawEscapeBat(h,cell,g.elapsed,g):h.kind==='eel'?drawEscapeEel(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
   drawingContext.save();drawingContext.globalAlpha*=g.player.hidden?.48:1;
   for(const h of g.hunters)if(h.state==='clash'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noFill();stroke(255,193,107,180);strokeWeight(cell*.035);ellipse(h.x*cell,h.y*cell,cell*(.9+Math.sin(g.elapsed*14)*.08),cell*.75);}
   // Mid-flight off a bounce cap, Sally rises over her shadow.
   const flight=g.player.flight,lift=flight?Math.sin(Math.min(1,(g.elapsed-flight.start)/flight.dur)*Math.PI)*cell*.9:0;
   if(flight){noStroke();fill(0,0,0,70);ellipse(g.player.x*cell,g.player.y*cell+cell*.1,cell*.7,cell*.25);push();translate(0,-lift);}
+  // Crawling, Sally hugs the ground: a little smaller and dimmer, with a hush mark over her.
+  const low=g.player.crawling;if(low){push();translate(g.player.x*cell,g.player.y*cell);scale(.86);translate(-g.player.x*cell,-g.player.y*cell);drawingContext.globalAlpha=.82;}
   drawEscapeLizard(g.motion.lizard,cell,g.motion.clock,g.player.swimming,!g.hasTail,escapeCharacter?.face);
+  if(low){drawingContext.globalAlpha=1;pop();noStroke();fill(214,232,190,150);textSize(cell*.3);text('shh',g.player.x*cell,(g.player.y-.62)*cell);}
   if(flight)pop();
   drawingContext.restore();drawingContext.restore();
   for(const c of g.clouds||[]){const age=g.elapsed-c.born,fade=Math.min(1,age*4,(c.until-g.elapsed)/1.2);noStroke();for(let k=0;k<7;k++){const a=k*.9+age*.3,r=c.r*cell*(.45+(k%3)*.18);fill(214,232,190,70*fade);ellipse(c.x*cell+Math.cos(a)*r*.6,c.y*cell+Math.sin(a)*r*.5,r*1.3,r*1.1);}fill(240,250,220,45*fade);ellipse(c.x*cell,c.y*cell,c.r*cell*2,c.r*cell*1.8);}
@@ -638,6 +657,15 @@ function drawEscapeEel(h,cell,clock){
 }
 // A flytrap on its stem: two toothed lobes that gape while it waits, slam shut on a snap,
 // and stay closed and bulging while it chews. Its reach is always marked.
+// Sticky dew round a flytrap marks exactly how far it bites. Each drop shows wherever its own
+// tile is in view, so the ring can be read from a distance before the plant itself is in sight.
+function drawEscapeDew(g,h,cell,view){
+  const reach=h.reach||1.6,n=Math.round(reach*9);noStroke();
+  for(let k=0;k<n;k++){const a=k/n*TWO_PI+h.x,x=h.x+Math.cos(a)*reach*.97,y=h.y+Math.sin(a)*reach*.97;
+    if(view.follow&&!g.visibleTile(Math.floor(x),Math.floor(y)))continue;
+    const glint=Math.max(0,Math.sin(g.elapsed*1.8+k*1.7));fill(205,236,160,110+glint*100);ellipse(x*cell,y*cell,cell*.1,cell*.1);
+    if(glint>.92){fill(255,255,235,170);ellipse(x*cell-cell*.012,y*cell-cell*.012,cell*.03,cell*.03);}}
+}
 function drawEscapeFlytrap(h,cell,clock){
   push();translate(h.x*cell,h.y*cell);noFill();stroke(200,90,90,h.state==='open'?55:25);strokeWeight(Math.max(1,cell*.02));drawingContext.setLineDash?.([cell*.08,cell*.08]);ellipse(0,0,cell*2*(h.reach||1.6),cell*2*(h.reach||1.6));drawingContext.setLineDash?.([]);
   noStroke();fill(40,90,40);ellipse(0,cell*.12,cell*.55,cell*.3);

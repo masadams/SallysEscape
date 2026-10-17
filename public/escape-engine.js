@@ -22,7 +22,7 @@
       this.level=options.level||(options.hiddenId?catalog.EscapeCatalog.hidden.find(l=>l.id===options.hiddenId):catalog.EscapeCatalog.levels.find(l=>l.id===(this.challenge?.levelId||options.levelId||'quiet-vault')));
       if(!this.level)throw new Error('Unknown Escape level');
       this.grid=catalog.escapeGridFor(this.level);this.height=this.grid.length;this.width=this.grid[0].length;
-      this.player={...centre(...this.level.spawn),facing:{x:0,y:-1},tongueAim:null,stamina:100,exhausted:false,moving:false,sprinting:false,hidden:false,noisy:false};
+      this.player={...centre(...this.level.spawn),facing:{x:0,y:-1},tongueAim:null,stamina:100,exhausted:false,moving:false,sprinting:false,crawling:false,hidden:false,noisy:false};
       this.hunters=this.level.guards.map(guard=>this.makeHunter(guard));
       this.pendingSpawns=[];this.spawnedReinforcements=new Set();this.webs=[];this.glowTrail=[];this.trailAt=0;
       this.hunter=this.hunters[0]||null;this.patrol=this.hunter?.patrol||[];
@@ -389,7 +389,7 @@
       }
       if(h.state==='return'){if(distance(h,home)<.1){h.state='patrol';h.cooldown=this.elapsed+6;return;}this.moveHunter(home,2*dt,h);return;}
       h.state='patrol';
-      if(this.carried.length&&this.elapsed>=(h.cooldown||0)&&!p.hidden&&distance(h,p)<=6&&this.clear(h,p,true)){h.state='dash';this.events.push('skitter');}
+      if(this.carried.length&&this.elapsed>=(h.cooldown||0)&&!p.hidden&&distance(h,p)<=(p.crawling?3.5:6)&&this.clear(h,p,true)){h.state='dash';this.events.push('skitter');}
     }
     ventPhase(v,t=this.elapsed){const phase=((t+v.offset)%v.period+v.period)%v.period;return {active:phase>=v.period-v.on,warning:phase>=v.period-v.on-v.warn&&phase<v.period-v.on};}
     inJet(p){const key=this.tileKey(p);return this.vents.some(v=>v.active&&v.keys.has(key));}
@@ -485,14 +485,14 @@
       if(p.exhausted&&p.stamina>=25)p.exhausted=false;
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
       if(this.cold.size)this.updateWarmth(dt);
-      const sprint=Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',speed=(sprint?4:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72:1)*(this.water(p)?.55:1);
+      const crawl=Boolean(input.crawl&&length>0&&!this.water(p)),sprint=!crawl&&Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',speed=(sprint?4:crawl?1.25:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72:1)*(this.water(p)?.55:1);
       for(const [axis,direction] of [['x',dx],['y',dy]]){
         const next={...p,[axis]:p[axis]+direction*speed*dt};if(this.fits(next)&&!(this.vents.length&&this.inJet(next)&&!this.inJet(p)))p[axis]=next[axis];
       }
       if(this.wind.length&&!p.flight){const gust=this.wind.find(w=>this.gustPhase(w).active&&w.keys.has(this.tileKey(p)));if(gust)for(const [axis,d] of [['x',gust.dir[0]],['y',gust.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*2.3*dt};if(this.fits(next))p[axis]=next[axis];
         // A gust that shoves Sally against a ledge over a gap blows her off it.
         else if(this.grid[Math.floor(next.y+d*(axis==='y'?.3:0))]?.[Math.floor(next.x+d*(axis==='x'?.3:0))]==='P'&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(null)){this.finish('caught','A gust blew Sally off the ledge. Watch the streaks: when they thicken, get out of the lane or brace against a wall.');return;}}}
-      p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);if(p.swimming&&!this.water(old))this.events.push('splash');p.moving=distance(old,p)>0.0001;p.sprinting=sprint&&p.moving;this.playerVelocity={x:(p.x-old.x)/dt,y:(p.y-old.y)/dt};
+      p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);if(p.swimming&&!this.water(old))this.events.push('splash');p.moving=distance(old,p)>0.0001;p.sprinting=sprint&&p.moving;p.crawling=crawl&&p.moving&&!p.swimming;this.playerVelocity={x:(p.x-old.x)/dt,y:(p.y-old.y)/dt};
       p.stamina=Math.max(0,Math.min(100,p.stamina+(p.sprinting?-24:18)*dt));
       if(this.camoUntil>this.elapsed&&p.moving){this.camoUntil=0;this.notice('Moving broke the camouflage.');}
       p.camo=this.camoUntil>this.elapsed;
@@ -500,7 +500,8 @@
       if(this.caps.length&&!p.flight&&p.moving){const cap=this.caps.find(c=>c.key===this.tileKey(p)&&this.elapsed>=c.readyAt);if(cap){p.flight={from:centre(...cap.at),to:centre(...cap.to),start:this.elapsed,dur:.55};cap.readyAt=this.elapsed+1;this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+.6);this.events.push('hop');}}
       p.hidden=!p.moving&&!this.heldBy&&(this.grid[Math.floor(p.y)][Math.floor(p.x)]==='L'||p.camo)||this.clouds.length>0&&!this.heldBy&&this.inCloud(p);
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
-      p.noisy=p.sprinting||(p.moving&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='N');
+      // A crawl makes no sound, even on gravel.
+      p.noisy=p.sprinting||(p.moving&&!p.crawling&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='N');
       if(this.level.dark){
         this.glowTrail=this.glowTrail.filter(t=>t.expires>this.elapsed);
         if(p.moving&&this.elapsed>=this.trailAt){this.glowTrail.push({...copy(p),born:this.elapsed,expires:this.elapsed+8});this.trailAt=this.elapsed+.18;}
@@ -592,7 +593,7 @@
       if(h.kind==='fox'){this.updateFox(dt,h);return;}
       const p=this.player,previousState=h.state;
       // Nearby visible danger overrides a lure; a pebble cannot make it ignore a bite.
-      const seen=this.seesPlayer(h),heard=(p.noisy||p.sprinting)&&!p.hidden&&this.audible(h,p,p.sprinting?6:3.5);
+      const seen=this.seesPlayer(h)&&!(p.crawling&&distance(h,p)>(this.hunters.length>1&&this.lit()?5.5:3.5)&&this.elapsed>=this.flashUntil),heard=(p.noisy||p.sprinting)&&!p.hidden&&this.audible(h,p,p.sprinting?6:3.5);
       const lure=this.decoy&&this.audible(h,this.decoy,9)&&!(seen&&distance(h,p)<1.2);
       let target,speed=1.25;
       if(lure){
@@ -600,10 +601,10 @@
         h.state='decoy';h.awareness=0;h.lastKnown=null;target=this.decoy;speed=1.7;
       }else if(seen||heard){
         h.reason=seen?'seen':'heard';h.lastKnown=copy(p);h.lastObserved=this.elapsed;
-        h.awareness=Math.min(1,h.awareness+dt/0.7);
+        const sure=p.crawling&&!heard?1.2:0.7;h.awareness=Math.min(1,h.awareness+dt/sure);
         h.state=h.awareness>=1?'chase':'alert';target=h.lastKnown;
         if(h.state==='alert'){
-          if(h.awareness-dt/0.7<=0)this.events.push('warning');
+          if(h.awareness-dt/sure<=0)this.events.push('warning');
           h.facing=Math.atan2(p.y-h.y,p.x-h.x);speed=0;
         }else speed=2.75;
       }else if(h.state==='alert'){
@@ -670,7 +671,7 @@
         if(remaining<.05||this.elapsed>=h.phaseUntil||!this.fits(next,.22,h)){h.state='sniff';h.phaseUntil=this.elapsed+1.6;h.path=[];return;}
         h.x=next.x;h.y=next.y;h.distanceMoved+=step;return;
       }
-      const heard=(p.noisy||p.sprinting)&&this.audible(h,p,7)||p.moving&&!p.hidden&&this.audible(h,p,2.6),lure=this.decoy&&this.decoy.expires!==h.lastLure&&this.audible(h,this.decoy,7);
+      const heard=(p.noisy||p.sprinting)&&this.audible(h,p,7)||p.moving&&!p.hidden&&this.audible(h,p,p.crawling?1:2.6),lure=this.decoy&&this.decoy.expires!==h.lastLure&&this.audible(h,this.decoy,7);
       if((heard||lure)&&this.elapsed>=(h.calmUntil||0)){
         const target=lure&&!heard?copy(this.decoy):this.lead(.2);if(lure)h.lastLure=this.decoy.expires;
         const d=Math.min(distance(h,target)+.4,4.5),a=Math.atan2(target.y-h.y,target.x-h.x);
@@ -714,7 +715,7 @@
       if(lure||near){
         h.aim=lure?copy(this.decoy):this.lead(.3);if(lure)h.lastLure=this.decoy.expires;
         if(distance(h,h.aim)>reach){const a=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.aim={x:h.x+Math.cos(a)*reach,y:h.y+Math.sin(a)*reach};}
-        h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='snap';h.phaseUntil=this.elapsed+.32;this.events.push('rustle');
+        h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='snap';h.phaseUntil=this.elapsed+(!lure&&p.crawling?.55:.32);this.events.push('rustle');
       }
     }
     // Bog heron: stands frozen in the reeds and stares along its beak. Anything that steps into
@@ -869,7 +870,7 @@
     // short of her, sniffs about and digs back down. A pebble's thud draws it too.
     moleHears(h){
       const p=this.player;if(!p.moving||p.flight||p.swimming||this.grid[Math.floor(p.y)]?.[Math.floor(p.x)]==='L')return null;
-      return distance(p,h)<=(p.sprinting?8:p.noisy?6:4.5)?copy(p):null;
+      return distance(p,h)<=(p.sprinting?8:p.noisy?6:p.crawling?2:4.5)?copy(p):null;
     }
     updateMole(dt,h){
       const p=this.player;
@@ -936,7 +937,7 @@
         this.moveHunter(h.anchor,1.4*dt,h);if(distance(h,h.anchor)<.05){h.state='rooted';h.aim=null;}return;
       }
       h.state='rooted';
-      const lure=this.decoy&&this.decoy.expires!==h.lastLure&&distance(h,this.decoy)<=5&&this.clear(h,this.decoy),seen=!this.player.hidden&&distance(h,this.player)<=1.7&&this.clear(h,this.player);
+      const lure=this.decoy&&this.decoy.expires!==h.lastLure&&distance(h,this.decoy)<=5&&this.clear(h,this.decoy),seen=!this.player.hidden&&distance(h,this.player)<=(this.player.crawling?1.2:1.7)&&this.clear(h,this.player);
       if(lure||seen){
         h.aim=lure?copy(this.decoy):this.lead(.25);if(lure)h.lastLure=this.decoy.expires;
         h.reason=lure?'heard':'seen';h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='reveal';h.phaseUntil=this.elapsed+.4;this.events.push('rustle');
