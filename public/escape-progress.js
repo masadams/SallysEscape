@@ -1,8 +1,20 @@
 (function(root){
   const catalog=typeof module!=='undefined'&&module.exports?require('./escape-levels.js').EscapeCatalog:root.EscapeCatalog;
   const KEY='sallys-escape-progress-v1',validTime=n=>Number.isFinite(n)&&n>0&&n<1000000;
+  // What opens each secret spot on the map (see EscapeWorld secrets for where they are).
+  const SECRET_RULES={
+    'star-garden':{name:'the Star Garden',stars:100},
+    'cloud-nest':{name:'the Cloud Nest',flies:25},
+    'mossy-well':{name:'the Mossy Well',bump:true,clue:'This bit of hedge looks thin and cracked…'},
+    'moss-den':{name:'Old Moss\u2019s Den',clue:'A snug little den. Old Moss says it is not ready for visitors yet.'},
+    'challenge-shrine':{name:'the Challenge Shrine',challenges:20},
+    'bestiary-grove':{name:'the Bestiary Grove',bestiary:true},
+    'ice-cave':{name:'the Ice Cave',caches:['frost-north','frost-south'],clue:'Cold air seeps through the rock. Find both treasure caches in Frost Hollow to open the Ice Cave.'},
+    'sunken-wreck':{name:'the Sunken Wreck',mastered:'tide',clue:'A mast pokes through the reeds. Earn every star in the Tide Pools to reach the Sunken Wreck.'},
+    'sallys-burrow':{name:'Sally\u2019s Burrow',cleared:'home',clue:'Home is just through here. Reach it the long way: clear escape 100.'}
+  };
   class EscapeProgress{
-    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],challengesSeen:[],attempts:{},masterySeen:[],skin:'classic',whisper:false,hidden:{},met:[]};this.lastPerfect=false;this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
+    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],challengesSeen:[],attempts:{},masterySeen:[],skin:'classic',whisper:false,hidden:{},met:[],secrets:[]};this.lastPerfect=false;this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
     read(){
       let raw,value;
       try{raw=this.storage?.getItem(KEY);this.persistent=Boolean(this.storage);}catch(_){this.persistent=false;return;}
@@ -18,6 +30,7 @@
       if(Array.isArray(value.masterySeen))for(const t of value.masterySeen)if(typeof t==='string'&&/^[a-z]+$/.test(t)&&!this.data.masterySeen.includes(t))this.data.masterySeen.push(t);
       if(typeof value.skin==='string'&&/^[a-z]+$/.test(value.skin))this.data.skin=value.skin;
       if(value.whisper===true)this.data.whisper=true;
+      if(Array.isArray(value.secrets))for(const id of value.secrets)if(SECRET_RULES[id]?.bump&&!this.data.secrets.includes(id))this.data.secrets.push(id);
       if(Array.isArray(value.met))for(const k of value.met)if(typeof k==='string'&&/^[a-z-]{2,20}$/.test(k)&&!this.data.met.includes(k)&&this.data.met.length<64)this.data.met.push(k);
       for(const level of catalog.hidden||[]){const saved=value.hidden?.[level.id],old=this.data.hidden[level.id];if(!saved||saved.cleared!==true||!validTime(saved.bestTime)||!Number.isInteger(saved.stars)||saved.stars<1||saved.stars>3)continue;
         this.data.hidden[level.id]={cleared:true,bestTime:Math.min(old?.bestTime||Infinity,saved.bestTime),stars:Math.max(old?.stars||0,saved.stars)};}
@@ -61,7 +74,28 @@
     hiddenOpen(chapters){return Boolean(this.unlockAll)||this.perfectAreas(chapters)>=5;}
     // A bonus escape opens once every escape in the areas before it has all three stars.
     bonusOpen(id,chapters){const level=(catalog.hidden||[]).find(l=>l.id===id);return Boolean(level?.bonus)&&(Boolean(this.unlockAll)||chapters.slice(0,level.bonus.areas).every(c=>this.mastered(c)));}
-    hiddenLevelOpen(id,chapters){const level=(catalog.hidden||[]).find(l=>l.id===id);return level?.bonus?this.bonusOpen(id,chapters):this.hiddenOpen(chapters);}
+    hiddenLevelOpen(id,chapters){const level=(catalog.hidden||[]).find(l=>l.id===id);if(level?.secret)return this.secretLevelOpen(level,chapters);return level?.bonus?this.bonusOpen(id,chapters):this.hiddenOpen(chapters);}
+    // Secret spots on the map open on deeds, not on the trail: stars, golden flies, challenges,
+    // creatures met, caches found, or a cracked hedge Sally simply walks into. Each reports how far along it is.
+    stars(){return catalog.levels.reduce((n,l)=>n+(this.data.levels[l.id]?.stars||0),0);}
+    creatureKinds(){const kinds=new Set();for(const l of catalog.levels){for(const g of l.guards||[])kinds.add(g.kind||'snake');if(l.hawk)kinds.add('hawk');if(l.antTrails?.length)kinds.add('ants');}return [...kinds];}
+    secret(id,chapters=[]){
+      const rule=SECRET_RULES[id];if(!rule)return null;const all=Boolean(this.unlockAll);
+      if(rule.stars)return {open:all||this.stars()>=rule.stars,have:this.stars(),need:rule.stars,hint:'Earn '+rule.stars+' stars to open '+rule.name+'.'};
+      if(rule.flies)return {open:all||this.data.goldflies>=rule.flies,have:this.data.goldflies,need:rule.flies,hint:'Catch '+rule.flies+' golden flies to open '+rule.name+'.'};
+      if(rule.challenges){const n=this.challengesCleared();return {open:all||n>=rule.challenges,have:n,need:rule.challenges,hint:'Beat '+rule.challenges+' challenges to open '+rule.name+'.'};}
+      if(rule.bestiary){const kinds=this.creatureKinds(),n=kinds.filter(k=>this.data.met.includes(k)).length;return {open:all||n>=kinds.length,have:n,need:kinds.length,hint:'Meet every creature in the bestiary to open '+rule.name+'.'};}
+      if(rule.caches){const n=rule.caches.filter(c=>this.data.caches.includes(c)).length;return {open:all||n>=rule.caches.length,have:n,need:rule.caches.length,hint:rule.clue};}
+      if(rule.mastered){const c=chapters.find(c=>c.theme===rule.mastered),open=all||Boolean(c&&this.mastered(c));return {open,have:open?1:0,need:1,hint:rule.clue};}
+      if(rule.cleared){const open=all||Boolean(this.data.levels[rule.cleared]?.cleared);return {open,have:open?1:0,need:1,hint:rule.clue};}
+      if(rule.bump){const open=all||this.data.secrets.includes(id);return {open,have:open?1:0,need:1,hint:rule.clue,bump:true};}
+      return {open:all,have:0,need:1,hint:rule.clue};
+    }
+    secretOpen(id,chapters){return Boolean(this.secret(id,chapters)?.open);}
+    // A cracked hedge gives way when Sally pushes into it, and stays open.
+    openSecret(id){if(!SECRET_RULES[id]?.bump)return false;this.read();if(this.data.secrets.includes(id))return false;this.data.secrets.push(id);this.write();return true;}
+    // An escape inside a secret spot opens with the spot, unless it asks for more stars of its own.
+    secretLevelOpen(level,chapters){return this.secretOpen(level.secret,chapters)&&(Boolean(this.unlockAll)||!level.stars||this.stars()>=level.stars);}
     whisper(){this.read();if(this.data.whisper||!catalog.levels.some(l=>this.data.levels[l.id]?.perfect))return false;this.data.whisper=true;this.write();return true;}
     setView(view){if(!['follow','overview'].includes(view))return false;this.read();this.data.view=view;this.write();return true;}
     // Creatures met for the bestiary; returns the ones met for the first time.
@@ -113,6 +147,7 @@
       return true;
     }
   }
+  EscapeProgress.SECRET_RULES=SECRET_RULES;
   root.EscapeProgress=EscapeProgress;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeProgress};
 })(typeof globalThis!=='undefined'?globalThis:this);

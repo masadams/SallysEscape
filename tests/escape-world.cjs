@@ -25,7 +25,7 @@ test('golden flies appear on open ground near Sally, flee, expire, and are caugh
   w.elapsed=w.fly.expires;w.advance(.1);assert.equal(w.fly,null,'it leaves when unclaimed');assert.equal(caught,1);});
 test('the Gilded Burrow stays solid rock until five perfect areas, then opens north of the Garden Ruins with three escapes',()=>{
   const {EscapeWorld}=require('../public/escape-world.js'),{EscapeCatalog}=require('../public/escape-levels.js');let open=false;
-  const w=new EscapeWorld(()=>true,null,()=>open);assert.equal(EscapeCatalog.hidden.filter(l=>!l.bonus).length,3);assert.ok(EscapeCatalog.hidden.every(l=>l.hidden&&!EscapeCatalog.levels.includes(l)));
+  const w=new EscapeWorld(()=>true,null,()=>open);assert.equal(EscapeCatalog.hidden.filter(l=>!l.bonus&&!l.secret).length,3);assert.ok(EscapeCatalog.hidden.every(l=>l.hidden&&!EscapeCatalog.levels.includes(l)));
   assert.equal(w.grid[5][36],'#');assert.equal(w.floor(36.5,9.5),false);w.player.x=36.5;w.player.y=3.5;assert.equal(w.nearby()?.hidden,undefined);
   open=true;w.refreshRegions();assert.equal(w.hiddenCarved,true);assert.ok(w.terrainVersion>0);assert.equal(w.floor(36.5,9.5),true);
   assert.ok(w.route({x:36.5,y:3.5},{x:36.5,y:18.5}),'a path leads up from the Garden Ruins');assert.equal(w.nearby().id,EscapeCatalog.hidden[1].id);assert.equal(w.enter(),'hidden:'+EscapeCatalog.hidden[1].id);
