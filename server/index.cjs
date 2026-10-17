@@ -1,4 +1,4 @@
-const http=require('node:http'),fs=require('node:fs'),path=require('node:path');const {createLevelApi}=require('./levels.cjs');const {createAdminApi}=require('./admin.cjs');
+const http=require('node:http'),fs=require('node:fs'),path=require('node:path');const {createLevelApi}=require('./levels.cjs');const {createAdminApi}=require('./admin.cjs');const {createPlayDataApi}=require('./playdata.cjs');
 const root=path.resolve(__dirname,'../public'),types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.txt':'text/plain; charset=utf-8','.mp3':'audio/mpeg','.ogg':'audio/ogg','.m4a':'audio/mp4','.wav':'audio/wav','.png':'image/png','.svg':'image/svg+xml'};
 // Deadlines so a slow or stalled client cannot hold a connection open: headers in 15 seconds, the
 // whole request in 30, and idle keep-alive connections close after 5.
@@ -18,11 +18,12 @@ function serveStatic(req,res,file){
     fs.readFile(file,(readError,raw)=>{if(readError){res.writeHead(404);res.end();return;}zlib.gzip(raw,{level:9},(zipError,body)=>{if(zipError){res.writeHead(500);res.end();return;}gzipped.set(file,{etag,body});send(body);});});
   });
 }
-function createServer(options={}){const admin=createAdminApi(options);const levels=createLevelApi({...options,isAdmin:admin.isAdmin});const server=http.createServer({requestTimeout:30000,headersTimeout:15000,keepAliveTimeout:5000},async(req,res)=>{
+function createServer(options={}){const admin=createAdminApi(options);const levels=createLevelApi({...options,isAdmin:admin.isAdmin});const playdata=createPlayDataApi({...options,isAdmin:admin.isAdmin});const server=http.createServer({requestTimeout:30000,headersTimeout:15000,keepAliveTimeout:5000},async(req,res)=>{
  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'; object-src 'none'");res.setHeader('Cross-Origin-Opener-Policy','same-origin');res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=(), payment=(), usb=(), publickey-credentials-create=(self), publickey-credentials-get=(self)');
- // Admin sign-in and the community shelf live under /api; everything else is the static game.
+ // Admin sign-in, play data and the community shelf live under /api; everything else is the static game.
  let pathname;try{pathname=new URL(req.url,'http://localhost').pathname;}catch(_){res.writeHead(400);res.end();return;}
  if(await admin.handle(req,res,pathname))return;
+ if(await playdata.handle(req,res,pathname))return;
  if(await levels.handle(req,res,pathname))return;
  if(!['GET','HEAD'].includes(req.method)){res.writeHead(405,{Allow:'GET, HEAD'});res.end();return;}
  if(req.url==='/healthz'){res.writeHead(200,{'Content-Type':'application/json'});res.end(req.method==='HEAD'?undefined:'{"ok":true}');return;}

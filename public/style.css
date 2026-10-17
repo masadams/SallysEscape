@@ -418,3 +418,10 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .volume-panel{flex-direction:column;gap:6px;padding:8px 10px;border-radius:10px;background:rgba(12,30,30,.94);border:1px solid #4f7a66;font-size:.8rem}
 .volume-panel label{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .volume-panel input{width:120px;accent-color:#b6dda0}
+
+/* Admin: player data table */
+.playdata-wrap { overflow-x:auto; }
+.playdata { border-collapse:collapse; font-size:.82rem; min-width:720px; }
+.playdata th,.playdata td { border-bottom:1px solid #5d7a6255; padding:5px 8px; text-align:left; vertical-align:top; }
+.playdata th { color:#c9d8b8; font-weight:650; }
+.admin-export { text-decoration:none; display:inline-flex; align-items:center; padding:6px 12px; border-radius:8px; }
