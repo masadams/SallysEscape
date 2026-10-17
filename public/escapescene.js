@@ -149,6 +149,7 @@ function tickEscapeCrawlTip(g){
 }
 function startEscape(options={}){
   escapeAbandonRun();
+  escapeFx.clear();escapeFxDecoy=null;
   if(options.custom?false:options.hiddenId?!escapeProgress.hiddenLevelOpen(options.hiddenId,EscapeWorld.chapters):options.challengeId?!escapeProgress.challengeUnlocked(options.challengeId):!escapeProgress.unlocked(options.levelId||'quiet-vault')){showEscapeSelect();return;}
   // Now and then (about one escape in four, never in a challenge) glow bugs drift about as a bonus.
   if(options.glowbugs===undefined&&!options.challengeId&&!options.custom&&Math.random()<ESCAPE_GLOWBUG_CHANCE)options={...options,glowbugs:1+Math.floor(Math.random()*1e6)};
@@ -287,7 +288,8 @@ function playEscape(){
   const open=escapeGame.hasKey&&escapeGame.treasure>=escapeGame.requiredTreasure;
   if(open&&!escapeHatchCued&&escapeGame.requiredTreasure>0){escapeHatchCued=true;if(!events.includes('key'))escapeMusic?.cue('hatch');}
   if(!open)escapeHatchCued=false;
-  if(gameState==='escape'&&!paused)escapeFootsteps(escapeGame.player);
+  if(gameState==='escape'&&!paused){escapeFootsteps(escapeGame.player);tickEscapeFx(escapeGame);}
+  if(mobile&&typeof EscapeFeel!=='undefined'&&events.length)EscapeFeel.buzz(events);
   drawEscapeVault();renderEscapeHUD();
   // A creature met for the first time joins the bestiary, with a short note at the top.
   if(escapeGame.met&&escapeGame.met.size!==escapeMetCount&&!escapeGame.level.custom){escapeMetCount=escapeGame.met.size;const fresh=escapeProgress.meet([...escapeGame.met]);const first=fresh.map(k=>EscapeBestiary.byKind(k)).find(Boolean);if(first)escapeBestiaryNote={text:'📖 New in the bestiary: '+first.name,until:millis()+3500};}
@@ -394,8 +396,10 @@ function tickEscapeMusic(){
   escapeMusic.setFlavor?.(screen==='game'&&escapeGame?EscapeMusic.flavorFor(escapeGame):null);
   // The soundscape follows the same place, softer on the map and the menu, ducked in a chase;
   // the map has the weather, an escape only the place's own sounds.
+  // Sound effects echo in caves and halls, never on the map.
+  if(audioUnlocked&&typeof EscapeAudio!=='undefined'&&EscapeAudio.setSpace&&typeof EscapeFeel!=='undefined')EscapeAudio.setSpace(getAudioContext(),screen==='game'?EscapeFeel.space(special||chapter?.theme||'meadow',lvl):'open');
   if(escapeAmbience){const key=special||chapter?.theme||'meadow';escapeAmbience.setScape(screen==='menu'?'meadow':EscapeAmbience.SCAPES[key]?key:'meadow',screen==='game'?'level':'world');
-    escapeAmbience.setVolume(isMuted?0:soundVolume*1.3*(screen==='menu'?.45:screen==='world'?.7:1)*(paused?.35:1)*(escapeMusic.state==='chase'?.5:1));escapeAmbience.tick();}
+    escapeAmbience.setVolume(isMuted?0:ambienceVolume*.65*(screen==='menu'?.45:screen==='world'?.7:1)*(paused?.35:1)*(escapeMusic.state==='chase'?.5:1));escapeAmbience.tick();}
 }
 function escapeSound(event,options={}){
   if(isMuted||paused||!audioUnlocked||soundVolume===0||typeof EscapeAudio==='undefined')return;
@@ -407,7 +411,31 @@ let escapeStepFrom=null,escapeStepDistance=0,escapeStepAlt=false;
 function escapeFootsteps(p){
   if(!escapeStepFrom||!p.moving){escapeStepFrom={x:p.x,y:p.y};escapeStepDistance=0;return;}
   escapeStepDistance+=Math.hypot(p.x-escapeStepFrom.x,p.y-escapeStepFrom.y);escapeStepFrom={x:p.x,y:p.y};
-  if(escapeStepDistance>=(p.sprinting?.62:p.crawling?.7:.48)){escapeStepDistance=0;escapeStepAlt=!escapeStepAlt;escapeSound(p.swimming?'paddle':p.crawling?'crawl':'step',{sprint:p.sprinting,alt:escapeStepAlt});}
+  if(escapeStepDistance>=(p.sprinting?.62:p.crawling?.7:.48)){escapeStepDistance=0;escapeStepAlt=!escapeStepAlt;
+    const surface=typeof EscapeFeel!=='undefined'?EscapeFeel.surface(escapeGame):'floor';
+    escapeSound(p.swimming?'paddle':p.crawling?'crawl':'step',{sprint:p.sprinting,alt:escapeStepAlt,surface});
+    if(typeof EscapeFeel!=='undefined'&&!p.swimming&&!p.crawling)EscapeFeel.step(escapeFx,escapeGame,{t:escapeGame.elapsed,sprint:p.sprinting,alt:escapeStepAlt});}
+}
+// Feel: footprints, dust, leaves, sparks and noise rings, kept in one small pool per run. Rings
+// show how far a noise carries, so they stay on in Simple lighting; the rest is Full only.
+const escapeFx=typeof EscapeFeel!=='undefined'?new EscapeFeel.Particles():{items:[],add(){},update(){},clear(){}};
+let escapeFxDecoy=null;
+function tickEscapeFx(g){
+  escapeFx.update(g.elapsed,deltaTime/1000);
+  if(g.decoy&&g.decoy!==escapeFxDecoy&&typeof EscapeFeel!=='undefined')EscapeFeel.land(escapeFx,g.decoy,g.elapsed);escapeFxDecoy=g.decoy;
+}
+function drawEscapePrints(g,cell){
+  if(!escapeLightingFull())return;noStroke();
+  for(const p of escapeFx.items){if(p.kind!=='print')continue;const k=1-(g.elapsed-p.born)/p.life;push();translate(p.x*cell,p.y*cell);rotate(p.angle);fill(...p.color,110*k);ellipse(0,0,cell*p.size*1.5,cell*p.size);pop();}
+}
+function drawEscapeFx(g,cell){
+  const full=escapeLightingFull();
+  for(const p of escapeFx.items){const age=g.elapsed-p.born,k=Math.max(0,1-age/p.life);
+    if(p.kind==='ring'){noFill();stroke(...p.color,150*k);strokeWeight(Math.max(1,cell*.035));const r=p.r*cell*(.25+.75*Math.min(1,age/p.life*1.6));ellipse(p.x*cell,p.y*cell,r*2,r*2);continue;}
+    if(!full||p.kind==='print')continue;noStroke();
+    if(p.kind==='dust'){fill(...p.color,120*k);ellipse(p.x*cell,p.y*cell,cell*p.size*(1+age*2),cell*p.size*(1+age*2));}
+    else if(p.kind==='leaf'){push();translate(p.x*cell,p.y*cell);rotate(p.angle);fill(...p.color,220*k);ellipse(0,0,cell*p.size*1.6,cell*p.size*.8);pop();}
+    else if(p.kind==='spark'){fill(...p.color,255*k);ellipse(p.x*cell,p.y*cell,cell*p.size,cell*p.size);}}
 }
 // Phones show a close, following view by default; the menu switches to the whole map.
 const ESCAPE_CLOSE_VIEW_KEY='sally-escape-close-view';
@@ -582,7 +610,7 @@ function drawEscapeVault(){
   background(10,18,25);push();translate(ox,oy);textFont('sans-serif');textAlign(CENTER,CENTER);
   drawEscapeTiles(g,cell,palette,index);
   drawEscapeWaterLight(g,cell,view);drawEscapeLightningShadows(g,cell);
-  drawEscapeTricks(g,cell,view);
+  drawEscapeTricks(g,cell,view);drawEscapePrints(g,cell);
   if(g.level.rootWheel){const [x,y]=g.level.rootWheel,angle=g.wheelAngle;push();translate((x+.5)*cell,(y+.5)*cell);rotate(angle);noFill();stroke(106,147,76,95);strokeWeight(cell*.11);ellipse(0,0,cell*2.7,cell*2.7);for(let a=0;a<TWO_PI;a+=PI/2)line(0,0,Math.cos(a)*cell*1.35,Math.sin(a)*cell*1.35);pop();}
   for(const gate of g.gates){
     const s=gate.switch,label=gate.closingAt!==null?'!':gate.duration&&gate.open?String(Math.max(0,Math.ceil(gate.expiresAt-g.elapsed))):gate.sealed?'×':gate.open?'✓':s?gate.id==='blue'?'B':'A':'◇',gateColor=gate.sealed?[230,137,148]:gate.color;
@@ -706,7 +734,7 @@ function drawEscapeVault(){
   for(const h of g.hunters)if(h.kind==='cloudray')drawEscapeCloudRay(h,cell,g.elapsed);
   if(g.player.frozenUntil>g.elapsed){const p=g.player,k=Math.min(1,(g.player.frozenUntil-g.elapsed)/1.6);noStroke();fill(200,236,250,120*k);ellipse(p.x*cell,p.y*cell,cell*.9,cell*.9);stroke(235,250,255,200*k);strokeWeight(Math.max(1,cell*.035));for(let a=0;a<6;a++){const r=a*Math.PI/3;line(p.x*cell,p.y*cell,(p.x+Math.cos(r)*.45)*cell,(p.y+Math.sin(r)*.45)*cell);}}
   for(const h of g.hunters)if(h.kind!=='millipede'&&h.state!=='rooted'&&h.state!=='patrol'&&!(['angler','flytrap'].includes(h.kind)&&h.state!=='snap')&&!(h.kind==='heron'&&h.state!=='aim')&&!(h.kind==='mantis'&&h.state!=='raise')&&!(h.kind==='wasp'&&h.state!=='stir')&&h.kind!=='dragonfly'&&h.kind!=='cloudray'&&h.kind!=='sentinel'&&!(h.kind==='mole'&&h.state!=='surface')&&!(h.kind==='bat'&&h.state!=='dive')&&!(h.kind==='eel'&&h.state!=='ripple')&&!(h.kind==='crab'&&!['peek','scuttle'].includes(h.state))&&h.kind!=='fox'&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))){fill(h.state==='decoy'?195:255, h.state==='decoy'?182:214, h.state==='decoy'?255:133);noStroke();textSize(cell*.65);text(h.state==='alert'?'?':['chase','windup','charge','sting','leap','glimmer','swoop','reveal','lunge','snap','peek','scuttle','aim','raise','stir','surface','ripple'].includes(h.state)?'!':h.state==='decoy'?'♪':'…',h.x*cell,(h.y-.65)*cell);}
-  if(g.player.noisy&&!g.player.sprinting){noFill();stroke(221,195,149,80);strokeWeight(1);const pulse=(g.elapsed%.6)/.6;ellipse(g.player.x*cell,g.player.y*cell,cell*(.55+pulse),cell*(.55+pulse));}
+  drawEscapeFx(g,cell);
   const place=escapePlace(g.level),mood=place?EscapeLighting.moodFor(place.key,place.step):null;
   drawEscapeLights(g,cell,mood);
   if(view.follow)drawEscapeFog(g,cell);

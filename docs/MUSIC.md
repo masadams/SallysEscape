@@ -97,13 +97,14 @@ the finale (`SCAPES`): one or two beds of shaped noise (a breeze, wind, a stream
 insects, a cave's rumble, steam's hiss, a machine hum) with a slow swell, and calls now and then,
 panned to a side (birdsong, frogs, crickets, drips, crows, owls, gulls, creaks, ice tinkles,
 clanks, bubbles, thunder, a shrine chime). Beds crossfade over two seconds when the place
-changes. It follows the sound volume, plays softer on the world map and the menu, and ducks
-during a chase and while paused.
+changes. The world map carries the weather (wind, rain, surf, breeze, at under half their full
+level); inside an escape only the place's own beds play, softer. It has its own volume slider,
+plays softer on the world map and the menu, and ducks during a chase and while paused.
 
 ## Volume
 
-**Volume** in the toolbar opens two sliders, saved per browser: Sound (effects and ambience) and
-Music. **Sound: Off** still silences everything.
+**Volume** in the toolbar opens three sliders, saved per browser: Sound (effects), Music and
+Ambience. **Sound: Off** still silences everything.
 
 ## Sound effects
 
@@ -119,6 +120,25 @@ A creature's sound carries where it happened (`game.cue(name, hunter)`), so the 
 left or right of Sally and lets it fade with distance. `EscapeAudio.measure(name)` renders a
 sound offline and reports its loudness; `TRIM` evens them out (rewards near -17 dB RMS, danger
 tells near -27 dB so a warning is never lost under the music, footsteps and a crawl soft).
+
+Footsteps follow the ground under Sally (`EscapeFeel.surface`): a soft pad on plain floor, a
+crunch of gravel (the noisy floor, so it sounds noisy), a rustle of leaves and vines, next to
+nothing on moss, a squelch of mud, a hiss of desert sand, the crunch of snow on cold ground and a
+wet slap on the tide flats.
+
+Caves and halls echo (`EscapeFeel.space`, `EscapeAudio.setSpace`): every effect passes through
+one shared convolver fed a decaying-noise impulse, about 1.7 s in caves, the grotto, ant tunnels,
+the Hollow, the Gilded Burrow, the Mossy Well, the Ice Cave and any dark escape, and a shorter one
+in the ruins, quarry, vents, the wreck and the shrine. Open places and the world map stay dry.
+
+## Feel
+
+`public/escape-feel.js` holds the small touches the scene draws: footprints that fade in snow,
+sand and mud; dust kicked up when sprinting; leaves flicked up from leaves and vines; sparks where
+a pebble lands; and noise rings that spread as far as the hunters can hear the sound (6 tiles for a
+sprint, 3.5 for gravel, 7 for a pebble). Rings stay on in Simple lighting because they tell the
+player something; the rest show in Full only. On phones a short buzz marks being caught or
+spotted, a dropped tail, the key and escaping (Android; iPhones do not let web pages vibrate).
 
 ## Changing the music
 
