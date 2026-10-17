@@ -6,7 +6,8 @@ function steps(){const g=new EscapeAdventure({level:legacy['frostbite-steps']});
 test('Frost Hollow follows the Lantern Marsh: five routes where only marked rooms are cold',()=>{
   const frost=EscapeCatalog.levels.slice(68,73);assert.deepEqual(frost.map(l=>l.id),['frostbite-steps','icicle-gallery','frozen-plates','snowdrift-vault','winter-heart']);
   assert.equal(frost[0].unlockAfter,'moonwell-keep');for(const l of frost){assert.ok(l.cold.length&&l.warm.length>=4&&l.tailDrop);const g=new EscapeAdventure({levelId:l.id});assert.ok(!g.cold.has(g.tileKey(g.player)),'Sally starts warm');let floor=0,cold=0;for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.floor(x,y)){floor++;if(g.cold.has(x+','+y))cold++;}assert.ok(cold/floor<.75,l.id+' keeps warm ground too');}
-  assert.ok(EscapeCatalog.levels.filter(l=>l.cold).every(l=>EscapeCatalog.levels.indexOf(l)>=68&&EscapeCatalog.levels.indexOf(l)<73));const p=new EscapeProgress(null);assert.equal(p.unlocked('frostbite-steps'),false);p.data.levels['moonwell-keep']={cleared:true};assert.equal(p.unlocked('frostbite-steps'),true);
+  // Cold rooms belong to Frost Hollow, and return once on the road home (Cold Steam).
+  assert.ok(EscapeCatalog.levels.filter(l=>l.cold).every(l=>{const i=EscapeCatalog.levels.indexOf(l);return i>=68&&i<73||l.id==='cold-steam';}));const p=new EscapeProgress(null);assert.equal(p.unlocked('frostbite-steps'),false);p.data.levels['moonwell-keep']={cleared:true};assert.equal(p.unlocked('frostbite-steps'),true);
 });
 test('cold rooms drain warmth, sprinting drains it faster, and warm ground or stones thaw Sally',()=>{
   const g=steps();Object.assign(g.player,{x:14.5,y:3.5});ticks(g,2);const walkedCold=g.player.warmth;assert.ok(walkedCold<85&&walkedCold>78);

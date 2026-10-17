@@ -6,26 +6,26 @@
     [0,5,'Sunny Meadow','meadow'],[5,9,'Garden Ruins','garden'],[9,13,'Reedbanks','river'],
     [13,17,'Restless Ruins','ruins'],[17,23,'Deep Trials','quarry'],[23,27,'Venom Depths','desert'],
     [27,32,'The Waking Maze','marsh'],[32,37,'Hollow Jungle','jungle'],[37,42,'Luminous Depths','glow'],
-    [42,47,'Living Labyrinth','orchard'],[47,49,'Sun and Sea','coast'],[49,53,'The Shedding Hollow','hollow'],[53,58,'The Lantern Marsh','lantern'],[58,63,'Sunbaked Rooftops','rooftops'],[63,68,'Ant Kingdom','ants'],[68,73,'Frost Hollow','frost'],[73,78,'Steam Vents','vents'],[78,83,'Mushroom Grotto','grotto'],[83,88,'Storm Heights','storm'],[88,93,'Tide Pools','tide']
-  ].map(([start,end,name,theme],i)=>{const [x,y]=[[14,18],[36,18],[58,18],[80,18],[101,18],[101,43],[79,43],[57,43],[35,43],[14,43],[14,68],[36,68],[36,93],[57,68],[101,68],[14,93],[57,93],[79,93],[101,93],[101,118]][i];return {start,end,name,theme,x,y,linear:['hollow','lantern','rooftops','ants','frost','vents','grotto','storm','tide'].includes(theme)};});
+    [42,47,'Living Labyrinth','orchard'],[47,49,'Sun and Sea','coast'],[49,53,'The Shedding Hollow','hollow'],[53,58,'The Lantern Marsh','lantern'],[58,63,'Sunbaked Rooftops','rooftops'],[63,68,'Ant Kingdom','ants'],[68,73,'Frost Hollow','frost'],[73,78,'Steam Vents','vents'],[78,83,'Mushroom Grotto','grotto'],[83,88,'Storm Heights','storm'],[88,93,'Tide Pools','tide'],[93,100,'The Road Home','home']
+  ].map(([start,end,name,theme],i)=>{const [x,y]=[[14,18],[36,18],[58,18],[80,18],[101,18],[101,43],[79,43],[57,43],[35,43],[14,43],[14,68],[36,68],[36,93],[57,68],[101,68],[14,93],[57,93],[79,93],[101,93],[101,118],[57,118]][i];return {start,end,name,theme,x,y,linear:['hollow','lantern','rooftops','ants','frost','vents','grotto','storm','tide','home'].includes(theme)};});
   // Two treasure caches hide in the far corners of every courtyard. They add to
   // Sally's lifetime hoard but never gate progress.
   const CACHE_VALUE=5,caches=chapters.flatMap((c,i)=>[[c.x+7,c.y-6],[c.x-7,c.y+6]].map(([x,y],n)=>({id:c.theme+'-'+(n?'south':'north'),chapter:i,x,y,value:CACHE_VALUE})));
   // Signposts greet Sally at each courtyard and report how many stars it holds.
   const signs=chapters.map((c,i)=>({chapter:i,x:c.x-3,y:c.y-6}));
   // One friendly local lives in every courtyard and chats when Sally is close.
-  const folk=[['tortoise','Old Moss'],['snail','Pip'],['frog','Reed'],['beetle','Brass'],['tortoise','Gravel'],['frog','Dusty'],['snail','Murk'],['frog','Fern'],['beetle','Glimmer'],['snail','Bramble'],['frog','Coral'],['tortoise','Husk'],['beetle','Wick'],['frog','Tiles'],['beetle','Pincer'],['tortoise','Frostbite'],['snail','Rivet'],['frog','Morel'],['tortoise','Gale'],['snail','Shelly']];
+  const folk=[['tortoise','Old Moss'],['snail','Pip'],['frog','Reed'],['beetle','Brass'],['tortoise','Gravel'],['frog','Dusty'],['snail','Murk'],['frog','Fern'],['beetle','Glimmer'],['snail','Bramble'],['frog','Coral'],['tortoise','Husk'],['beetle','Wick'],['frog','Tiles'],['beetle','Pincer'],['tortoise','Frostbite'],['snail','Rivet'],['frog','Morel'],['tortoise','Gale'],['snail','Shelly'],['tortoise','Granny Sedge']];
   const npcs=chapters.map((c,i)=>({chapter:i,x:c.x+3,y:c.y+5,kind:folk[i][0],name:folk[i][1]}));
   // Sealed spots for later: small clearings walled off from the trail, each marked with a standing
-  // stone (or, inside a courtyard, a fairy ring or a lightning-struck stump), plus the open space
-  // the final stretch of the trail will fill. None of them can be reached yet.
+  // stone (or, inside a courtyard, a fairy ring or a lightning-struck stump), 
+  // none of them can be reached yet.
   const secrets=[
     {id:'star-garden',name:'Star Garden',x:79,y:68,rx:5,ry:4},{id:'cloud-nest',name:'Cloud Nest',x:70,y:4,rx:4,ry:2},
     {id:'mossy-well',name:'Mossy Well',x:47,y:31,rx:3,ry:3},{id:'moss-den',name:'Old Moss\'s Den',x:25,y:56,rx:3,ry:3},
     {id:'challenge-shrine',name:'Challenge Shrine',x:68,y:56,rx:3,ry:3},{id:'bestiary-grove',name:'Bestiary Grove',x:90,y:81,rx:3,ry:3},
     {id:'ice-cave',name:'Ice Cave',x:14,y:111,rx:3,ry:3},{id:'sunken-wreck',name:'Sunken Wreck',x:3,y:80,rx:2,ry:2},
     {id:'fairy-ring',name:'Fairy Ring',x:84,y:89,rx:0,ry:0},{id:'struck-oak',name:'Struck Oak',x:95,y:89,rx:0,ry:0},
-    {id:'final-stretch',name:'The Final Stretch',x:58,y:118,rx:14,ry:8,area:true},{id:'sallys-burrow',name:'Sally\'s Burrow',x:31,y:118,rx:4,ry:3}
+    {id:'sallys-burrow',name:'Sally\'s Burrow',x:31,y:118,rx:4,ry:3}
   ];
   class EscapeWorld{
     constructor(unlocked=()=>true,focusId=null,hiddenOpen=()=>false,bonusOpen=()=>false){
@@ -39,10 +39,12 @@
       this.bonusOpen=bonusOpen;
       this.bonusNodes=(catalog.hidden||[]).map((level,i)=>({id:level.id,hidden:true,bonus:level.bonus,index:i,name:level.name})).filter(n=>n.bonus).map((n,k)=>({...n,...[{x:101,y:4,lock:{x:101,y:9},sign:{x:99,y:11}},{x:14,y:30,lock:{x:14,y:35},sign:{x:12,y:37}}][k]}));
       this.rng=Math.random;this.fly=null;this.flyAt=10;this.onFly=null;this.lick=null;this.unlocked=unlocked;this.hunters=[];this.elapsed=0;this.target=null;this.accumulator=0;
-      const spots=[[-6,3],[-4,-2],[0,-4],[4,-1],[6,4],[0,6]];
-      this.nodes=catalog.levels.map((level,index)=>{const chapter=chapters.findIndex(c=>index>=c.start&&index<c.end),c=chapters[chapter],[x,y]=chapter===10&&index===48?[6,5]:spots[index-c.start];return {id:level.id,index,chapter,x:c.x+x,y:c.y+y,name:level.name};});
+      const spots=[[-6,3],[-4,-2],[0,-4],[4,-1],[6,4],[0,6]],
+        // The road home has seven: in from the Tide Pools on the east, out west toward the burrow.
+        homeSpots=[[6,4],[7,-2],[3,-5],[-2,-5],[-6,-2],[-2,3],[-7,4]];
+      this.nodes=catalog.levels.map((level,index)=>{const chapter=chapters.findIndex(c=>index>=c.start&&index<c.end),c=chapters[chapter],[x,y]=chapter===10&&index===48?[6,5]:(c.theme==='home'?homeSpots:spots)[index-c.start];return {id:level.id,index,chapter,x:c.x+x,y:c.y+y,name:level.name};});
       const node=this.spotFor(focusId)||this.nodes[0];this.player={x:node.x,y:node.y+1,facing:{x:0,y:-1},moving:false,sprinting:false};
-      this.paths=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[7,13],[5,14],[12,15],[13,16],[16,17],[17,18],[18,19]];
+      this.paths=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[7,13],[5,14],[12,15],[13,16],[16,17],[17,18],[18,19],[19,20]];
       this.grid=Array.from({length:this.height},()=>Array(this.width).fill('#'));this.gates=[];
       const room=(x1,y1,x2,y2,t='.')=>{for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)if(this.grid[y]?.[x])this.grid[y][x]=t;};
       for(const c of chapters){room(c.x-8,c.y-7,c.x+8,c.y+7);if(['ruins','garden','quarry'].includes(c.theme)){room(c.x-1,c.y+1,c.x+1,c.y+1,'#');room(c.x,c.y+1,c.x,c.y+1);}else{room(c.x+1,c.y+2,c.x+2,c.y+2,'L');}for(const [dx,dy]of [[-6,1],[-5,1],[4,-1],[5,-1]])this.grid[c.y+dy][c.x+dx]='L';if(c.theme==='river')room(c.x+4,c.y-2,c.x+6,c.y+1,'P');if(c.theme==='coast')room(c.x+2,c.y+1,c.x+4,c.y+4,'P');if(c.theme==='tide'){room(c.x-3,c.y+1,c.x-1,c.y+3,'P');room(c.x+2,c.y-6,c.x+4,c.y-5,'P');}}
