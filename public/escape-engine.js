@@ -924,7 +924,7 @@
     updateMimic(dt,h){
       h.anchor||=copy(h);
       if(h.state==='reveal'){
-        if(this.elapsed>=h.phaseUntil){h.state='lunge';h.phaseUntil=this.elapsed+.55;this.alarms++;this.events.push('snap');}return;
+        if(this.elapsed>=h.phaseUntil){h.state='lunge';h.phaseUntil=this.elapsed+.55;this.events.push('snap');}return;
       }
       if(h.state==='lunge'){
         const remaining=distance(h,h.aim),step=Math.min(5.5*dt,remaining),next={x:h.x+Math.cos(h.facing)*step,y:h.y+Math.sin(h.facing)*step};
@@ -1234,7 +1234,7 @@
       this.status=status;this.notice(message,status);
       this.tongue=null;
       const stars=status==='won'?1+Number(this.treasure>=Math.ceil(this.totalTreasure*.6))+Number(this.alarms===0&&this.hasTail):0;
-      this.result=Object.freeze({status,levelId:this.level.id,hidden:Boolean(this.level.hidden),routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),blasts:this.blasts,steamed:this.steamed,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,glowbugs:this.glowbugsCaught,message});
+      this.result=Object.freeze({status,levelId:this.level.id,hidden:Boolean(this.level.hidden),draft:Boolean(this.level.draft),routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),blasts:this.blasts,steamed:this.steamed,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,glowbugs:this.glowbugsCaught,message});
     }
     drainEvents(){const events=this.events;this.events=[];return events;}
   }

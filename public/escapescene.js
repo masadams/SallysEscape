@@ -25,7 +25,7 @@ function showEscapeIntro(){
   const brief=g.challenge?g.challenge.brief:full?level.brief:'';
   // Names, briefs and hints can come from a shared or community level, so they are escaped as text.
   const t=escapeText;
-  card.innerHTML='<span class="escape-intro-number">'+(g.challenge?'CHALLENGE · '+t(level.name):level.custom?'YOUR LEVEL':level.hidden?'THE GILDED BURROW':(level.expedition?'EXPEDITION ':'ESCAPE ')+(index+1))+'</span><h2 id="escape-intro-title">'+t(g.challenge?g.challenge.name:level.name)+'</h2>'+(brief?'<p class="escape-intro-brief">'+t(brief)+'</p>':'')+(showHint?'<p class="escape-intro-hint">'+t(level.hint)+'</p>':'<p class="escape-intro-hint escape-intro-hidden" id="escape-intro-hint">'+t(level.hint)+'</p><button id="escape-intro-reveal" class="escape-secondary">Show hint <span class="key-hint">[H]</span></button>')+toolList+(g.tailDrop&&full?'<p class="escape-intro-tail">Sally can drop her tail once here. The next catch is final.</p>':'')+(best?'<p class="escape-intro-best">Best: '+escapeRecordSummary(level,best)+'</p>':'')+'<button id="escape-intro-start" class="escape-primary">Start<span class="key-hint"> · any key</span></button>';
+  card.innerHTML='<span class="escape-intro-number">'+(g.challenge?'CHALLENGE · '+t(level.name):level.custom?'YOUR LEVEL':level.hidden?'THE GILDED BURROW':(level.expedition?'EXPEDITION ':'ESCAPE ')+(index+1))+(level.draft?' · ✎ WORKSHOP DRAFT':'')+'</span><h2 id="escape-intro-title">'+t(g.challenge?g.challenge.name:level.name)+'</h2>'+(brief?'<p class="escape-intro-brief">'+t(brief)+'</p>':'')+(showHint?'<p class="escape-intro-hint">'+t(level.hint)+'</p>':'<p class="escape-intro-hint escape-intro-hidden" id="escape-intro-hint">'+t(level.hint)+'</p><button id="escape-intro-reveal" class="escape-secondary">Show hint <span class="key-hint">[H]</span></button>')+toolList+(g.tailDrop&&full?'<p class="escape-intro-tail">Sally can drop her tail once here. The next catch is final.</p>':'')+(best?'<p class="escape-intro-best">Best: '+escapeRecordSummary(level,best)+'</p>':'')+'<button id="escape-intro-start" class="escape-primary">Start<span class="key-hint"> · any key</span></button>';
   card.style.display='block';card.onclick=e=>{if(e.target.closest('#escape-intro-reveal')){revealEscapeHint();return;}hideEscapeIntro();};document.getElementById('escape-intro-start').focus();
 }
 let escapeHintHidden=false;
@@ -213,7 +213,7 @@ function playEscape(){
 function renderEscapeHUD(force=false){
   if(!escapeGame||(!force&&gameNow()-escapeHudAt<100))return;escapeHudAt=gameNow();
   const g=escapeGame;
-  document.getElementById('escape-mission-name').textContent=g.challenge?g.challenge.name:g.level.custom?'✎ '+g.level.name:g.level.hidden?'✦ '+g.level.name:(EscapeCatalog.levels.indexOf(g.level)+1)+' · '+g.level.name;
+  document.getElementById('escape-mission-name').textContent=(g.level.draft?'✎ ':'')+(g.challenge?g.challenge.name:g.level.custom?'✎ '+g.level.name:g.level.hidden?'✦ '+g.level.name:(EscapeCatalog.levels.indexOf(g.level)+1)+' · '+g.level.name);
   const crossing=g.gates.filter(gate=>gate.duration&&gate.open&&gate.expiresAt!==null).sort((a,b)=>a.expiresAt-b.expiresAt)[0];
   const brace=g.gates.filter(gate=>gate.bracedUntil>g.elapsed).sort((a,b)=>a.bracedUntil-b.bracedUntil)[0],growing=g.seedGrowth.slice().sort((a,b)=>a.expires-b.expires)[0];
   const remaining=Math.max(0,Math.ceil((g.timeLimit||0)-g.elapsed));
@@ -658,7 +658,7 @@ function drawEscapeVine(v,cell,clock,withered,held){
   pop();
 }
 function drawEscapeMimic(h,cell,clock,harmless=false){
-  if(!harmless&&h.state==='rooted'){push();translate(h.x*cell,h.y*cell);const breath=Math.sin(clock*1.3+h.x*2)*.5+.5,blink=Math.sin(clock*.9+h.y)>.985;noStroke();fill(245-breath*20,189+breath*8,87);rect(-cell*.3,-cell*.22,cell*.6,cell*.44,cell*.08);fill(100,71,40);rect(-cell*.06,-cell*.22,cell*.12,cell*.44);if(blink){fill(120,200,90);ellipse(-cell*.15,-cell*.02,cell*.07,cell*.05);ellipse(cell*.15,-cell*.02,cell*.07,cell*.05);}pop();return;}
+  if(!harmless&&h.state==='rooted'){push();const shiver=Math.sin(clock*.7+h.x*3+h.y*5)>.975?Math.sin(clock*55)*cell*.022:0;translate(h.x*cell+shiver,h.y*cell);const breath=Math.sin(clock*1.3+h.x*2)*.5+.5,blink=Math.sin(clock*.9+h.y)>.985;noStroke();fill(245-breath*20,189+breath*8,87);rect(-cell*.3,-cell*.22,cell*.6,cell*.44,cell*.08);fill(100,71,40);rect(-cell*.06,-cell*.22,cell*.12,cell*.44);if(blink){fill(120,200,90);ellipse(-cell*.15,-cell*.02,cell*.07,cell*.05);ellipse(cell*.15,-cell*.02,cell*.07,cell*.05);}pop();return;}
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);const hidden=h.state==='rooted',twitch=!harmless&&hidden&&Math.sin(clock*1.6+h.x)>.97?.07:0;
   noStroke();fill(9,24,16,150);ellipse(-cell*.06+cell*twitch*.3,cell*(.07+twitch*.2),cell*(.8+twitch),cell*.5);
   stroke(82,119,56);strokeWeight(cell*.05);for(const side of [-1,1]){const stride=hidden?0:Math.sin(h.distanceMoved*9+side)*.05;line(-cell*.12,side*cell*.08,-cell*.35,side*cell*.26);line(-cell*.35,side*cell*.26,-cell*(.46+stride),side*cell*.33);}
