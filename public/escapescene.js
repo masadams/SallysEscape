@@ -413,7 +413,7 @@ function tickEscapeMusic(){
   // Sound effects echo in caves and halls, never on the map.
   if(audioUnlocked&&typeof EscapeAudio!=='undefined'&&EscapeAudio.setSpace&&typeof EscapeFeel!=='undefined')EscapeAudio.setSpace(getAudioContext(),screen==='game'?EscapeFeel.space(special||chapter?.theme||'meadow',lvl):'open');
   if(escapeAmbience){const key=special||chapter?.theme||'meadow';escapeAmbience.setScape(screen==='menu'?'meadow':EscapeAmbience.SCAPES[key]?key:'meadow',screen==='game'?'level':'world');
-    escapeAmbience.setVolume(isMuted?0:ambienceVolume*.65*(screen==='menu'?.45:screen==='world'?.7:1)*(paused?.35:1)*(escapeMusic.state==='chase'?.5:1));escapeAmbience.tick();}
+    escapeAmbience.setVolume(isMuted?0:ambienceVolume*.33*(screen==='menu'?.45:screen==='world'?.7:1)*(paused?.35:1)*(escapeMusic.state==='chase'?.5:1));escapeAmbience.tick();}
 }
 function escapeSound(event,options={}){
   if(isMuted||paused||!audioUnlocked||soundVolume===0||typeof EscapeAudio==='undefined')return;

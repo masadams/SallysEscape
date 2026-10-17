@@ -83,6 +83,9 @@ function playerChip(){const chip=document.getElementById('player-chip');if(!chip
 // The title: Sally on her warm stone in her chosen colours, where the adventure stands, and on an
 // iPhone (which cannot go full screen from a web page) how to play full screen.
 function titleScreen(sum){
+  // The title sky starts at the player's own time of day (noon is the start of its two-minute turn).
+  const now=new Date(),day=((now.getHours()+now.getMinutes()/60-12+24)%24)/24;
+  document.getElementById('start-menu-container')?.style.setProperty('--title-delay',-(day*120).toFixed(1)+'s');
   const art=document.getElementById('title-sally');
   if(art&&typeof sallyCelebrationSVG==='function'&&typeof escapeSkinPalette==='function')try{art.innerHTML=sallyCelebrationSVG({status:'won',treasure:0,totalTreasure:10,alarms:0,tailsDropped:0,hasTail:true},escapeSkinPalette());}catch(_){}
   const where=document.getElementById('play-where');
