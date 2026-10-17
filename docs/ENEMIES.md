@@ -28,6 +28,20 @@ to twice, losing a quarter of their reach each time, and fly over gaps and water
   a corner from Sally. Standing in its light lights Sally up too: leaves stop hiding her.
 - Fogged mazes from escape 20 on carry one; the darkest and biggest carry two.
 
+## Tricks of the ground
+
+- **Moss** (`m` on a map): every step is silent there, even a sprint, and moles feel nothing.
+- **Echo halls** (`echoes`, rectangles): any sound made inside carries nearly twice as far,
+  Sally's steps and a pebble's clack alike.
+- **Currents** (`currents`: an area, a direction and a strength): water in the area pushes a
+  swimmer along. Sally swims about 1.3 tiles a second, so a current stronger than that cannot
+  be swum against.
+- **Burrow pairs** (`tunnels`: two mounds): standing on a mound, press E (Burrow) to dig in and
+  come up out of its partner a moment later. No burrow charge is used; nothing can catch Sally
+  underground or follow her.
+- **Spore pouches** (`spores`, held throw with Z): the cloud hides Sally even on the move and
+  blinds any hunter inside it, for about six seconds.
+
 ## Hunters
 
 | Hunter | Job | What it does | How to beat it |

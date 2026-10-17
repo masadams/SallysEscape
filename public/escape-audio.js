@@ -98,6 +98,10 @@
     smash:(v)=>{noise(v,{dur:.45,gain:.45,filter:'lowpass',freq:900,to:150});tone(v,{freq:120,to:50,dur:.35,type:'square',gain:.18});for(let i=0;i<4;i++)noise(v,{dur:.05,delay:.08+i*.06,gain:.15,freq:2200-i*300,q:4});},
     glowbug:(v)=>{notes(v,[[1568,0,.06],[2093,.05,.08],[2637,.1,.22]],{type:'sine',gain:.22});tone(v,{freq:3136,delay:.1,dur:.3,type:'sine',gain:.06,wobble:40,wobbleRate:14});},
     click:(v)=>tone(v,{freq:900,to:700,dur:.05,type:'sine',gain:.12}),
+    // Digging into a burrow mound, and coming up again.
+    tunnel:(v)=>{noise(v,{dur:.35,gain:.22,filter:'lowpass',freq:700,to:180,attack:.02});tone(v,{freq:140,to:70,dur:.3,type:'triangle',gain:.1});},
+    // A sound bouncing round an echo hall.
+    echo:(v)=>{for(let i=0;i<4;i++)noise(v,{dur:.06,delay:i*.14,gain:.12/(i+1),freq:1800-i*200,q:3});},
     // A crawl: the faintest brush of leaves.
     crawl:(v)=>{noise(v,{dur:.12,gain:.05,filter:'bandpass',freq:2400,to:1600,q:.8,attack:.03});}
   };
