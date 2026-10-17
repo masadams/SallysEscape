@@ -30,3 +30,15 @@ a soft-light colour **grade**, a time-of-day **wash** from one side (morning fro
 meadow, an orange glow from below in the vents, a golden sunset over the Road Home that warms
 escape by escape), a **vignette**, and whether it is a **night** area (light sources glow
 brighter). Grades stay subtle (alpha under 0.4) so the play area always reads clearly.
+
+## Depth, weather and danger
+
+- **Wall shadows:** soft shadows where floor meets a wall above or to the left, drawn into the
+  cached tile layer, so they cost nothing per frame.
+- **Light shafts** slant down through the canopy and cave roofs (`shafts` in a mood: the jungle,
+  the grotto, Luminous Depths, the Bestiary Grove and the Sunken Wreck), swaying slowly.
+- **Water** catches rippling sunlight.
+- **Lightning** throws long shadows from every wall for the length of the flash, and the white
+  flash itself is gentler.
+- **Danger:** during a chase the screen's edges warm and darken, pulsing slowly; it fades in
+  quickly and out slowly. While Sally is hidden, a faint hush settles over the view.

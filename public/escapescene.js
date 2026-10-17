@@ -421,9 +421,13 @@ function drawEscapeStillTiles(g,cell,palette,index){
       for(const dy of [.3,.65])line((x+.2)*cell,(y+dy)*cell,(x+.8)*cell,(y+dy)*cell);
     }
   }
+  // Full lighting: soft shadows where floor meets a wall above or to the left, so mazes read in depth.
+  if(escapeLightingFull())for(let y=1;y<g.height;y++)for(let x=1;x<g.width;x++){if(!g.floor(x,y))continue;noStroke();
+    if(!g.floor(x,y-1))for(let i=0;i<3;i++){fill(0,0,0,[58,32,14][i]);rect(x*cell,y*cell+i*cell*.07,cell,cell*.07);}
+    if(!g.floor(x-1,y))for(let i=0;i<3;i++){fill(0,0,0,[40,22,10][i]);rect(x*cell+i*cell*.06,y*cell,cell*.06,cell);}}
 }
 function drawEscapeTiles(g,cell,palette,index){
-  const key=g.level.id+'|'+cell+'|'+index+'|'+g.grid.map(r=>r.join('')).join('/'),w=g.width*cell,h=g.height*cell;
+  const key=g.level.id+'|'+cell+'|'+index+'|'+escapeLightingFull()+'|'+g.grid.map(r=>r.join('')).join('/'),w=g.width*cell,h=g.height*cell;
   // Without a real p5 sketch (the test harness) the tiles are simply drawn every frame.
   if(!p5.instance?._renderer||!drawingContext.drawImage)drawEscapeStillTiles(g,cell,palette,index);
   else{if(escapeTileCache?.key!==key){
@@ -481,14 +485,43 @@ function drawEscapeFog(g,cell){
 }
 // The area's mood over the whole view: a soft-light colour grade, a time-of-day wash from one
 // side, and a vignette.
-function drawEscapeGrade(mood){
-  if(!mood||!escapeLightingFull())return;const ctx=drawingContext,W=width,H=height;ctx.save();
+// Danger and safety, eased so they fade rather than snap: warm dark edges in a chase, a hush over
+// the view while Sally is hidden.
+let escapeDanger=0,escapeHush=0;
+function drawEscapeGrade(mood,g){
+  if(!escapeLightingFull())return;const ctx=drawingContext,W=width,H=height,clock=g?.elapsed||0;
+  if(g){const chase=EscapeMusic.stateFor({screen:'game',game:g})==='chase';escapeDanger+=((chase?1:0)-escapeDanger)*(chase?.12:.03);escapeHush+=((g.player.hidden?1:0)-escapeHush)*.08;}
+  if(mood)drawEscapeMood(ctx,mood,W,H,clock);
+  if(escapeHush>.01){ctx.save();ctx.fillStyle='rgba(6,12,22,'+(.14*escapeHush)+')';ctx.fillRect(0,0,W,H);ctx.restore();}
+  if(escapeDanger>.01){ctx.save();const pulse=.85+.15*Math.sin(clock*4),grad=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.32,W/2,H/2,Math.hypot(W,H)*.55);
+    grad.addColorStop(0,'rgba(70,10,0,0)');grad.addColorStop(1,'rgba(90,16,4,'+(.42*escapeDanger*pulse)+')');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);ctx.restore();}
+}
+function drawEscapeMood(ctx,mood,W,H,clock){
+  ctx.save();
   const [r,gr,b,a]=mood.grade;ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba('+r+','+gr+','+b+','+Math.min(1,a*2)+')';ctx.fillRect(0,0,W,H);
   if(mood.wash){const w=mood.wash,[wr,wg,wb]=w.color,grad=w.from==='left'?ctx.createLinearGradient(0,0,W*.8,0):w.from==='bottom'?ctx.createLinearGradient(0,H,0,H*.25):ctx.createLinearGradient(0,0,0,H*.75);
     grad.addColorStop(0,'rgba('+wr+','+wg+','+wb+','+Math.min(1,w.alpha*2)+')');grad.addColorStop(1,'rgba('+wr+','+wg+','+wb+',0)');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);}
   ctx.globalCompositeOperation='source-over';
   if(mood.vignette){const grad=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.hypot(W,H)*.55);grad.addColorStop(0,'rgba(0,0,0,0)');grad.addColorStop(1,'rgba(0,0,0,'+(mood.vignette*.55)+')');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);}
+  // Light shafts slanting down through a canopy or a cave roof, swaying slowly.
+  if(mood.shafts){const [r,gr,b]=mood.shafts;ctx.globalCompositeOperation='lighter';
+    for(let k=0;k<4;k++){const x0=W*(.12+.25*k)+Math.sin(clock*.2+k*1.9)*W*.03,top=W*.05,bottom=W*.13,slant=H*.35,grad=ctx.createLinearGradient(0,0,0,H);
+      grad.addColorStop(0,'rgba('+r+','+gr+','+b+',.09)');grad.addColorStop(1,'rgba('+r+','+gr+','+b+',0)');ctx.fillStyle=grad;
+      ctx.beginPath();ctx.moveTo(x0,0);ctx.lineTo(x0+top,0);ctx.lineTo(x0+top+slant+bottom-top,H);ctx.lineTo(x0+slant,H);ctx.closePath();ctx.fill();}}
   ctx.restore();
+}
+// Sunlight rippling across water, in Full lighting.
+function drawEscapeWaterLight(g,cell,view){
+  if(!escapeLightingFull())return;const t=g.elapsed;
+  for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){if(g.grid[y][x]!=='U'||view.follow&&!g.visibleTile(x,y))continue;
+    noFill();stroke(200,250,250,34);strokeWeight(Math.max(1,cell*.03));
+    for(let k=0;k<2;k++){const phase=t*1.3+x*1.7+y*2.3+k*2.1,yy=(y+.3+k*.4+Math.sin(phase)*.06)*cell;beginShape();for(let i=0;i<=4;i++)vertex((x+.1+i*.2)*cell,yy+Math.sin(phase*1.7+i*1.4)*cell*.05);endShape();}}
+}
+// A lightning flash throws long shadows from every wall, away from the strike.
+function drawEscapeLightningShadows(g,cell){
+  if(!g.storm||g.elapsed>=g.flashUntil||!escapeLightingFull())return;const k=Math.min(1,(g.flashUntil-g.elapsed)/.4),dx=1.4,dy=2.6;noStroke();fill(4,6,14,150*k);
+  for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){if(g.sightFloor(x,y)||!(g.sightFloor(x,y+1)||g.sightFloor(x+1,y)))continue;
+    quad(x*cell,(y+1)*cell,(x+1)*cell,(y+1)*cell,(x+1+dx)*cell,(y+1+dy)*cell,(x+dx)*cell,(y+1+dy)*cell);quad((x+1)*cell,y*cell,(x+1)*cell,(y+1)*cell,(x+1+dx)*cell,(y+1+dy)*cell,(x+1+dx)*cell,(y+dy)*cell);}
 }
 function drawEscapeVault(){
   const g=escapeGame,close=mobile&&escapeCloseView(),top=mobile?(close?8:45):height<=550?126:164,bottom=mobile?(close?8:65):70,view=escapeCameraFor(g,width,height-top-bottom,escapeProgress.data.view==='overview',close);view.oy+=top;const {cell,ox,oy}=view;
@@ -512,6 +545,7 @@ function drawEscapeVault(){
   const palette=g.level.custom?[[24,40,34],[58,84,70],[110,140,110]]:g.level.hidden?[[38,30,14],[96,76,32],[176,144,64]]:index>=93?homePalettes[(index-93)%homePalettes.length]:index>=88?tidePalettes[(index-88)%tidePalettes.length]:index>=83?stormPalettes[(index-83)%stormPalettes.length]:index>=78?grottoPalettes[(index-78)%grottoPalettes.length]:index>=73?ventPalettes[(index-73)%ventPalettes.length]:index>=68?frostPalettes[(index-68)%frostPalettes.length]:index>=63?antPalettes[(index-63)%antPalettes.length]:index>=58?rooftopPalettes[(index-58)%rooftopPalettes.length]:index>=53?lanternPalettes[(index-53)%lanternPalettes.length]:index>=49?hollowPalettes[(index-49)%hollowPalettes.length]:index>=47?biomePalettes[index-47]:index>=42?livingPalettes[index-42]:index>=37?glowPalettes[index-37]:index>=32?junglePalettes[index-32]:index>=27?wakingPalettes[index-27]:palettes[index]||(index>=17?deepPalettes[(index-17)%deepPalettes.length]:palettes[0]);
   background(10,18,25);push();translate(ox,oy);textFont('sans-serif');textAlign(CENTER,CENTER);
   drawEscapeTiles(g,cell,palette,index);
+  drawEscapeWaterLight(g,cell,view);drawEscapeLightningShadows(g,cell);
   if(g.level.rootWheel){const [x,y]=g.level.rootWheel,angle=g.wheelAngle;push();translate((x+.5)*cell,(y+.5)*cell);rotate(angle);noFill();stroke(106,147,76,95);strokeWeight(cell*.11);ellipse(0,0,cell*2.7,cell*2.7);for(let a=0;a<TWO_PI;a+=PI/2)line(0,0,Math.cos(a)*cell*1.35,Math.sin(a)*cell*1.35);pop();}
   for(const gate of g.gates){
     const s=gate.switch,label=gate.closingAt!==null?'!':gate.duration&&gate.open?String(Math.max(0,Math.ceil(gate.expiresAt-g.elapsed))):gate.sealed?'×':gate.open?'✓':s?gate.id==='blue'?'B':'A':'◇',gateColor=gate.sealed?[230,137,148]:gate.color;
@@ -637,10 +671,10 @@ function drawEscapeVault(){
   drawEscapeLights(g,cell,mood);
   if(view.follow)drawEscapeFog(g,cell);
   pop();
-  drawEscapeGrade(mood);
+  drawEscapeGrade(mood,g);
   // Storm: the sky darkens while thunder rumbles, then a white flash lights everything for a moment.
   if(g.storm){const toFlash=g.storm.nextAt-g.elapsed;if(toFlash<g.storm.warn){noStroke();fill(10,14,30,90*(1-toFlash/g.storm.warn));rect(0,0,width,height);}
-    if(g.elapsed<g.flashUntil){noStroke();fill(235,240,255,170*(g.flashUntil-g.elapsed)/.4);rect(0,0,width,height);}}
+    if(g.elapsed<g.flashUntil){noStroke();fill(235,240,255,(escapeLightingFull()?110:170)*(g.flashUntil-g.elapsed)/.4);rect(0,0,width,height);}}
   // Hunters off the edge of a following view: an alerted one shows a bright '!', and in a phone's
   // close view a nearby one on patrol shows a dim marker, so zooming in never hides danger.
   if(view.follow)for(const h of g.hunters){
