@@ -53,6 +53,17 @@ test('every area and secret spot has a soundscape, and it builds, switches and p
   assert.ok(ctx.made>200);assert.equal(a.setScape(a.key),false,'the same scape twice does nothing');
 });
 
+test('the weather stays on the world map: inside an escape only the place\'s own sounds play',()=>{
+  const {SCAPES,WEATHER,scapeFor}=EscapeAmbience;
+  for(const key of Object.keys(SCAPES)){const level=scapeFor(key,'level'),world=scapeFor(key,'world');
+    assert.ok(level.beds.every(([k])=>!WEATHER.has(k)),key+' has no weather in an escape');
+    assert.equal(level.calls.length,SCAPES[key].calls.length,key+' keeps its calls');
+    for(const [k,l] of world.beds){const base=SCAPES[key].beds.find(b=>b[0]===k)[1];assert.ok(WEATHER.has(k)?l<base*.9&&l>base*.85:l===base,key+' '+k);}}
+  assert.equal(scapeFor('storm','level').beds.length,0,'no rain or wind inside a storm escape');
+  const a=new EscapeAmbience();a.start(fakeContext());assert.equal(a.setScape('storm','world'),true);assert.equal(a.setScape('storm','level'),true,'entering an escape switches the scape');
+  assert.equal(a.setScape('storm','level'),false);
+});
+
 test('every sound trim names a real sound, and the new throws and crawl have sounds',()=>{
   for(const k of Object.keys(EscapeAudio.TRIM))assert.ok(EscapeAudio.recipes.includes(k),k);
   for(const k of ['crawl','toss','clack','glow'])assert.ok(EscapeAudio.recipes.includes(k),k);
