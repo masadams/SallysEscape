@@ -110,24 +110,29 @@ function renderEscapeAbility(button,kind,label,key,left,total,ready=true,active=
 }
 
 const ESCAPE_GLOWBUG_CHANCE=.25;
-// One-time tips, each shown a few seconds into the first escape it helps in: crawling (gravel,
-// or a creature that hunts by ear or springs from close by), held throws (pebbles), and glow
-// mushrooms. One at a time, after any other message has cleared.
+// One-time tips, each shown when it first helps rather than all at once when a level starts (escape
+// 1 already teaches leaves and cracked walls): crawling the first time Sally crunches across gravel
+// near a hunter (or meets a creature that hunts by ear), held throws right after her first pebble,
+// glow mushrooms when a level first hands her some. One at a time, after any other message clears.
+const ESCAPE_EAR_HUNTERS=['fox','mole','cricket'];
 const ESCAPE_TIPS=[
-  {key:'sally-escape-crawl-tip',when:g=>g.level.gravel?.length||g.hunters.some(h=>['fox','mole','cricket','scorpion','wasp','flytrap','mimic','gecko'].includes(h.kind)),
-    text:()=>mobile?'Hold Crawl to creep: slow, but silent, and slower to be spotted.':'Hold C to crawl: slow, but silent, and slower to be spotted.'},
-  {key:'sally-escape-throw-tip',when:g=>g.level.pebbles>0,
-    text:()=>mobile?'Hold Pebble to throw further and aim with the stick. Pebbles bank off walls.':'Hold Q to throw further; aim with the arrows while you hold. Pebbles bank off walls.'},
-  {key:'sally-escape-glow-tip',when:g=>g.level.glows>0,
+  {key:'sally-escape-crawl-tip',
+    live:g=>g.level.id!=='quiet-vault'&&g.player.noisy&&!g.player.sprinting&&g.hunters.some(h=>Math.hypot(h.x-g.player.x,h.y-g.player.y)<7)||g.elapsed>3&&g.hunters.some(h=>ESCAPE_EAR_HUNTERS.includes(h.kind)),
+    text:()=>mobile?'That crunch carries. Hold Crawl to creep: slow, but silent, and slower to be spotted.':'That crunch carries. Hold C to crawl: slow, but silent, and slower to be spotted.'},
+  {key:'sally-escape-throw-tip',live:g=>g.level.pebbles>0&&g.decoys<g.level.pebbles,
+    text:()=>mobile?'Next time, hold Pebble to throw further and aim with the stick. Pebbles bank off walls.':'Next time, hold Q to throw further and aim with the arrows. Pebbles bank off walls.'},
+  {key:'sally-escape-glow-tip',live:g=>g.level.glows>0&&g.elapsed>3,
     text:()=>mobile?'Glow mushrooms: hold Glow, aim and let go to light up the dark for a while.':'Glow mushrooms: hold L, aim and let go to light up the dark for a while.'}
 ];
-let escapeTipQueue=[];
+let escapeTipQueue=[],escapeTipsPending=[];
 function escapeCrawlTip(g){
-  escapeTipQueue=[];for(const tip of ESCAPE_TIPS){try{if(localStorage.getItem(tip.key))continue;}catch(_){return;}if(tip.when(g))escapeTipQueue.push(tip);}
+  escapeTipQueue=[];escapeTipsPending=ESCAPE_TIPS.filter(tip=>{try{return !localStorage.getItem(tip.key);}catch(_){return false;}});
 }
 function tickEscapeCrawlTip(g){
-  if(!escapeTipQueue.length||g.elapsed<3||g.messageUntil>g.elapsed||g.status!=='playing')return;
-  const tip=escapeTipQueue.shift();g.notice(tip.text());g.messageUntil=g.elapsed+5;
+  if(g.status!=='playing')return;
+  for(const tip of escapeTipsPending)if(!escapeTipQueue.includes(tip)&&tip.live(g))escapeTipQueue.push(tip);
+  if(!escapeTipQueue.length||g.elapsed<2||g.messageUntil>g.elapsed)return;
+  const tip=escapeTipQueue.shift();escapeTipsPending=escapeTipsPending.filter(t=>t!==tip);g.notice(tip.text());g.messageUntil=g.elapsed+5;
   try{localStorage.setItem(tip.key,'1');}catch(_){}
 }
 function startEscape(options={}){
