@@ -101,7 +101,7 @@ function makeEvaluator(initial,{planning=true}={}){
       +g.reactionsFired.size*10+g.gates.filter(p=>p.open).length*8+g.steamed*8
       +(g.decoys+g.burrows+g.tongues+g.seeds+g.camos)*.1;
     if(planning){
-      const objective=plan(g),actual=objective.distance??distance;
+      const objective=plan(g),actual=objective.totalDistance??objective.distance??distance;
       return {score:score+(distance-actual)*12,distance:actual,objective,landmarks:[]};
     }
     return {score,distance,landmarks:landmarks.map(p=>score+distance*12-(p.done(g)?0:(p.field.get(tile)??fallback))*12)};
@@ -199,7 +199,7 @@ function execute(parent,choice,config){
 function commandsFor(node){const parts=[];for(let n=node;n?.parent;n=n.parent)parts.push(n.commands);const commands=[];for(const part of parts.reverse())for(const c of part)append(commands,c);return commands;}
 function solve(options,config={}){
   const cfg=settings(config),initial=new EscapeAdventure(options),evaluate=makeEvaluator(initial,cfg),started=Date.now();
-  const root={g:initial,parent:null,commands:[],...evaluate(initial)};
+  const root={g:initial,parent:null,commands:[],pathDepth:0,...evaluate(initial)};
   let beam=[root],best=root,expanded=0,generated=0,simulatedFrames=0,depth=0,winner=null,reason='depth-limit',memory=null;
   let sharedExhausted=false,verificationFrames=0;
   const verifyFrame=()=>{if(config.consumeFrame&&!config.consumeFrame()){sharedExhausted=true;return false;}verificationFrames++;return true;};
@@ -209,9 +209,42 @@ function solve(options,config={}){
     if(check.won)return {schemaVersion:VERSION,status:'solved',reason:'reused-verified-replay',options,fingerprint:fingerprint(options),settings:cfg,search:{expanded:0,generated:0,simulatedFrames:0,verificationFrames,depth:0,milliseconds:Date.now()-started},bestAttempt:check,failures:[],verification:check,memory,replay:{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands:config.reuseCommands}};
   }
   const failures=new Map(),seen=new Set([signature(initial)]);
-  outer:for(;depth<cfg.depth&&beam.length;depth++){
+  const recordFailure=g=>{
+    const label=g.result?.message||'Tail loss forbidden by review policy',tile=Math.floor(g.player.x)+','+Math.floor(g.player.y),id=label+'@'+tile;
+    const entry=failures.get(id)||{message:label,tile,count:0};entry.count++;failures.set(id,entry);
+  };
+  // A cheap deterministic proposal can finish straightforward objective tours
+  // before the beam spends its allowance on tactical alternatives. Charge all
+  // work to the same ledger, and retain the beam fallback for failed proposals.
+  const proposalLimit=Math.min(6000,Math.floor(cfg.frames*.1)),proposalDeadline=started+Math.floor(cfg.milliseconds*.4);
+  const proposalSeeds=[];
+  if(cfg.planning&&cfg.macro)for(const sprint of [true,false]){
+    let node=root;
+    for(let step=0;step<Math.min(24,cfg.depth)&&!winner;step++){
+      if(simulatedFrames>=proposalLimit||Date.now()>=proposalDeadline||sharedExhausted||expanded>=cfg.budget)break;
+      const route=goalRoutes(node.g,node.objective).find(c=>c.sprint===sprint&&!c.lookBack);
+      if(!route)break;
+      const result=execute(node.g,route,{...executionConfig,consumeFrame:()=>simulatedFrames<proposalLimit&&Date.now()<proposalDeadline&&executionConfig.consumeFrame()});
+      expanded++;if(!result)break;generated++;
+      const child={...result,parent:node,pathDepth:node.pathDepth+1,...evaluate(result.g)};
+      if(legalWin(child.g)&&(cfg.allowTail||child.g.tailsDropped===0)){winner=child;break;}
+      if(child.g.status!=='playing'||(!cfg.allowTail&&child.g.tailsDropped>0)){recordFailure(child.g);break;}
+      if(child.g.elapsed>=cfg.seconds)break;
+      if(child.score>best.score)best=child;
+      if(Math.hypot(child.g.player.x-node.g.player.x,child.g.player.y-node.g.player.y)<.05&&child.g.treasure===node.g.treasure&&child.g.hasKey===node.g.hasKey)break;
+      node=child;
+    }
+    if(node!==root)proposalSeeds.push(node);
+    if(winner)break;
+  }
+  const proposalWork={expanded,simulatedFrames};
+  // Continue useful living prefixes rather than throwing away the proposal's
+  // progress. Keep the original start as an alternative when width permits.
+  if(proposalSeeds.length)beam=[...proposalSeeds,root].sort((a,b)=>b.score-a.score).slice(0,cfg.width);
+  outer:for(;!winner&&depth<cfg.depth&&beam.length;depth++){
     const next=[];
     for(const node of beam){
+      if(node.pathDepth>=cfg.depth)continue;
       if(sharedExhausted){reason='shared-budget';break outer;}
       if(expanded>=cfg.budget){reason='expansion-budget';break outer;}expanded++;
       for(const choice of candidates(node.g,{...cfg,objective:node.objective})){
@@ -220,14 +253,13 @@ function solve(options,config={}){
         if(Date.now()-started>=cfg.milliseconds){reason='wall-time-budget';break outer;}
         const result=execute(node.g,choice,executionConfig);if(!result)continue;generated++;
         const {g}=result;
-        if(legalWin(g)&&(cfg.allowTail||g.tailsDropped===0)){winner={...result,parent:node};break outer;}
+        if(legalWin(g)&&(cfg.allowTail||g.tailsDropped===0)){winner={...result,parent:node,pathDepth:node.pathDepth+1};break outer;}
         if(g.status!=='playing'||(!cfg.allowTail&&g.tailsDropped>0)){
-          const label=g.result?.message||'Tail loss forbidden by review policy',tile=Math.floor(g.player.x)+','+Math.floor(g.player.y),id=label+'@'+tile;
-          const entry=failures.get(id)||{message:label,tile,count:0};entry.count++;failures.set(id,entry);continue;
+          recordFailure(g);continue;
         }
         if(g.elapsed>=cfg.seconds)continue;
         const id=signature(g);if(seen.has(id))continue;seen.add(id);
-        const child={...result,parent:node,...evaluate(g)};if(child.score>best.score)best=child;next.push(child);
+        const child={...result,parent:node,pathDepth:node.pathDepth+1,...evaluate(g)};if(child.score>best.score)best=child;next.push(child);
       }
     }
     next.sort((a,b)=>b.score-a.score);
@@ -247,7 +279,7 @@ function solve(options,config={}){
   if(winner&&!verification.won&&!verification.budgetExhausted)throw new Error('Search/replay disagreement: '+JSON.stringify(verification));
   const solved=winner&&verification.won;
   const attempt=config.trace?{schemaVersion:VERSION,kind:'diagnostic-attempt',options,fingerprint:fingerprint(options),commands:commandsFor(winner||best),objective:(winner||best).objective,gates:(winner||best).g.gates.map(g=>({id:g.id,open:g.open,sealed:g.sealed,activations:g.activations})),reactions:[...(winner||best).g.reactionsFired]}:undefined;
-  return {schemaVersion:VERSION,status:solved?'solved':'unresolved',reason:solved?'verified-replay':verification?.budgetExhausted?'verification-budget':reason,options,fingerprint:fingerprint(options),settings:cfg,search:{expanded,generated,simulatedFrames,verificationFrames,depth,milliseconds:Date.now()-started},bestAttempt:summary((winner||best).g),attempt,failures:[...failures.values()].sort((a,b)=>b.count-a.count).slice(0,12),verification,memory,replay:solved?{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands}:null,policy:solved?{schemaVersion:1,kind:'feedback-policy',options,fingerprint:fingerprint(options),settings:{seconds:cfg.seconds,allowTail:cfg.allowTail},choices}:null};
+  return {schemaVersion:VERSION,status:solved?'solved':'unresolved',reason:solved?'verified-replay':verification?.budgetExhausted?'verification-budget':reason,options,fingerprint:fingerprint(options),settings:cfg,search:{expanded,generated,simulatedFrames,verificationFrames,depth:Math.max(depth,(winner||best).pathDepth),proposal:proposalWork,milliseconds:Date.now()-started},bestAttempt:summary((winner||best).g),attempt,failures:[...failures.values()].sort((a,b)=>b.count-a.count).slice(0,12),verification,memory,replay:solved?{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands}:null,policy:solved?{schemaVersion:1,kind:'feedback-policy',options,fingerprint:fingerprint(options),settings:{seconds:cfg.seconds,allowTail:cfg.allowTail},choices}:null};
 }
 function verifyArtifact(artifact,config={}){
   if(artifact.schemaVersion!==VERSION||!artifact.options||!Array.isArray(artifact.commands))throw new Error('Invalid level-lab replay');

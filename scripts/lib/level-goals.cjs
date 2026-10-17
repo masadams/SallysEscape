@@ -22,6 +22,33 @@ function createPlanner(){
     const kind=!g.hasKey?'key':g.treasure<g.requiredTreasure?'treasure':'exit';
     const targets=kind==='key'?[g.key]:kind==='treasure'?g.loot.filter(p=>!p.taken):[g.exit];
     const from=distances(g,g.player),origin=tile(g.player);
+    // Exact subset routing is cheap for small treasure sets. Cap its size so
+    // custom maps cannot turn this heuristic into an unbounded tour search.
+    // It estimates walking only; every suggested route still runs in-engine.
+    if(kind==='treasure'&&targets.length<=10){
+      const reachable=targets.filter(p=>from.has(tile(p))),n=reachable.length,needed=g.requiredTreasure-g.treasure;
+      if(n&&reachable.reduce((sum,p)=>sum+p.value,0)>=needed){
+        const fields=reachable.map(p=>distances(g,p)),exit=distances(g,g.exit),values=new Float64Array(1<<n),memo=new Map();
+        for(let mask=1;mask<values.length;mask++){const bit=mask&-mask;values[mask]=values[mask^bit]+reachable[31-Math.clz32(bit)].value;}
+        const tour=(last,mask)=>{
+          const key=mask*n+last;if(memo.has(key))return memo.get(key);
+          if(values[mask]>=needed)return {cost:exit.get(tile(reachable[last]))??Infinity,next:-1};
+          let best={cost:Infinity,next:-1};
+          for(let next=0;next<n;next++)if(!(mask&(1<<next))){
+            const distance=fields[next].get(tile(reachable[last]));if(distance===undefined)continue;
+            const cost=distance+tour(next,mask|(1<<next)).cost;
+            if(cost<best.cost)best={cost,next};
+          }
+          memo.set(key,best);return best;
+        };
+        let best=null;
+        for(let next=0;next<n;next++){
+          const distance=from.get(tile(reachable[next])),totalDistance=distance+tour(next,1<<next).cost;
+          if(Number.isFinite(totalDistance)&&(!best||totalDistance<best.totalDistance))best={kind,target:{x:reachable[next].x,y:reachable[next].y},distance,totalDistance};
+        }
+        if(best)return best;
+      }
+    }
     let best=null;
     for(const target of targets){
       const distance=from.get(tile(target));

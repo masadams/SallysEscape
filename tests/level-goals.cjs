@@ -43,3 +43,29 @@ test('terminal completion follows real geometry only after the exit unlocks',()=
   const locked=Lab.execute(new EscapeAdventure(options),{...choice,waypoints:[{x:2.5,y:1.5}],finishExit:true},Lab.settings());
   assert.equal(locked.g.status,'playing');assert.equal(locked.g.hasKey,false);
 });
+
+test('treasure planning weighs required value and the remaining route to the exit',()=>{
+  const g=new EscapeAdventure({level:level(['#############','#1.@..2...KX#','#############'],{requiredTreasure:2})});
+  g.hasKey=true;const plan=createPlanner(),before=JSON.stringify(g.loot);
+  const objective=plan(g);assert.equal(objective.kind,'treasure');assert.deepEqual(objective.target,{x:6.5,y:1.5});
+  assert.equal(objective.distance,3);assert.equal(objective.totalDistance,8);assert.equal(JSON.stringify(g.loot),before);
+  g.loot[1].taken=true;g.treasure=2;assert.equal(plan(g).kind,'exit');
+  const result=Lab.solve({level:g.level},{budget:4,width:1,frames:15000,milliseconds:10000});
+  assert.equal(result.status,'solved');assert.equal(Lab.verifyArtifact(result.replay).won,true);
+});
+
+test('treasure routing remains bounded and falls back when exit connectivity is unknown',()=>{
+  const g=new EscapeAdventure({level:level(['#################','#@11111111111.KX#','#################'],{requiredTreasure:2})});
+  g.hasKey=true;assert.equal(createPlanner()(g).totalDistance,undefined);
+  const blocked=new EscapeAdventure({level:level(['###########','#@.2.G.KX.#','###########'],{requiredTreasure:2,gates:[{id:'locked-exit',tiles:[[5,1]]}]})});
+  blocked.hasKey=true;const objective=createPlanner()(blocked);assert.equal(objective.kind,'treasure');assert.equal(objective.distance,2);assert.equal(objective.totalDistance,undefined);
+});
+
+test('route-first proposals share frame, expansion and total decision-depth limits',()=>{
+  const options={level:level(['#####################','#@........K........X#','#####################'])};
+  let frames=0;
+  const result=Lab.solve(options,{depth:1,budget:3,frames:10000,milliseconds:10000,consumeFrame:()=>++frames<=800});
+  assert.equal(result.status,'unresolved');assert.ok(result.search.expanded<=3);assert.ok(result.search.depth<=1);
+  assert.ok(result.search.proposal.simulatedFrames<=1000);assert.ok(result.search.simulatedFrames<=800);assert.equal(result.replay,null);
+  const legacy=Lab.solve(options,{planning:false,budget:1,frames:1000});assert.equal(legacy.search.proposal.expanded,0);
+});

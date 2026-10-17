@@ -273,6 +273,25 @@ it never changes simulator geometry. Sealed, closing-only and heavy-only gates
 are not offered as human-openable shortcuts. The engine must actually activate
 the trigger, open the passage and survive any timer before a replay can win.
 
+After the key, when at most ten untaken treasure items remain, the planner
+uses a bounded subset search to estimate the shortest collection tour that
+meets the required value and reaches the exit. It may skip nearby low-value
+items when a different collection order gives a shorter complete route.
+The beam score uses this remaining tour distance. Larger sets, insufficient
+reachable treasure, or an unreachable exit fall back to the nearest reachable
+objective and existing gate guidance. Treasure values and geometry come from
+the current engine state; this estimate does not predict hunters, timers,
+future reactions, or incidental pickups along the route. It does not learn
+from recordings or change the game state.
+
+Before wider search, two route-first proposals try the current objective with
+sprinting and walking. Together they receive at most 10% of the frame limit
+(capped at 6,000 frames), 40% of the time limit, and 24 decisions per proposal;
+the ordinary expansion and depth limits still apply. Useful surviving prefixes
+seed the beam alongside the starting state when width permits. This is a cheap
+search proposal, not a saved solution or learned tactic. All its simulation
+counts against the original allowance, and wins require fresh input replay.
+
 This is a bounded one-gate dependency heuristic. It does not solve arbitrary
 chains of gates, model hunter lures, plan cold recovery or predict every maze
 reaction. When a dependency cannot be represented, it falls back to optimistic
