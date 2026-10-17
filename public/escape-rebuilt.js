@@ -1496,7 +1496,7 @@
  "#........ttttttttttttttttt......X.#",
  "#1.......ttttttttttttttttt.......1#",
  "###################################"]},
-// The Long Way Home
+// The Road Home
 {append:true,explore:false,tailDrop:true,id:"dusk-meadow",name:"Dusk Meadow",brief:"The meadow where it all began, quiet now in the evening light.",hint:"The way home starts where the trail began. Hedges split the meadow into rooms: wait in the leaves until each snake turns away. The cricket by the key will call for help if it hears you.",pebbles:2,tongues:1,guards:[{spawn:[19,2],facing:PI,patrol:[[12,2],[20,3]]},{spawn:[16,6],facing:PI,patrol:[[13,5],[19,7]]},{spawn:[7,10],facing:0,patrol:[[3,9],[8,11]]},{kind:"cricket",spawn:[28,9],facing:PI,patrol:[[28,9],[28,10]]},{kind:"toad",spawn:[28,2],facing:PI/2,patrol:[[28,2]]}],map:[
  "###############################",
  "#@..L.....#.....1.....#....L.1#",

@@ -6,7 +6,7 @@
     [0,5,'Sunny Meadow','meadow'],[5,9,'Garden Ruins','garden'],[9,13,'Reedbanks','river'],
     [13,17,'Restless Ruins','ruins'],[17,23,'Deep Trials','quarry'],[23,27,'Venom Depths','desert'],
     [27,32,'The Waking Maze','marsh'],[32,37,'Hollow Jungle','jungle'],[37,42,'Luminous Depths','glow'],
-    [42,47,'Living Labyrinth','orchard'],[47,49,'Sun and Sea','coast'],[49,53,'The Shedding Hollow','hollow'],[53,58,'The Lantern Marsh','lantern'],[58,63,'Sunbaked Rooftops','rooftops'],[63,68,'Ant Kingdom','ants'],[68,73,'Frost Hollow','frost'],[73,78,'Steam Vents','vents'],[78,83,'Mushroom Grotto','grotto'],[83,88,'Storm Heights','storm'],[88,93,'Tide Pools','tide'],[93,100,'The Long Way Home','home']
+    [42,47,'Living Labyrinth','orchard'],[47,49,'Sun and Sea','coast'],[49,53,'The Shedding Hollow','hollow'],[53,58,'The Lantern Marsh','lantern'],[58,63,'Sunbaked Rooftops','rooftops'],[63,68,'Ant Kingdom','ants'],[68,73,'Frost Hollow','frost'],[73,78,'Steam Vents','vents'],[78,83,'Mushroom Grotto','grotto'],[83,88,'Storm Heights','storm'],[88,93,'Tide Pools','tide'],[93,100,'The Road Home','home']
   ].map(([start,end,name,theme],i)=>{const [x,y]=[[14,18],[36,18],[58,18],[80,18],[101,18],[101,43],[79,43],[57,43],[35,43],[14,43],[14,68],[36,68],[36,93],[57,68],[101,68],[14,93],[57,93],[79,93],[101,93],[101,118],[57,118]][i];return {start,end,name,theme,x,y,linear:['hollow','lantern','rooftops','ants','frost','vents','grotto','storm','tide','home'].includes(theme)};});
   // Two treasure caches hide in the far corners of every courtyard. They add to
   // Sally's lifetime hoard but never gate progress.
