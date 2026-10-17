@@ -18,24 +18,53 @@
     desert:{chords:[['D3','F#3','A3'],['Eb3','G3','Bb3'],['C3','Eb3','G3'],['D3','F#3','A3']],bass:['D2','Eb2','C2','D2'],fifth:['A2','Bb2','G2','A2'],scale:['D4','Eb4','F#4','G4','A4','C5'],seed:19},
     // Spooky: diminished and augmented chords that never quite settle.
     spooky:{chords:[['A3','C4','Eb4'],['F3','A3','C#4'],['D3','F3','Ab3'],['E3','G#3','C4']],bass:['A2','F2','D2','E2'],fifth:['Eb3','C#3','Ab2','C3'],scale:['A4','Bb4','C5','Eb5','E5','G5'],seed:29},
-    frost:{chords:[['B3','E4','F#4'],['G3','B3','D4'],['E3','A3','B3'],['F#3','B3','C#4']],bass:['B1','G2','E2','F#2'],fifth:['F#2','D3','B2','C#3'],scale:['B4','C#5','D5','F#5','A5','B5'],seed:23}
+    frost:{chords:[['B3','E4','F#4'],['G3','B3','D4'],['E3','A3','B3'],['F#3','B3','C#4']],bass:['B1','G2','E2','F#2'],fifth:['F#2','D3','B2','C#3'],scale:['B4','C#5','D5','F#5','A5','B5'],seed:23},
+    // Every later region has its own harmony too, so no two areas sound alike.
+    garden:{chords:[['C3','E3','G3'],['E3','G3','B3'],['F3','A3','C4'],['G3','B3','D4']],bass:['C2','E2','F2','G2'],fifth:['G2','B2','C3','D3'],scale:['C4','D4','E4','G4','A4','C5'],seed:31},
+    quarry:{chords:[['G3','Bb3','D4'],['C3','E3','G3'],['Bb2','D3','F3'],['F3','A3','C4']],bass:['G2','C2','Bb1','F2'],fifth:['D3','G2','F2','C3'],scale:['G4','A4','Bb4','C5','D5','F5'],seed:37},
+    jungle:{chords:[['A3','C4','E4'],['G3','B3','D4'],['A3','C4','E4'],['E3','G3','B3']],bass:['A2','G2','A2','E2'],fifth:['E3','D3','E3','B2'],scale:['A4','C5','D5','E5','G5','A5'],seed:41},
+    glow:{chords:[['Eb3','G3','Bb3','D4'],['F3','A3','C4'],['C3','Eb3','G3'],['Eb3','G3','Bb3','D4']],bass:['Eb2','F2','C2','Eb2'],fifth:['Bb2','C3','G2','Bb2'],scale:['Eb4','F4','G4','A4','Bb4','D5'],seed:43},
+    orchard:{chords:[['F3','A3','C4'],['D3','F3','A3'],['Bb2','D3','F3'],['C3','E3','G3']],bass:['F2','D2','Bb1','C2'],fifth:['C3','A2','F2','G2'],scale:['F4','G4','A4','C5','D5','F5'],seed:47},
+    coast:{chords:[['D3','F#3','A3'],['C3','E3','G3'],['G3','B3','D4'],['D3','F#3','A3']],bass:['D2','C2','G2','D2'],fifth:['A2','G2','D3','A2'],scale:['D4','E4','F#4','A4','B4','C5'],seed:53},
+    rooftops:{chords:[['Bb2','D3','F3','A3'],['G3','Bb3','D4','F4'],['C3','Eb3','G3','Bb3'],['F3','A3','C4','Eb4']],bass:['Bb1','G2','C2','F2'],fifth:['F2','D3','G2','C3'],scale:['Bb4','C5','D5','F5','G5','Bb5'],seed:59},
+    ants:{chords:[['E3','G3','B3'],['C3','E3','G3'],['D3','F#3','A3'],['B2','D#3','F#3']],bass:['E2','C2','D2','B1'],fifth:['B2','G2','A2','F#2'],scale:['E4','G4','A4','B4','D5','E5'],seed:61},
+    vents:{chords:[['C#3','E3','G#3'],['D3','F#3','A3'],['B2','D3','F#3'],['C#3','E3','G#3']],bass:['C#2','D2','B1','C#2'],fifth:['G#2','A2','F#2','G#2'],scale:['C#4','D4','E4','F#4','G#4','B4'],seed:67},
+    grotto:{chords:[['C3','E3','G#3'],['D3','F#3','A#3'],['Bb2','D3','F#3'],['C3','E3','G#3']],bass:['C2','D2','Bb1','C2'],fifth:['G#2','A#2','F#2','G#2'],scale:['C4','D4','E4','F#4','G#4','A#4'],seed:71},
+    tide:{chords:[['A3','C#4','E4'],['G3','B3','D4'],['D3','F#3','A3'],['A3','C#4','E4']],bass:['A2','G2','D2','A2'],fifth:['E3','D3','A2','E3'],scale:['A4','B4','C#5','E5','F#5','G5'],seed:73},
+    home:{chords:[['D3','F#3','A3'],['B2','D3','F#3'],['G3','B3','D4'],['G3','Bb3','D4']],bass:['D2','B1','G2','G2'],fifth:['A2','F#2','D3','D3'],scale:['D4','E4','F#4','A4','B4','D5'],seed:79},
+    storm:{chords:[['C3','Eb3','G3'],['Ab2','C3','Eb3'],['Bb2','D3','F3'],['G2','B2','D3']],bass:['C2','Ab1','Bb1','G1'],fifth:['G2','Eb2','F2','D2'],scale:['C4','D4','Eb4','G4','Ab4','Bb4'],seed:83},
+    gilded:{chords:[['E3','G#3','B3'],['E3','G#3','C4'],['A3','C#4','E4'],['B2','D#3','F#3']],bass:['E2','E2','A2','B1'],fifth:['B2','C3','E3','F#2'],scale:['E4','F#4','G#4','B4','C#5','E5'],seed:89},
+    // The last escapes, the secret spots: themes of their own.
+    finale:{chords:[['D3','F#3','A3'],['B2','D3','F#3'],['Bb2','D3','F3'],['A2','C#3','E3']],bass:['D2','B1','Bb1','A1'],fifth:['A2','F#2','F2','E2'],scale:['D4','E4','F#4','A4','B4','D5'],seed:97},
+    stars:{chords:[['G3','B3','D4','F#4'],['A3','C#4','E4'],['E3','G3','B3'],['G3','B3','D4','F#4']],bass:['G2','A2','E2','G2'],fifth:['D3','E3','B2','D3'],scale:['G4','A4','B4','C#5','D5','F#5'],seed:101},
+    shrine:{chords:[['D3','G3','A3'],['Eb3','G3','Bb3'],['C3','Eb3','G3'],['D3','G3','A3']],bass:['D2','Eb2','C2','D2'],fifth:['A2','Bb2','G2','A2'],scale:['D4','Eb4','G4','A4','C5','D5'],seed:103},
+    wreck:{chords:[['B2','D3','F#3'],['G3','B3','D4'],['A3','C#4','E4'],['F#3','A#3','C#4']],bass:['B1','G2','A2','F#2'],fifth:['F#2','D3','E3','C#3'],scale:['B4','C#5','D5','E5','F#5','A5'],seed:107}
   };
   // Each region has its own style: a mood, a lead instrument, a tempo and a groove.
   const STYLES={
-    meadow:{mood:'meadow',lead:'melody',bpm:96,groove:0},garden:{mood:'meadow',lead:'pluck',bpm:100,groove:1,transpose:2},
+    meadow:{mood:'meadow',lead:'melody',bpm:96,groove:0},garden:{mood:'garden',lead:'pluck',bpm:100,groove:1},
     river:{mood:'river',lead:'flute',bpm:88,groove:2},ruins:{mood:'sneaky',lead:'pluck',bpm:92,groove:1},
-    quarry:{mood:'sneaky',lead:'bell',bpm:100,groove:0,transpose:-2},desert:{mood:'desert',lead:'pluck',bpm:98,groove:1},
-    marsh:{mood:'marsh',lead:'flute',bpm:84,groove:2},jungle:{mood:'marsh',lead:'pluck',bpm:108,groove:1,transpose:3},
-    glow:{mood:'dark',lead:'bell',bpm:84,groove:2},orchard:{mood:'meadow',lead:'bell',bpm:94,groove:2,transpose:-3},
-    coast:{mood:'warm',lead:'flute',bpm:90,groove:2},hollow:{mood:'spooky',lead:'ghost',bpm:76,groove:3,transpose:-2},
-    lantern:{mood:'spooky',lead:'bell',bpm:82,groove:3,transpose:2},rooftops:{mood:'warm',lead:'melody',bpm:110,groove:1,transpose:2},
-    ants:{mood:'desert',lead:'bell',bpm:104,groove:0,transpose:-2},frost:{mood:'frost',lead:'bell',bpm:88,groove:2},
-    vents:{mood:'warm',lead:'pluck',bpm:96,groove:0,transpose:-4},
-    grotto:{mood:'dark',lead:'bell',bpm:90,groove:3,transpose:-1},
-    tide:{mood:'warm',lead:'flute',bpm:88,groove:2,transpose:1},
-    home:{mood:'warm',lead:'flute',bpm:80,groove:1,transpose:-2},
-    storm:{mood:'sneaky',lead:'ghost',bpm:102,groove:1,transpose:-3},
-    gilded:{mood:'river',lead:'bell',bpm:92,groove:2,transpose:1}
+    quarry:{mood:'quarry',lead:'bell',bpm:100,groove:0},desert:{mood:'desert',lead:'pluck',bpm:98,groove:1},
+    marsh:{mood:'marsh',lead:'flute',bpm:84,groove:2},jungle:{mood:'jungle',lead:'pluck',bpm:108,groove:1},
+    glow:{mood:'glow',lead:'bell',bpm:84,groove:2},orchard:{mood:'orchard',lead:'melody',bpm:94,groove:2},
+    coast:{mood:'coast',lead:'flute',bpm:90,groove:2},hollow:{mood:'spooky',lead:'ghost',bpm:76,groove:3,transpose:-2},
+    lantern:{mood:'spooky',lead:'bell',bpm:82,groove:3,transpose:2},rooftops:{mood:'rooftops',lead:'melody',bpm:110,groove:1},
+    ants:{mood:'ants',lead:'pluck',bpm:104,groove:0},frost:{mood:'frost',lead:'bell',bpm:88,groove:2},
+    vents:{mood:'vents',lead:'pluck',bpm:96,groove:0},
+    grotto:{mood:'grotto',lead:'bell',bpm:90,groove:3},
+    tide:{mood:'tide',lead:'flute',bpm:88,groove:2},
+    home:{mood:'home',lead:'flute',bpm:80,groove:1},
+    storm:{mood:'storm',lead:'ghost',bpm:102,groove:1},
+    gilded:{mood:'gilded',lead:'bell',bpm:92,groove:2},
+    // Places off the trail: the last escape and the long bonus run home, and each secret spot.
+    finale:{mood:'finale',lead:'flute',bpm:92,groove:1},
+    'secret:star-garden':{mood:'stars',lead:'bell',bpm:76,groove:2},
+    'secret:mossy-well':{mood:'river',lead:'flute',bpm:72,groove:3,transpose:-3},
+    'secret:cloud-nest':{mood:'stars',lead:'flute',bpm:88,groove:2,transpose:3},
+    'secret:challenge-shrine':{mood:'shrine',lead:'pluck',bpm:84,groove:3},
+    'secret:bestiary-grove':{mood:'jungle',lead:'flute',bpm:90,groove:2,transpose:-2},
+    'secret:ice-cave':{mood:'frost',lead:'ghost',bpm:72,groove:3,transpose:-2},
+    'secret:sunken-wreck':{mood:'wreck',lead:'ghost',bpm:78,groove:2}
   };
   const THEME_MOOD=Object.fromEntries(Object.entries(STYLES).map(([theme,style])=>[theme,style.mood]));
   // Every escape in a region gets its own tune and key: the region's style, a new melody seed,
@@ -69,7 +98,7 @@
   const tunes={};const tuneFor=(mood,offset=0)=>tunes[mood+':'+offset]||(tunes[mood+':'+offset]=melody(mood,offset));
   // Everything that sounds on one sixteenth step. Pure, so tests can read the score.
   // A style may shift the key, pick a lead voice and a groove (0 straight, 1 backbeat, 2 swung, 3 sparse).
-  function events(mood,step,style={}){
+  function events(mood,step,style={},flavor=null){
     const m=MOODS[mood]||MOODS.meadow,t=style.transpose||0,groove=style.groove||0,bar=Math.floor(step/16),s=step%16,c=bar%4,root=midi(m.bass[c])+t,fifth=midi(m.fifth[c])+t,chord=m.chords[c].map(n=>midi(n)+t),out=[];
     const add=(layer,voice,notes,dur,vel)=>out.push({layer,voice,notes:[].concat(notes),dur,vel});
     if(s===0)add('pad','pad',chord,'1m',.32);
@@ -86,18 +115,45 @@
     if(s===3)add('tension','heart',midi('A1'),'16n',.55);
     // The chase: a driving kick, sixteenth hats, a backbeat with a ghost note, a riff on the
     // chord root, and a tom fill that tumbles into every fourth bar.
-    const fill=c===3&&s>=12;
-    if(!fill&&[0,3,6,8,11,14].includes(s))add('chase','kick',midi('C1'),'8n',s%8===0?.95:.75);
-    if(!fill&&(s===4||s===12))add('chase','snare',null,'16n',.65);
+    // Who is chasing flavours it: something heavy (a beetle, a cobra, a fox) stomps in half time
+    // with low toms; something small and quick (a spider, a gecko, a scorpion) skitters with
+    // rolling hats and a crawling chromatic riff; something in the air swoops with falling glides.
+    const fill=c===3&&s>=12,heavy=flavor==='heavy',skitter=flavor==='skitter',swoop=flavor==='swoop';
+    if(!fill&&(heavy?[0,10]:[0,3,6,8,11,14]).includes(s))add('chase','kick',midi('C1'),'8n',s%8===0?.95:.75);
+    if(!fill&&(heavy?s===8:s===4||s===12))add('chase','snare',null,'16n',heavy?.8:.65);
     if(!fill&&s===15)add('chase','snare',null,'32n',.22);
-    add('chase','hat',null,'32n',s%4===2?.5:s%2?.16:.3);
+    if(heavy&&!fill&&(s===4||s===12))add('chase','tom',root-12,'8n',.7);
+    add('chase','hat',null,'32n',skitter?(s%2?.32:.42):heavy?(s%4===2?.4:s%4===0?.2:0):s%4===2?.5:s%2?.16:.3);
+    if(skitter&&!fill&&s%4===1)add('chase','rimshot',null,'32n',.35);
     if(fill)add('chase','tom',root-12+[7,5,3,0][s-12],'16n',.85);
-    if(s%2===0)add('chase','ostinato',root+12+[0,0,12,0,7,0,12,10][s/2],'16n',.55);
+    const riff=skitter?[0,1,0,12,0,1,7,6]:heavy?[0,0,0,-5,0,0,3,-2]:[0,0,12,0,7,0,12,10];
+    if(s%2===0)add('chase','ostinato',root+(heavy?0:12)+riff[s/2],'16n',heavy?.65:.55);
     if(!fill&&[0,6,12].includes(s))add('chase','stab',chord.map(n=>n+12),'16n',.45);
+    if(swoop&&(s===0||s===8))add('chase','swoop',root+31,'4n',.5);
+    if(swoop&&(s===2||s===10))add('chase','swoop',root+19,'8n',.45);
     return out;
   }
   function stinger(mood,kind){const m=MOODS[mood]||MOODS.meadow,tonic=m.chords[0].map(midi);
     return kind==='victory'?[...tonic,tonic[0]+12,tonic[1]+12,tonic[0]+24].map((n,i)=>({note:n,at:i*.09,dur:i===5?1.2:.3,vel:.5})):[tonic[2],tonic[1],tonic[0]-1,tonic[0]-12].map((n,i)=>({note:n,at:i*.16,dur:i===3?1:.25,vel:.45}));}
+  // The flavour of a chase, from whatever is chasing. Pure, so it is easy to test.
+  const FLAVORS={heavy:['beetle','cobra','fox','crab','mole','eel','toad'],skitter:['spider','gecko','cricket','millipede','scorpion','mantis','wasp'],swoop:['owl','bat','dragonfly','moth','heron']};
+  function flavorFor(game){
+    const chasing=['chase','charge','sting','leap','swoop','lunge','dash','flee','rush','tongue','pounce','dive','scuttle'];
+    if(game?.hawk?.state==='dive')return 'swoop';
+    const h=(game?.hunters||[]).find(q=>chasing.includes(q.state));if(!h)return null;
+    for(const [name,kinds] of Object.entries(FLAVORS))if(kinds.includes(h.kind))return name;
+    return null;
+  }
+  // Short musical cues on the stinger voice, built from the mood's home chord: the key found, the
+  // hatch open, a secret uncovered, a new area reached.
+  function cue(mood,kind,transpose=0){
+    const m=MOODS[mood]||MOODS.meadow,tonic=m.chords[0].map(n=>midi(n)+transpose+12),scale=m.scale.map(n=>midi(n)+transpose);
+    if(kind==='key')return [tonic[0],tonic[1],tonic[2],tonic[0]+12].map((n,i)=>({note:n,at:i*.07,dur:i===3?.6:.18,vel:.42}));
+    if(kind==='hatch')return [...tonic.map(n=>({note:n,at:0,dur:.5,vel:.32})),...tonic.map(n=>({note:n+7,at:.22,dur:.9,vel:.36}))];
+    if(kind==='secret')return scale.concat(scale.slice(0,2).map(n=>n+12)).map((n,i)=>({note:n+12,at:i*.06,dur:i===7?1:.16,vel:.3}));
+    if(kind==='area')return [...tonic.map((n,i)=>({note:n,at:i*.1,dur:.3,vel:.4})),...tonic.map(n=>({note:n+12,at:.36,dur:1.4,vel:.4}))];
+    return [];
+  }
   // Pick the music state for what is happening right now. Pure, so it is easy to test.
   function stateFor({screen,game}={}){
     if(screen==='menu')return 'menu';
@@ -136,6 +192,8 @@
         v.ghost=new T.Synth({portamento:.12,oscillator:{type:'sine'},envelope:{attack:.15,decay:.3,sustain:.7,release:.8}}).connect(new T.Vibrato(3.5,.35).connect(out('melody')));
         v.hat=new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.025,sustain:0}}).connect(new T.Filter(8000,'highpass').connect(out('chase')));
         v.tom=new T.MembraneSynth({pitchDecay:.05,octaves:2.5,envelope:{attack:.001,decay:.22,sustain:0}}).connect(out('chase'));
+        v.rimshot=new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.02,sustain:0}}).connect(new T.Filter(4200,'bandpass').connect(out('chase')));
+        v.swoop=new T.Synth({portamento:.18,oscillator:{type:'sine'},envelope:{attack:.02,decay:.3,sustain:.4,release:.4}}).connect(out('chase'));
         v.rim=new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.03,sustain:0}}).connect(new T.Filter(3200,'bandpass').connect(out('perc')));
         // The alarm: a low boom and a clashing stab the moment something gives chase.
         v.boom=new T.MembraneSynth({pitchDecay:.08,octaves:6,envelope:{attack:.001,decay:.7,sustain:0}}).connect(this.master);
@@ -149,7 +207,7 @@
         v.stab=new T.PolySynth(T.Synth,{oscillator:{type:'sawtooth'},envelope:{attack:.004,decay:.12,sustain:0,release:.08}}).connect(new T.Filter(2200,'lowpass').connect(out('chase')));
         v.sting=new T.PolySynth(T.Synth,{oscillator:{type:'triangle'},envelope:{attack:.005,decay:.3,sustain:.3,release:.8}}).connect(reverb);
         // Levels measured offline so every layer sits at a similar loudness at full mix.
-        for(const [name,voice] of Object.entries(v))if(voice.volume)voice.volume.value={pad:-5,strings:-16,stab:-17,sting:-6,shaker:-1,snare:-15,ostinato:-11,bass:-1,melody:7,heart:-4,kick:-7,pluck:-4,bell:-9,flute:-6,arp:-14,rim:-12,boom:-4,alarm:-14,ghost:-8,hat:-20,tom:-6}[name]??-10;
+        for(const [name,voice] of Object.entries(v))if(voice.volume)voice.volume.value={pad:-5,strings:-16,stab:-17,sting:-6,shaker:-1,snare:-15,ostinato:-11,bass:-1,melody:7,heart:-4,kick:-7,pluck:-4,bell:-9,flute:-6,arp:-14,rim:-12,boom:-4,alarm:-14,ghost:-8,hat:-20,tom:-6,rimshot:-16,swoop:-14}[name]??-10;
         this.ready=true;
       }catch(_){this.ready=false;}
       return this.ready;
@@ -162,10 +220,13 @@
       // A new style starts on the next bar, from the top of its own tune.
       if(this.nextStyle&&this.step%16===0){this.style=this.nextStyle;this.nextStyle=null;this.mood=this.style.mood;this.nextMood=null;this.step=0;this.tempo(.5);}
       const now=this.context.currentTime;
-      for(const e of events(this.mood,this.step,this.style)){const layer=this.layers.get(e.layer);if(!layer||layer.target===0&&now>layer.quietAt)continue;this.play(this.voices[e.voice],e,time);}
+      for(const e of events(this.mood,this.step,this.style,this.flavor)){const layer=this.layers.get(e.layer);if(!layer||layer.target===0&&now>layer.quietAt)continue;this.play(this.voices[e.voice],e,time);}
       this.step++;
     }
     play(voice,e,time){if(!voice)return;try{if(!e.notes.length||e.notes[0]==null)voice.triggerAttackRelease(e.dur,time,e.vel);else voice.triggerAttackRelease(e.notes.length>1?e.notes.map(hz):hz(e.notes[0]),e.dur,time,e.vel);}catch(_){/* A dropped note is never worth an error. */}}
+    setFlavor(flavor){if(flavor)this.flavor=flavor;else if(this.state!=='chase')this.flavor=null;}
+    cue(kind){if(!this.ready||!this.started||this.muted)return false;const t=this.context.currentTime+.03;
+      try{for(const n of cue(this.mood,kind,this.style.transpose||0))this.voices.sting.triggerAttackRelease(hz(n.note),n.dur,t+n.at,n.vel);}catch(_){}return true;}
     setMood(mood){if(!MOODS[mood]||mood===(this.nextMood||this.mood))return false;return this.setStyle({...this.style,mood,id:mood},true);}
     // A new style (region or escape) waits for the next bar so the harmony never lurches.
     setStyle(style,force=false){
@@ -195,7 +256,7 @@
     }
     setVolume(volume,muted=this.muted){if(volume===this.volume&&muted===this.muted&&this.volumeSet)return;this.volume=volume;this.muted=muted;if(!this.master)return;this.volumeSet=true;this.master.gain.rampTo(muted?0:volume,.25);}
   }
-  Object.assign(EscapeMusic,{stateFor,events,stinger,melody:tuneFor,styleFor,STYLES,MOODS,MIX,FADES,LAYERS,THEME_MOOD,BPM,midi});
+  Object.assign(EscapeMusic,{flavorFor,cue,FLAVORS,stateFor,events,stinger,melody:tuneFor,styleFor,STYLES,MOODS,MIX,FADES,LAYERS,THEME_MOOD,BPM,midi});
   root.EscapeMusic=EscapeMusic;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeMusic};
 })(typeof globalThis!=='undefined'?globalThis:this);

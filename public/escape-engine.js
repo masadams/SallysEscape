@@ -447,7 +447,7 @@
       }
       if(h.state==='return'){if(distance(h,home)<.1){h.state='patrol';h.cooldown=this.elapsed+6;return;}this.moveHunter(home,2*dt,h);return;}
       h.state='patrol';
-      if(this.carried.length&&this.elapsed>=(h.cooldown||0)&&!p.hidden&&distance(h,p)<=(p.crawling?3.5:6)&&this.clear(h,p,true)){h.state='dash';this.events.push('skitter');}
+      if(this.carried.length&&this.elapsed>=(h.cooldown||0)&&!p.hidden&&distance(h,p)<=(p.crawling?3.5:6)&&this.clear(h,p,true)){h.state='dash';this.cue('skitter',h);}
     }
     ventPhase(v,t=this.elapsed){const phase=((t+v.offset)%v.period+v.period)%v.period;return {active:phase>=v.period-v.on,warning:phase>=v.period-v.on-v.warn&&phase<v.period-v.on};}
     inJet(p){const key=this.tileKey(p);return this.vents.some(v=>v.active&&v.keys.has(key));}
@@ -665,7 +665,7 @@
         const sure=p.crawling&&!heard?1.2:0.7;h.awareness=Math.min(1,h.awareness+dt/sure);
         h.state=h.awareness>=1?'chase':'alert';target=h.lastKnown;
         if(h.state==='alert'){
-          if(h.awareness-dt/sure<=0)this.events.push('warning');
+          if(h.awareness-dt/sure<=0)this.cue('warning',h);
           h.facing=Math.atan2(p.y-h.y,p.x-h.x);speed=0;
         }else speed=2.75;
       }else if(h.state==='alert'){
@@ -685,7 +685,7 @@
           if(this.elapsed<h.pauseUntil){speed=0;}else{h.pauseUntil=0;h.routeIndex=(h.routeIndex+1)%h.patrol.length;target=h.patrol[h.routeIndex];}
         }
       }
-      if(h.state==='chase'&&previousState!=='chase'){this.alarms++;this.events.push('spotted');}
+      if(h.state==='chase'&&previousState!=='chase'){this.alarms++;this.cue('spotted',h);}
       // A king cobra hunts a little faster than any snake.
       if(h.kind==='cobra')speed*=1.18;
       if(target&&speed>0)this.moveHunter(target,speed*dt,h);
@@ -715,7 +715,7 @@
       if(h.state==='lurking'){if(distance(p,h.lure)<.6)this.springAngler(h,copy(h.lure),.22);else if(this.decoy&&!this.decoy.chirp&&distance(this.decoy,h.lure)<.9)this.springAngler(h,copy(h.lure),.22);return;}
       if(h.state==='snap'){
         if(this.elapsed<h.phaseUntil)return;
-        h.state='sink';h.phaseUntil=this.elapsed+3.5;this.events.push('snap');
+        h.state='sink';h.phaseUntil=this.elapsed+3.5;this.cue('snap',h);
         if(distance(p,h.aim)<.95&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(h))this.finish('caught','An angler snapped from the dark water. A glow that bobs on a line is bait.');
         return;
       }
@@ -726,7 +726,7 @@
     // the usual warning. Then it sniffs about where it landed before going back to its rounds.
     updateFox(dt,h){
       const p=this.player;
-      if(h.state==='crouch'){if(this.elapsed>=h.phaseUntil){h.state='pounce';h.pounceFrom=copy(h);h.phaseUntil=this.elapsed+.6;this.events.push('skitter');}return;}
+      if(h.state==='crouch'){if(this.elapsed>=h.phaseUntil){h.state='pounce';h.pounceFrom=copy(h);h.phaseUntil=this.elapsed+.6;this.cue('skitter',h);}return;}
       if(h.state==='pounce'){
         const remaining=distance(h,h.aim),step=Math.min(remaining,8*dt),next={x:h.x+Math.cos(h.facing)*step,y:h.y+Math.sin(h.facing)*step};
         if(remaining<.05||this.elapsed>=h.phaseUntil||!this.fits(next,.22,h)){h.state='sniff';h.phaseUntil=this.elapsed+1.6;h.path=[];return;}
@@ -748,9 +748,9 @@
     updateCrab(dt,h){
       const p=this.player,a=h.axis,b=a==='x'?'y':'x',lo=h.home[a]-h.range,hi=h.home[a]+h.range;
       const slide=(to,speed)=>{const d=Math.max(lo,Math.min(hi,to))-h[a],step=Math.sign(d)*Math.min(Math.abs(d),speed*dt),next={...copy(h),[a]:h[a]+step};if(step&&this.fits(next,.22,h)){h[a]=next[a];h.distanceMoved+=Math.abs(step);return true;}return false;};
-      if(this.decoy&&this.decoy.expires!==h.lastLure&&distance(h,this.decoy)<1.5){h.lastLure=this.decoy.expires;h.state='hide';h.phaseUntil=this.elapsed+3;h.aim=null;this.events.push('scrape');return;}
+      if(this.decoy&&this.decoy.expires!==h.lastLure&&distance(h,this.decoy)<1.5){h.lastLure=this.decoy.expires;h.state='hide';h.phaseUntil=this.elapsed+3;h.aim=null;this.cue('scrape',h);return;}
       if(h.state==='hide'){if(this.elapsed>=h.phaseUntil)h.state='return';return;}
-      if(h.state==='peek'){if(this.elapsed>=h.phaseUntil){h.state='scuttle';h.phaseUntil=this.elapsed+1.3;this.alarms++;this.events.push('skitter');}return;}
+      if(h.state==='peek'){if(this.elapsed>=h.phaseUntil){h.state='scuttle';h.phaseUntil=this.elapsed+1.3;this.alarms++;this.cue('skitter',h);}return;}
       if(h.state==='scuttle'){
         const lead=this.lead(.3),aim=Math.max(lo,Math.min(hi,lead[a]));h.facing=a==='x'?(aim>=h.x?0:Math.PI):(aim>=h.y?Math.PI/2:-Math.PI/2);
         if(!slide(aim,4.6)&&Math.abs(aim-h[a])<.05||this.elapsed>=h.phaseUntil){h.state='tired';h.phaseUntil=this.elapsed+1.6;}
@@ -759,7 +759,7 @@
       if(h.state==='tired'){if(this.elapsed>=h.phaseUntil)h.state='return';return;}
       if(h.state==='return'){if(!slide(h.home[a],1.2)||Math.abs(h[a]-h.home[a])<.05)h.state='shell';return;}
       // In its shell: wake only for Sally in plain sight close by, roughly level with its lane.
-      if(!p.hidden&&distance(h,p)<=3&&Math.abs(p[b]-h[b])<=2.2&&this.clear(h,p,true)){h.state='peek';h.phaseUntil=this.elapsed+.35;this.events.push('rustle');}
+      if(!p.hidden&&distance(h,p)<=3&&Math.abs(p[b]-h[b])<=2.2&&this.clear(h,p,true)){h.state='peek';h.phaseUntil=this.elapsed+.35;this.cue('rustle',h);}
     }
     // Flytrap: rooted and always shown. Anything that comes within reach (or a pebble that lands
     // there) makes it snap where Sally is heading; then it chews for a while and is harmless.
@@ -767,7 +767,7 @@
       const p=this.player,reach=h.reach||1.6;
       if(h.state==='snap'){
         if(this.elapsed<h.phaseUntil)return;
-        h.state='chew';h.phaseUntil=this.elapsed+2.4;this.events.push('snap');
+        h.state='chew';h.phaseUntil=this.elapsed+2.4;this.cue('snap',h);
         if(distance(p,h.aim)<.72&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(h))this.finish('caught','The flytrap snapped shut. Wait for it to bite at something else, then pass while it chews.');
         return;
       }
@@ -776,7 +776,7 @@
       if(lure||near){
         h.aim=lure?copy(this.decoy):this.lead(.3);if(lure)h.lastLure=this.decoy.expires;
         if(distance(h,h.aim)>reach){const a=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.aim={x:h.x+Math.cos(a)*reach,y:h.y+Math.sin(a)*reach};}
-        h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='snap';h.phaseUntil=this.elapsed+(!lure&&p.crawling?.55:.32);this.events.push('rustle');
+        h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='snap';h.phaseUntil=this.elapsed+(!lure&&p.crawling?.55:.32);this.cue('rustle',h);
       }
     }
     // Bog heron: stands frozen in the reeds and stares along its beak. Anything that steps into
@@ -788,14 +788,14 @@
       const p=this.player;
       if(h.state==='aim'){
         if(this.elapsed<h.phaseUntil)return;
-        h.state='stab';h.phaseUntil=this.elapsed+1.3;this.events.push('snap');
+        h.state='stab';h.phaseUntil=this.elapsed+1.3;this.cue('snap',h);
         if(!p.swimming&&(this.inBeakLine(h,p)||distance(p,h.aim)<.6)&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(h))this.finish('caught','The bog heron stabbed. Cross its beak line while it looks away or recovers from a stab, or swim past under the surface.');
         return;
       }
       if(h.state==='stab'){if(this.elapsed>=h.phaseUntil)h.state='still';return;}
       if(h.looks&&this.elapsed>=h.turnAt){h.look=(h.look+1)%h.looks.length;h.facing=h.looks[h.look];h.turnAt=this.elapsed+h.every;}
       const lure=this.decoy&&this.decoy.expires!==h.lastLure&&this.inBeakLine(h,this.decoy),near=!p.swimming&&this.inBeakLine(h,p);
-      if(lure||near){h.aim=lure?copy(this.decoy):copy(p);if(lure)h.lastLure=this.decoy.expires;h.state='aim';h.phaseUntil=this.elapsed+.25;this.events.push('rustle');}
+      if(lure||near){h.aim=lure?copy(this.decoy):copy(p);if(lure)h.lastLure=this.decoy.expires;h.state='aim';h.phaseUntil=this.elapsed+.25;this.cue('rustle',h);}
     }
     // Praying mantis: a twig among twigs. It stays still and all but invisible until Sally is
     // close, watching a short cone in front of it. Anything that moves into the cone (Sally, a
@@ -807,7 +807,7 @@
       const p=this.player;
       if(h.state==='raise'){
         if(this.elapsed<h.phaseUntil)return;
-        h.state='strike';h.phaseUntil=this.elapsed+1.2;h.shownUntil=this.elapsed+3;this.events.push('snap');
+        h.state='strike';h.phaseUntil=this.elapsed+1.2;h.shownUntil=this.elapsed+3;this.cue('snap',h);
         const prey=h.prey&&this.hunters.includes(h.prey)?h.prey:null;h.prey=null;
         if(prey&&!['steamed','stunned'].includes(prey.state)&&(this.inMantisReach(h,prey)||distance(prey,h.aim)<.6)){prey.state='steamed';prey.phaseUntil=this.elapsed+2.2;prey.mantisSafeUntil=this.elapsed+5;prey.path=[];prey.targetId=null;prey.awareness=0;prey.lastKnown=null;this.notice('The mantis snatched at a hunter. It reels back, dazed!','clash');}
         if((this.inMantisReach(h,p)||distance(p,h.aim)<.6)&&!p.swimming&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(h))this.finish('caught','A praying mantis was hiding among the twigs. Watch for the faint twig shape, cross behind it or while it recovers, or toss a pebble into its reach first.');
@@ -817,7 +817,7 @@
       if(h.looks&&this.elapsed>=h.turnAt){h.look=(h.look+1)%h.looks.length;h.facing=h.looks[h.look];h.turnAt=this.elapsed+h.every;}
       const lure=this.decoy&&this.decoy.expires!==h.lastLure&&this.inMantisReach(h,this.decoy),near=!p.swimming&&this.inMantisReach(h,p);
       const prey=!lure&&!near&&this.hunters.find(o=>o!==h&&!['mantis','heron','flytrap','angler','mimic','owl','moth','fish','crab','cricket','wasp','dragonfly','mole','bat','eel'].includes(o.kind)&&!['steamed','stunned','emerge','dig','buried','rise','clash'].includes(o.state)&&!o.buried&&this.elapsed>=(o.mantisSafeUntil||0)&&this.inMantisReach(h,o));
-      if(lure||near||prey){h.aim=lure?copy(this.decoy):near?copy(p):copy(prey);h.prey=prey||null;if(lure)h.lastLure=this.decoy.expires;h.state='raise';h.phaseUntil=this.elapsed+.25;this.events.push('rustle');}
+      if(lure||near||prey){h.aim=lure?copy(this.decoy):near?copy(p):copy(prey);h.prey=prey||null;if(lure)h.lastLure=this.decoy.expires;h.state='raise';h.phaseUntil=this.elapsed+.25;this.cue('rustle',h);}
     }
     // Wasp nest: a papery nest on the wall. Noise close by, a pebble landing near it, or a touch
     // stirs it: a buzz, then a swarm pours out and chases the nearest creature it can reach,
@@ -839,7 +839,7 @@
       if(h.state==='nest'){
         if(this.elapsed<h.readyAt)return;
         const noisy=(p.sprinting||p.noisy)&&!p.hidden&&distance(p,h.nest)<3.5,touch=distance(p,h.nest)<.8,pebble=this.decoy&&this.decoy.expires!==h.lastLure&&distance(this.decoy,h.nest)<1.6,bumped=this.hunters.some(o=>o!==h&&o.state==='charge'&&distance(o,h.nest)<1);
-        if(noisy||touch||pebble||bumped){if(pebble)h.lastLure=this.decoy.expires;h.state='stir';h.phaseUntil=this.elapsed+.45;this.events.push('buzz');this.notice('The wasp nest is buzzing!','buzz');}
+        if(noisy||touch||pebble||bumped){if(pebble)h.lastLure=this.decoy.expires;h.state='stir';h.phaseUntil=this.elapsed+.45;this.cue('buzz',h);this.notice('The wasp nest is buzzing!','buzz');}
         return;
       }
       if(h.state==='stir'){if(this.elapsed>=h.phaseUntil){h.state='swarm';h.swarm=copy(h.nest);h.phaseUntil=this.elapsed+4;}return;}
@@ -849,7 +849,7 @@
         const target=targets.reduce((a,b)=>distance(a,h.swarm)<=distance(b,h.swarm)?a:b);this.flyToward(h.swarm,target,3*dt);
         if(distance(h.swarm,target)<.5){
           if(target===p){if(this.elapsed>=this.invulnerableUntil&&!this.shedTail(h))this.finish('caught','The wasp swarm caught Sally. Walk softly past a nest, or duck into leaves or water to lose the swarm. A pebble can set it on a hunter instead.');h.state='home';}
-          else{target.state='steamed';target.phaseUntil=this.elapsed+2.5;target.path=[];target.targetId=null;target.awareness=0;target.lastKnown=null;this.events.push('sting');this.notice('The wasps chased off a hunter!','clash');h.state='home';}
+          else{target.state='steamed';target.phaseUntil=this.elapsed+2.5;target.path=[];target.targetId=null;target.awareness=0;target.lastKnown=null;this.cue('sting',h);this.notice('The wasps chased off a hunter!','clash');h.state='home';}
         }
         return;
       }
@@ -883,11 +883,11 @@
     // Sally while she is moving, the bat swoops on the spot; a still Sally is invisible to it.
     updateBat(dt,h){
       const p=this.player;
-      if(h.state==='dive'){this.flyToward(h,h.aim,9*dt);if(this.elapsed>=h.phaseUntil){h.state='rise';h.phaseUntil=this.elapsed+1;this.events.push('dive');if(distance(p,h)<.75&&!p.flight&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(h))this.finish('caught','The echo bat heard Sally move in its sonar ring and swooped. Freeze when a ring sweeps toward you.');}return;}
+      if(h.state==='dive'){this.flyToward(h,h.aim,9*dt);if(this.elapsed>=h.phaseUntil){h.state='rise';h.phaseUntil=this.elapsed+1;this.cue('dive',h);if(distance(p,h)<.75&&!p.flight&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(h))this.finish('caught','The echo bat heard Sally move in its sonar ring and swooped. Freeze when a ring sweeps toward you.');}return;}
       if(h.state==='rise'){const home=h.home||h.patrol[0];const d=distance(h,home),step=3*dt;if(d>step){h.x+=(home.x-h.x)/d*step;h.y+=(home.y-h.y)/d*step;}else{h.x=home.x;h.y=home.y;}if(this.elapsed>=h.phaseUntil&&d<=step)h.state='fly';return;}
       const pts=h.patrol;if(pts.length>1){let step=h.speed*dt;while(step>0){const next=pts[(h.leg+1)%pts.length],d=distance(h,next);if(d<=step){h.x=next.x;h.y=next.y;step-=d;h.leg=(h.leg+1)%pts.length;}else{h.x+=(next.x-h.x)/d*step;h.y+=(next.y-h.y)/d*step;h.facing=Math.atan2(next.y-h.y,next.x-h.x);step=0;}}}
-      if(this.elapsed>=h.pulseAt+h.every){h.pulseAt=this.elapsed;h.pulseFrom=copy(h);this.events.push('ping');}
-      const age=this.elapsed-h.pulseAt;if(age<.6&&h.pulseFrom){const r=age/.6*h.range,d=distance(p,h.pulseFrom);if(p.moving&&!p.flight&&Math.abs(d-r)<.55){h.state='dive';h.aim=this.lead(.45);h.home=copy(h);h.phaseUntil=this.elapsed+.45;this.alarms++;this.events.push('screech');}}
+      if(this.elapsed>=h.pulseAt+h.every){h.pulseAt=this.elapsed;h.pulseFrom=copy(h);this.cue('ping',h);}
+      const age=this.elapsed-h.pulseAt;if(age<.6&&h.pulseFrom){const r=age/.6*h.range,d=distance(p,h.pulseFrom);if(p.moving&&!p.flight&&Math.abs(d-r)<.55){h.state='dive';h.aim=this.lead(.45);h.home=copy(h);h.phaseUntil=this.elapsed+.45;this.alarms++;this.cue('screech',h);}}
     }
     // The tide: for part of each cycle the flats are under water (Sally swims, land hunters keep
     // off), the rest of the time they are sand. Waves lap at the edges just before it turns.
@@ -907,12 +907,12 @@
       const p=this.player,home=h.post,wet=this.water(home);
       if(!wet){h.state='buried';h.x=home.x;h.y=home.y;return;}
       if(h.state==='buried')h.state='lurk';
-      if(h.state==='ripple'){if(this.elapsed<h.phaseUntil)return;h.state='lunge';h.phaseUntil=this.elapsed+.25;h.x=h.aim.x;h.y=h.aim.y;this.events.push('snap');
+      if(h.state==='ripple'){if(this.elapsed<h.phaseUntil)return;h.state='lunge';h.phaseUntil=this.elapsed+.25;h.x=h.aim.x;h.y=h.aim.y;this.cue('snap',h);
         if(distance(p,h.aim)<.75&&!p.flight&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(h))this.finish('caught','An eel lunged from the water. Keep a tile back from its pool, swim wide of it, or come by when the tide is out.');return;}
       if(h.state==='lunge'){if(this.elapsed>=h.phaseUntil){h.state='sulk';h.phaseUntil=this.elapsed+1.6;h.x=home.x;h.y=home.y;}return;}
       if(h.state==='sulk'){if(this.elapsed>=h.phaseUntil)h.state='lurk';return;}
       const reach=p.swimming?2.2:1.6;
-      if(distance(p,home)<=reach&&!p.flight&&this.clear(home,p,true)){h.state='ripple';h.aim=this.lead(.3);if(distance(h.aim,home)>reach+.5)h.aim=copy(p);h.phaseUntil=this.elapsed+.3;this.events.push('splash');}
+      if(distance(p,home)<=reach&&!p.flight&&this.clear(home,p,true)){h.state='ripple';h.aim=this.lead(.3);if(distance(h.aim,home)>reach+.5)h.aim=copy(p);h.phaseUntil=this.elapsed+.3;this.cue('splash',h);}
     }
     // Spore puffballs: Sally treading on one, a hunter walking over it or a pebble landing by it
     // bursts it into a spore cloud for a few seconds. Inside the cloud Sally is hidden even on the
@@ -937,7 +937,7 @@
       const p=this.player;
       if(h.state==='surface'){
         if(this.elapsed<h.phaseUntil)return;
-        h.state='up';h.phaseUntil=this.elapsed+1.8;this.events.push('emerge');
+        h.state='up';h.phaseUntil=this.elapsed+1.8;this.cue('emerge',h);
         for(const o of this.hunters)if(o!==h&&!['mole','wasp','dragonfly','owl','moth','bat','eel'].includes(o.kind)&&!['steamed','stunned'].includes(o.state)&&distance(o,h)<.7){o.state='steamed';o.phaseUntil=this.elapsed+2;o.path=[];}
         if(distance(p,h)<.85&&!p.flight&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(h))this.finish('caught','The mole felt Sally\'s footsteps and burst up beneath her. Stop when the ground ripples toward you, or keep to leaves.');
         return;
@@ -945,7 +945,7 @@
       if(h.state==='up'){if(this.elapsed>=h.phaseUntil){h.state='under';h.target=null;}return;}
       const heard=this.moleHears(h),thud=this.decoy&&this.decoy.expires!==h.lastLure&&distance(this.decoy,h)<8?copy(this.decoy):null;
       if(thud){h.lastLure=this.decoy.expires;h.target=thud;h.heardAt=this.elapsed;h.state='track';}
-      else if(heard){h.target=heard;h.heardAt=this.elapsed;if(h.state!=='track'){h.state='track';this.events.push('rumble');}}
+      else if(heard){h.target=heard;h.heardAt=this.elapsed;if(h.state!=='track'){h.state='track';this.cue('rumble',h);}}
       if(h.state==='track'){
         if(this.elapsed-h.heardAt>.5){h.state='surface';h.phaseUntil=this.elapsed+.45;return;}
         this.flyToward(h,h.target,2.2*dt);if(distance(h,h.target)<.3){h.state='surface';h.phaseUntil=this.elapsed+.3;}
@@ -979,14 +979,14 @@
       else if(seen){h.lastKnown=copy(this.player);h.lastObserved=this.elapsed;h.awareness=Math.min(1,h.awareness+dt/.9);h.state=h.awareness>=1?'chase':'alert';target=h.lastKnown;speed=h.state==='chase'?1.85:0;h.facing=Math.atan2(target.y-h.y,target.x-h.x);}
       else if(h.lastKnown&&this.elapsed-h.lastObserved<1.2){h.state='search';target=h.lastKnown;speed=1.2;}
       else{h.state='patrol';h.awareness=0;h.lastKnown=null;target=h.patrol[h.routeIndex];if(distance(h,target)<.1){h.routeIndex=(h.routeIndex+1)%h.patrol.length;target=h.patrol[h.routeIndex];}}
-      if(h.state==='alert'&&previousState!=='alert')this.events.push('warning');
-      if(h.state==='chase'&&previousState!=='chase'){this.alarms++;this.events.push('spotted');}
+      if(h.state==='alert'&&previousState!=='alert')this.cue('warning',h);
+      if(h.state==='chase'&&previousState!=='chase'){this.alarms++;this.cue('spotted',h);}
       if(target&&speed)this.moveHunter(target,speed*dt,h);
     }
     updateMimic(dt,h){
       h.anchor||=copy(h);
       if(h.state==='reveal'){
-        if(this.elapsed>=h.phaseUntil){h.state='lunge';h.phaseUntil=this.elapsed+.55;this.events.push('snap');}return;
+        if(this.elapsed>=h.phaseUntil){h.state='lunge';h.phaseUntil=this.elapsed+.55;this.cue('snap',h);}return;
       }
       if(h.state==='lunge'){
         const remaining=distance(h,h.aim),step=Math.min(5.5*dt,remaining),next={x:h.x+Math.cos(h.facing)*step,y:h.y+Math.sin(h.facing)*step};
@@ -1001,7 +1001,7 @@
       const lure=this.decoy&&this.decoy.expires!==h.lastLure&&distance(h,this.decoy)<=5&&this.clear(h,this.decoy),seen=!this.player.hidden&&distance(h,this.player)<=(this.player.crawling?1.2:1.7)&&this.clear(h,this.player);
       if(lure||seen){
         h.aim=lure?copy(this.decoy):this.lead(.25);if(lure)h.lastLure=this.decoy.expires;
-        h.reason=lure?'heard':'seen';h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='reveal';h.phaseUntil=this.elapsed+.4;this.events.push('rustle');
+        h.reason=lure?'heard':'seen';h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='reveal';h.phaseUntil=this.elapsed+.4;this.cue('rustle',h);
       }
     }
     updateMillipede(dt,h){
@@ -1013,7 +1013,7 @@
       }
       if(!h.awakened||this.elapsed<(h.followAt||0)){h.state='still';return;}
       if(!this.audible(h,this.player,14)){h.state='still';return;}
-      if(h.state!=='follow'&&this.elapsed>=(h.scrapeAt||0)){this.events.push('scrape');h.scrapeAt=this.elapsed+3;}
+      if(h.state!=='follow'&&this.elapsed>=(h.scrapeAt||0)){this.cue('scrape',h);h.scrapeAt=this.elapsed+3;}
       h.state='follow';h.reason='seen';
       this.moveHunter(this.player,(distance(h,this.player)<1.5?1.6:2.3)*dt,h);
     }
@@ -1021,7 +1021,7 @@
       // Follow actual luminous footprints, never an unseen player's position.
       // Once a swoop is armed its landing point stays fixed.
       if(h.state==='glimmer'){
-        if(this.elapsed>=h.phaseUntil){h.state='swoop';h.phaseUntil=this.elapsed+.85;this.events.push('flutter');this.alarms++;}return;
+        if(this.elapsed>=h.phaseUntil){h.state='swoop';h.phaseUntil=this.elapsed+.85;this.cue('flutter',h);this.alarms++;}return;
       }
       if(h.state==='swoop'){
         const d=distance(h,h.aim),step=Math.min(d,4*dt),next={x:h.x+Math.cos(h.facing)*step,y:h.y+Math.sin(h.facing)*step};
@@ -1030,7 +1030,7 @@
       }
       if(h.state==='recover'){if(this.elapsed>=h.phaseUntil){h.state='patrol';h.aim=null;}return;}
       const target=[...(this.decoy?[this.decoy]:[]),...this.glowTrail.slice().reverse()].find(t=>distance(h,t)<=4&&this.clear(h,t,true));
-      if(target){h.aim=copy(target);h.state='glimmer';h.phaseUntil=this.elapsed+.6;h.facing=Math.atan2(target.y-h.y,target.x-h.x);this.events.push('glimmer');return;}
+      if(target){h.aim=copy(target);h.state='glimmer';h.phaseUntil=this.elapsed+.6;h.facing=Math.atan2(target.y-h.y,target.x-h.x);this.cue('glimmer',h);return;}
       h.state='patrol';let point=h.patrol[h.routeIndex];
       if(distance(h,point)<.1){h.routeIndex=(h.routeIndex+1)%h.patrol.length;point=h.patrol[h.routeIndex];}
       if(this.clear(h,point,true)){
@@ -1041,7 +1041,7 @@
     // narrow beam even in the dark, glares, then swoops to the spot it locked.
     updateOwl(dt,h){
       const p=this.player,perch=h.perch||(h.perch={x:h.x,y:h.y});
-      if(h.state==='glare'){if(this.elapsed>=h.phaseUntil){h.state='swoop';this.alarms++;this.events.push('flutter');}return;}
+      if(h.state==='glare'){if(this.elapsed>=h.phaseUntil){h.state='swoop';this.alarms++;this.cue('flutter',h);}return;}
       if(h.state==='swoop'){
         // The swoop bends toward Sally, so a straight dash is not enough; hide or turn sharply.
         h.swoopTime=(h.swoopTime||0)+dt;if(!p.hidden&&h.swoopTime<1){const want=Math.atan2(p.y-h.aim.y,p.x-h.aim.x),gap=distance(h.aim,p),pull=Math.min(gap,3*dt);h.aim={x:h.aim.x+Math.cos(want)*pull,y:h.aim.y+Math.sin(want)*pull};}
@@ -1058,7 +1058,7 @@
       const lure=this.decoy&&!this.decoy.owled&&distance(h,this.decoy)<=8&&this.clear(h,this.decoy,true);
       if(lure||this.owlSees(h)){
         const target=lure?this.decoy:p;if(lure)this.decoy.owled=true;
-        h.aim=copy(target);h.facing=Math.atan2(target.y-h.y,target.x-h.x);h.state='glare';h.phaseUntil=this.elapsed+.7;h.swoopTime=0;this.events.push('hoot');return;
+        h.aim=copy(target);h.facing=Math.atan2(target.y-h.y,target.x-h.x);h.state='glare';h.phaseUntil=this.elapsed+.7;h.swoopTime=0;this.cue('hoot',h);return;
       }
       const look=h.patrol[h.routeIndex],want=Math.atan2(look.y-h.y,look.x-h.x),turn=Math.atan2(Math.sin(want-h.facing),Math.cos(want-h.facing));
       if(Math.abs(turn)>.02){h.facing+=Math.sign(turn)*Math.min(Math.abs(turn),1.1*dt);h.lookUntil=this.elapsed+1.8;}
@@ -1073,12 +1073,12 @@
     updateCricket(dt,h){
       const p=this.player;
       if(h.state==='chirp'){
-        if(this.elapsed>=h.phaseUntil){this.decoy={x:h.aim.x,y:h.aim.y,expires:this.elapsed+4,chirp:true};this.alarms++;this.events.push('chirp');this.notice('A cricket chirps! Every hunter nearby is coming.','warning');h.state='recover';h.phaseUntil=this.elapsed+5;}
+        if(this.elapsed>=h.phaseUntil){this.decoy={x:h.aim.x,y:h.aim.y,expires:this.elapsed+4,chirp:true};this.alarms++;this.cue('chirp',h);this.notice('A cricket chirps! Every hunter nearby is coming.','warning');h.state='recover';h.phaseUntil=this.elapsed+5;}
         return;
       }
       if(h.state==='recover'){if(this.elapsed>=h.phaseUntil)h.state='patrol';return;}
       const seen=this.seesPlayer(h),heard=p.noisy&&!p.hidden&&this.audible(h,p,8);
-      if(seen||heard){h.state='chirp';h.aim=copy(p);h.reason=seen?'seen':'heard';h.facing=Math.atan2(p.y-h.y,p.x-h.x);h.phaseUntil=this.elapsed+.5;this.events.push('skitter');return;}
+      if(seen||heard){h.state='chirp';h.aim=copy(p);h.reason=seen?'seen':'heard';h.facing=Math.atan2(p.y-h.y,p.x-h.x);h.phaseUntil=this.elapsed+.5;this.cue('skitter',h);return;}
       h.state='patrol';const target=h.patrol[h.routeIndex];
       if(distance(h,target)<.1)h.routeIndex=(h.routeIndex+1)%h.patrol.length;
       this.moveHunter(h.patrol[h.routeIndex],.8*dt,h);
@@ -1103,7 +1103,7 @@
     }
     updateCobra(dt,h){
       const p=this.player;
-      if(h.state==='rear'){if(this.elapsed>=h.phaseUntil){h.state='strike';h.strikeFrom=copy(h);h.phaseUntil=this.elapsed+.4;this.events.push('sting');}return true;}
+      if(h.state==='rear'){if(this.elapsed>=h.phaseUntil){h.state='strike';h.strikeFrom=copy(h);h.phaseUntil=this.elapsed+.4;this.cue('sting',h);}return true;}
       if(h.state==='strike'){
         const dx=Math.cos(h.facing),dy=Math.sin(h.facing),step=12*dt,next={x:h.x+dx*step,y:h.y+dy*step};
         if(!this.fits(next,.22,h)||this.elapsed>=h.phaseUntil||distance(h.strikeFrom,next)>h.reach){
@@ -1113,7 +1113,7 @@
       if(h.state==='coiled'||h.state==='return'||h.state==='patrol'){
         if(this.seesPlayer(h)){
           h.awareness=Math.min(1,h.awareness+dt/.3);h.facing=Math.atan2(p.y-h.y,p.x-h.x);
-          if(h.awareness>=1){h.aim=this.lead(.35);h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='rear';h.phaseUntil=this.elapsed+.45;this.alarms++;this.events.push('hiss');this.notice('The king cobra rears. It strikes, then it hunts.','warning');}
+          if(h.awareness>=1){h.aim=this.lead(.35);h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='rear';h.phaseUntil=this.elapsed+.45;this.alarms++;this.cue('hiss',h);this.notice('The king cobra rears. It strikes, then it hunts.','warning');}
           return true;
         }
         h.awareness=Math.max(0,h.awareness-dt);
@@ -1124,7 +1124,7 @@
     }
     updateBeetle(dt,h){
       if(h.state==='windup'){
-        if(this.elapsed>=h.phaseUntil){h.state='charge';h.phaseUntil=this.elapsed+2.4;h.chargeFrom=copy(h);this.events.push('charge');}
+        if(this.elapsed>=h.phaseUntil){h.state='charge';h.phaseUntil=this.elapsed+2.4;h.chargeFrom=copy(h);this.cue('charge',h);}
         return;
       }
       if(h.state==='charge'){
@@ -1134,7 +1134,7 @@
         h.chargeFrom||=copy(h);if(!this.fits(next,.22,h)||this.elapsed>=h.phaseUntil||h.aim&&distance(h.chargeFrom,next)>distance(h.chargeFrom,h.aim)+3){
           const straight=Math.abs(dx)>.92||Math.abs(dy)>.92,wall=[Math.floor(h.x+Math.round(dx)*.75),Math.floor(h.y+Math.round(dy)*.75)];
           const hitWall=!this.fits(next,.22,h);if(straight&&hitWall)this.smash(...wall);
-          h.state=hitWall?'stunned':'recover';h.phaseUntil=this.elapsed+(hitWall?1.8:1);h.awareness=0;h.path=[];this.events.push('clash');return;
+          h.state=hitWall?'stunned':'recover';h.phaseUntil=this.elapsed+(hitWall?1.8:1);h.awareness=0;h.path=[];this.cue('clash',h);return;
         }
         h.x=next.x;h.y=next.y;h.distanceMoved+=step;return;
       }
@@ -1164,13 +1164,13 @@
       const p=this.player,reach=h.reach||1.8,inRing=distance(h,p)<=reach&&!p.hidden&&this.clear(h,p);
       if(h.buried&&!h.surfaced){
         h.state='buried';h.tailUp=false;
-        if(distance(h,p)<2&&this.clear(h,p)){h.surfaced=true;h.state='emerge';h.phaseUntil=this.elapsed+.35;h.alertUntil=this.elapsed+3;this.events.push('emerge');this.notice('A scorpion bursts from the sand!','tail');}
+        if(distance(h,p)<2&&this.clear(h,p)){h.surfaced=true;h.state='emerge';h.phaseUntil=this.elapsed+.35;h.alertUntil=this.elapsed+3;this.cue('emerge',h);this.notice('A scorpion bursts from the sand!','tail');}
         return;
       }
       if(h.state==='emerge'){if(this.elapsed>=h.phaseUntil)h.state='patrol';return;}
       if(h.state==='raise'){h.tailUp=true;if(this.elapsed>=h.phaseUntil){if(inRing){h.aim=this.lead(.3);h.state='windup';h.phaseUntil=this.elapsed+.3;}else h.state='alert';}return;}
       if(h.state==='windup'){
-        if(this.elapsed>=h.phaseUntil){h.state='sting';h.phaseUntil=this.elapsed+.2;this.events.push('sting');}
+        if(this.elapsed>=h.phaseUntil){h.state='sting';h.phaseUntil=this.elapsed+.2;this.cue('sting',h);}
         return;
       }
       if(h.state==='sting'){
@@ -1213,8 +1213,8 @@
       const p=this.player;
       if(h.state==='windup'){
         if(this.elapsed>=h.phaseUntil){
-          if(h.kind==='toad'){h.state='tongue';h.phaseUntil=this.elapsed+.35;h.tongueLength=0;this.events.push('tongue');}
-          else{if(this.fits(h.aim)&&this.clear(h,h.aim,true))this.webs.push({...h.aim,expires:this.elapsed+6});h.state='recover';h.phaseUntil=this.elapsed+1.2;this.events.push('web');}
+          if(h.kind==='toad'){h.state='tongue';h.phaseUntil=this.elapsed+.35;h.tongueLength=0;this.cue('tongue',h);}
+          else{if(this.fits(h.aim)&&this.clear(h,h.aim,true))this.webs.push({...h.aim,expires:this.elapsed+6});h.state='recover';h.phaseUntil=this.elapsed+1.2;this.cue('web',h);}
         }return;
       }
       if(h.state==='tongue'){
@@ -1298,7 +1298,9 @@
       const stars=status==='won'?1+Number(this.treasure>=Math.ceil(this.totalTreasure*.6))+Number(this.alarms===0&&this.hasTail):0;
       this.result=Object.freeze({status,levelId:this.level.id,hidden:Boolean(this.level.hidden),draft:Boolean(this.level.draft),routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),blasts:this.blasts,steamed:this.steamed,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,glowbugs:this.glowbugsCaught,message});
     }
-    drainEvents(){const events=this.events;this.events=[];return events;}
+    // A sound with a place: the scene pans it and lets it fade with distance from Sally.
+    cue(name,at){this.events.push(name);if(at)(this.eventAt||(this.eventAt={}))[name]={x:at.x,y:at.y};}
+    drainEvents(){const events=this.events;this.events=[];this.lastEventAt=this.eventAt||{};this.eventAt={};return events;}
   }
   root.EscapeAdventure=EscapeAdventure;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeAdventure};

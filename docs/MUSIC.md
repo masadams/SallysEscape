@@ -74,6 +74,37 @@ A new style starts on the next bar, from the top of its own tune, so the
 harmony never lurches mid-bar. On the world map the style follows the
 courtyard Sally is standing in.
 
+## Special themes, chase flavours and cues
+
+Every region has its own harmony now (only the two spooky regions share one). Places off the
+trail have themes of their own in `STYLES`: each secret spot (`secret:<id>`), the Gilded Burrow,
+the bonus maze, and `finale` for the last escape and The Long Way Home.
+
+A chase takes its **flavour** from whatever is chasing (`flavorFor`): something heavy (beetle,
+cobra, fox, crab, mole, eel, toad) stomps in half time with low toms; something small and quick
+(spider, gecko, cricket, millipede, scorpion, mantis, wasp) skitters with rolling hats, rim clicks
+and a chromatic riff; a flyer (owl, bat, dragonfly, moth, heron, a diving hawk) adds falling
+glides. A snake keeps the standard chase.
+
+Short **cues** on the stinger voice mark moments, built from the mood's home chord (`cue`): the
+key found, the hatch opening once enough treasure is in hand, a secret uncovered, a new area
+opened on the map.
+
+## Ambience
+
+`public/escape-ambience.js` lays a soundscape under the music for every region, secret spot and
+the finale (`SCAPES`): one or two beds of shaped noise (a breeze, wind, a stream, surf, rain,
+insects, a cave's rumble, steam's hiss, a machine hum) with a slow swell, and calls now and then,
+panned to a side (birdsong, frogs, crickets, drips, crows, owls, gulls, creaks, ice tinkles,
+clanks, bubbles, thunder, a shrine chime). Beds crossfade over two seconds when the place
+changes. It follows the sound volume, plays softer on the world map and the menu, and ducks
+during a chase and while paused.
+
+## Volume
+
+**Volume** in the toolbar opens two sliders, saved per browser: Sound (effects and ambience) and
+Music. **Sound: Off** still silences everything.
+
 ## Sound effects
 
 `public/escape-audio.js` synthesises every effect. The first time a sound
@@ -83,6 +114,11 @@ oscillators and filters. Footsteps and other noisy sounds keep three takes
 and a slight pitch drift, so repeats do not sound stamped. The same sound
 twice within 45 ms is dropped, and at most 14 sounds play at once (footsteps
 give way first).
+
+A creature's sound carries where it happened (`game.cue(name, hunter)`), so the scene pans it
+left or right of Sally and lets it fade with distance. `EscapeAudio.measure(name)` renders a
+sound offline and reports its loudness; `TRIM` evens them out (rewards near -17 dB RMS, danger
+tells near -27 dB so a warning is never lost under the music, footsteps and a crawl soft).
 
 ## Changing the music
 
