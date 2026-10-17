@@ -19,13 +19,14 @@ Options: --budget 1500 --width 24 --depth 160 --seconds 120 --trials 8
          --milliseconds 60000 --frames 1000000 --jitter 6 (frames at 120 Hz) --seed 1 --no-tail
          --reuse previous/replay.json (try previous inputs against this map first)
          --no-macro (disable goal-directed route segments for comparison)
+         --no-planning (legacy optimistic distance guidance) --trace (save diagnostic attempt)
 Exit codes: 0 solved/replay passed; 1 unresolved/replay failed/stress failure; 2 invalid input.
 Search uses full game state. Results do not certify human difficulty or impossibility.`;
 function parse(argv){
   const flags={},pos=[];const numeric=new Set(['budget','width','depth','seconds','milliseconds','frames','trials','jitter','seed']);
   for(let i=0;i<argv.length;i++){
     const arg=argv[i];if(!arg.startsWith('--')){pos.push(arg);continue;}
-    const key=arg.slice(2);if(key==='no-tail'){flags.allowTail=false;continue;}if(key==='no-macro'){flags.macro=false;continue;}if(key==='help'){flags.help=true;continue;}
+    const key=arg.slice(2);if(key==='no-tail'){flags.allowTail=false;continue;}if(key==='no-macro'){flags.macro=false;continue;}if(key==='no-planning'){flags.planning=false;continue;}if(key==='trace'){flags.trace=true;continue;}if(key==='help'){flags.help=true;continue;}
     if(!numeric.has(key)&&!['out','custom','route','reuse'].includes(key))throw new Error('Unknown option '+arg);
     const value=argv[++i];if(value===undefined||value.startsWith('--'))throw new Error('Missing value for '+arg);
     flags[key]=numeric.has(key)?Number(value):value;
@@ -48,6 +49,9 @@ function writeOutputs(dir,report){
   const policyPath=path.join(dir,'policy.json');
   if(report.policy)fs.writeFileSync(policyPath,JSON.stringify(report.policy,null,2)+'\n');
   else if(fs.existsSync(policyPath))fs.unlinkSync(policyPath);
+  const attemptPath=path.join(dir,'attempt.json');
+  if(report.attempt)fs.writeFileSync(attemptPath,JSON.stringify(report.attempt,null,2)+'\n');
+  else if(fs.existsSync(attemptPath))fs.unlinkSync(attemptPath);
   const s=report.stress;
   const lines=[`# Level lab: ${report.options.levelId||report.options.challengeId||report.options.hiddenId||report.options.level.name}`,``, `Result: **${report.status}** (${report.reason}).`,``, `Search: ${report.search.expanded} expanded states; ${report.search.generated} simulated candidates.`,``, `Best attempt: ${report.bestAttempt.hasKey?'key collected':'key not collected'}, ${report.bestAttempt.treasure}/${report.bestAttempt.requiredTreasure} required treasure, ${report.bestAttempt.seconds}s; tail drops: ${report.bestAttempt.tailsDropped}.`,``,s?`Timing stress: ${s.wins}/${s.trials} wins with ±${s.jitterFrames} input frames and intermittent delays. This is an open-loop stress test, not a human success estimate.`:'Timing stress: unavailable without a winning replay.',``,report.status==='unresolved'?'No solution was found within this search configuration. This is NOT proof that the map is impossible.':'A fresh instance of the real engine verified the saved replay.',``,`## Most frequent failed branches`,``,...report.failures.map(f=>`- Tile ${f.tile}: ${f.message} (${f.count} branches)`),``,`These counts describe this search, not player death rates. Search has full map knowledge. Inspect the replay and playtest readability and fun before accepting a map.`];
   if(report.policy)lines.push('', 'A full-state feedback plan is saved in policy.json. Use policy-replay or policy-stress to evaluate it separately; it is not an open-loop replay or a human player model.');

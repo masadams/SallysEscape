@@ -4,7 +4,7 @@ const Lab=require('./level-lab.cjs'),Policy=require('./level-policy.cjs');
 const digest=value=>crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const keyFor=(options,allowTail=true)=>digest([Lab.fingerprint(options),allowTail]);
 const policyHash=Policy.identity;
-const evaluator=crypto.createHash('sha256').update(['level-lab.cjs','level-policy.cjs','level-practice.cjs','level-memory.cjs'].map(name=>fs.readFileSync(path.join(__dirname,name),'utf8')).join('\0')).digest('hex');
+const evaluator=crypto.createHash('sha256').update(['level-lab.cjs','level-goals.cjs','level-policy.cjs','level-practice.cjs','level-memory.cjs'].map(name=>fs.readFileSync(path.join(__dirname,name),'utf8')).join('\0')).digest('hex');
 function load(file){
   if(!fs.existsSync(file))return {schemaVersion:1,entries:{},attempts:[]};
   if(fs.statSync(file).size>16*1024*1024)throw new Error('Memory library exceeds 16 MiB');

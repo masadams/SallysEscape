@@ -44,10 +44,11 @@ function saveSummary(out,results,config){
   return {summary,markdown};
 }
 function main(argv){
-  const config={budget:600,width:8,depth:160,seconds:120,milliseconds:20000,frames:1000000,trials:3,jitter:6,seed:1,macro:true},flags={shard:1,shards:1};
+  const config={budget:600,width:8,depth:160,seconds:120,milliseconds:20000,frames:1000000,trials:3,jitter:6,seed:1,macro:true,planning:true},flags={shard:1,shards:1};
   for(let i=0;i<argv.length;i++){
     if(argv[i]==='--no-macro'){config.macro=false;continue;}
-    const key=argv[i].slice(2);if(!argv[i].startsWith('--')||!['out','only','shard','shards',...Object.keys(config).filter(k=>k!=='macro')].includes(key))throw new Error('Unknown benchmark option '+argv[i]);
+    if(argv[i]==='--no-planning'){config.planning=false;continue;}
+    const key=argv[i].slice(2);if(!argv[i].startsWith('--')||!['out','only','shard','shards',...Object.keys(config).filter(k=>!['macro','planning'].includes(k))].includes(key))throw new Error('Unknown benchmark option '+argv[i]);
     const value=argv[++i];if(value===undefined||value.startsWith('--'))throw new Error('Missing value for --'+key);
     if(Object.hasOwn(config,key))config[key]=Number(value);else flags[key]=['out','only'].includes(key)?value:Number(value);
   }
@@ -56,7 +57,7 @@ function main(argv){
   if(!Number.isInteger(config.trials)||config.trials<0||config.trials>100)throw new Error('Invalid trials');
   const selected=shardCases(selectCases(cases(),flags.only),flags.shard,flags.shards);
   const recordings=JSON.parse(fs.readFileSync(path.join(__dirname,'../tests/fixtures/escape-playthroughs.json'),'utf8'));
-  const solverFingerprint=crypto.createHash('sha256').update(['lib/level-lab.cjs','lib/level-policy.cjs','level-lab.cjs','level-benchmark.cjs','route-solver.cjs'].map(file=>fs.readFileSync(path.join(__dirname,file),'utf8')).join('\0')).digest('hex');
+  const solverFingerprint=crypto.createHash('sha256').update(['lib/level-lab.cjs','lib/level-goals.cjs','lib/level-policy.cjs','level-lab.cjs','level-benchmark.cjs','route-solver.cjs'].map(file=>fs.readFileSync(path.join(__dirname,file),'utf8')).join('\0')).digest('hex');
   const metadata={...config,shard:flags.shard,shards:flags.shards,only:flags.only||null,node:process.version,solverFingerprint};
   const results=[];
   for(const item of selected){

@@ -4,6 +4,7 @@ const path=require('node:path');
 const crypto=require('node:crypto');
 const {EscapeAdventure}=require('../../public/escape-engine.js');
 const {clone}=require('../route-solver.cjs');
+const {createPlanner}=require('./level-goals.cjs');
 const FPS=120, VERSION=1;
 const ACTIONS=Object.freeze({pebble:'throwDecoy',tongue:'useTongue',burrow:'burrow',seed:'plantSeed',camo:'camouflage',lookBack:'lookBack'});
 const DIRS=[[1,0],[0,1],[-1,0],[0,-1]];
@@ -63,10 +64,10 @@ function stress(options,commands,{trials=8,jitter=6,seed=1,allowTail=true}={}){
   return {kind:'open-loop timing stress; not a human win-rate estimate',trials,jitterFrames:jitter,seed,wins:runs.filter(r=>r.won).length,runs};
 }
 function settings(config={}){
-  const defaults={budget:1500,width:24,depth:160,seconds:120,milliseconds:60000,frames:1000000,allowTail:true,macro:true};
+  const defaults={budget:1500,width:24,depth:160,seconds:120,milliseconds:60000,frames:1000000,allowTail:true,macro:true,planning:true};
   const s=Object.fromEntries(Object.entries(defaults).map(([k,v])=>[k,config[k]??v]));
   for(const [k,max] of [['budget',100000],['width',256],['depth',1000],['seconds',300],['milliseconds',600000],['frames',100000000]])if(!Number.isInteger(s[k])||s[k]<1||s[k]>max)throw new Error('Invalid '+k+' (1–'+max+')');
-  for(const k of ['allowTail','macro'])if(typeof s[k]!=='boolean')throw new Error('Invalid '+k+' (boolean required)');
+  for(const k of ['allowTail','macro','planning'])if(typeof s[k]!=='boolean')throw new Error('Invalid '+k+' (boolean required)');
   return s;
 }
 // Optimistic distances guide search only: gates, cracked walls and gaps may be
@@ -80,7 +81,8 @@ function distanceField(g,target){
   }
   return field;
 }
-function makeEvaluator(initial){
+function makeEvaluator(initial,{planning=true}={}){
+  const plan=createPlanner();
   const key=distanceField(initial,initial.key),exit=distanceField(initial,initial.exit);
   const loot=initial.loot.map(p=>distanceField(initial,p));
   // Reserve search lanes for mechanisms away from the direct objective route.
@@ -98,6 +100,10 @@ function makeEvaluator(initial){
     const score=(g.hasKey?10000:0)+Math.min(g.treasure,g.requiredTreasure)*1000-distance*12-g.elapsed*.25-g.tailsDropped*25
       +g.reactionsFired.size*10+g.gates.filter(p=>p.open).length*8+g.steamed*8
       +(g.decoys+g.burrows+g.tongues+g.seeds+g.camos)*.1;
+    if(planning){
+      const objective=plan(g),actual=objective.distance??distance;
+      return {score:score+(distance-actual)*12,distance:actual,objective,landmarks:[]};
+    }
     return {score,distance,landmarks:landmarks.map(p=>score+distance*12-(p.done(g)?0:(p.field.get(tile)??fallback))*12)};
   };
 }
@@ -107,8 +113,8 @@ function signature(g){
   const q=n=>Math.round((n||0)*4);
   return JSON.stringify([q(g.player.x),q(g.player.y),g.player.facing,g.player.tongueAim,Math.floor(g.elapsed*2),Math.floor(g.player.stamina/20),Math.floor(g.player.warmth/20),g.hasKey,g.keyByTongue,g.loot.map(p=>p.taken),g.treasure,g.decoys,g.burrows,g.tongues,g.seeds,g.camos,g.hasTail,g.alarms,g.steamed,g.gates.map(p=>[p.open,p.sealed,p.bracedUntil,p.expiresAt]),[...g.reactionsFired],g.hunters.map(h=>[q(h.x),q(h.y),h.state,q(h.awareness),h.routeIndex]),g.grid.map(row=>row.join('')).join(''),g.lookUntil,g.camoUntil]);
 }
-function goalRoutes(g){
-  const objectives=[];
+function goalRoutes(g,objective){
+  const objectives=objective?.target?[objective.target]:[];
   if(!g.hasKey)objectives.push(g.key);
   if(g.hasKey&&g.exitUnlocked())objectives.push(g.exit);
   if(g.treasure<g.requiredTreasure)objectives.push(...g.loot.filter(p=>!p.taken));
@@ -123,13 +129,14 @@ function goalRoutes(g){
     const waypoints=g.route(g.player,target).slice(0,6);
     if(!waypoints.length)continue;
     const key=JSON.stringify(waypoints);if(unique.has(key))continue;unique.add(key);
-    for(const sprint of [true,false])routes.push({type:'route',waypoints,sprint});
-    if(g.level.gaze)routes.push({type:'route',waypoints,sprint:true,lookBack:true});
+    const finishing=g.exitUnlocked()&&target.x===g.exit.x&&target.y===g.exit.y?{finishExit:true}:{};
+    for(const sprint of [true,false])routes.push({type:'route',waypoints,sprint,...finishing});
+    if(g.level.gaze)routes.push({type:'route',waypoints,sprint:true,lookBack:true,...finishing});
   }
   return routes;
 }
-function candidates(g,{macro=true}={}){
-  const out=macro?goalRoutes(g):[],x=Math.floor(g.player.x),y=Math.floor(g.player.y);
+function candidates(g,{macro=true,objective}={}){
+  const out=macro?goalRoutes(g,objective):[],x=Math.floor(g.player.x),y=Math.floor(g.player.y);
   for(const [dx,dy]of DIRS){
     if(g.actorFloor(x+dx,y+dy,null))for(const sprint of [true,false]){
       const move={type:'tile',target:{x:x+dx+.5,y:y+dy+.5},sprint};out.push(move);
@@ -169,6 +176,12 @@ function execute(parent,choice,config){
     walk(choice.target);
   }else if(choice.type==='route'){
     for(const target of choice.waypoints)if(!walk(target))break;
+    if(choice.finishExit&&g.status==='playing'&&g.exitUnlocked()){
+      // Connect a nearly finished exit route instead of spending another
+      // whole beam layer on two final tiles. Geometry and catches stay real.
+      const finish=g.route(g.player,g.exit);
+      if(finish.length<=3)for(const target of finish)if(!walk(target))break;
+    }
     // Escaping requires holding on the exit; do not make the beam discover
     // that finishing wait through unrelated idle branches.
     if(g.status==='playing'&&g.exitUnlocked()&&Math.hypot(g.player.x-g.exit.x,g.player.y-g.exit.y)<.3)wait(90);
@@ -185,7 +198,7 @@ function execute(parent,choice,config){
 }
 function commandsFor(node){const parts=[];for(let n=node;n?.parent;n=n.parent)parts.push(n.commands);const commands=[];for(const part of parts.reverse())for(const c of part)append(commands,c);return commands;}
 function solve(options,config={}){
-  const cfg=settings(config),initial=new EscapeAdventure(options),evaluate=makeEvaluator(initial),started=Date.now();
+  const cfg=settings(config),initial=new EscapeAdventure(options),evaluate=makeEvaluator(initial,cfg),started=Date.now();
   const root={g:initial,parent:null,commands:[],...evaluate(initial)};
   let beam=[root],best=root,expanded=0,generated=0,simulatedFrames=0,depth=0,winner=null,reason='depth-limit',memory=null;
   let sharedExhausted=false,verificationFrames=0;
@@ -201,7 +214,7 @@ function solve(options,config={}){
     for(const node of beam){
       if(sharedExhausted){reason='shared-budget';break outer;}
       if(expanded>=cfg.budget){reason='expansion-budget';break outer;}expanded++;
-      for(const choice of candidates(node.g,cfg)){
+      for(const choice of candidates(node.g,{...cfg,objective:node.objective})){
         if(sharedExhausted){reason='shared-budget';break outer;}
         if(simulatedFrames>=cfg.frames){reason='simulation-budget';break outer;}
         if(Date.now()-started>=cfg.milliseconds){reason='wall-time-budget';break outer;}
@@ -233,7 +246,8 @@ function solve(options,config={}){
   const verification=commands?replay(options,commands,{allowTail:cfg.allowTail,consumeFrame:verifyFrame}):null;
   if(winner&&!verification.won&&!verification.budgetExhausted)throw new Error('Search/replay disagreement: '+JSON.stringify(verification));
   const solved=winner&&verification.won;
-  return {schemaVersion:VERSION,status:solved?'solved':'unresolved',reason:solved?'verified-replay':verification?.budgetExhausted?'verification-budget':reason,options,fingerprint:fingerprint(options),settings:cfg,search:{expanded,generated,simulatedFrames,verificationFrames,depth,milliseconds:Date.now()-started},bestAttempt:summary((winner||best).g),failures:[...failures.values()].sort((a,b)=>b.count-a.count).slice(0,12),verification,memory,replay:solved?{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands}:null,policy:solved?{schemaVersion:1,kind:'feedback-policy',options,fingerprint:fingerprint(options),settings:{seconds:cfg.seconds,allowTail:cfg.allowTail},choices}:null};
+  const attempt=config.trace?{schemaVersion:VERSION,kind:'diagnostic-attempt',options,fingerprint:fingerprint(options),commands:commandsFor(winner||best),objective:(winner||best).objective,gates:(winner||best).g.gates.map(g=>({id:g.id,open:g.open,sealed:g.sealed,activations:g.activations})),reactions:[...(winner||best).g.reactionsFired]}:undefined;
+  return {schemaVersion:VERSION,status:solved?'solved':'unresolved',reason:solved?'verified-replay':verification?.budgetExhausted?'verification-budget':reason,options,fingerprint:fingerprint(options),settings:cfg,search:{expanded,generated,simulatedFrames,verificationFrames,depth,milliseconds:Date.now()-started},bestAttempt:summary((winner||best).g),attempt,failures:[...failures.values()].sort((a,b)=>b.count-a.count).slice(0,12),verification,memory,replay:solved?{schemaVersion:VERSION,options,fingerprint:fingerprint(options),commands}:null,policy:solved?{schemaVersion:1,kind:'feedback-policy',options,fingerprint:fingerprint(options),settings:{seconds:cfg.seconds,allowTail:cfg.allowTail},choices}:null};
 }
 function verifyArtifact(artifact,config={}){
   if(artifact.schemaVersion!==VERSION||!artifact.options||!Array.isArray(artifact.commands))throw new Error('Invalid level-lab replay');

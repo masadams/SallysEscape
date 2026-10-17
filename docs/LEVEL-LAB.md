@@ -56,6 +56,8 @@ catalog level by its ID, not by exporting a partial approximation of it.
 | `--milliseconds` | 60000 | Search wall-clock budget, checked between candidates |
 | `--frames` | 1000000 | Total search simulation frames across all branches, checked every tick |
 | `--no-tail` | off | Require no tail drops; normal legal tail recovery is otherwise allowed |
+| `--no-planning` | off | Use the previous optimistic distance guidance for comparison |
+| `--trace` | off | Save the best diagnostic input trace as `attempt.json`, including gate/reaction state |
 | `--trials` | 8 | Timing stress runs after a solution, up to 100; 0 disables |
 | `--jitter` | 6 | Maximum input-duration change in 120 Hz frames, plus occasional input delays |
 | `--seed` | 1 | Reproducible timing perturbations |
@@ -255,6 +257,40 @@ an unlocked exit includes the real finishing hold. Local movements, waits and
 tools remain available when a direct route is unsafe. These segments reduce
 decision depth; they do not predict a safe route through hunters or authorize
 crossing a closed gate. `--no-macro` disables them for controlled comparisons.
+
+### Current geometry and trigger dependencies
+
+The default guidance uses distances through the current branch's walkable map.
+It does not prefer a nearby closed door over an existing longer route. A cached
+flood fill is invalidated by changed geometry; the cache has at most 256 entries
+per search. Keys, outstanding required treasure and the exit are separate goal
+phases. Target-directed macro candidates are ordered toward the current subgoal.
+
+If none of the current goal targets is reachable, guidance considers a reachable
+human-operated switch, plate or lever whose gate would connect to a target.
+The dependency estimate permits that gate's tiles only in a separate flood fill;
+it never changes simulator geometry. Sealed, closing-only and heavy-only gates
+are not offered as human-openable shortcuts. The engine must actually activate
+the trigger, open the passage and survive any timer before a replay can win.
+
+This is a bounded one-gate dependency heuristic. It does not solve arbitrary
+chains of gates, model hunter lures, plan cold recovery or predict every maze
+reaction. When a dependency cannot be represented, it falls back to optimistic
+guidance and retains local movements and abilities. `--no-planning` restores
+the former distance/landmark guidance for comparison; it does not disable
+goal-route macros.
+
+Exit-directed route segments may finish a remaining actual route of at most
+three waypoints once the exit is unlocked, then perform the engine's exit hold.
+These extra frames count against the same work allowance. Saved feedback plans
+record this terminal-completion choice, and fresh raw-input verification still
+checks the whole run. Ordinary key/treasure route segments cannot trigger it.
+
+With `--trace`, `attempt.json` contains the best candidate's actual commands,
+selected objective, gate states and fired reactions. It is explicitly labeled
+`diagnostic-attempt`, not a winning replay. Inspect it to distinguish a poor
+goal estimate from a catch or insufficient search. Runs without trace remove
+old attempt files, so stale diagnostics cannot look current.
 
 Optimistic map distances guide key/treasure/exit search. Reserved beam slots
 also explore switches, plates, levers and treasure, allowing detours away from
