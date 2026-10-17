@@ -653,7 +653,7 @@ function drawEscapeVault(){
   for(const den of g.pendingSpawns){if(view.follow&&!g.visibleTile(Math.floor(den.x),Math.floor(den.y)))continue;noFill();stroke(231,161,121);strokeWeight(cell*.05);ellipse(den.x*cell,den.y*cell,cell*(.7+Math.sin(g.elapsed*8)*.12),cell*.5);fill(237,177,142);noStroke();textSize(cell*.5);text('!',den.x*cell,(den.y-.5)*cell);}
   for(const h of g.hunters){const ang=h.facing,cone=h.kind==='beetle'?PI/5:PI/3;
   if(view.follow&&!g.visibleTile(Math.floor(h.x),Math.floor(h.y)))continue;
-  if(!g.level.dark&&!['millipede','cricket','moth','mimic','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','crab','fox'].includes(h.kind)&&['patrol','alert'].includes(h.state)){
+  if(!g.level.dark&&!['millipede','cricket','moth','mimic','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','crab','fox','echofrog','chameleon'].includes(h.kind)&&['patrol','alert'].includes(h.state)){
     noStroke();fill(245,171,105,18);beginShape();vertex(h.x*cell,h.y*cell);
     for(let a=-cone;a<=cone+.01;a+=cone/6){let reach=0,from=h;for(let d=.2;d<=4.5;d+=.2){const to={x:h.x+Math.cos(ang+a)*d,y:h.y+Math.sin(ang+a)*d};if(!g.clear(from,to,true))break;reach=d;from=to;}vertex((h.x+Math.cos(ang+a)*reach)*cell,(h.y+Math.sin(ang+a)*reach)*cell);}endShape(CLOSE);
   }
@@ -680,7 +680,7 @@ function drawEscapeVault(){
   g.hunters.filter(h=>h.kind==='angler').forEach(h=>drawEscapeAngler(h,cell,g.elapsed));
   g.motion.refresh?.();
   for(const h of g.hunters)if(h.kind==='flytrap')drawEscapeDew(g,h,cell,view);
-  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='angler')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='wasp'?drawEscapeWaspNest(h,cell,g.elapsed):h.kind==='dragonfly'?drawEscapeDragonfly(h,cell,g.elapsed):h.kind==='mole'?drawEscapeMole(h,cell,g.elapsed):h.kind==='bat'?drawEscapeBat(h,cell,g.elapsed,g):h.kind==='eel'?drawEscapeEel(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
+  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='angler')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='wasp'?drawEscapeWaspNest(h,cell,g.elapsed):h.kind==='dragonfly'?drawEscapeDragonfly(h,cell,g.elapsed):h.kind==='mole'?drawEscapeMole(h,cell,g.elapsed):h.kind==='bat'?drawEscapeBat(h,cell,g.elapsed,g):h.kind==='eel'?drawEscapeEel(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='echofrog'?drawEscapeEchoFrog(h,cell,g.elapsed):h.kind==='chameleon'?drawEscapeChameleon(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
   drawingContext.save();drawingContext.globalAlpha*=g.player.hidden?.48:1;
   for(const h of g.hunters)if(h.state==='clash'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noFill();stroke(255,193,107,180);strokeWeight(cell*.035);ellipse(h.x*cell,h.y*cell,cell*(.9+Math.sin(g.elapsed*14)*.08),cell*.75);}
   // Mid-flight off a bounce cap, Sally rises over her shadow.
@@ -898,6 +898,28 @@ function drawEscapeGlow(g,cell){
   }
   for(const t of g.glowTrail){if(!g.visibleTile(Math.floor(t.x),Math.floor(t.y)))continue;const fade=Math.max(0,(t.expires-g.elapsed)/8);noStroke();fill(67,209,233,22*fade);ellipse(t.x*cell,t.y*cell,cell*.65,cell*.65);fill(117,235,240,105*fade);for(const side of [-1,1])ellipse((t.x+side*.09)*cell,t.y*cell,cell*.075,cell*.045);}
   noStroke();fill(140,226,220,15);ellipse(g.player.x*cell,g.player.y*cell,cell*1.25,cell*1.25);
+}
+// An echo frog: a squat green frog whose throat swells with the noise it heard, then rings
+// outward as it croaks it back.
+function drawEscapeEchoFrog(h,cell,clock){
+  push();translate(h.x*cell,h.y*cell);const swell=h.state==='swell'?Math.min(1,1-(h.phaseUntil-clock)/2):h.state==='croak'?1:0;
+  noStroke();fill(0,0,0,60);ellipse(0,cell*.08,cell*.62,cell*.3);
+  if(swell>0){fill(220,236,170,140+swell*80);ellipse(0,cell*.12,cell*(.18+swell*.32),cell*(.14+swell*.26));}
+  fill(92,150,78);ellipse(0,0,cell*.52,cell*.42);fill(70,122,62);for(const s of [-1,1]){ellipse(s*cell*.24,cell*.12,cell*.2,cell*.14);ellipse(s*cell*.2,-cell*.14,cell*.16,cell*.12);}
+  fill(240,226,140);for(const s of [-1,1])ellipse(s*cell*.12,-cell*.13,cell*.12,cell*.12);fill(20);for(const s of [-1,1])ellipse(s*cell*.12,-cell*.13,cell*.05,cell*.07);
+  if(h.state==='croak'){noFill();for(let k=0;k<3;k++){const r=((clock*2.2+k/3)%1);stroke(200,240,170,180*(1-r));strokeWeight(cell*.04);ellipse(0,0,cell*(.6+r*3),cell*(.6+r*3));}}
+  pop();
+}
+// A chameleon: almost invisible while it keeps still; moving, it shimmers into view.
+function drawEscapeChameleon(h,cell,clock){
+  const moving=clock-(h.movedAt??-9)<.2,alert=['alert','chase','search'].includes(h.state),a=moving||alert?.6:.07;
+  push();translate(h.x*cell,h.y*cell);rotate(h.facing||0);drawingContext.globalAlpha*=a;noStroke();
+  fill(0,0,0,70);ellipse(0,cell*.06,cell*.7,cell*.3);fill(110,170,96);ellipse(0,0,cell*.62,cell*.32);ellipse(cell*.32,0,cell*.24,cell*.22);
+  stroke(110,170,96);strokeWeight(cell*.07);noFill();arc(-cell*.36,cell*.06,cell*.26,cell*.26,-HALF_PI,PI);noStroke();
+  fill(214,186,96);ellipse(cell*.36,-cell*.07,cell*.09,cell*.09);fill(20);ellipse(cell*.37,-cell*.07,cell*.04,cell*.04);
+  drawingContext.globalAlpha/=a;
+  if(moving){noFill();stroke(170+Math.sin(clock*9)*60,220,255-Math.sin(clock*9)*60,110);strokeWeight(cell*.03);ellipse(0,0,cell*.78,cell*.44);}
+  pop();
 }
 function drawEscapeGecko(h,cell,clock){
   push();translate(h.x*cell,h.y*cell);rotate(h.facing||0);scale(1.3);const run=['dash','flee'].includes(h.state),wig=Math.sin(clock*(run?30:6))*.25;noStroke();

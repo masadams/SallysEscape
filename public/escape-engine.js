@@ -84,7 +84,7 @@
       this.visible=new Set();this.discovered=new Set();this.visibilityAt=-Infinity;this.updateVisibility(true);
       this.motion=new CreatureMotion(this);
     }
-    makeHunter(guard){return {...centre(...guard.spawn),id:guard.id||null,kind:guard.kind||'snake',facing:guard.facing,state:guard.kind==='mimic'?'rooted':guard.kind==='cobra'?'coiled':guard.kind==='angler'?'lurking':guard.kind==='flytrap'?'open':guard.kind==='heron'||guard.kind==='mantis'?'still':guard.kind==='wasp'?'nest':guard.kind==='dragonfly'?'fly':guard.kind==='mole'?'under':guard.kind==='bat'?'fly':guard.kind==='eel'?'lurk':guard.kind==='crab'?'shell':'patrol',awareness:0,lastKnown:null,lastObserved:-Infinity,reason:'seen',path:[],routeIndex:0,pauseUntil:0,searchUntil:0,patrol:guard.patrol.map(p=>centre(...p)),aim:null,phaseUntil:0,distanceMoved:0,...(guard.kind==='cobra'?{post:centre(...guard.spawn),reach:guard.reach||2.6}:{}),...(guard.kind==='angler'?{lure:centre(...(guard.lure||guard.spawn))}:{}),...(guard.kind==='heron'||guard.kind==='mantis'?{facing:guard.looks?guard.looks[0]:guard.facing,reach:guard.reach||(guard.kind==='mantis'?1.7:2.6),looks:guard.looks||null,every:guard.every||3.2,look:0,turnAt:guard.every||3.2}:{}),...(guard.kind==='eel'?{post:centre(...guard.spawn)}:{}),...(guard.kind==='bat'?{leg:0,speed:guard.speed||1.8,every:guard.every||2.4,range:guard.range||4.5,pulseAt:(guard.offset||0)-2,pulseFrom:null}:{}),...(guard.kind==='dragonfly'?{leg:0,hoverUntil:0,speed:guard.speed||4.6,hover:guard.hover??.4}:{}),...(guard.kind==='wasp'?{nest:centre(...guard.spawn),swarm:null,leash:guard.leash||6,readyAt:0}:{}),...(guard.kind==='crab'?{home:centre(...guard.spawn),axis:guard.axis||'x',range:guard.range||3}:{}),...(guard.kind==='scorpion'?{reach:guard.reach||1.8,buried:Boolean(guard.buried),offset:guard.offset??(guard.spawn[0]*.7+guard.spawn[1]*.3)%3.8,post:centre(...guard.spawn)}:{})};}
+    makeHunter(guard){return {...centre(...guard.spawn),id:guard.id||null,kind:guard.kind||'snake',facing:guard.facing,state:guard.kind==='echofrog'?'listen':guard.kind==='mimic'?'rooted':guard.kind==='cobra'?'coiled':guard.kind==='angler'?'lurking':guard.kind==='flytrap'?'open':guard.kind==='heron'||guard.kind==='mantis'?'still':guard.kind==='wasp'?'nest':guard.kind==='dragonfly'?'fly':guard.kind==='mole'?'under':guard.kind==='bat'?'fly':guard.kind==='eel'?'lurk':guard.kind==='crab'?'shell':'patrol',awareness:0,lastKnown:null,lastObserved:-Infinity,reason:'seen',path:[],routeIndex:0,pauseUntil:0,searchUntil:0,patrol:guard.patrol.map(p=>centre(...p)),aim:null,phaseUntil:0,distanceMoved:0,...(guard.kind==='cobra'?{post:centre(...guard.spawn),reach:guard.reach||2.6}:{}),...(guard.kind==='angler'?{lure:centre(...(guard.lure||guard.spawn))}:{}),...(guard.kind==='heron'||guard.kind==='mantis'?{facing:guard.looks?guard.looks[0]:guard.facing,reach:guard.reach||(guard.kind==='mantis'?1.7:2.6),looks:guard.looks||null,every:guard.every||3.2,look:0,turnAt:guard.every||3.2}:{}),...(guard.kind==='eel'?{post:centre(...guard.spawn)}:{}),...(guard.kind==='bat'?{leg:0,speed:guard.speed||1.8,every:guard.every||2.4,range:guard.range||4.5,pulseAt:(guard.offset||0)-2,pulseFrom:null}:{}),...(guard.kind==='dragonfly'?{leg:0,hoverUntil:0,speed:guard.speed||4.6,hover:guard.hover??.4}:{}),...(guard.kind==='wasp'?{nest:centre(...guard.spawn),swarm:null,leash:guard.leash||6,readyAt:0}:{}),...(guard.kind==='crab'?{home:centre(...guard.spawn),axis:guard.axis||'x',range:guard.range||3}:{}),...(guard.kind==='scorpion'?{reach:guard.reach||1.8,buried:Boolean(guard.buried),offset:guard.offset??(guard.spawn[0]*.7+guard.spawn[1]*.3)%3.8,post:centre(...guard.spawn)}:{})};}
     floor(x,y){const t=this.grid[y]?.[x];return t!==undefined&&t!=='#'&&t!=='B'&&t!=='G'&&t!=='P';}
     water(p){return this.grid[Math.floor(p.y)]?.[Math.floor(p.x)]==='U';}
     // A crack (Y; S in text maps) is wide enough for Sally only: no hunter can squeeze through or see into it.
@@ -436,7 +436,7 @@
         if(h!==captor&&(distance(h,p)>=6||!this.clear(h,p,true)))continue;
         h.graceUntil=Math.max(h.graceUntil||0,this.elapsed+2.8);
         // Rooted plants, fish and burrowing hunters cannot chase a tail across the floor.
-        if(['mimic','fish','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','crab','owl','gecko'].includes(h.kind)||['emerge','dig','buried','rise','clash'].includes(h.state))continue;
+        if(['mimic','fish','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','crab','owl','gecko','echofrog'].includes(h.kind)||['emerge','dig','buried','rise','clash'].includes(h.state))continue;
         h.tailLureUntil=this.elapsed+2.4;h.path=[];h.targetId=null;
       }
       this.notice(this.regrowthBugs.some(b=>!b.eaten)?'Tail dropped! It wriggles as a decoy. Run—then eat a glowing bug to regrow it.':'Tail dropped! It wriggles as a decoy. Run! The next catch is final.','tailDrop');
@@ -489,7 +489,7 @@
       const p=this.player;
       for(const v of this.vents){const {active,warning}=this.ventPhase(v);if(warning&&!v.warning&&distance(p,centre(...v.at))<9)this.events.push('hiss');if(active&&!v.active&&distance(p,centre(...v.at))<9)this.events.push('steam');v.active=active;v.warning=warning;if(!active)continue;
         if(v.keys.has(this.tileKey(p))&&this.blowClear(v,p)){this.blasts++;p.stamina=Math.max(0,p.stamina-35);this.motion.resetPlayer(p);this.notice('Scalding steam! Sally is blown clear.','steam');}
-        this.hunters.forEach((h,i)=>{if(!v.keys.has(this.tileKey(h))||h.state==='steamed'||['owl','moth','fish','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel'].includes(h.kind))return;this.blowClear(v,h,h);this.motion.resetHunter?.(h,i);h.state='steamed';h.phaseUntil=this.elapsed+2.5;h.path=[];h.targetId=null;h.aim=null;h.awareness=0;h.lastKnown=null;this.steamed++;this.notice('The steam blasts a hunter aside. It is dazed!','steam');});
+        this.hunters.forEach((h,i)=>{if(!v.keys.has(this.tileKey(h))||h.state==='steamed'||['owl','moth','fish','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','echofrog'].includes(h.kind))return;this.blowClear(v,h,h);this.motion.resetHunter?.(h,i);h.state='steamed';h.phaseUntil=this.elapsed+2.5;h.path=[];h.targetId=null;h.aim=null;h.awareness=0;h.lastKnown=null;this.steamed++;this.notice('The steam blasts a hunter aside. It is dazed!','steam');});
       }
     }
     tileKey(p){return Math.floor(p.x)+','+Math.floor(p.y);}
@@ -617,7 +617,7 @@
       if(this.elapsed>=this.invulnerableUntil&&stinger&&this.shedTail(stinger))return;
       if(this.elapsed>=this.invulnerableUntil&&stinger){this.finish('caught','The scorpion struck. Cross its ring while the tail is down, or change direction when it strikes.');return;}
       // Capture wins over picking up the key or escaping in the same simulation step.
-      const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='angler'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(h.kind==='beetle'&&h.state==='charge'?.62:.48)&&this.clear(p,h));
+      const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(h.kind==='beetle'&&h.state==='charge'?.62:.48)&&this.clear(p,h));
       if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
       if(this.elapsed>=this.invulnerableUntil && captor){
         this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. Try another route through the ruins.':captor.kind==='mimic'?'The plant snapped at its marked spot. Provoke it from a distance or step aside when it opens.':captor.kind==='fox'?'A snow fox heard Sally and pounced. Stand still, keep to quiet ground, or toss a pebble to send it pouncing elsewhere.':captor.kind==='crab'?'A hermit crab scuttled out and pinched Sally. Pass its lane while it is tucked in, or send it back into its shell with a pebble.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'The guard spotted you. Break sight at a corner or use a pebble.');return;
@@ -686,13 +686,14 @@
       if(h.kind==='eel'){this.updateEel(dt,h);return;}
       if(h.kind==='crab'){this.updateCrab(dt,h);return;}
       if(h.kind==='fox'){this.updateFox(dt,h);return;}
+      if(h.kind==='echofrog'){this.updateEchoFrog(dt,h);return;}
       const p=this.player,previousState=h.state;
       // Nearby visible danger overrides a lure; a pebble cannot make it ignore a bite.
       const seen=this.seesPlayer(h)&&!(p.crawling&&distance(h,p)>(this.hunters.length>1&&this.lit()?5.5:3.5)&&this.elapsed>=this.flashUntil),heard=(p.noisy||p.loud)&&!p.hidden&&this.audible(h,p,p.loud?6:3.5);
       const lure=this.decoy&&this.audible(h,this.decoy,9)&&!(seen&&distance(h,p)<1.2);
       let target,speed=1.25;
       if(lure){
-        if(!this.decoy.noticed){this.decoy.noticed=true;this.notice('It heard the pebble. Now is your chance!','distracted');}
+        if(!this.decoy.noticed){this.decoy.noticed=true;this.notice(this.decoy.croak?'It heard the frog. Now is your chance!':'It heard the pebble. Now is your chance!','distracted');}
         h.state='decoy';h.awareness=0;h.lastKnown=null;target=this.decoy;speed=1.7;
       }else if(seen||heard){
         h.reason=seen?'seen':'heard';h.lastKnown=copy(p);h.lastObserved=this.elapsed;
@@ -715,14 +716,16 @@
         h.state='patrol';h.awareness=Math.max(0,h.awareness-dt*1.5);h.lastKnown=null;
         target=h.patrol[h.routeIndex];
         if(distance(h,target)<0.1){
-          if(h.pauseUntil===0)h.pauseUntil=this.elapsed+0.75;
-          if(this.elapsed<h.pauseUntil){speed=0;}else{h.pauseUntil=0;h.routeIndex=(h.routeIndex+1)%h.patrol.length;target=h.patrol[h.routeIndex];}
+          if(h.pauseUntil===0)h.pauseUntil=this.elapsed+(h.kind==='chameleon'?1.8:0.75);
+          if(this.elapsed<h.pauseUntil){speed=0;}else{h.pauseUntil=0;h.routeIndex=(h.routeIndex+1)%h.patrol.length;target=h.patrol[h.routeIndex];if(h.kind==='chameleon')this.cue('rustle',h);}
         }
       }
       if(h.state==='chase'&&previousState!=='chase'){this.alarms++;this.cue('spotted',h);}
       // A king cobra hunts a little faster than any snake.
       if(h.kind==='cobra')speed*=1.18;
-      if(target&&speed>0)this.moveHunter(target,speed*dt,h);
+      // A chameleon creeps a little slower than a snake; the scene shows it only while it moves.
+      if(h.kind==='chameleon')speed*=.88;
+      if(target&&speed>0){this.moveHunter(target,speed*dt,h);h.movedAt=this.elapsed;}
     }
     updateRivalries(){
       if(!this.active())return;
@@ -797,6 +800,18 @@
     }
     // Flytrap: rooted and always shown. Anything that comes within reach (or a pebble that lands
     // there) makes it snap where Sally is heading; then it chews for a while and is harmless.
+    // Echo frog: harmless itself. Noise near it (Sally's steps on gravel, a sprint, a pebble's
+    // clack) fills its throat for two seconds, then it croaks it back loudly from where it sits,
+    // and hunters in earshot come to look there instead. Then it rests a while.
+    updateEchoFrog(dt,h){
+      const p=this.player;
+      if(h.state==='swell'){if(this.elapsed<h.phaseUntil)return;h.state='croak';h.phaseUntil=this.elapsed+.6;h.readyAt=this.elapsed+6;
+        this.decoy={x:h.x,y:h.y,expires:this.elapsed+3,noticed:false,croak:true};this.cue('croak',h);return;}
+      if(h.state==='croak'){if(this.elapsed>=h.phaseUntil)h.state='listen';return;}
+      if(this.elapsed<(h.readyAt||0))return;
+      const heard=p.noisy&&!p.hidden&&this.audible(h,p,6),clack=this.decoy&&!this.decoy.croak&&this.decoy.expires!==h.lastLure&&distance(this.decoy,h)<2.5;
+      if(heard||clack){if(clack)h.lastLure=this.decoy.expires;h.state='swell';h.phaseUntil=this.elapsed+2;h.facing=Math.atan2(p.y-h.y,p.x-h.x);this.cue('ribbit',h);}
+    }
     updateFlytrap(dt,h){
       const p=this.player,reach=h.reach||1.6;
       if(h.state==='snap'){
@@ -850,7 +865,7 @@
       if(h.state==='strike'){if(this.elapsed>=h.phaseUntil)h.state='still';return;}
       if(h.looks&&this.elapsed>=h.turnAt){h.look=(h.look+1)%h.looks.length;h.facing=h.looks[h.look];h.turnAt=this.elapsed+h.every;}
       const lure=this.decoy&&this.decoy.expires!==h.lastLure&&this.inMantisReach(h,this.decoy),near=!p.swimming&&this.inMantisReach(h,p);
-      const prey=!lure&&!near&&this.hunters.find(o=>o!==h&&!['mantis','heron','flytrap','angler','mimic','owl','moth','fish','crab','cricket','wasp','dragonfly','mole','bat','eel'].includes(o.kind)&&!['steamed','stunned','emerge','dig','buried','rise','clash'].includes(o.state)&&!o.buried&&this.elapsed>=(o.mantisSafeUntil||0)&&this.inMantisReach(h,o));
+      const prey=!lure&&!near&&this.hunters.find(o=>o!==h&&!['mantis','heron','flytrap','angler','mimic','owl','moth','fish','crab','cricket','wasp','dragonfly','mole','bat','eel','echofrog'].includes(o.kind)&&!['steamed','stunned','emerge','dig','buried','rise','clash'].includes(o.state)&&!o.buried&&this.elapsed>=(o.mantisSafeUntil||0)&&this.inMantisReach(h,o));
       if(lure||near||prey){h.aim=lure?copy(this.decoy):near?copy(p):copy(prey);h.prey=prey||null;if(lure)h.lastLure=this.decoy.expires;h.state='raise';h.phaseUntil=this.elapsed+.25;this.cue('rustle',h);}
     }
     // Wasp nest: a papery nest on the wall. Noise close by, a pebble landing near it, or a touch
@@ -861,7 +876,7 @@
     waspTargets(h){
       const p=this.player,list=[];
       if(!p.hidden&&!p.swimming&&distance(p,h.nest)<=h.leash)list.push(p);
-      for(const o of this.hunters)if(o!==h&&!['wasp','mantis','heron','flytrap','angler','mimic','owl','moth','fish','crab','dragonfly','mole','bat','eel'].includes(o.kind)&&!['steamed','stunned','emerge','dig','buried','rise'].includes(o.state)&&!o.buried&&distance(o,h.nest)<=h.leash)list.push(o);
+      for(const o of this.hunters)if(o!==h&&!['wasp','mantis','heron','flytrap','angler','mimic','owl','moth','fish','crab','dragonfly','mole','bat','eel','echofrog'].includes(o.kind)&&!['steamed','stunned','emerge','dig','buried','rise'].includes(o.state)&&!o.buried&&distance(o,h.nest)<=h.leash)list.push(o);
       return list;
     }
     flyToward(s,target,step){
@@ -993,7 +1008,7 @@
     updateVines(){
       const p=this.player,t=this.elapsed,here=this.tileKey(p);
       if(this.heldBy){
-        const v=this.heldBy,spotter=this.hunters.find(h=>!['flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','angler','mimic','cricket'].includes(h.kind)&&this.seesPlayer(h));
+        const v=this.heldBy,spotter=this.hunters.find(h=>!['flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','angler','mimic','cricket','echofrog'].includes(h.kind)&&this.seesPlayer(h));
         if(spotter&&t>=this.invulnerableUntil){
           this.alarms++;spotter.awareness=1;spotter.lastKnown=copy(p);spotter.lastObserved=t;
           if(this.shedTail(spotter)){this.heldUntil=0;this.heldBy=null;v.holding=false;v.readyAt=t+4;this.notice('Sally tore free and left her tail in the vine!','tailDrop');return;}

@@ -6,9 +6,9 @@
   const KEY='sally-escape-custom-v1',VERSION=3;
   const TILES={'#':'Wall','.':'Floor','L':'Leaves','N':'Gravel','B':'Cracked wall','M':'Mud','~':'Water','_':'Gap','c':'Crumbling floor','T':'Tangle vine','S':'Crack (Sally only)','o':'Spore puffball','t':'Tide flat','m':'Moss (silent)'};
   const MARKS={'@':'Sally','K':'Key','X':'Hatch','1':'Treasure 1','2':'Treasure 2','3':'Chest 3'};
-  const ENEMIES={snake:'Snake',beetle:'Beetle',scorpion:'Scorpion',toad:'Toad',spider:'Spider',cricket:'Cricket',moth:'Moth',mimic:'Mimic',millipede:'Millipede',cobra:'King cobra',flytrap:'Flytrap',crab:'Hermit crab',fox:'Snow fox',heron:'Bog heron',mantis:'Praying mantis',wasp:'Wasp nest',dragonfly:'Dragonfly',mole:'Mole',bat:'Echo bat',eel:'Eel',angler:'Angler',fish:'Reef fish','sea-snake':'Sea snake',owl:'Owl',gecko:'Gecko'};
+  const ENEMIES={snake:'Snake',beetle:'Beetle',scorpion:'Scorpion',toad:'Toad',spider:'Spider',cricket:'Cricket',moth:'Moth',mimic:'Mimic',millipede:'Millipede',cobra:'King cobra',flytrap:'Flytrap',crab:'Hermit crab',fox:'Snow fox',heron:'Bog heron',mantis:'Praying mantis',wasp:'Wasp nest',dragonfly:'Dragonfly',mole:'Mole',bat:'Echo bat',eel:'Eel',angler:'Angler',fish:'Reef fish','sea-snake':'Sea snake',owl:'Owl',gecko:'Gecko',echofrog:'Echo frog',chameleon:'Chameleon'};
   // Enemies that stay on their post; the rest walk their patrol.
-  const POSTED=new Set(['scorpion','toad','mimic','millipede','cobra','flytrap','crab','heron','mantis','wasp','eel','angler','gecko']);
+  const POSTED=new Set(['scorpion','toad','mimic','millipede','cobra','flytrap','crab','heron','mantis','wasp','eel','angler','gecko','echofrog']);
   const LIMITS={minW:11,maxW:45,minH:9,maxH:29,doors:6,triggers:24,hazards:40,guards:30};
   // Doors and bridges come in six colours; each colour is one door and one bridge.
   const COLORS=[['Red',[226,96,96]],['Blue',[96,150,236]],['Gold',[240,196,80]],['Green',[110,200,120]],['Violet',[178,120,230]],['Teal',[80,200,196]]];
