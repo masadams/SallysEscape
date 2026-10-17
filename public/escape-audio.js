@@ -30,7 +30,18 @@
   }
   const notes=(volume,list,opts={})=>list.forEach(([freq,delay,dur=.14],i)=>tone(volume,{type:'triangle',gain:.45,...opts,freq,delay,dur}));
   const recipes={
-    step:(v,o)=>noise(v,{dur:.05,gain:o.sprint?.22:.13,filter:'lowpass',freq:o.alt?520:420,q:.7}),
+    // Footsteps sound like the ground: a soft pad on plain floor, a crunch of gravel (loud: hunters
+    // hear it), a rustle of leaves, next to nothing on moss, a squelch of mud, a hiss of sand, the
+    // squeak and crunch of snow, a wet slap on the tide flats.
+    step:(v,o)=>{const s=o.sprint?1.6:1,f=o.alt?1.12:1;switch(o.surface){
+      case 'gravel':for(let i=0;i<3;i++)noise(v,{dur:.025,delay:i*.018,gain:.16*s,filter:'bandpass',freq:(2600+i*500)*f,q:3});noise(v,{dur:.06,gain:.08*s,filter:'lowpass',freq:700});break;
+      case 'leaves':case 'tangle':noise(v,{dur:.14,gain:.11*s,filter:'bandpass',freq:2800*f,to:1800,q:.9,attack:.02});break;
+      case 'moss':noise(v,{dur:.05,gain:.035*s,filter:'lowpass',freq:260});break;
+      case 'mud':noise(v,{dur:.16,gain:.12*s,filter:'lowpass',freq:520*f,to:180,q:2,attack:.02});tone(v,{freq:150*f,to:90,dur:.12,type:'sine',gain:.05*s});break;
+      case 'sand':noise(v,{dur:.08,gain:.07*s,filter:'highpass',freq:3400*f,attack:.01});break;
+      case 'snow':noise(v,{dur:.09,gain:.13*s,filter:'bandpass',freq:1500*f,to:900,q:1.6,attack:.01});noise(v,{dur:.02,delay:.03,gain:.06*s,filter:'highpass',freq:4200});break;
+      case 'wet':noise(v,{dur:.07,gain:.12*s,filter:'bandpass',freq:1700*f,to:1100,q:1.2});break;
+      default:noise(v,{dur:.05,gain:o.sprint?.22:.13,filter:'lowpass',freq:o.alt?520:420,q:.7});}},
     paddle:(v)=>noise(v,{dur:.16,gain:.16,freq:700,to:300,q:1.5}),
     treasure:(v)=>{notes(v,[[988,0,.09],[1319,.07,.22]],{type:'square',gain:.16});tone(v,{freq:2637,delay:.07,dur:.2,type:'sine',gain:.12});},
     chest:(v)=>{notes(v,[[784,0],[988,.06],[1175,.12],[1568,.18,.3]],{type:'square',gain:.14});noise(v,{dur:.3,delay:.18,gain:.1,filter:'highpass',freq:5000});},
@@ -124,7 +135,7 @@
   const VARIED=new Set(['step','paddle','tail','rustle','skitter','scrape','splash','flutter','clash']);
   const cache=new Map(),rendering=new Set(),lastPlayed=new Map(),active=[];
   const MAX_VOICES=14,REPEAT_GAP=.045;
-  const keyFor=(name,o)=>name+(o.sprint?':s':'')+(o.alt?':a':'');
+  const keyFor=(name,o)=>name+(o.sprint?':s':'')+(o.alt?':a':'')+(o.surface&&o.surface!=='floor'?':'+o.surface:'');
   function render(ctx,name,options,key){
     const Offline=root.OfflineAudioContext||root.webkitOfflineAudioContext;if(!Offline||rendering.has(key))return;rendering.add(key);
     const takes=VARIED.has(name)?3:1,length=Math.ceil(ctx.sampleRate*1.6),buffers=[];
@@ -142,6 +153,19 @@
     // A sound from off to one side comes from that side.
     const panner=pan&&ctx.createStereoPanner?ctx.createStereoPanner():null;if(panner){panner.pan.value=Math.max(-1,Math.min(1,pan));amp.connect(panner);panner.connect(master);}else amp.connect(master);src.start();
     const voice={src,ends:ctx.currentTime+src.buffer.duration};active.push(voice);src.onended=()=>{src.disconnect();amp.disconnect();panner?.disconnect();const i=active.indexOf(voice);if(i>=0)active.splice(i,1);};
+  }
+  // The room: caves ring, halls a little, the open air not at all. Every sound passes through one
+  // shared echo (a convolver fed a decaying-noise impulse), so the cost is the same for one sound
+  // or twenty, and nothing at all outdoors.
+  const SPACE={cave:{wet:.3,length:1.7,decay:2.6},hall:{wet:.16,length:.9,decay:3.4}};
+  let space='open',send=null,convolver=null;
+  function impulse(ctx,{length,decay}){const n=Math.ceil(ctx.sampleRate*length),b=ctx.createBuffer(2,n,ctx.sampleRate);let seed=3;
+    for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<n;i++){seed=(seed*16807)%2147483647;d[i]=(seed/1073741823.5-1)*Math.pow(1-i/n,decay);}}return b;}
+  function setSpace(ctx,kind){
+    if(!ctx?.createConvolver)return false;setup(ctx);const spec=SPACE[kind];if(kind===space&&(!spec||send?.context===ctx))return false;space=spec?kind:'open';
+    if(!spec){if(send)send.gain.setTargetAtTime(0,ctx.currentTime,.3);return true;}
+    if(!send||send.context!==ctx){send=ctx.createGain();send.gain.value=0;convolver=ctx.createConvolver();master.connect(send);send.connect(convolver);convolver.connect(ctx.destination);}
+    convolver.buffer=impulse(ctx,spec);send.gain.setTargetAtTime(spec.wet,ctx.currentTime,.3);return true;
   }
   function play(ctx,name,volume=.25,options={}){
     const recipe=recipes[name];if(!recipe||!ctx||volume<=0)return false;
@@ -167,6 +191,6 @@
       for(let i=0;i<d.length;i++){const v=d[i]*d[i];sum+=v;if(i>=win)sum-=d[i-win]*d[i-win];if(sum>best)best=sum;if(Math.abs(d[i])>peak)peak=Math.abs(d[i]);}
       return {name,rms:Math.sqrt(best/win),peak};});
   }
-  root.EscapeAudio={play,measure,TRIM,recipes:Object.keys(recipes),cached:()=>cache.size,reset:()=>{cache.clear();lastPlayed.clear();active.length=0;}};
+  root.EscapeAudio={play,measure,setSpace,space:()=>space,SPACE,TRIM,recipes:Object.keys(recipes),cached:()=>cache.size,reset:()=>{cache.clear();lastPlayed.clear();active.length=0;}};
   if(typeof module!=='undefined'&&module.exports)module.exports=root.EscapeAudio;
 })(typeof globalThis!=='undefined'?globalThis:this);
