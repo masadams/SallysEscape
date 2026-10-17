@@ -425,3 +425,10 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .playdata th,.playdata td { border-bottom:1px solid #5d7a6255; padding:5px 8px; text-align:left; vertical-align:top; }
 .playdata th { color:#c9d8b8; font-weight:650; }
 .admin-export { text-decoration:none; display:inline-flex; align-items:center; padding:6px 12px; border-radius:8px; }
+
+/* Results: stars pop in one at a time */
+.escape-stars { display:inline-flex; gap:2px; margin-right:4px; font-size:1.35em; vertical-align:-2px; }
+.star-pop { display:inline-block; color:#ffd36b; animation:star-pop .5s cubic-bezier(.3,1.7,.5,1) both; }
+.star-pop.star-empty { color:#8aa08a; }
+@keyframes star-pop { 0% { transform:scale(0) rotate(-50deg); opacity:0; } 100% { transform:scale(1) rotate(0); opacity:1; } }
+@media (prefers-reduced-motion: reduce) { .star-pop { animation:none; } }

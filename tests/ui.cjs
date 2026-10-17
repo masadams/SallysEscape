@@ -48,7 +48,7 @@ function harness() {
     createCanvas:()=>({parent:noop}),pixelDensity:()=>1,displayDensity:()=>1,
     random:(a,b)=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;const n=seed/4294967296;return Array.isArray(a)?a[Math.floor(n*a.length)]:a===undefined?n:b===undefined?n*a:a+n*(b-a)},
     keyIsDown:()=>false,fetch:async()=>({ok:true,json:async()=>[]})};
-  for(const n of ['push','pop','background','fill','noFill','stroke','noStroke','strokeWeight','rect','triangle','ellipse','line','bezier','beginShape','endShape','curveVertex','vertex','translate','scale','image','imageMode','text','textSize','textFont','textAlign','colorMode','arc','setShakeThreshold','resizeCanvas','rotate','blendMode']) c[n]=noop;
+  for(const n of ['push','pop','background','fill','noFill','stroke','noStroke','strokeWeight','rect','triangle','ellipse','line','bezier','beginShape','endShape','curveVertex','vertex','translate','scale','image','imageMode','text','textSize','textFont','textAlign','textStyle','colorMode','arc','setShakeThreshold','resizeCanvas','rotate','blendMode']) c[n]=noop;c.BOLD='bold';c.NORMAL='normal';
   for(const n of ['CORNER','CENTER','LEFT','RIGHT','TOP','BOTTOM','CLOSE','RGB','HSB','PIE','ADD','BLEND']) c[n]=n;
   c.UP_ARROW=38;c.DOWN_ARROW=40;c.LEFT_ARROW=37;c.RIGHT_ARROW=39;
   c.createGraphics=()=>({...c,clear:noop,remove:noop});
@@ -62,12 +62,12 @@ function harness() {
   run('setup();');
   return {c:context,run,el:element,events,storage,setTime:value=>now=value,tick:fps=>{c.deltaTime=1000/fps;now+=c.deltaTime;c.frameCount++}};
 }
-test('the standalone world enters the real engine and renders the result in its existing playfield',()=>{const h=harness();h.run('showEscapeSelect();startEscape({levelId:"quiet-vault"});draw();escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.finish("won","escaped");draw();');assert.equal(h.run('gameState'),'escapeResult');assert.equal(h.el('game-container').style.display,'block');assert.equal(h.el('escape-result').style.display,'block');assert.equal(h.el('escape-menu-btn').textContent,'Explore the world');assert.equal(h.run('escapeProgress.unlocked("crumbling-hall")'),true);});
+test('the standalone world enters the real engine and renders the result in its existing playfield',()=>{const h=harness();h.run('showEscapeSelect();startEscape({levelId:"quiet-vault"});draw();escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.finish("won","escaped");draw();escapeMoment.hold=0;draw();');assert.equal(h.run('gameState'),'escapeResult');assert.equal(h.el('game-container').style.display,'block');assert.equal(h.el('escape-result').style.display,'block');assert.equal(h.el('escape-menu-btn').textContent,'Explore the world');assert.equal(h.run('escapeProgress.unlocked("crumbling-hall")'),true);});
 test('Sally celebrates the finished run, keeps retry available, and resets her expression on retry',()=>{
- const h=harness();h.run('startEscape({levelId:"quiet-vault",skipIntro:true});escapeGame.elapsed=20;escapeGame.treasure=8;escapeGame.finish("won","escaped");draw();');
+ const h=harness();h.run('startEscape({levelId:"quiet-vault",skipIntro:true});escapeGame.elapsed=20;escapeGame.treasure=8;escapeGame.finish("won","escaped");draw();escapeMoment.hold=0;draw();');
  assert.match(h.el('escape-character-celebration').innerHTML,/sally-proud/);assert.equal(h.el('escape-character-celebration').style.display,'');
  h.el('escape-retry-btn').onclick();assert.equal(h.run('gameState'),'escape');assert.equal(h.run('escapeCharacter.face.mood'),'calm');
- h.run('escapeGame.elapsed=2;escapeGame.finish("caught","caught");draw();');assert.equal(h.el('escape-character-celebration').style.display,'none');
+ h.run('escapeGame.elapsed=2;escapeGame.finish("caught","caught");draw();escapeMoment.hold=0;draw();');assert.equal(h.el('escape-character-celebration').style.display,'none');
  assert.equal(h.el('escape-character-celebration').innerHTML,'');
 });
 test('arcade resources follow real pebble use, cooldown, depletion and retry on desktop and touch',()=>{
@@ -94,7 +94,7 @@ test('the stick clamps diagonal input, rejects a second pointer and releases ind
 test('portrait rotation pauses simulation and clears the stick, and landscape preserves the pause until resumed',()=>{const h=harness();h.run('startEscape({levelId:"quiet-vault",skipIntro:true});mobile=true;windowWidth=390;windowHeight=844;touchStick.x=1;');const t=h.run('escapeGame.elapsed');h.run('draw();');assert.equal(h.run('paused'),true);assert.equal(h.run('touchStick.x'),0);assert.equal(h.run('escapeGame.elapsed'),t);h.run('windowWidth=844;windowHeight=390;draw();');assert.equal(h.run('paused'),true);h.run('togglePause();draw();draw();');assert.ok(h.run('escapeGame.elapsed')>t);});
 test('the intro card holds the hunters until a key or movement, and a retry skips it',()=>{const h=harness();h.run('escapeProgress.unlocked=()=>true;startEscape({levelId:"fern-cloister"});');assert.equal(h.run('escapeIntroOpen'),true);assert.equal(h.el('escape-intro').style.display,'block');assert.match(h.el('escape-intro').innerHTML,/Fern Cloister/);assert.match(h.el('escape-intro').innerHTML,/spare tail/);
   h.run('draw();draw();');assert.equal(h.run('escapeGame.elapsed'),0);h.run('key="e";keyCode=69;keyPressed({});');assert.equal(h.run('escapeIntroOpen'),false);assert.equal(h.run('escapeGame.burrows'),h.run('escapeGame.level.burrows'),'the dismissing key does not spend a tool');h.run('draw();draw();');assert.ok(h.run('escapeGame.elapsed')>0);
-  h.run('escapeGame.finish("caught","bitten");draw();key="r";keyCode=82;keyPressed({});');assert.equal(h.run('escapeIntroOpen'),false);assert.equal(h.run('gameState'),'escape');
+  h.run('escapeGame.finish("caught","bitten");draw();escapeMoment.hold=0;draw();key="r";keyCode=82;keyPressed({});');assert.equal(h.run('escapeIntroOpen'),false);assert.equal(h.run('gameState'),'escape');
   h.run('startEscape({levelId:"fern-cloister"});touchStick.x=1;draw();');assert.equal(h.run('escapeIntroOpen'),false,'moving dismisses the card');});
 test('brief cards fold the hint away except where an area teaches something; Full shows it, Off skips the card',()=>{const h=harness();h.run('escapeProgress.unlocked=()=>true;startEscape({levelId:"chimney-run"});');
   assert.match(h.el('escape-intro').innerHTML,/escape-intro-hidden/);assert.equal(h.run('escapeGame.message'),'','the in-game tip waits too');h.run('key="h";keyCode=72;keyPressed({});');assert.equal(h.run('escapeIntroOpen'),true,'H reveals rather than starting');assert.equal(h.run('escapeGame.message'),h.run('escapeGame.level.hint'));
@@ -102,7 +102,7 @@ test('brief cards fold the hint away except where an area teaches something; Ful
   h.run('introMode="full";startEscape({levelId:"chimney-run"});');assert.match(h.el('escape-intro').innerHTML,/drop her tail/);assert.doesNotMatch(h.el('escape-intro').innerHTML,/escape-intro-hidden/);
   h.run('introMode="off";startEscape({levelId:"chimney-run"});');assert.equal(h.run('escapeIntroOpen'),false);});
 test('leaving a route part-way uses up its first try, and a first-attempt escape shows the bonus',()=>{const h=harness();h.run('startEscape({levelId:"quiet-vault",skipIntro:true});escapeGame.elapsed=5;showEscapeSelect();');assert.equal(h.run('escapeProgress.data.attempts["quiet-vault"]'),1);
-  h.run('startEscape({levelId:"leafy-crossroads",skipIntro:true});draw();escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.finish("won","escaped");draw();');assert.match(h.el('escape-result-title').textContent,/First try/);assert.match(h.el('escape-result-medals').textContent,/First try bonus/);});
+  h.run('startEscape({levelId:"leafy-crossroads",skipIntro:true});draw();escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.finish("won","escaped");draw();escapeMoment.hold=0;draw();');assert.match(h.el('escape-result-title').textContent,/First try/);assert.match(h.el('escape-result-medals').textContent,/First try bonus/);});
 test('a shared level cannot put markup on the intro card: its name, brief and hint show as text',()=>{
  const h=harness();h.run('introMode="full";const m=EscapeBuilder.blank();m.name="<h1>AUDIT</h1>";m.brief="<form action=x><button>Go</button></form>";startEscape({custom:EscapeBuilder.toRoute(m),from:"builder"});hideEscapeIntro();for(let i=0;i<30;i++)draw();');assert.equal(h.run('escapeGame.status'),'playing','a level with no enemies plays');
  const card=h.el('escape-intro').innerHTML;assert.doesNotMatch(card,/<h1>|<form/);assert.match(card,/&lt;h1&gt;AUDIT&lt;\/h1&gt;/);assert.match(card,/&lt;form action=x&gt;/);
