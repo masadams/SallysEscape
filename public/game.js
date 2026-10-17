@@ -41,7 +41,9 @@ const isFullscreen=()=>Boolean(document.fullscreenElement||document.webkitFullsc
 function toggleFullscreen(){const d=document,el=d.documentElement;
   if(isFullscreen())(d.exitFullscreen||d.webkitExitFullscreen)?.call(d);
   else{const ask=(el.requestFullscreen||el.webkitRequestFullscreen)?.call(el,{navigationUI:'hide'});ask?.then?.(()=>screen.orientation?.lock?.('landscape').catch(()=>{})).catch(()=>{});}}
-let fullscreenAsked=false;
+// Phones play full screen: every tap while not full screen asks again, so leaving it by accident
+// (a swipe, a notification) is undone by the next touch.
+function enterFullscreen(){if(!isFullscreen())toggleFullscreen();}
 function closeToolbarMenu(){const bar=document.getElementById('game-toolbar');bar?.classList.remove('toolbar-open');document.getElementById('menu-button')?.setAttribute('aria-expanded','false');}
 // Volume: three sliders in Options, for effects (0–100 maps to 0–0.5), music and ambience
 // (0–100%). Saved with the other settings, per player.
@@ -55,15 +57,15 @@ function saveSettings(){try{escapeStore.setItem('sally-escape-settings',JSON.str
 function setup(){mobile=isMobileDevice();document.getElementById('menu-button').onclick=e=>{e.stopPropagation();const bar=document.getElementById('game-toolbar'),open=!bar.classList.contains('toolbar-open');bar.classList.toggle('toolbar-open',open);e.currentTarget.setAttribute('aria-expanded',String(open));};
  document.getElementById('fullscreen-button').onclick=()=>{toggleFullscreen();closeToolbarMenu();};document.getElementById('view-button').onclick=()=>{toggleEscapeCloseView();closeToolbarMenu();};
  document.addEventListener('fullscreenchange',updateToolbar);document.addEventListener('webkitfullscreenchange',updateToolbar);
- // A tap outside the open menu closes it; on a phone the first tap anywhere goes full screen.
- document.addEventListener('pointerdown',e=>{if(!e.target.closest?.('#game-toolbar'))closeToolbarMenu();if(mobile&&!fullscreenAsked&&fullscreenAvailable()&&!isFullscreen()){fullscreenAsked=true;toggleFullscreen();}},true);
+ // A tap outside the open menu closes it; on a phone any tap goes back to full screen.
+ document.addEventListener('pointerdown',e=>{if(!e.target.closest?.('#game-toolbar'))closeToolbarMenu();if(mobile&&fullscreenAvailable()&&!isFullscreen())enterFullscreen();},true);
  for(const id of ['pause-button','escape-map-button','end-run-button','restart-run-button'])document.getElementById(id)?.addEventListener('click',()=>closeToolbarMenu());
 const size=canvasDimensions();createCanvas(size.width,size.height).parent('game-container');pixelDensity(escapeDensityCap());frameRate(60);setupMovementStick();try{const settings=JSON.parse(escapeStore.getItem('sally-escape-settings')||'{}');isMuted=settings.muted===true;if(['full','simple'].includes(settings.lighting))escapeLightingMode=settings.lighting;if(Number.isFinite(settings.sound))soundVolume=Math.max(0,Math.min(.5,settings.sound));if(Number.isFinite(settings.musicLevel))musicVolume=Math.max(0,Math.min(1,settings.musicLevel));if(Number.isFinite(settings.ambience))ambienceVolume=Math.max(0,Math.min(1,settings.ambience));musicOn=settings.music!==false;if(['brief','full','off'].includes(settings.cards))introMode=settings.cards;}catch(_){}setupVolumePanel();setupMenus();document.getElementById('music-button').onclick=()=>{unlockAudio();musicOn=!musicOn;saveSettings();};document.getElementById('lighting-button').onclick=()=>{escapeLightingMode=escapeLightingMode==='full'&&!escapeLightingAuto?'simple':'full';escapeLightingAuto=false;escapeSlowFrames=0;escapeFrameAvg=16;saveSettings();};document.getElementById('cards-button').onclick=()=>{introMode=({brief:'full',full:'off',off:'brief'})[introMode];saveSettings();};document.getElementById('play-button').onclick=showEscapeSelect;document.getElementById('builder-button').onclick=()=>openEscapeBuilder();document.getElementById('admin-button').onclick=()=>openEscapeAdmin();document.getElementById('community-button').onclick=()=>openEscapeCommunity();document.getElementById('mute-button').onclick=()=>{unlockAudio();isMuted=!isMuted;saveSettings();};document.getElementById('pause-button').onclick=togglePause;document.getElementById('end-run-button').onclick=showEscapeSelect;{const rb=document.getElementById('restart-run-button');if(rb)rb.onclick=()=>escapeRestart();}
  for(const action of Object.keys(touchInput)){const b=document.getElementById('touch-'+action);b.addEventListener('pointerdown',e=>{e.preventDefault();if(paused||(!isRunActive()&&gameState!=='escapeSelect'))return;unlockAudio();touchInput[action]=true;b.setPointerCapture?.(e.pointerId);});for(const event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>touchInput[action]=false);}
  escapeBindCharge(document.getElementById('touch-camo'),'pebble');escapeBindCharge(document.getElementById('touch-glow'),'glow');escapeBindCharge(document.getElementById('touch-spore'),'spore');
  for(const [id,fn]of [['burrow',useEscapeBurrow],['tongue',useEscapeTongue],['seed',useEscapeSeed],['blend',useEscapeCamo],['look',useEscapeLook],['zoom',toggleEscapeMap]])document.getElementById('touch-'+id).onclick=fn;
  window.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(e.target?.tagName))return;const code=controlCodes[e.key]||controlCodes[e.key.toLowerCase()];if(!e.repeat&&code)suppressedKeys.delete(code);if(e.key.startsWith('Arrow')||e.key===' '&&e.target?.tagName!=='BUTTON')e.preventDefault();});window.addEventListener('blur',()=>{clearTouchInput();suppressHeldKeys();if(isRunActive())togglePause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&isRunActive())togglePause();});updateToolbar();}
-function draw(){if(mobilePortraitBlocked()){clearTouchInput();if(isRunActive())togglePause();return;}if(millis()-toolbarAt>200){toolbarAt=millis();updateToolbar();}tickEscapeMusic();if(gameState==='escapeSelect')playEscapeWorld();else if(['escape','escapeResult'].includes(gameState)){playEscape();skipSimulationFrame=false;}else if(gameState==='builder'){}else{document.getElementById('start-menu-container').style.display='block';document.getElementById('game-container').style.display='none';}}
+function draw(){if(mobilePortraitBlocked()){clearTouchInput();if(isRunActive())togglePause();return;}if(millis()-toolbarAt>200){toolbarAt=millis();updateToolbar();}tickEscapeMusic();if(gameState==='escapeSelect')playEscapeWorld();else if(['escape','escapeResult'].includes(gameState)){playEscape();skipSimulationFrame=false;}else if(gameState==='builder'){}else{document.getElementById('start-menu-container').style.display='';document.getElementById('game-container').style.display='none';}}
 function keyReleased(){if(gameState==='escape'&&typeof escapeKeyReleased==='function')escapeKeyReleased();}
 function keyPressed(e){if(e?.repeat||['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName))return;if(keyCode===85&&keyIsDown(CONTROL)&&keyIsDown(ALT)){toggleEscapeTestUnlock();return false;}if(keyCode===27)togglePause();else if(String(key).toLowerCase()==='m')document.getElementById('mute-button').click();else escapeKeyPressed();}
 function windowResized(){clearTouchInput();suppressHeldKeys();mobile=isMobileDevice();const size=canvasDimensions();resizeCanvas(size.width,size.height,true);mobilePortraitBlocked();}
@@ -77,7 +79,18 @@ function closeOptions(){const panel=document.getElementById('options-panel');if(
 // Players: who is playing, with their stars; pick one (the game reloads as them), rename, remove or add.
 function playerChip(){const chip=document.getElementById('player-chip');if(!chip||typeof EscapePlayers==='undefined')return;const p=EscapePlayers.current(),sum=EscapePlayers.summary(p.id),c=EscapePlayers.COLORS[p.color]?.[1]||'#7cc46a';
   const esc=t=>String(t).replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';');chip.innerHTML='<span class="player-dot" style="background:'+c+'"></span>Playing as <b>'+esc(p.name)+'</b> · ★ '+sum.stars;
-  const play=document.getElementById('play-button');if(play)play.textContent=sum.cleared?'Continue':'Start the adventure';}
+  const play=document.getElementById('play-button');if(play)play.textContent=sum.cleared?'Continue':'Start the adventure';titleScreen(sum);}
+// The title: Sally on her warm stone in her chosen colours, where the adventure stands, and on an
+// iPhone (which cannot go full screen from a web page) how to play full screen.
+function titleScreen(sum){
+  const art=document.getElementById('title-sally');
+  if(art&&typeof sallyCelebrationSVG==='function'&&typeof escapeSkinPalette==='function')try{art.innerHTML=sallyCelebrationSVG({status:'won',treasure:0,totalTreasure:10,alarms:0,tailsDropped:0,hasTail:true},escapeSkinPalette());}catch(_){}
+  const where=document.getElementById('play-where');
+  if(where&&typeof EscapeCatalog!=='undefined'&&typeof EscapeWorld!=='undefined'&&typeof escapeProgress!=='undefined'){
+    const next=EscapeCatalog.levels.findIndex(l=>!escapeProgress.data.levels[l.id]),i=next<0?EscapeCatalog.levels.length-1:next,n=EscapeWorld.chapters.findIndex(c=>i>=c.start&&i<c.end);
+    where.textContent=sum.cleared?'Area '+(n+1)+' · '+EscapeWorld.chapters[n].name+' · escape '+(i+1):'A flood, a lost lizard, and a long way home.';}
+  const ios=document.getElementById('title-ios');if(ios)ios.hidden=!(/iPhone|iPod/.test(navigator.userAgent)&&!navigator.standalone);
+}
 let playersNewColor=1;
 function renderPlayers(){
   const list=document.getElementById('players-list'),P=EscapePlayers;if(!list)return;const current=P.current();list.innerHTML='';

@@ -69,13 +69,15 @@ test('every region has its own style, and every escape in a region its own tune,
 test('a chase lands hard: an alarm hit and a faster tempo, which settles when it ends',async()=>{
   const {T,played,transport}=fakeTone(),m=new EscapeMusic({Tone:T});await m.load({});m.setStyle(styleFor('ruins',1));m.setState('explore',0);m.start();
   const base=transport.bpm.value;assert.equal(base,styleFor('ruins',1).bpm);m.setState('chase',1);
-  assert.ok(played.some(p=>p.voice===m.voices.boom)&&played.some(p=>p.voice===m.voices.alarm),'alarm plays');assert.ok(transport.bpm.value>base*1.15,'tempo lifts');
-  m.setState('explore',9);assert.equal(transport.bpm.value,base,'tempo settles');
+  assert.ok(played.some(p=>p.voice===m.voices.boom)&&played.some(p=>p.voice===m.voices.alarm),'alarm plays');
+  // The tempo glides a step per sixteenth, quickly into a chase and slowly out of it.
+  for(let i=0;i<12;i++)transport.repeat(0);assert.ok(transport.bpm.value>base*1.15,'tempo lifts');
+  m.setState('explore',9);transport.repeat(0);assert.ok(transport.bpm.value>base,'it eases down, not at once');for(let i=0;i<200;i++)transport.repeat(0);assert.equal(transport.bpm.value,base,'tempo settles');
 });
 test('a new escape style waits for the phrase, then takes its own tempo',async()=>{
   const {T,transport}=fakeTone(),m=new EscapeMusic({Tone:T});await m.load({});m.setState('explore',0);m.start();transport.repeat(0);
   assert.equal(m.setStyle(styleFor('frost',2)),true);assert.equal(m.setStyle(styleFor('frost',2)),false,'same style is a no-op');assert.equal(m.mood,'meadow');
-  while(m.step%16!==0)transport.repeat(0);transport.repeat(0);assert.equal(m.mood,'frost');assert.equal(transport.bpm.value,styleFor('frost',2).bpm);
+  while(m.step%16!==0)transport.repeat(0);transport.repeat(0);assert.equal(m.mood,'frost');for(let i=0;i<40;i++)transport.repeat(0);assert.equal(transport.bpm.value,styleFor('frost',2).bpm);
 });
 test('every fourth bar of a chase ends in a tom fill, and spooky regions play sparse and unsettled',()=>{
   const fillBar=[...Array(16)].map((_,s)=>events('meadow',48+s));assert.deepEqual(fillBar.map((e,s)=>e.some(x=>x.voice==='tom')?s:-1).filter(s=>s>=0),[12,13,14,15]);assert.ok(!fillBar[12].some(x=>x.voice==='kick'));
