@@ -924,7 +924,7 @@
     updateMimic(dt,h){
       h.anchor||=copy(h);
       if(h.state==='reveal'){
-        if(this.elapsed>=h.phaseUntil){h.state='lunge';h.phaseUntil=this.elapsed+.55;this.alarms++;this.events.push('snap');}return;
+        if(this.elapsed>=h.phaseUntil){h.state='lunge';h.phaseUntil=this.elapsed+.55;this.events.push('snap');}return;
       }
       if(h.state==='lunge'){
         const remaining=distance(h,h.aim),step=Math.min(5.5*dt,remaining),next={x:h.x+Math.cos(h.facing)*step,y:h.y+Math.sin(h.facing)*step};

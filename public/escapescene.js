@@ -658,7 +658,7 @@ function drawEscapeVine(v,cell,clock,withered,held){
   pop();
 }
 function drawEscapeMimic(h,cell,clock,harmless=false){
-  if(!harmless&&h.state==='rooted'){push();translate(h.x*cell,h.y*cell);const breath=Math.sin(clock*1.3+h.x*2)*.5+.5,blink=Math.sin(clock*.9+h.y)>.985;noStroke();fill(245-breath*20,189+breath*8,87);rect(-cell*.3,-cell*.22,cell*.6,cell*.44,cell*.08);fill(100,71,40);rect(-cell*.06,-cell*.22,cell*.12,cell*.44);if(blink){fill(120,200,90);ellipse(-cell*.15,-cell*.02,cell*.07,cell*.05);ellipse(cell*.15,-cell*.02,cell*.07,cell*.05);}pop();return;}
+  if(!harmless&&h.state==='rooted'){push();const shiver=Math.sin(clock*.7+h.x*3+h.y*5)>.975?Math.sin(clock*55)*cell*.022:0;translate(h.x*cell+shiver,h.y*cell);const breath=Math.sin(clock*1.3+h.x*2)*.5+.5,blink=Math.sin(clock*.9+h.y)>.985;noStroke();fill(245-breath*20,189+breath*8,87);rect(-cell*.3,-cell*.22,cell*.6,cell*.44,cell*.08);fill(100,71,40);rect(-cell*.06,-cell*.22,cell*.12,cell*.44);if(blink){fill(120,200,90);ellipse(-cell*.15,-cell*.02,cell*.07,cell*.05);ellipse(cell*.15,-cell*.02,cell*.07,cell*.05);}pop();return;}
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);const hidden=h.state==='rooted',twitch=!harmless&&hidden&&Math.sin(clock*1.6+h.x)>.97?.07:0;
   noStroke();fill(9,24,16,150);ellipse(-cell*.06+cell*twitch*.3,cell*(.07+twitch*.2),cell*(.8+twitch),cell*.5);
   stroke(82,119,56);strokeWeight(cell*.05);for(const side of [-1,1]){const stride=hidden?0:Math.sin(h.distanceMoved*9+side)*.05;line(-cell*.12,side*cell*.08,-cell*.35,side*cell*.26);line(-cell*.35,side*cell*.26,-cell*(.46+stride),side*cell*.33);}
