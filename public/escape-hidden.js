@@ -148,14 +148,14 @@
  "#..L.....N...#...3...#.....L....#",
  "#X...........B...L...B.......K.1#",
  "#################################"]},
-{explore:false,tailDrop:true,id:"mossy-well",name:"The Mossy Well",secret:"mossy-well",brief:"Down the old well, a vault of switches that nobody has turned in years.",hint:"The first switch opens the middle gate; the switch inside opens the vault. Snakes keep the halls and a spider keeps the vault.",pebbles:2,tongues:1,gates:[{id:"middle",name:"Middle gate",color:[120,200,150],switch:[2,8],tiles:[[10,5]]},{id:"vault",name:"Vault gate",color:[220,180,90],switch:[15,8],tiles:[[20,5]]}],guards:[{spawn:[15,3],facing:PI,patrol:[[12,2],[18,4]]},{kind:"spider",spawn:[24,8],facing:PI,patrol:[[22,7],[27,9]]},{spawn:[6,2],facing:PI,patrol:[[5,1],[9,3]]}],map:[
+{explore:false,tailDrop:true,id:"mossy-well",name:"The Mossy Well",secret:"mossy-well",brief:"Down the old well, a vault of switches that nobody has turned in years.",hint:"The first switch opens the middle gate; the switch inside opens the vault. The middle hall echoes, and echo frogs croak back any noise they hear: hunters go to the frog. Moss is silent underfoot.",pebbles:2,tongues:1,echoes:[[11,1,19,9]],gates:[{id:"middle",name:"Middle gate",color:[120,200,150],switch:[2,8],tiles:[[10,5]]},{id:"vault",name:"Vault gate",color:[220,180,90],switch:[15,8],tiles:[[20,5]]}],guards:[{spawn:[15,3],facing:PI,patrol:[[12,2],[18,4]]},{kind:"spider",spawn:[24,8],facing:PI,patrol:[[22,7],[27,9]]},{spawn:[6,2],facing:PI,patrol:[[5,1],[9,3]]},{kind:"echofrog",spawn:[18,9],facing:PI,patrol:[[18,9]]},{kind:"echofrog",spawn:[26,4],facing:PI,patrol:[[26,4]]}],map:[
  "#############################",
  "#@...L....#.........#......1#",
  "#.........#.2.L.....#.......#",
  "#..N......#.........#...L...#",
- "#.........#....N....#.......#",
- "#....L......................#",
- "#.........#.........#.......#",
+ "#..mmm....#....N....#m......#",
+ "#..mmLmm.............mmm....#",
+ "#..mmm....#.........#mm.....#",
  "#2........#....3....#.....K.#",
  "#....L....#.........#.......#",
  "#.........#...L.....#...L...#",
@@ -188,7 +188,7 @@
  "#...........#.3.....#...........#",
  "#X....L.....#.......#......L...2#",
  "#################################"]},
-{explore:false,tailDrop:true,id:"menagerie",name:"The Menagerie",secret:"bestiary-grove",brief:"Every creature you met on the road, each in its own pen. Mind the gaps between them.",hint:"Rooted hunters wait in pens along both walks: a flytrap, mantis, wasp nest, scorpion, toad, millipede, mimic, crab and heron. Each only reaches out of its own pen.",pebbles:3,tongues:2,guards:[{kind:"flytrap",spawn:[7,3],facing:PI/2,patrol:[[7,3]]},{kind:"mantis",spawn:[11,3],facing:PI/2,patrol:[[11,3]]},{kind:"wasp",spawn:[19,3],facing:PI/2,patrol:[[19,3]]},{kind:"scorpion",spawn:[23,3],facing:PI,patrol:[[23,3]]},{kind:"toad",spawn:[27,3],facing:PI/2,patrol:[[27,3]]},{kind:"millipede",spawn:[7,9],facing:PI,patrol:[[7,9]]},{kind:"mimic",spawn:[15,9],facing:PI,patrol:[[15,9]]},{kind:"crab",spawn:[19,9],facing:-PI/2,patrol:[[19,9]],axis:"y",range:1},{kind:"heron",spawn:[27,9],facing:-PI/2,looks:[-PI/2,PI],every:3.2,patrol:[[27,9]]}],map:[
+{explore:false,tailDrop:true,id:"menagerie",name:"The Menagerie",secret:"bestiary-grove",brief:"Every creature you met on the road, each in its own pen. Mind the gaps between them.",hint:"Rooted hunters wait in pens along both walks: a flytrap, mantis, wasp nest, scorpion, toad, millipede, mimic, crab and heron. Each only reaches out of its own pen. And something unseen walks the middle path: watch for a shimmer when it moves.",pebbles:3,tongues:2,guards:[{kind:"flytrap",spawn:[7,3],facing:PI/2,patrol:[[7,3]]},{kind:"mantis",spawn:[11,3],facing:PI/2,patrol:[[11,3]]},{kind:"wasp",spawn:[19,3],facing:PI/2,patrol:[[19,3]]},{kind:"scorpion",spawn:[23,3],facing:PI,patrol:[[23,3]]},{kind:"toad",spawn:[27,3],facing:PI/2,patrol:[[27,3]]},{kind:"millipede",spawn:[7,9],facing:PI,patrol:[[7,9]]},{kind:"mimic",spawn:[15,9],facing:PI,patrol:[[15,9]]},{kind:"crab",spawn:[19,9],facing:-PI/2,patrol:[[19,9]],axis:"y",range:1},{kind:"heron",spawn:[27,9],facing:-PI/2,looks:[-PI/2,PI],every:3.2,patrol:[[27,9]]},{kind:"chameleon",spawn:[24,6],facing:PI,patrol:[[24,6],[9,6]]}],map:[
  "###################################",
  "#@....L......L.......L.......L...1#",
  "#.###.###.###.###.###.###.###.###.#",
