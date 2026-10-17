@@ -345,7 +345,7 @@ function renderEscapeHUD(force=false){
 function showEscapeResult(){
   escapeResultShown=true;gameState='escapeResult';clearTouchInput();suppressHeldKeys();
   const r=escapeGame.result,won=r.status==='won';
-  escapeProgress.record(r);if(typeof EscapePlayData!=='undefined')EscapePlayData.record(escapeGame,r.status,escapeDevice());const firstTry=won&&!r.challengeId&&escapeProgress.lastFirstTry,perfect=won&&!r.challengeId&&escapeProgress.lastPerfect;document.getElementById('escape-result').classList.toggle('escape-first-try',firstTry&&!perfect);document.getElementById('escape-result').classList.toggle('escape-perfect',perfect);
+  escapeProgress.record(r);if(typeof escapeStoryForResult==='function')escapeStoryForResult(escapeGame.level,won);if(typeof EscapePlayData!=='undefined')EscapePlayData.record(escapeGame,r.status,escapeDevice());const firstTry=won&&!r.challengeId&&escapeProgress.lastFirstTry,perfect=won&&!r.challengeId&&escapeProgress.lastPerfect;document.getElementById('escape-result').classList.toggle('escape-first-try',firstTry&&!perfect);document.getElementById('escape-result').classList.toggle('escape-perfect',perfect);
   document.getElementById('game-area').classList.add('escape-results-open');
   document.getElementById('escape-result-location').textContent=r.levelName;
   document.getElementById('escape-result-title').textContent=won?(r.challengeId?'Challenge complete!':perfect?'Perfect escape! First try, every star, every treasure.':firstTry?'First try! Sally escaped!':'Sally escaped!'):r.status==='failed'?'Challenge missed':'Nearly… try another route';
@@ -394,6 +394,8 @@ function tickEscapeMusic(){
   if(!escapeMusic)return;
   escapeMusic.setVolume((paused?.35:1)*.6*musicVolume,isMuted||!musicOn||musicVolume===0);
   const screen=gameState==='start'?'menu':gameState==='escapeSelect'?'world':'game';
+  // A story card being read has music of its own: a music box, warmer once Sally knows she is a Wayfinder.
+  if(typeof escapeStoryOpen!=='undefined'&&escapeStoryOpen){const part=escapeStoryOpen.part?.n||escapeStoryOpen.card?.part||1;escapeMusic.setState('story',millis()/1000);escapeMusic.setStyle(EscapeMusic.styleFor(part>=2?'wayfinder':'tale'));escapeAmbience?.setVolume(0);return;}
   escapeMusic.setState(EscapeMusic.stateFor({screen,game:screen==='game'?escapeGame:null}),millis()/1000);
   // Each region has a style and each escape its own tune; the world map follows the courtyard Sally is standing in.
   const chapters=EscapeWorld.chapters,index=screen==='game'&&escapeGame?EscapeCatalog.levels.indexOf(escapeGame.level):-1,chapter=index>=0?chapters.find(c=>index>=c.start&&index<c.end):screen==='world'&&escapeWorld?chapters[escapeWorld.chapterAt()]:chapters[0];

@@ -38,6 +38,9 @@
     finale:{chords:[['D3','F#3','A3'],['B2','D3','F#3'],['Bb2','D3','F3'],['A2','C#3','E3']],bass:['D2','B1','Bb1','A1'],fifth:['A2','F#2','F2','E2'],scale:['D4','E4','F#4','A4','B4','D5'],seed:97},
     stars:{chords:[['G3','B3','D4','F#4'],['A3','C#4','E4'],['E3','G3','B3'],['G3','B3','D4','F#4']],bass:['G2','A2','E2','G2'],fifth:['D3','E3','B2','D3'],scale:['G4','A4','B4','C#5','D5','F#5'],seed:101},
     shrine:{chords:[['D3','G3','A3'],['Eb3','G3','Bb3'],['C3','Eb3','G3'],['D3','G3','A3']],bass:['D2','Eb2','C2','D2'],fifth:['A2','Bb2','G2','A2'],scale:['D4','Eb4','G4','A4','C5','D5'],seed:103},
+    // Story cards: a slow music box for Old Moss's journal, a warmer theme once Sally is a Wayfinder.
+    tale:{chords:[['C3','E3','G3','B3'],['A2','C3','E3','G3'],['F2','A2','C3','E3'],['G2','B2','D3','F3']],bass:['C2','A1','F1','G1'],fifth:['G2','E2','C2','D2'],scale:['C5','D5','E5','G5','A5','C6'],seed:109},
+    wayfinder:{chords:[['D3','F#3','A3','C#4'],['B2','D3','F#3','A3'],['G2','B2','D3','F#3'],['A2','C#3','E3','G3']],bass:['D2','B1','G1','A1'],fifth:['A2','F#2','D2','E2'],scale:['D5','E5','F#5','A5','B5','D6'],seed:113},
     wreck:{chords:[['B2','D3','F#3'],['G3','B3','D4'],['A3','C#4','E4'],['F#3','A#3','C#4']],bass:['B1','G2','A2','F#2'],fifth:['F#2','D3','E3','C#3'],scale:['B4','C#5','D5','E5','F#5','A5'],seed:107}
   };
   // Each region has its own style: a mood, a lead instrument, a tempo and a groove.
@@ -58,6 +61,7 @@
     gilded:{mood:'gilded',lead:'bell',bpm:92,groove:2},
     // Places off the trail: the last escape and the long bonus run home, and each secret spot.
     finale:{mood:'finale',lead:'flute',bpm:92,groove:1},
+    tale:{mood:'tale',lead:'bell',bpm:66,groove:3},wayfinder:{mood:'wayfinder',lead:'flute',bpm:72,groove:3},
     'secret:star-garden':{mood:'stars',lead:'bell',bpm:76,groove:2},
     'secret:mossy-well':{mood:'river',lead:'flute',bpm:72,groove:3,transpose:-3},
     'secret:cloud-nest':{mood:'stars',lead:'flute',bpm:88,groove:2,transpose:3},
@@ -77,6 +81,7 @@
   // How loud each layer is in each state (0–1), and how long the fades take.
   const MIX={
     menu:{pad:.7,melody:.55},
+    story:{pad:.5,melody:.6},
     world:{pad:.55,melody:.6,bass:.35,perc:.3},
     explore:{pad:.4,bass:.65,melody:.3,perc:.35},
     tension:{pad:.3,bass:.6,perc:.15,tension:.75},
