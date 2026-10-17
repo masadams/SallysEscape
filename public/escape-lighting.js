@@ -5,7 +5,8 @@
 (function(root){
   // grade: [r,g,b,alpha] blended soft-light over the whole view; wash: a gradient from one side
   // ({from:'top'|'bottom'|'left', color:[r,g,b], alpha}); vignette: how dark the edges go (0–1);
-  // night: light sources glow brighter, as they do in the dark levels.
+  // night: light sources glow brighter, as they do in the dark levels; shafts: [r,g,b] light
+  // shafts slanting down through a canopy or cave roof.
   const MOODS={
     meadow:{grade:[255,236,200,.16],wash:{from:'top',color:[255,244,214],alpha:.14},vignette:.22},
     garden:{grade:[255,240,210,.14],wash:{from:'left',color:[255,236,200],alpha:.12},vignette:.25},
@@ -14,8 +15,8 @@
     quarry:{grade:[210,205,195,.16],wash:{from:'top',color:[240,230,210],alpha:.1},vignette:.4},
     desert:{grade:[255,228,170,.22],wash:{from:'top',color:[255,240,200],alpha:.18},vignette:.15},
     marsh:{grade:[130,195,185,.22],wash:{from:'bottom',color:[170,220,205],alpha:.16},vignette:.45},
-    jungle:{grade:[170,220,150,.18],wash:{from:'top',color:[220,250,190],alpha:.14},vignette:.4},
-    glow:{grade:[90,120,200,.22],vignette:.5,night:true},
+    jungle:{grade:[170,220,150,.18],shafts:[255,250,210],wash:{from:'top',color:[220,250,190],alpha:.14},vignette:.4},
+    glow:{grade:[90,120,200,.22],shafts:[120,200,240],vignette:.5,night:true},
     orchard:{grade:[255,225,190,.15],wash:{from:'left',color:[255,230,190],alpha:.12},vignette:.3},
     coast:{grade:[255,245,220,.16],wash:{from:'top',color:[255,250,230],alpha:.16},vignette:.15},
     hollow:{grade:[150,120,170,.24],vignette:.5,night:true},
@@ -24,7 +25,7 @@
     ants:{grade:[230,190,140,.18],vignette:.38},
     frost:{grade:[180,215,255,.22],wash:{from:'top',color:[230,245,255],alpha:.14},vignette:.3},
     vents:{grade:[255,170,110,.16],wash:{from:'bottom',color:[255,140,60],alpha:.2},vignette:.35},
-    grotto:{grade:[120,160,220,.22],wash:{from:'bottom',color:[110,220,210],alpha:.12},vignette:.45,night:true},
+    grotto:{grade:[120,160,220,.22],shafts:[150,240,230],wash:{from:'bottom',color:[110,220,210],alpha:.12},vignette:.45,night:true},
     storm:{grade:[150,160,180,.24],wash:{from:'top',color:[60,70,90],alpha:.18},vignette:.4},
     tide:{grade:[210,240,240,.14],wash:{from:'top',color:[230,250,250],alpha:.14},vignette:.2},
     home:{grade:[255,200,150,.18],wash:{from:'top',color:[255,190,120],alpha:.16},vignette:.25},
@@ -34,9 +35,9 @@
     'secret:mossy-well':{grade:[140,190,150,.2],vignette:.5},
     'secret:cloud-nest':{grade:[235,240,255,.18],wash:{from:'top',color:[255,255,255],alpha:.18},vignette:.15},
     'secret:challenge-shrine':{grade:[255,210,170,.2],wash:{from:'top',color:[255,220,180],alpha:.14},vignette:.35},
-    'secret:bestiary-grove':{grade:[170,220,160,.18],wash:{from:'top',color:[220,250,200],alpha:.12},vignette:.35},
+    'secret:bestiary-grove':{grade:[170,220,160,.18],shafts:[255,250,210],wash:{from:'top',color:[220,250,200],alpha:.12},vignette:.35},
     'secret:ice-cave':{grade:[180,220,255,.24],vignette:.45},
-    'secret:sunken-wreck':{grade:[100,150,170,.26],wash:{from:'top',color:[150,220,230],alpha:.14},vignette:.45}
+    'secret:sunken-wreck':{grade:[100,150,170,.26],shafts:[170,230,240],wash:{from:'top',color:[150,220,230],alpha:.14},vignette:.45}
   };
   // The Road Home warms toward sunset as Sally nears the end: step 0 is its first escape.
   function moodFor(key,step=0){
