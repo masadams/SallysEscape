@@ -471,3 +471,31 @@ body:not(.mobile-game) #game-toolbar.toolbar-open #menu-button { order:-1; }
 /* The title screen has its own buttons: no toolbar there. */
 .title-screen #game-toolbar { display:none; }
 @media (max-height:520px){ .game-dialog-card { padding:12px 16px; } .game-dialog-card h2 { margin-bottom:8px; } .options-grid { gap:6px 10px; } .options-grid button { min-height:32px; padding:4px 10px; } }
+
+/* Story: part titles and cards (Old Moss's journal, the Great Map, a lost Wayfinder's note) */
+.story-overlay { position:fixed; inset:0; z-index:70; display:none; align-items:center; justify-content:center; padding:16px; background:#04100dcc; }
+.story-card { width:min(560px,100%); max-height:calc(100vh - 32px); overflow:auto; border-radius:14px; padding:22px 26px; box-shadow:0 20px 60px #000c; line-height:1.55; animation:story-in .45s ease-out both; }
+.story-card h2 { margin:4px 0 12px; font-size:1.45rem; }
+.story-card p { margin:0 0 12px; }
+.story-card button { margin-top:6px; }
+.story-eyebrow { display:block; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; opacity:.75; }
+.story-journal .story-card { background:#f1e6c8; color:#3b2f1c; border:1px solid #c9b48a; font-family:Georgia,'Times New Roman',serif; }
+.story-map .story-card { background:#e7ecd6; color:#24372c; border:2px solid #7fa07a; font-family:Georgia,'Times New Roman',serif; background-image:linear-gradient(#7fa07a22 1px,transparent 1px),linear-gradient(90deg,#7fa07a22 1px,transparent 1px); background-size:22px 22px; }
+.story-note .story-card { background:#fbf6e8; color:#3a3326; border:1px dashed #b9a57a; font-family:'Comic Sans MS','Segoe Print',cursive; transform:rotate(-1deg); }
+.story-part { background:#020806f2; }
+.story-part-inner { text-align:center; color:#eaf1d8; animation:story-in .9s ease-out both; }
+.story-part-inner h2 { font-size:clamp(2rem,6vw,3.4rem); margin:6px 0 10px; }
+.story-part-inner p { opacity:.85; margin:0 0 22px; font-style:italic; }
+@keyframes story-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+@media (prefers-reduced-motion: reduce) { .story-card, .story-part-inner { animation:none; } }
+.story-book h3 { margin:14px 0 8px; font-size:1rem; color:#d6e4c6; }
+.story-tiles { display:flex; flex-wrap:wrap; gap:6px; }
+.story-tile { min-width:120px; padding:8px 10px; border-radius:9px; font-size:.82rem; text-align:left; border:1px solid #5d8a6e; background:#163a33; color:#eaf1d8; }
+.story-tile-journal { background:#4a3e26; border-color:#b49a64; }
+.story-tile-map { background:#284634; border-color:#8fbf86; }
+.story-tile-note { background:#4a4434; border-style:dashed; }
+.story-locked { opacity:.45; text-align:center; }
+.great-map { width:min(420px,100%); display:block; }
+.great-map rect { stroke:#5d8a6e; stroke-width:1.5; }
+.great-map .map-dark { fill:#0f2420; } .great-map .map-garden { fill:#2c2a1e; } .great-map .map-lit { fill:#e8d27a; stroke:#fff3b0; }
+.great-map text { fill:#c9d8b8; font-size:12px; } .great-map .map-lit + text { fill:#3b2f1c; }
