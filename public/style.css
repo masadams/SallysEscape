@@ -40,10 +40,8 @@
   .escape-mode #touch-down { grid-column: 2; grid-row: 2; }
   .escape-mode #touch-right { grid-column: 3; grid-row: 2; }
   .escape-mode .ability-pad { display: grid; grid-template-columns: repeat(2,70px); gap: 4px; }
-  .escape-mode #touch-sprint { grid-column: 1 / -1; }
   .escape-mode #touch-zoom { grid-column: 1 / -1; }
-  .escape-exploring #touch-sprint { grid-column: 1; grid-row: 1; }
-  .escape-exploring #touch-zoom { grid-column: 2; grid-row: 1; }
+  .escape-exploring #touch-zoom { grid-column: 1 / -1; }
   .escape-mode #touch-controls button { font-size: .85rem; }
   #escape-result { inset: 5% 4%; padding: 16px 10px; }
   #escape-result h2 { font-size: 1.25rem; }

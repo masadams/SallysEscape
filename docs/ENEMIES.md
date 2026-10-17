@@ -4,6 +4,19 @@ Every hunter has one job that changes the route Sally takes, rather than just be
 dodged. Wherever an attack commits, it aims where Sally is heading, so walking
 straight on is rarely enough: change direction, break line of sight, or hide.
 
+## Crawling
+Hold **C** (or the Crawl button on phones) to crawl: about half walking pace, no sprint, and never
+any noise, even on gravel. It is a slight edge, not a disguise:
+
+- Snakes, sea snakes and cobras on watch spot a crawling Sally about a tile closer, and take
+  about 1.2 s instead of 0.7 s to be sure before they chase.
+- A snow fox hears a crawl only from about a tile away (2.6 walking); a mole about 2 tiles (4.5).
+- Crickets, scorpions and wasp nests react to noise, and a crawl makes none.
+- A mimic springs at 1.2 tiles instead of 1.7; a gecko notices from 3.5 tiles instead of 6.
+- A flytrap snaps 0.55 s after a crawling Sally enters its dew-marked reach, instead of 0.32 s.
+- Everything else (mantis, heron, crab, eel, a cobra's strike, owl, hawk, bat, dragonfly, toad,
+  spider, beetle, fish, angler) is unchanged: crawling into a strike still gets Sally caught.
+
 ## Hunters
 
 | Hunter | Job | What it does | How to beat it |

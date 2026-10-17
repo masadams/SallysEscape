@@ -1,7 +1,7 @@
 let gameState='start',gameMode='escape',mobile=false,paused=false,pauseStartedAt=0,pausedDuration=0,skipSimulationFrame=false;
 let isMuted=false,audioUnlocked=false,soundVolume=.25,escapeAudio=null,musicOn=true,escapeMusic=null,introMode='brief';
-const touchInput={up:false,down:false,left:false,right:false,sprint:false},touchStick={x:0,y:0,pointer:null},suppressedKeys=new Set();
-const controlCodes={ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40,Shift:16,w:87,a:65,s:83,d:68,q:81,e:69,r:82,f:70,g:71,' ':32,Enter:13};
+const touchInput={up:false,down:false,left:false,right:false,sprint:false,crawl:false},touchStick={x:0,y:0,pointer:null},suppressedKeys=new Set();
+const controlCodes={ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40,Shift:16,c:67,w:87,a:65,s:83,d:68,q:81,e:69,r:82,f:70,g:71,' ':32,Enter:13};
 const colorSound={play:()=>escapeSound('key')},coinSound={play:()=>escapeSound('treasure')};
 function gameKeyDown(code){return !suppressedKeys.has(code)&&keyIsDown(code);}
 function suppressHeldKeys(){Object.values(controlCodes).forEach(c=>suppressedKeys.add(c));}
