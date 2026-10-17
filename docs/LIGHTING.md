@@ -6,8 +6,14 @@ Lighting is purely visual: what creatures see, and what Sally can see, is decide
 ## Full and Simple
 
 **Lighting: Full / Simple** in the toolbar is saved per browser. Simple is the plain, flat look.
-Full drops to Simple on its own (shown as "Simple (auto)") if frames run slower than about 30 fps
-for three seconds, until the player picks again.
+
+## Performance
+
+The canvas draws at most 2 device pixels per CSS pixel on a desktop and 1.5 on a phone
+(`escapeDensityCap`): a phone screen's 3× would be nine times the drawing for little visible
+gain. When frames run slower than about 30 fps for three seconds, quality steps down by itself:
+sharpness to 1.5×, then 1×, then Simple lighting (shown as "Simple (auto)") until the player
+picks again.
 
 ## Darkness
 

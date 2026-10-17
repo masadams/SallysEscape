@@ -45,7 +45,7 @@ function harness() {
     createVector:(x,y)=>new Vector(x,y),p5:{Vector},drawingContext:dc,
     color:(...values)=>({values,setAlpha:noop}),red:()=>0,green:()=>255,blue:()=>255,hue:()=>120,saturation:()=>100,brightness:()=>100,lerpColor:a=>a,
     loadSound:sound,loadImage:()=>({}),getAudioContext:()=>({state:'running',resume:noop}),
-    createCanvas:()=>({parent:noop}),
+    createCanvas:()=>({parent:noop}),pixelDensity:()=>1,displayDensity:()=>1,
     random:(a,b)=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;const n=seed/4294967296;return Array.isArray(a)?a[Math.floor(n*a.length)]:a===undefined?n:b===undefined?n*a:a+n*(b-a)},
     keyIsDown:()=>false,fetch:async()=>({ok:true,json:async()=>[]})};
   for(const n of ['push','pop','background','fill','noFill','stroke','noStroke','strokeWeight','rect','triangle','ellipse','line','bezier','beginShape','endShape','curveVertex','vertex','translate','scale','image','imageMode','text','textSize','textFont','textAlign','colorMode','arc','setShakeThreshold','resizeCanvas','rotate','blendMode']) c[n]=noop;
