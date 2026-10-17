@@ -17,6 +17,17 @@ any noise, even on gravel. It is a slight edge, not a disguise:
 - Everything else (mantis, heron, crab, eel, a cobra's strike, owl, hawk, bat, dragonfly, toad,
   spider, beetle, fish, angler) is unchanged: crawling into a strike still gets Sally caught.
 
+## Throwing
+Hold **Q** (a pebble) or **L** (a glow mushroom), or hold the button on phones, to throw further:
+a tap goes about 2.6 tiles, a full 0.75 s hold about 6. While held, the arrows or stick aim
+(diagonals too) and Sally stands still; a dotted line shows the flight. Throws bank off walls up
+to twice, losing a quarter of their reach each time, and fly over gaps and water.
+
+- A **pebble** clacks where it hits a wall, so a hunter hears it there first, then where it lands.
+- A **glow mushroom** lights the ground 2.5 tiles round where it lands for about 12 s, even round
+  a corner from Sally. Standing in its light lights Sally up too: leaves stop hiding her.
+- Fogged mazes from escape 20 on carry one; the darkest and biggest carry two.
+
 ## Hunters
 
 | Hunter | Job | What it does | How to beat it |

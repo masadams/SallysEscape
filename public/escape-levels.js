@@ -8764,6 +8764,10 @@
   }
   // Later chapters forgive one catch with a tail drop; early routes keep one-touch tension.
   for(const level of levels.slice(23,47))level.tailDrop=true;
+  // Glow mushrooms light the fogged mazes: none in the early, easier ones, one in most later
+  // ones, two in the darkest and the biggest. A route that sets its own count keeps it.
+  const glowsFor=(level,i)=>level.glows!==undefined||!level.explore||i<19?level.glows:level.dark||level.width>=33?2:1;
+  levels.forEach((level,i)=>{const n=glowsFor(level,i);if(n!==undefined)level.glows=n;});
   // Each challenge also waits for stars in its area: two per route on the
   // shortest way from the area's first escape to the challenge's escape.
   // Stars from any route in the area count, so an alternative route helps too.
@@ -8777,6 +8781,7 @@
   // The Gilded Burrow sits outside the trail: its escapes never count toward stars or unlocks.
   const hiddenRoutes=typeof module!=='undefined'&&module.exports?require('./escape-hidden.js'):root.EscapeHidden||[];
   const hidden=hiddenRoutes.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,...route,hidden:true,revision:1}));
+  hidden.forEach(level=>{const n=glowsFor(level,99);if(n!==undefined)level.glows=n;});
   // Workshop drafts (escape-edits.js), only while its test-in-game switch is on in this browser.
   // A draft keeps its escape's place: id, unlock rules, secret and bonus ties stay the game's.
   // A draft that fails to build is skipped, so a bad edit can never stop the game loading.

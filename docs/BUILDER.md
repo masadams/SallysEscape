@@ -66,6 +66,10 @@ Sally takes that. (Plates and levers work doors; only the key and chests wake en
 - Select a hazard to set **slow / medium / fast**, or **half a beat later** to stagger two of them.
 - **❄ Cold** ground chills Sally; a **◍ Warm stone** thaws her.
 
+**Level settings** also set how many **glow mushrooms** Sally carries (0–5). Each one, thrown,
+lights the ground around where it lands for about twelve seconds; give them to fogged or dark
+levels.
+
 ## Playing, saving and sharing
 The status line explains anything that stops a level being playable (no way to the key, a door
 with nothing linked, a heavy plate with no beetle…). **▶ Playtest** runs it. **Save** keeps it in

@@ -87,6 +87,10 @@
     steam:(v)=>{noise(v,{dur:1.1,gain:.32,filter:'bandpass',freq:1800,to:900,q:.6,attack:.05});noise(v,{dur:.25,gain:.25,filter:'lowpass',freq:300});},
     gust:(v)=>noise(v,{dur:.9,gain:.12,filter:'bandpass',freq:500,to:1400,q:.7,attack:.3}),
     thunder:(v)=>{noise(v,{dur:1.4,gain:.3,filter:'lowpass',freq:400,to:80,attack:.005});noise(v,{dur:.15,gain:.2,filter:'highpass',freq:2500});},
+    // A throw leaving Sally's hand, a pebble cracking off a wall, a glow mushroom lighting up.
+    toss:(v)=>{noise(v,{dur:.16,gain:.09,filter:'bandpass',freq:700,to:2200,q:1.4,attack:.02});},
+    clack:(v)=>{noise(v,{dur:.035,gain:.4,freq:3200,q:6});tone(v,{freq:1900,to:1500,dur:.05,type:'square',gain:.04});},
+    glow:(v)=>{for(const [f,d] of [[880,0],[1320,.07],[1760,.14]])tone(v,{freq:f,to:f*1.01,dur:.5,delay:d,type:'sine',gain:.05,attack:.05});noise(v,{dur:.3,gain:.05,filter:'highpass',freq:5000,attack:.05});},
     ping:(v)=>{tone(v,{freq:3400,to:4200,dur:.06,type:'sine',gain:.08});tone(v,{freq:3400,to:4200,dur:.05,delay:.12,type:'sine',gain:.04});},
     puff:(v)=>{noise(v,{dur:.45,gain:.16,filter:'lowpass',freq:900,to:300,attack:.01});tone(v,{freq:160,to:90,dur:.2,type:'sine',gain:.12});},
     buzz:(v)=>{tone(v,{freq:210,to:240,dur:.55,type:'sawtooth',gain:.07,attack:.05,wobble:18,wobbleRate:42});noise(v,{dur:.5,gain:.05,freq:1600,q:3,attack:.05});},
