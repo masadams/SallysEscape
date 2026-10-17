@@ -777,8 +777,12 @@ function drawEscapeVault(){
   for(const h of g.hunters){const ang=h.facing,cone=h.kind==='beetle'?PI/5:PI/3;
   if(view.follow&&!g.visibleTile(Math.floor(h.x),Math.floor(h.y)))continue;
   if(!g.level.dark&&!['millipede','cricket','moth','mimic','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','crab','fox','echofrog','chameleon','sentinel','cloudray'].includes(h.kind)&&['patrol','alert'].includes(h.state)){
-    noStroke();fill(245,171,105,18);beginShape();vertex(h.x*cell,h.y*cell);
-    for(let a=-cone;a<=cone+.01;a+=cone/6){let reach=0,from=h;for(let d=.2;d<=4.5;d+=.2){const to={x:h.x+Math.cos(ang+a)*d,y:h.y+Math.sin(ang+a)*d};if(!g.clear(from,to,true))break;reach=d;from=to;}vertex((h.x+Math.cos(ang+a)*reach)*cell,(h.y+Math.sin(ang+a)*reach)*cell);}endShape(CLOSE);
+    // Many fine rays, so the gaze hugs walls and corners instead of cutting across them, reaching as
+    // far as the guard really sees (further when Sally stands in light), and fading with distance.
+    const p=g.player,range=(g.hunters.length>1&&g.lit()||g.lights.length>0&&g.inLight(p))?6.5:4.5,step=.15;
+    noStroke();fill(245,171,105,18);const glow=drawingContext.createRadialGradient(h.x*cell,h.y*cell,0,h.x*cell,h.y*cell,range*cell);glow.addColorStop(0,'rgba(245,171,105,.16)');glow.addColorStop(1,'rgba(245,171,105,0)');drawingContext.fillStyle=glow;
+    beginShape();vertex(h.x*cell,h.y*cell);
+    for(let a=-cone;a<=cone+.001;a+=cone/24){let reach=0,from=h;for(let d=step;d<=range;d+=step){const to={x:h.x+Math.cos(ang+a)*d,y:h.y+Math.sin(ang+a)*d};if(!g.clear(from,to,true))break;reach=d;from=to;}vertex((h.x+Math.cos(ang+a)*reach)*cell,(h.y+Math.sin(ang+a)*reach)*cell);}endShape(CLOSE);
   }
   if(h.kind==='toad'&&h.state==='windup'){let d=0;const dx=Math.cos(h.facing),dy=Math.sin(h.facing);while(d<5.5&&g.sightFloor(Math.floor(h.x+dx*(d+.1)),Math.floor(h.y+dy*(d+.1))))d+=.1;stroke(240,120,140,90+70*Math.sin(g.elapsed*22));strokeWeight(cell*.06);drawingContext.setLineDash([cell*.12,cell*.12]);line(h.x*cell,h.y*cell,(h.x+dx*d)*cell,(h.y+dy*d)*cell);drawingContext.setLineDash([]);}
   if(h.kind==='toad'&&h.state==='tongue'&&h.tongueLength>0){stroke(232,110,140);strokeWeight(cell*.12);line(h.x*cell,h.y*cell,(h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell);noStroke();fill(250,150,170);ellipse((h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell,cell*.22,cell*.22);}
