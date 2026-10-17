@@ -42,7 +42,7 @@ let escapeHudAt=-Infinity;
 let escapeResultShown=false;
 let escapeOptions={};
 let escapeMapOpen=false;
-const escapeProgress=new EscapeProgress((()=>{try{return typeof localStorage==='undefined'?null:localStorage;}catch(_){return null;}})());
+const escapeProgress=new EscapeProgress(escapeStore);
 // Test mode: Ctrl+Alt+U (or ?unlock=all in the address) opens every escape and challenge.
 // It is remembered in this browser until toggled off, and never changes saved records.
 const ESCAPE_TEST_KEY='sally-escape-unlock-all';
@@ -60,8 +60,8 @@ function showEscapeSelect(){
   // Sally comes out on the map where she just was (the escape she played, or the last one she
   // played before this visit), never jumped ahead to the next open escape across the map.
   const played=escapeGame&&!escapeGame.level.custom?escapeGame.level.id:null;
-  if(played)try{localStorage.setItem(ESCAPE_LAST_PLAYED_KEY,played);}catch(_){}
-  let focus=played;if(!focus)try{focus=localStorage.getItem(ESCAPE_LAST_PLAYED_KEY)||undefined;}catch(_){}
+  if(played)try{escapeStore.setItem(ESCAPE_LAST_PLAYED_KEY,played);}catch(_){}
+  let focus=played;if(!focus)try{focus=escapeStore.getItem(ESCAPE_LAST_PLAYED_KEY)||undefined;}catch(_){}
   escapeProgress.read();
   resetGameState();gameMode='escape';gameState='escapeSelect';
   for(const id of ['start-menu-container','game-container'])document.getElementById(id).style.display='none';
@@ -139,14 +139,14 @@ const ESCAPE_TIPS=[
 ];
 let escapeTipQueue=[],escapeTipsPending=[];
 function escapeCrawlTip(g){
-  escapeTipQueue=[];escapeTipsPending=ESCAPE_TIPS.filter(tip=>{try{return !localStorage.getItem(tip.key);}catch(_){return false;}});
+  escapeTipQueue=[];escapeTipsPending=ESCAPE_TIPS.filter(tip=>{try{return !escapeStore.getItem(tip.key);}catch(_){return false;}});
 }
 function tickEscapeCrawlTip(g){
   if(g.status!=='playing')return;
   for(const tip of escapeTipsPending)if(!escapeTipQueue.includes(tip)&&tip.live(g))escapeTipQueue.push(tip);
   if(!escapeTipQueue.length||g.elapsed<2||g.messageUntil>g.elapsed)return;
   const tip=escapeTipQueue.shift();escapeTipsPending=escapeTipsPending.filter(t=>t!==tip);g.notice(tip.text());g.messageUntil=g.elapsed+5;
-  try{localStorage.setItem(tip.key,'1');}catch(_){}
+  try{escapeStore.setItem(tip.key,'1');}catch(_){}
 }
 function startEscape(options={}){
   escapeAbandonRun();
@@ -512,8 +512,8 @@ function drawEscapeFx(g,cell){
 }
 // Phones show a close, following view by default; the menu switches to the whole map.
 const ESCAPE_CLOSE_VIEW_KEY='sally-escape-close-view';
-function escapeCloseView(){try{return localStorage.getItem(ESCAPE_CLOSE_VIEW_KEY)!=='0';}catch(_){return true;}}
-function toggleEscapeCloseView(){try{localStorage.setItem(ESCAPE_CLOSE_VIEW_KEY,escapeCloseView()?'0':'1');}catch(_){}updateToolbar();}
+function escapeCloseView(){try{return escapeStore.getItem(ESCAPE_CLOSE_VIEW_KEY)!=='0';}catch(_){return true;}}
+function toggleEscapeCloseView(){try{escapeStore.setItem(ESCAPE_CLOSE_VIEW_KEY,escapeCloseView()?'0':'1');}catch(_){}updateToolbar();}
 // The floor, walls and other still tiles, drawn once into an offscreen layer and copied each frame;
 // the layer is redrawn only when the map itself changes (a smashed wall, flattened leaves).
 let escapeTileCache=null;

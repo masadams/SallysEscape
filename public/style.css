@@ -363,7 +363,7 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .mobile-game #menu-button { display:inline-block; }
 .mobile-game #game-toolbar > button:not(#menu-button):not(#pause-button) { display:none !important; }
 .mobile-game #game-toolbar.toolbar-open { flex-direction:column; align-items:stretch; padding:6px; border-radius:14px; background:rgba(12,30,30,.96); box-shadow:0 8px 24px #0008; z-index:30; }
-.mobile-game #game-toolbar.toolbar-open > button:not(#menu-button):not(#pause-button):not([style*="display: none"]):not([style*="display:none"]) { display:block !important; text-align:left; }
+.mobile-game #game-toolbar.toolbar-open > button:not(.toolbar-world):not(#menu-button):not(#pause-button):not([style*="display: none"]):not([style*="display:none"]) { display:block !important; text-align:left; }
 .mobile-game #game-toolbar.toolbar-open #menu-button { order:-1; }
 
 /* World panel: stars stay visible; the rest of the tally opens under Journal. */
@@ -432,3 +432,42 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .star-pop.star-empty { color:#8aa08a; }
 @keyframes star-pop { 0% { transform:scale(0) rotate(-50deg); opacity:0; } 100% { transform:scale(1) rotate(0); opacity:1; } }
 @media (prefers-reduced-motion: reduce) { .star-pop { animation:none; } }
+
+/* A traditional menu: the toolbar shows ☰ Menu, Pause and Full screen; everything else opens
+   from ☰ as a list, on desktop as on phones. Sound, music, lighting and cards live in Options. */
+body:not(.mobile-game) #game-toolbar > button:not(#menu-button):not(#pause-button):not(#fullscreen-button) { display:none !important; }
+body:not(.mobile-game) #menu-button { display:inline-block; }
+body:not(.mobile-game) #game-toolbar.toolbar-open { flex-direction:column; align-items:stretch; padding:6px; border-radius:14px; background:rgba(12,30,30,.96); box-shadow:0 8px 24px #0008; z-index:30; min-width:190px; }
+body:not(.mobile-game) #game-toolbar.toolbar-open > button:not(.toolbar-world):not(#menu-button):not(#pause-button):not(#fullscreen-button):not([style*="display: none"]):not([style*="display:none"]) { display:block !important; text-align:left; }
+body:not(.mobile-game) #game-toolbar.toolbar-open > button { text-align:left; }
+body:not(.mobile-game) #game-toolbar.toolbar-open > button.toolbar-world:not(#menu-button):not(#pause-button):not(#fullscreen-button) { display:none !important; }
+body:not(.mobile-game) .escape-world-open #game-toolbar.toolbar-open > button.toolbar-world:not(#menu-button):not(#pause-button):not(#fullscreen-button) { display:block !important; }
+body:not(.mobile-game) #game-toolbar.toolbar-open #menu-button { order:-1; }
+#game-toolbar.toolbar-open #options-button { border-color:#b6dda0; }
+
+/* Dialogs: options and players */
+.game-dialog { position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; background:#06141488; padding:16px; }
+.game-dialog-card { width:min(460px,100%); max-height:calc(100vh - 32px); overflow:auto; background:#13302b; border:1px solid #5d8a6e; border-radius:16px; padding:18px 20px; box-shadow:0 18px 50px #000a; color:#eaf1d8; }
+.game-dialog-card h2 { margin:0 0 14px; font-size:1.3rem; }
+.options-grid { display:grid; grid-template-columns:auto 1fr auto; gap:10px 12px; align-items:center; margin-bottom:16px; }
+.options-grid .options-wide { grid-column:2 / 4; text-align:left; }
+.options-grid input[type=range] { width:100%; accent-color:#b6dda0; }
+.options-grid button { min-height:36px; }
+.players-row { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:10px; margin-bottom:6px; background:#0e2622; flex-wrap:wrap; }
+.players-current { outline:2px solid #b6dda0; }
+.players-name { flex:1 1 auto; min-width:80px; }
+.players-stats { font-size:.82rem; color:#c9d8b8; }
+.players-here { font-size:.8rem; color:#b6dda0; font-weight:650; }
+.player-dot { display:inline-block; width:14px; height:14px; border-radius:50%; flex:none; margin-right:4px; vertical-align:-2px; }
+.players-new { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:12px 0 16px; }
+.players-new input { flex:1 1 160px; background:#21443f; color:#e4edd6; border:1px solid #789575; border-radius:8px; padding:8px 10px; font:inherit; }
+.players-colors { display:flex; gap:6px; }
+.players-color { width:24px; height:24px; min-height:0 !important; padding:0 !important; border-radius:50%; border:2px solid transparent; }
+.players-color-on { border-color:#fff; }
+/* Title: who is playing, then a short list */
+.player-chip { margin:4px 0 12px; font-size:.95rem; color:#d6e4c6; }
+.title-extras { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:6px 0; }
+
+/* The title screen has its own buttons: no toolbar there. */
+.title-screen #game-toolbar { display:none; }
+@media (max-height:520px){ .game-dialog-card { padding:12px 16px; } .game-dialog-card h2 { margin-bottom:8px; } .options-grid { gap:6px 10px; } .options-grid button { min-height:32px; padding:4px 10px; } }
