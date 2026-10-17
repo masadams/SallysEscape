@@ -27,3 +27,33 @@ test('a chameleon creeps a little slower than a snake and pauses long at each en
   run(snake,{},2);run(cham,{},2);assert.ok(cham.hunters[0].x>snake.hunters[0].x,'slower');
   assert.ok(cham.hunters[0].movedAt>0,'the scene can tell when it last moved');
 });
+
+test('a frost sentinel’s gaze glances off ice walls round a corner, glints, then freezes Sally and calls the hunters',()=>{
+  // An open hall with a stone pillar; the sentinel looks down-right at the east wall, which is ice.
+  const ice=['############I','#@..........I','#...........I','#.....##....I','#.....##....I','#X.........KI','############I'],stone=ice.map(r=>r.replace(/I/g,'#'));
+  const guards=[{kind:'sentinel',spawn:[1,1],facing:.45,range:12,patrol:[[1,1]]},{spawn:[1,5],facing:0,patrol:[[1,5]]}];
+  const seenAt=(map,x,y)=>{const g=make(map,guards.slice(0,1));g.player.x=x+.5;g.player.y=y+.5;return g.sentinelBeams(g.hunters[0]).seen;};
+  let spot=null;for(let y=1;y<6&&!spot;y++)for(let x=1;x<12&&!spot;x++)if(seenAt(ice,x,y)&&!seenAt(stone,x,y))spot=[x,y];
+  assert.ok(spot,'some tile is seen only by the gaze glancing off the ice');
+  const g=make(ice,guards);g.player.x=spot[0]+.5;g.player.y=spot[1]+.5;run(g,{},.05);assert.equal(g.hunters[0].state,'glare','a glint of warning first');
+  run(g,{},.7);assert.equal(g.hunters[0].state,'cool');assert.ok(g.heldUntil>g.elapsed,'frozen');assert.ok(g.decoy?.chirp,'the crack calls the hunters');
+  const x=g.player.x;run(g,{x:-1,y:0},.5);assert.equal(g.player.x,x,'cannot move while frozen');assert.equal(g.status,'playing','the gaze itself never catches her');
+  const hid=make(ice.map((r,y)=>y===spot[1]?r.slice(0,spot[0])+'L'+r.slice(spot[0]+1):r),guards.slice(0,1));hid.player.x=spot[0]+.5;hid.player.y=spot[1]+.5;run(hid,{},.2);assert.equal(hid.hunters[0].state,'watch','leaves still hide her');
+});
+
+test('a cloud ray glides over walls, and its shadow hides Sally from the hawk and the hunters, even moving',()=>{
+  const map=['################','#@............K#','#..............#','#X.............#','################'];
+  const g=make(map,[{kind:'cloudray',spawn:[2,2],facing:0,patrol:[[2,2],[13,2]],speed:1.2}],{hawk:{every:9,warn:2,first:20}});
+  g.player.x=2.5;g.player.y=2.5;run(g,{x:.3,y:0},.5);assert.equal(g.player.hidden,true,'in the shadow, moving');assert.equal(g.shaded(),true,'the hawk cannot see her');
+  run(g,{},6);assert.ok(g.hunters[0].x>8,'it glides on');assert.equal(g.player.hidden,false,'out of the shadow');assert.equal(g.status,'playing','harmless itself');
+});
+
+test('the builder knows ice walls, frost sentinels, cloud rays, echo frogs and chameleons',()=>{
+  const B=require('../public/escape-builder.js');const m=B.blank(21,13);
+  assert.ok(B.paint(m,5,5,'I'));for(const kind of ['sentinel','cloudray','echofrog','chameleon'])assert.ok(B.addEnemy(m,kind,4+['sentinel','cloudray','echofrog','chameleon'].indexOf(kind)*3,8),kind);
+  const s=m.guards.find(g=>g.kind==='sentinel');B.setGuard(m,s.id,{looks:[0,Math.PI/2],every:3,range:7});
+  assert.deepEqual(B.validate(m),[]);const r=B.toRoute(m);assert.ok(r.map[5].includes('I'));
+  const again=B.sanitize(JSON.parse(JSON.stringify(m)));assert.deepEqual(B.toRoute(again),r);
+  const g=new EscapeAdventure({level:escapeBuildCustom(r)});assert.equal(g.ice.size,1);assert.equal(g.grid[5][5],'#','ice is a wall');
+  assert.equal(g.hunters.find(h=>h.kind==='sentinel').range,7);
+});

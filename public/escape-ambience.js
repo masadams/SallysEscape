@@ -1,7 +1,9 @@
 // Ambience: a soundscape under the music for every area. Each one is a bed or two of shaped noise
 // (a breeze, a stream, surf, rain, a cave's low rumble, steam's hiss) and calls that come now and
 // then (birdsong, frogs, drips, thunder, ice creaking), all synthesised, so there are no files.
-// The scene picks a scape and a level; beds crossfade when the scape changes.
+// The scene picks a scape and a level; beds crossfade when the scape changes. The world map
+// carries the weather (wind, rain, surf); inside an escape the weather drops away and only the
+// place's own sounds stay, softer and sparser, so they never compete with sneaking.
 (function(root){
   // beds: [kind, level]; calls: [kind, [min s, max s] between, level].
   const SCAPES={
@@ -51,9 +53,17 @@
     scuttle:{filter:'bandpass',freq:3000,q:3,rate:11,depth:.6,gain:.35},
     hum:{tone:[55,110],gain:.25}
   };
+  // Weather beds: heard on the world map (a touch under their full level), never inside an escape.
+  const WEATHER=new Set(['breeze','wind','hotwind','icewind','rain','surf']),WEATHER_TRIM=.88;
+  // What a scape sounds like on the map ('world') or inside an escape ('level').
+  function scapeFor(key,place='world'){
+    const s=SCAPES[key];if(!s)return null;
+    if(place!=='level')return {beds:s.beds.map(([k,l])=>[k,WEATHER.has(k)?+(l*WEATHER_TRIM).toFixed(3):l]),calls:s.calls};
+    return {beds:s.beds.filter(([k])=>!WEATHER.has(k)).map(([k,l])=>[k,+(l*.75).toFixed(3)]),calls:s.calls.map(([k,[a,b],l])=>[k,[a*1.3,b*1.3],+(l*.85).toFixed(3)])};
+  }
   const rand=(a,b)=>a+Math.random()*(b-a);
   class EscapeAmbience{
-    constructor(){this.ctx=null;this.master=null;this.beds=[];this.calls=[];this.key=null;this.volume=0;this.noise=null;}
+    constructor(){this.ctx=null;this.master=null;this.beds=[];this.calls=[];this.key=null;this.place='world';this.volume=0;this.noise=null;}
     start(ctx){
       if(this.ctx||!ctx?.createGain)return Boolean(this.ctx);
       this.ctx=ctx;this.master=ctx.createGain();this.master.gain.value=0;this.master.connect(ctx.destination);
@@ -61,8 +71,8 @@
       this.noise=n;return true;
     }
     // Switch soundscapes: the old beds fade out over two seconds as the new ones fade in.
-    setScape(key){
-      if(!this.ctx||key===this.key)return false;this.key=key;const scape=SCAPES[key]||null,t=this.ctx.currentTime;
+    setScape(key,place='world'){
+      if(!this.ctx||(key===this.key&&place===this.place))return false;this.key=key;this.place=place;const scape=scapeFor(key,place),t=this.ctx.currentTime;
       for(const b of this.beds){b.gain.gain.cancelScheduledValues(t);b.gain.gain.setValueAtTime(b.gain.gain.value,t);b.gain.gain.linearRampToValueAtTime(0,t+2);for(const s of b.sources)try{s.stop(t+2.1);}catch(_){}}
       this.beds=[];this.calls=(scape?.calls||[]).map(([kind,every,level])=>({kind,every,level,next:t+rand(1,every[1])}));
       for(const [kind,level] of scape?.beds||[])this.beds.push(this.bed(kind,level,t));
@@ -118,7 +128,7 @@
       setTimeout(()=>{try{out.disconnect();panner?.disconnect();}catch(_){}},4000);
     }
   }
-  Object.assign(EscapeAmbience,{SCAPES,BEDS});
+  Object.assign(EscapeAmbience,{SCAPES,BEDS,WEATHER,scapeFor});
   root.EscapeAmbience=EscapeAmbience;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeAmbience};
 })(typeof globalThis!=='undefined'?globalThis:this);

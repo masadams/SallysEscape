@@ -5,8 +5,8 @@
 // open to every player.
 let escapeBuilderModel=null,escapeBuilderTool='#',escapeBuilderColor=0,escapeBuilderPick=null,escapeBuilderPainting=false,escapeBuilderNote='',escapeBuilderAnchor=null;
 const ESCAPE_BUILDER_STORE=(()=>{try{return typeof localStorage==='undefined'?null:localStorage;}catch(_){return null;}})();
-const ESCAPE_BUILDER_LOOK={'#':['#2d4a43',''],'.':['#183029',''],'L':['#2f6b45','❀'],'N':['#3b3a32','∴'],'B':['#3c5a5e','⟋'],'M':['#4a3a26','≈'],'~':['#1f5a76','~'],'_':['#07120f',''],'c':['#3d3424','⁘'],'T':['#24452a','෴'],'o':['#2a3a2a','●'],'t':['#5a5040','≋'],'m':['#3f6b3a','ʬ'],'S':['#2d4a43','⦚'],'@':['#183029','🦎'],'K':['#183029','🔑'],'X':['#1d5a4f','⇩'],'1':['#183029','◆'],'2':['#183029','◆◆'],'3':['#183029','▣']};
-const ESCAPE_BUILDER_ENEMY={snake:'🐍',beetle:'🪲',scorpion:'🦂',toad:'🐸',spider:'🕷',cricket:'🦗',moth:'🦋',mimic:'🎁',millipede:'🐛',cobra:'👑',flytrap:'🌺',crab:'🦀',fox:'🦊',heron:'🦩',mantis:'🌿',wasp:'🐝',dragonfly:'🪰',mole:'🐹',bat:'🦇',eel:'🪱',angler:'🎣',fish:'🐟','sea-snake':'🌊',owl:'🦉',gecko:'🐾',echofrog:'🔊',chameleon:'🦎'};
+const ESCAPE_BUILDER_LOOK={'#':['#2d4a43',''],'.':['#183029',''],'L':['#2f6b45','❀'],'N':['#3b3a32','∴'],'B':['#3c5a5e','⟋'],'M':['#4a3a26','≈'],'~':['#1f5a76','~'],'_':['#07120f',''],'c':['#3d3424','⁘'],'T':['#24452a','෴'],'o':['#2a3a2a','●'],'t':['#5a5040','≋'],'m':['#3f6b3a','ʬ'],'I':['#8fc4dc','❄'],'S':['#2d4a43','⦚'],'@':['#183029','🦎'],'K':['#183029','🔑'],'X':['#1d5a4f','⇩'],'1':['#183029','◆'],'2':['#183029','◆◆'],'3':['#183029','▣']};
+const ESCAPE_BUILDER_ENEMY={snake:'🐍',beetle:'🪲',scorpion:'🦂',toad:'🐸',spider:'🕷',cricket:'🦗',moth:'🦋',mimic:'🎁',millipede:'🐛',cobra:'👑',flytrap:'🌺',crab:'🦀',fox:'🦊',heron:'🦩',mantis:'🌿',wasp:'🐝',dragonfly:'🪰',mole:'🐹',bat:'🦇',eel:'🪱',angler:'🎣',fish:'🐟','sea-snake':'🌊',owl:'🦉',gecko:'🐾',echofrog:'🔊',chameleon:'🦎',sentinel:'💎',cloudray:'☁'};
 const ESCAPE_BUILDER_TRIGGER={plate:'◉',heavy:'⬛',lever:'⚲',switch:'▣'},ESCAPE_BUILDER_HAZARD={vent:'♨',thorns:'⋀',log:'●'};
 const ESCAPE_BUILDER_ARROW=['→','↓','←','↑'];
 // The extras placed on top of the map: what each tool is called and how it looks on the grid.
@@ -193,6 +193,8 @@ function escapeBuilderGuardExtras(g){
   const n=(key,label,step=.1)=>' <label>'+label+' <input type="number" step="'+step+'" data-ginsp="'+key+'" value="'+(g[key]??'')+'"></label>';
   if(g.kind==='angler')return '<br>Lure: '+(g.lure?g.lure.join(','):'not set')+' <button data-insp="set-lure">Pick the lure tile</button>';
   if(g.kind==='crab')return '<br>Runs along <select data-ginsp="axis"><option value="">its facing</option><option value="x"'+(g.axis==='x'?' selected':'')+'>the row</option><option value="y"'+(g.axis==='y'?' selected':'')+'>the column</option></select>'+n('range','up to tiles',1);
+  if(g.kind==='sentinel')return '<br>Gazes: '+ESCAPE_BUILDER_ARROW.map((a,i)=>'<label class="builder-check"><input type="checkbox" data-look="'+i+'"'+((g.looks||[]).some(v=>Math.abs((((Math.round(v/(Math.PI/2))%4)+4)%4)-i)<.1)?' checked':'')+'> '+a+'</label>').join('')+n('every','turns every s')+n('range','gaze reaches tiles',1)+' · its gaze glances off ice walls';
+  if(g.kind==='cloudray')return '<br>Glides over everything along its patrol points, in a loop.'+n('speed','speed')+n('range','shadow radius');
   if(g.kind==='heron')return '<br>Looks: '+ESCAPE_BUILDER_ARROW.map((a,i)=>'<label class="builder-check"><input type="checkbox" data-look="'+i+'"'+((g.looks||[]).some(v=>Math.abs((((Math.round(v/(Math.PI/2))%4)+4)%4)-i)<.1)?' checked':'')+'> '+a+'</label>').join('')+n('every','turns every s');
   if(g.kind==='bat')return '<br>'+n('every','pings every s')+n('range','ring reaches tiles');
   if(g.kind==='dragonfly')return '<br>'+n('speed','speed');

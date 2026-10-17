@@ -98,6 +98,11 @@
     smash:(v)=>{noise(v,{dur:.45,gain:.45,filter:'lowpass',freq:900,to:150});tone(v,{freq:120,to:50,dur:.35,type:'square',gain:.18});for(let i=0;i<4;i++)noise(v,{dur:.05,delay:.08+i*.06,gain:.15,freq:2200-i*300,q:4});},
     glowbug:(v)=>{notes(v,[[1568,0,.06],[2093,.05,.08],[2637,.1,.22]],{type:'sine',gain:.22});tone(v,{freq:3136,delay:.1,dur:.3,type:'sine',gain:.06,wobble:40,wobbleRate:14});},
     click:(v)=>tone(v,{freq:900,to:700,dur:.05,type:'sine',gain:.12}),
+    // A frost sentinel's gaze: a crystal glint of warning, then the crack of ice.
+    glint:(v)=>{for(const [f,d] of [[2600,0],[3900,.05],[5200,.1]])tone(v,{freq:f,to:f*1.02,dur:.25,delay:d,type:'sine',gain:.07});},
+    freeze:(v)=>{noise(v,{dur:.08,gain:.4,filter:'highpass',freq:3000});noise(v,{dur:.5,delay:.04,gain:.18,freq:1600,to:600,q:2});tone(v,{freq:900,to:300,dur:.4,type:'triangle',gain:.06});},
+    // A cloud ray gliding overhead: a soft, deep rush of air.
+    glide:(v)=>{noise(v,{dur:1.4,gain:.12,filter:'lowpass',freq:280,to:520,attack:.5});tone(v,{freq:55,to:62,dur:1.4,type:'sine',gain:.08,attack:.5});},
     // An echo frog filling its throat, then croaking the noise back.
     ribbit:(v)=>{tone(v,{freq:180,to:240,dur:.12,type:'square',gain:.05,wobble:30,wobbleRate:40});},
     croak:(v)=>{for(let i=0;i<3;i++)tone(v,{freq:150-i*12,to:110,dur:.22,delay:i*.18,type:'square',gain:.11/(i*.6+1),wobble:22,wobbleRate:28});noise(v,{dur:.5,gain:.04,filter:'lowpass',freq:500,attack:.05});},
@@ -112,7 +117,7 @@
   // the loudest and quietest toward the middle; 1 leaves a sound as it is.
   // Measured in Chromium (dB RMS over the loudest 100 ms): rewards near -17, danger tells near
   // -27 so a hunter's warning is never lost under the music, footsteps and a crawl left soft.
-  const TRIM={croak:1.4,maze:.62,won:.86,snap:1.41,charge:1.78,sting:2.24,buzz:1.78,hiss:1.41,dive:1.6,clash:2.5,rumble:2.5,skitter:3.16,scrape:3.16,flutter:2,rustle:1.6,clack:3.16,decoy:3.16,toss:2};
+  const TRIM={croak:1.4,freeze:1.3,maze:.62,won:.86,snap:1.41,charge:1.78,sting:2.24,buzz:1.78,hiss:1.41,dive:1.6,clash:2.5,rumble:2.5,skitter:3.16,scrape:3.16,flutter:2,rustle:1.6,clack:3.16,decoy:3.16,toss:2};
   // Each recipe is rendered once to a buffer offline and replayed from then on: one buffer
   // source instead of a fresh graph of oscillators, filters and LFOs per sound. Footsteps and
   // other noisy sounds keep three takes and a slight pitch drift so repeats never sound stamped.

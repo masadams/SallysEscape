@@ -161,7 +161,7 @@
  "#.........#...L.....#...L...#",
  "#X........#.........#......2#",
  "#############################"]},
-{explore:false,tailDrop:true,id:"cloud-race",name:"Cloud Race",secret:"cloud-nest",brief:"The golden flies nest above the clouds. Race across before the wind changes.",hint:"Step on a bounce cap to fly to the next island. The dragonfly loops the gaps on a fixed path; it cannot follow you into the clouds. Fifty seconds, start to finish.",pebbles:1,tongues:1,timeLimit:50,caps:[{at:[6,2],to:[11,2]},{at:[15,3],to:[20,3]},{at:[20,8],to:[15,8]},{at:[11,9],to:[6,9]}],guards:[{kind:"dragonfly",spawn:[8,1],facing:PI/2,patrol:[[8,1],[8,10],[18,10],[18,1]],speed:4},{spawn:[25,4],facing:PI,patrol:[[22,2],[28,6]]},{spawn:[13,6],facing:PI,patrol:[[12,4],[15,8]]}],map:[
+{explore:false,tailDrop:true,id:"cloud-race",name:"Cloud Race",secret:"cloud-nest",brief:"The golden flies nest above the clouds. Race across before the wind changes.",hint:"Step on a bounce cap to fly to the next island. The dragonfly loops the gaps on a fixed path; it cannot follow you into the clouds. A hawk hunts the nest: the great cloud ray’s shadow is safe cover, even on the move. Fifty seconds, start to finish.",hawk:{every:8,warn:2,first:9},pebbles:1,tongues:1,timeLimit:50,caps:[{at:[6,2],to:[11,2]},{at:[15,3],to:[20,3]},{at:[20,8],to:[15,8]},{at:[11,9],to:[6,9]}],guards:[{kind:"dragonfly",spawn:[8,1],facing:PI/2,patrol:[[8,1],[8,10],[18,10],[18,1]],speed:4},{spawn:[25,4],facing:PI,patrol:[[22,2],[28,6]]},{spawn:[13,6],facing:PI,patrol:[[12,4],[15,8]]},{kind:"cloudray",spawn:[3,5],facing:0,patrol:[[3,5],[27,5]],speed:1.3,range:2.1}],map:[
  "###############################",
  "#@...L.____.....____.....L...1#",
  "#......____..L..____..........#",
@@ -202,18 +202,18 @@
  "#.###.###.###.###.###.###.###.###.#",
  "#X....1......1.......2.......L...3#",
  "###################################"]},
-{explore:false,tailDrop:true,id:"frozen-run",name:"Frozen Run",secret:"ice-cave",brief:"A cave of blue ice where the cold never lets up. Keep moving, quietly.",hint:"The whole cave is cold: hop between the warm stones. The foxes hunt by sound, and gravel is loud. Seventy seconds before the cave freezes over.",pebbles:3,tongues:1,timeLimit:70,cold:[[1,1,29,10]],warm:[[2,2],[3,8],[10,5],[18,5],[14,2],[14,9],[26,5],[27,2],[27,9]],guards:[{kind:"fox",spawn:[14,4],facing:PI,patrol:[[8,3],[20,3],[20,8],[8,8]]},{kind:"fox",spawn:[26,7],facing:PI,patrol:[[24,2],[28,9]]}],map:[
+{explore:false,tailDrop:true,id:"frozen-run",name:"Frozen Run",secret:"ice-cave",brief:"A cave of blue ice where the cold never lets up. Keep moving, quietly.",hint:"The whole cave is cold: hop between the warm stones. The foxes hunt by sound: bank a pebble off a wall round a corner and they chase the clack. Two frost sentinels watch, and their gaze glances off the ice walls: step out at the glint. Seventy seconds before the cave freezes over.",pebbles:3,tongues:1,timeLimit:70,cold:[[1,1,29,10]],warm:[[2,2],[3,8],[10,5],[18,5],[14,2],[14,9],[26,5],[27,2],[27,9]],guards:[{kind:"fox",spawn:[14,4],facing:PI,patrol:[[8,3],[20,3],[20,8],[8,8]]},{kind:"fox",spawn:[26,7],facing:PI,patrol:[[24,2],[28,9]]},{kind:"sentinel",spawn:[14,1],facing:PI,looks:[PI,PI/2],every:4.5,range:7,patrol:[[14,1]]},{kind:"sentinel",spawn:[18,10],facing:-PI/2,looks:[-PI/2,0],every:5,range:7,patrol:[[18,10]]}],map:[
  "###############################",
- "#@....#.......N.......#.....1.#",
- "#.....#...............#.......#",
- "#..L..#...L.......L...#...L...#",
+ "#@....I.......N.......I.....1.#",
+ "#.....I...............I.......#",
+ "#..L..I...L.......L...I...L...#",
  "#.......N.......N.............#",
- "#.....#...............#.......#",
- "#2....#.......3.......#....K..#",
- "#.....#...............#.......#",
+ "#.....I...............I.......#",
+ "#2....I.......3.......I....K..#",
+ "#.....I...............I.......#",
  "#.......N.......N.............#",
- "#..L..#...L.......L...#...L...#",
- "#X....#.......N.......#.....4.#",
+ "#..L..I...L.......L...I...L...#",
+ "#X....I.......N.......I.....4.#",
  "###############################"]},
 {explore:false,tailDrop:true,id:"sunken-wreck",name:"The Sunken Wreck",secret:"sunken-wreck",brief:"An old ship lies on its side in the reeds. Its decks are dry; the water between them is not empty.",hint:"Swim between the decks. Fish chase swimmers they can see, the sea snake hunts on deck and in the water, and an eel waits by the far treasure. Climb out to shake the fish.",pebbles:2,tongues:2,guards:[{kind:"fish",spawn:[12,1],facing:0,patrol:[[9,1],[16,2]]},{kind:"fish",spawn:[15,7],facing:PI,patrol:[[10,7],[22,7]]},{kind:"sea-snake",spawn:[26,4],facing:PI,patrol:[[24,3],[28,5]]},{kind:"eel",spawn:[27,10],facing:0,patrol:[[27,10]]}],map:[
  "###############################",

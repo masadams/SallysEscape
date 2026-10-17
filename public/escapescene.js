@@ -388,8 +388,9 @@ function tickEscapeMusic(){
   const special=!lvl?null:lvl.secret?'secret:'+lvl.secret:lvl.id==='the-long-way-home'||lvl.id==='home'?'finale':lvl.bonus?'hollow':lvl.hidden?'gilded':null;
   escapeMusic.setStyle(special&&EscapeMusic.STYLES[special]?EscapeMusic.styleFor(special,special==='hollow'?1:Math.max(0,hiddenAt)):EscapeMusic.styleFor(chapter?.theme||'meadow',index>=0&&chapter?index-chapter.start:-1));
   escapeMusic.setFlavor?.(screen==='game'&&escapeGame?EscapeMusic.flavorFor(escapeGame):null);
-  // The soundscape follows the same place, softer on the map and the menu, ducked in a chase.
-  if(escapeAmbience){const key=special||chapter?.theme||'meadow';escapeAmbience.setScape(screen==='menu'?'meadow':EscapeAmbience.SCAPES[key]?key:'meadow');
+  // The soundscape follows the same place, softer on the map and the menu, ducked in a chase;
+  // the map has the weather, an escape only the place's own sounds.
+  if(escapeAmbience){const key=special||chapter?.theme||'meadow';escapeAmbience.setScape(screen==='menu'?'meadow':EscapeAmbience.SCAPES[key]?key:'meadow',screen==='game'?'level':'world');
     escapeAmbience.setVolume(isMuted?0:soundVolume*1.3*(screen==='menu'?.45:screen==='world'?.7:1)*(paused?.35:1)*(escapeMusic.state==='chase'?.5:1));escapeAmbience.tick();}
 }
 function escapeSound(event,options={}){
@@ -438,6 +439,7 @@ function drawEscapeStillTiles(g,cell,palette,index){
       for(const dy of [.3,.65])line((x+.2)*cell,(y+dy)*cell,(x+.8)*cell,(y+dy)*cell);
     }
   }
+  for(const key of g.ice||[]){const [x,y]=key.split(',').map(Number);noStroke();fill(143,196,220);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*.12);fill(205,235,248,200);triangle(x*cell+cell*.18,y*cell+cell*.2,x*cell+cell*.55,y*cell+cell*.16,x*cell+cell*.2,y*cell+cell*.55);stroke(230,248,255,160);strokeWeight(Math.max(1,cell*.03));line(x*cell+cell*.62,y*cell+cell*.3,x*cell+cell*.8,y*cell+cell*.72);}
   // Full lighting: soft shadows where floor meets a wall above or to the left, so mazes read in depth.
   if(escapeLightingFull())for(let y=1;y<g.height;y++)for(let x=1;x<g.width;x++){if(!g.floor(x,y))continue;noStroke();
     if(!g.floor(x,y-1))for(let i=0;i<3;i++){fill(0,0,0,[58,32,14][i]);rect(x*cell,y*cell+i*cell*.07,cell,cell*.07);}
@@ -537,6 +539,7 @@ function drawEscapeTricks(g,cell,view){
   if(g.player.noisy&&g.echoes.length&&g.inEcho(g.player)){noFill();for(let k=0;k<3;k++){const r=((g.elapsed*1.6+k/3)%1);stroke(200,185,245,150*(1-r));strokeWeight(Math.max(1,cell*.04));ellipse(g.player.x*cell,g.player.y*cell,cell*(1+r*6),cell*(1+r*6));}}
   for(const c of g.currents){stroke(200,240,250,90);strokeWeight(Math.max(1,cell*.04));const [dx,dy]=c.dir,phase=(g.elapsed*c.speed*.8)%1;
     for(let y=c.y1;y<=c.y2;y++)for(let x=c.x1;x<=c.x2;x++){if(!seen(x,y)||g.grid[y][x]!=='U')continue;for(let k=0;k<2;k++){const t=(phase+k*.5)%1,cx=x+.5+dx*(t-.5)*.8+(dy?(k?.22:-.22):0),cy=y+.5+dy*(t-.5)*.8+(dx?(k?.22:-.22):0);line(cx*cell,cy*cell,(cx-dx*.22)*cell,(cy-dy*.22)*cell);}}}
+  for(const h of g.hunters)if(h.kind==='cloudray'){noStroke();fill(6,14,24,70);ellipse(h.x*cell,h.y*cell,h.shadowR*2*cell,h.shadowR*1.6*cell);fill(6,14,24,40);ellipse(h.x*cell,h.y*cell,h.shadowR*2.4*cell,h.shadowR*1.9*cell);}
   for(const t of g.tunnels)for(const m of [t.a,t.b]){if(!seen(Math.floor(m.x),Math.floor(m.y)))continue;noStroke();fill(96,72,46);ellipse(m.x*cell,m.y*cell+cell*.06,cell*.72,cell*.5);fill(40,28,18);ellipse(m.x*cell,m.y*cell+cell*.04,cell*.34,cell*.22);fill(150,118,80);for(const [dx,dy] of [[-.28,-.08],[.3,-.02],[.05,-.2]])ellipse((m.x+dx)*cell,(m.y+dy)*cell,cell*.09,cell*.07);}
 }
 // Sunlight rippling across water, in Full lighting.
@@ -653,7 +656,7 @@ function drawEscapeVault(){
   for(const den of g.pendingSpawns){if(view.follow&&!g.visibleTile(Math.floor(den.x),Math.floor(den.y)))continue;noFill();stroke(231,161,121);strokeWeight(cell*.05);ellipse(den.x*cell,den.y*cell,cell*(.7+Math.sin(g.elapsed*8)*.12),cell*.5);fill(237,177,142);noStroke();textSize(cell*.5);text('!',den.x*cell,(den.y-.5)*cell);}
   for(const h of g.hunters){const ang=h.facing,cone=h.kind==='beetle'?PI/5:PI/3;
   if(view.follow&&!g.visibleTile(Math.floor(h.x),Math.floor(h.y)))continue;
-  if(!g.level.dark&&!['millipede','cricket','moth','mimic','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','crab','fox','echofrog','chameleon'].includes(h.kind)&&['patrol','alert'].includes(h.state)){
+  if(!g.level.dark&&!['millipede','cricket','moth','mimic','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','crab','fox','echofrog','chameleon','sentinel','cloudray'].includes(h.kind)&&['patrol','alert'].includes(h.state)){
     noStroke();fill(245,171,105,18);beginShape();vertex(h.x*cell,h.y*cell);
     for(let a=-cone;a<=cone+.01;a+=cone/6){let reach=0,from=h;for(let d=.2;d<=4.5;d+=.2){const to={x:h.x+Math.cos(ang+a)*d,y:h.y+Math.sin(ang+a)*d};if(!g.clear(from,to,true))break;reach=d;from=to;}vertex((h.x+Math.cos(ang+a)*reach)*cell,(h.y+Math.sin(ang+a)*reach)*cell);}endShape(CLOSE);
   }
@@ -680,7 +683,7 @@ function drawEscapeVault(){
   g.hunters.filter(h=>h.kind==='angler').forEach(h=>drawEscapeAngler(h,cell,g.elapsed));
   g.motion.refresh?.();
   for(const h of g.hunters)if(h.kind==='flytrap')drawEscapeDew(g,h,cell,view);
-  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='angler')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='wasp'?drawEscapeWaspNest(h,cell,g.elapsed):h.kind==='dragonfly'?drawEscapeDragonfly(h,cell,g.elapsed):h.kind==='mole'?drawEscapeMole(h,cell,g.elapsed):h.kind==='bat'?drawEscapeBat(h,cell,g.elapsed,g):h.kind==='eel'?drawEscapeEel(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='echofrog'?drawEscapeEchoFrog(h,cell,g.elapsed):h.kind==='chameleon'?drawEscapeChameleon(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
+  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='angler'||h.kind==='cloudray')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='wasp'?drawEscapeWaspNest(h,cell,g.elapsed):h.kind==='dragonfly'?drawEscapeDragonfly(h,cell,g.elapsed):h.kind==='mole'?drawEscapeMole(h,cell,g.elapsed):h.kind==='bat'?drawEscapeBat(h,cell,g.elapsed,g):h.kind==='eel'?drawEscapeEel(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='echofrog'?drawEscapeEchoFrog(h,cell,g.elapsed):h.kind==='sentinel'?drawEscapeSentinel(h,cell,g.elapsed):h.kind==='chameleon'?drawEscapeChameleon(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
   drawingContext.save();drawingContext.globalAlpha*=g.player.hidden?.48:1;
   for(const h of g.hunters)if(h.state==='clash'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noFill();stroke(255,193,107,180);strokeWeight(cell*.035);ellipse(h.x*cell,h.y*cell,cell*(.9+Math.sin(g.elapsed*14)*.08),cell*.75);}
   // Mid-flight off a bounce cap, Sally rises over her shadow.
@@ -696,7 +699,9 @@ function drawEscapeVault(){
   for(const c of g.clouds||[]){const age=g.elapsed-c.born,fade=Math.min(1,age*4,(c.until-g.elapsed)/1.2);noStroke();for(let k=0;k<7;k++){const a=k*.9+age*.3,r=c.r*cell*(.45+(k%3)*.18);fill(214,232,190,70*fade);ellipse(c.x*cell+Math.cos(a)*r*.6,c.y*cell+Math.sin(a)*r*.5,r*1.3,r*1.1);}fill(240,250,220,45*fade);ellipse(c.x*cell,c.y*cell,c.r*cell*2,c.r*cell*1.8);}
   if(g.player.camo){noFill();stroke(214,190,140,90+60*Math.sin(g.elapsed*6));strokeWeight(cell*.03);ellipse(g.player.x*cell,g.player.y*cell,cell*1.1,cell*1.1);}
   if(g.hawk)drawEscapeHawk(g.hawk,cell,g.elapsed);
-  for(const h of g.hunters)if(h.kind!=='millipede'&&h.state!=='rooted'&&h.state!=='patrol'&&!(['angler','flytrap'].includes(h.kind)&&h.state!=='snap')&&!(h.kind==='heron'&&h.state!=='aim')&&!(h.kind==='mantis'&&h.state!=='raise')&&!(h.kind==='wasp'&&h.state!=='stir')&&h.kind!=='dragonfly'&&!(h.kind==='mole'&&h.state!=='surface')&&!(h.kind==='bat'&&h.state!=='dive')&&!(h.kind==='eel'&&h.state!=='ripple')&&!(h.kind==='crab'&&!['peek','scuttle'].includes(h.state))&&h.kind!=='fox'&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))){fill(h.state==='decoy'?195:255, h.state==='decoy'?182:214, h.state==='decoy'?255:133);noStroke();textSize(cell*.65);text(h.state==='alert'?'?':['chase','windup','charge','sting','leap','glimmer','swoop','reveal','lunge','snap','peek','scuttle','aim','raise','stir','surface','ripple'].includes(h.state)?'!':h.state==='decoy'?'♪':'…',h.x*cell,(h.y-.65)*cell);}
+  for(const h of g.hunters)if(h.kind==='cloudray')drawEscapeCloudRay(h,cell,g.elapsed);
+  if(g.player.frozenUntil>g.elapsed){const p=g.player,k=Math.min(1,(g.player.frozenUntil-g.elapsed)/1.6);noStroke();fill(200,236,250,120*k);ellipse(p.x*cell,p.y*cell,cell*.9,cell*.9);stroke(235,250,255,200*k);strokeWeight(Math.max(1,cell*.035));for(let a=0;a<6;a++){const r=a*Math.PI/3;line(p.x*cell,p.y*cell,(p.x+Math.cos(r)*.45)*cell,(p.y+Math.sin(r)*.45)*cell);}}
+  for(const h of g.hunters)if(h.kind!=='millipede'&&h.state!=='rooted'&&h.state!=='patrol'&&!(['angler','flytrap'].includes(h.kind)&&h.state!=='snap')&&!(h.kind==='heron'&&h.state!=='aim')&&!(h.kind==='mantis'&&h.state!=='raise')&&!(h.kind==='wasp'&&h.state!=='stir')&&h.kind!=='dragonfly'&&h.kind!=='cloudray'&&h.kind!=='sentinel'&&!(h.kind==='mole'&&h.state!=='surface')&&!(h.kind==='bat'&&h.state!=='dive')&&!(h.kind==='eel'&&h.state!=='ripple')&&!(h.kind==='crab'&&!['peek','scuttle'].includes(h.state))&&h.kind!=='fox'&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))){fill(h.state==='decoy'?195:255, h.state==='decoy'?182:214, h.state==='decoy'?255:133);noStroke();textSize(cell*.65);text(h.state==='alert'?'?':['chase','windup','charge','sting','leap','glimmer','swoop','reveal','lunge','snap','peek','scuttle','aim','raise','stir','surface','ripple'].includes(h.state)?'!':h.state==='decoy'?'♪':'…',h.x*cell,(h.y-.65)*cell);}
   if(g.player.noisy&&!g.player.sprinting){noFill();stroke(221,195,149,80);strokeWeight(1);const pulse=(g.elapsed%.6)/.6;ellipse(g.player.x*cell,g.player.y*cell,cell*(.55+pulse),cell*(.55+pulse));}
   const place=escapePlace(g.level),mood=place?EscapeLighting.moodFor(place.key,place.step):null;
   drawEscapeLights(g,cell,mood);
@@ -920,6 +925,22 @@ function drawEscapeChameleon(h,cell,clock){
   drawingContext.globalAlpha/=a;
   if(moving){noFill();stroke(170+Math.sin(clock*9)*60,220,255-Math.sin(clock*9)*60,110);strokeWeight(cell*.03);ellipse(0,0,cell*.78,cell*.44);}
   pop();
+}
+// A frost sentinel: a crystal statue and its gaze, a fan of pale light that glances off ice.
+function drawEscapeSentinel(h,cell,clock){
+  const glare=h.state==='glare',cool=h.state==='cool',a=glare?90+80*Math.abs(Math.sin(clock*18)):cool?14:26;
+  noFill();stroke(190,236,255,a);strokeWeight(Math.max(1,cell*(glare?.06:.035)));
+  for(const beam of h.beams||[]){beginShape();for(const q of beam)vertex(q.x*cell,q.y*cell);endShape();}
+  push();translate(h.x*cell,h.y*cell);noStroke();fill(0,0,0,70);ellipse(0,cell*.12,cell*.6,cell*.26);
+  fill(150,205,230);beginShape();for(let k=0;k<6;k++){const r=k*Math.PI/3-Math.PI/2;vertex(Math.cos(r)*cell*.3,Math.sin(r)*cell*.36-cell*.06);}endShape(CLOSE);
+  fill(225,246,255,220);triangle(-cell*.12,-cell*.3,cell*.04,-cell*.36,-cell*.1,cell*.05);
+  rotate(h.facing||0);fill(glare?255:200,glare?250:240,255);ellipse(cell*.14,0,cell*.12,cell*.08);pop();
+}
+// A cloud ray: a great translucent shape gliding high over everything.
+function drawEscapeCloudRay(h,cell,clock){
+  push();translate(h.x*cell,(h.y-1.1)*cell);rotate((h.facing||0)+HALF_PI);const flap=Math.sin(clock*1.6)*.12;noStroke();fill(214,226,240,120);
+  beginShape();vertex(0,-cell*.9);bezierVertex(cell*(.9+flap),-cell*.5,cell*(1.5+flap),cell*.1,cell*.25,cell*.35);vertex(0,cell*.25);vertex(-cell*.25,cell*.35);bezierVertex(-cell*(1.5+flap),cell*.1,-cell*(.9+flap),-cell*.5,0,-cell*.9);endShape(CLOSE);
+  stroke(214,226,240,110);strokeWeight(cell*.05);noFill();line(0,cell*.3,0,cell*1.2);noStroke();fill(160,180,205,140);for(const s of [-1,1])ellipse(s*cell*.16,-cell*.62,cell*.08,cell*.06);pop();
 }
 function drawEscapeGecko(h,cell,clock){
   push();translate(h.x*cell,h.y*cell);rotate(h.facing||0);scale(1.3);const run=['dash','flee'].includes(h.state),wig=Math.sin(clock*(run?30:6))*.25;noStroke();
