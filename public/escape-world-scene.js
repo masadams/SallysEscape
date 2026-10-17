@@ -83,7 +83,7 @@ function escapeWorldCaughtFly(){const n=escapeProgress.catchGoldfly();escapeWorl
 function escapeWorldAnnounceRegions(){
   const before=escapeProgress.data.regionsSeen.length,open=escapeWorld.chapters.map((_,i)=>i).filter(i=>escapeWorld.regionOpen(i)),fresh=escapeProgress.announceRegions(open);
   // A brand new save or an older save meeting this feature learns its regions silently.
-  if(before&&fresh.length){escapeWorldToast('A new path has opened: '+escapeWorld.chapters[fresh.at(-1)].name+'!');escapeSound('key');return;}
+  if(before&&fresh.length){escapeWorldToast('A new path has opened: '+escapeWorld.chapters[fresh.at(-1)].name+'!');escapeSound('key');escapeMusic?.cue('area');return;}
   const challenges=escapeProgress.announceChallenges();
   if(challenges.length){const c=challenges.at(-1),level=EscapeCatalog.levels.find(l=>l.id===c.levelId);escapeWorldToast(challenges.length>1?challenges.length+' new challenges are open — look for the glowing ⚑ flags.':'New challenge open: '+c.name+' at '+level.name+'. Look for the glowing ⚑.');escapeSound('glimmer');}
 }
@@ -99,12 +99,12 @@ function escapeWorldFoundSecretCache(id){
 // The first time the Gilded Burrow opens, the rest of the secret world stirs too.
 function escapeWorldAnnounceSecrets(){
   if(!escapeWorld?.revealed()||escapeProgress.data.masterySeen.includes('secrets'))return;escapeProgress.read();escapeProgress.data.masterySeen.push('secrets');escapeProgress.write();
-  escapeWorldToast('Somewhere a door of gold has opened, and all over the map, other hidden places stir…');
+  escapeWorldToast('Somewhere a door of gold has opened, and all over the map, other hidden places stir…');escapeMusic?.cue('secret');
 }
 // A cracked hedge gives way when Sally pushes into it.
 function escapeWorldBumpSecret(door){
   if(!escapeProgress.openSecret(door.id))return;const s=escapeWorld.secrets.find(s=>s.id===door.id);
-  escapeWorldToast('The cracked hedge gives way! A hidden path leads to '+s.name+'.');escapeSound('cache');escapeWorld.terrainVersion++;
+  escapeWorldToast('The cracked hedge gives way! A hidden path leads to '+s.name+'.');escapeSound('cache');escapeMusic?.cue('secret');escapeWorld.terrainVersion++;
 }
 function escapeWorldFoundCache(cache){
   if(!escapeProgress.findCache(cache.id))return;escapeWorldToast('Hidden cache found! +'+ESCAPE_CACHE_VALUE+' treasure for Sally’s hoard.');

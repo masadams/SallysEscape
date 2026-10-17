@@ -257,7 +257,15 @@ function playEscape(){
   for(const cue of escapeCharacter?.drainCues()||[])escapeSound(cue);
   // Each glow bug caught counts like a golden fly: a little bonus treasure on the world totals.
   for(const event of events)if(event==='glowbug')escapeProgress.catchGoldfly();
-  for(const event of new Set(events))escapeSound(event==='treasure'&&escapeGame.message.startsWith('A whole')?'chest':event);
+  // A creature's sound comes from where it is: panned left or right, and quieter further away.
+  const at=escapeGame.lastEventAt||{},p=escapeGame.player;
+  for(const event of new Set(events)){const q=at[event],d=q?Math.hypot(q.x-p.x,q.y-p.y):0;
+    escapeSound(event==='treasure'&&escapeGame.message.startsWith('A whole')?'chest':event,q?{pan:Math.max(-.8,Math.min(.8,(q.x-p.x)/7)),gain:Math.max(.35,1/(1+Math.max(0,d-2)/5))}:{});}
+  // Musical cues: the key, and the hatch opening once the key and enough treasure are in hand.
+  if(events.includes('key'))escapeMusic?.cue('key');
+  const open=escapeGame.hasKey&&escapeGame.treasure>=escapeGame.requiredTreasure;
+  if(open&&!escapeHatchCued&&escapeGame.requiredTreasure>0){escapeHatchCued=true;if(!events.includes('key'))escapeMusic?.cue('hatch');}
+  if(!open)escapeHatchCued=false;
   if(gameState==='escape'&&!paused)escapeFootsteps(escapeGame.player);
   drawEscapeVault();renderEscapeHUD();
   // A creature met for the first time joins the bestiary, with a short note at the top.
@@ -343,29 +351,40 @@ function showEscapeResult(){
   (won&&!r.challengeId?nextButton:document.getElementById('escape-retry-btn')).focus();renderEscapeHUD(true);
 }
 // Adaptive music boots after the first user gesture and then follows the game every frame.
+let escapeAmbience=null;
 function startEscapeMusic(context){
+  if(!escapeAmbience&&typeof EscapeAmbience!=='undefined'){escapeAmbience=new EscapeAmbience();escapeAmbience.start(context);}
   if(typeof EscapeMusic==='undefined'||escapeMusic)return;escapeMusic=new EscapeMusic();
   escapeMusic.load(context).then(ok=>{if(ok)escapeMusic.start();});
 }
 function tickEscapeMusic(){
   if(!escapeMusic)return;
-  escapeMusic.setVolume((paused?.35:1)*.6,isMuted||!musicOn);
+  escapeMusic.setVolume((paused?.35:1)*.6*musicVolume,isMuted||!musicOn||musicVolume===0);
   const screen=gameState==='start'?'menu':gameState==='escapeSelect'?'world':'game';
   escapeMusic.setState(EscapeMusic.stateFor({screen,game:screen==='game'?escapeGame:null}),millis()/1000);
   // Each region has a style and each escape its own tune; the world map follows the courtyard Sally is standing in.
   const chapters=EscapeWorld.chapters,index=screen==='game'&&escapeGame?EscapeCatalog.levels.indexOf(escapeGame.level):-1,chapter=index>=0?chapters.find(c=>index>=c.start&&index<c.end):screen==='world'&&escapeWorld?chapters[escapeWorld.chapterAt()]:chapters[0];
-  escapeMusic.setStyle(screen==='game'&&escapeGame?.level.bonus?EscapeMusic.styleFor('hollow',1):escapeGame?.level.hidden?EscapeMusic.styleFor('gilded',EscapeCatalog.hidden.indexOf(escapeGame.level)):EscapeMusic.styleFor(chapter?.theme||'meadow',index>=0&&chapter?index-chapter.start:-1));
+  // Places off the trail have their own themes: each secret spot, the Gilded Burrow, the bonus
+  // maze, and the finale for the last escape and the long run home.
+  const lvl=screen==='game'&&escapeGame?escapeGame.level:null,hiddenAt=lvl?.hidden?EscapeCatalog.hidden.findIndex(l=>l.id===lvl.id):-1;
+  const special=!lvl?null:lvl.secret?'secret:'+lvl.secret:lvl.id==='the-long-way-home'||lvl.id==='home'?'finale':lvl.bonus?'hollow':lvl.hidden?'gilded':null;
+  escapeMusic.setStyle(special&&EscapeMusic.STYLES[special]?EscapeMusic.styleFor(special,special==='hollow'?1:Math.max(0,hiddenAt)):EscapeMusic.styleFor(chapter?.theme||'meadow',index>=0&&chapter?index-chapter.start:-1));
+  escapeMusic.setFlavor?.(screen==='game'&&escapeGame?EscapeMusic.flavorFor(escapeGame):null);
+  // The soundscape follows the same place, softer on the map and the menu, ducked in a chase.
+  if(escapeAmbience){const key=special||chapter?.theme||'meadow';escapeAmbience.setScape(screen==='menu'?'meadow':EscapeAmbience.SCAPES[key]?key:'meadow');
+    escapeAmbience.setVolume(isMuted?0:soundVolume*1.3*(screen==='menu'?.45:screen==='world'?.7:1)*(paused?.35:1)*(escapeMusic.state==='chase'?.5:1));escapeAmbience.tick();}
 }
 function escapeSound(event,options={}){
   if(isMuted||paused||!audioUnlocked||soundVolume===0||typeof EscapeAudio==='undefined')return;
   try{EscapeAudio.play(getAudioContext(),event,soundVolume,options);}catch(_){/* Audio feedback remains optional. */}
 }
 // Soft footfalls follow Sally's real travelled distance, louder when sprinting.
+let escapeHatchCued=false;
 let escapeStepFrom=null,escapeStepDistance=0,escapeStepAlt=false;
 function escapeFootsteps(p){
   if(!escapeStepFrom||!p.moving){escapeStepFrom={x:p.x,y:p.y};escapeStepDistance=0;return;}
   escapeStepDistance+=Math.hypot(p.x-escapeStepFrom.x,p.y-escapeStepFrom.y);escapeStepFrom={x:p.x,y:p.y};
-  if(escapeStepDistance>=(p.sprinting?.62:p.crawling?.7:.48)){escapeStepDistance=0;escapeStepAlt=!escapeStepAlt;if(!p.crawling||p.swimming)escapeSound(p.swimming?'paddle':'step',{sprint:p.sprinting,alt:escapeStepAlt});}
+  if(escapeStepDistance>=(p.sprinting?.62:p.crawling?.7:.48)){escapeStepDistance=0;escapeStepAlt=!escapeStepAlt;escapeSound(p.swimming?'paddle':p.crawling?'crawl':'step',{sprint:p.sprinting,alt:escapeStepAlt});}
 }
 // Phones show a close, following view by default; the menu switches to the whole map.
 const ESCAPE_CLOSE_VIEW_KEY='sally-escape-close-view';

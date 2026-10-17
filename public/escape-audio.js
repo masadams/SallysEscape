@@ -97,8 +97,15 @@
     chirp:(v)=>{for(let i=0;i<6;i++)tone(v,{freq:4200,to:3900,dur:.04,delay:i*.07,type:'sine',gain:.16});},
     smash:(v)=>{noise(v,{dur:.45,gain:.45,filter:'lowpass',freq:900,to:150});tone(v,{freq:120,to:50,dur:.35,type:'square',gain:.18});for(let i=0;i<4;i++)noise(v,{dur:.05,delay:.08+i*.06,gain:.15,freq:2200-i*300,q:4});},
     glowbug:(v)=>{notes(v,[[1568,0,.06],[2093,.05,.08],[2637,.1,.22]],{type:'sine',gain:.22});tone(v,{freq:3136,delay:.1,dur:.3,type:'sine',gain:.06,wobble:40,wobbleRate:14});},
-    click:(v)=>tone(v,{freq:900,to:700,dur:.05,type:'sine',gain:.12})
+    click:(v)=>tone(v,{freq:900,to:700,dur:.05,type:'sine',gain:.12}),
+    // A crawl: the faintest brush of leaves.
+    crawl:(v)=>{noise(v,{dur:.12,gain:.05,filter:'bandpass',freq:2400,to:1600,q:.8,attack:.03});}
   };
+  // Loudness trims, measured by rendering every sound offline (EscapeAudio.measure) and bringing
+  // the loudest and quietest toward the middle; 1 leaves a sound as it is.
+  // Measured in Chromium (dB RMS over the loudest 100 ms): rewards near -17, danger tells near
+  // -27 so a hunter's warning is never lost under the music, footsteps and a crawl left soft.
+  const TRIM={maze:.62,won:.86,snap:1.41,charge:1.78,sting:2.24,buzz:1.78,hiss:1.41,dive:1.6,clash:2.5,rumble:2.5,skitter:3.16,scrape:3.16,flutter:2,rustle:1.6,clack:3.16,decoy:3.16,toss:2};
   // Each recipe is rendered once to a buffer offline and replayed from then on: one buffer
   // source instead of a fresh graph of oscillators, filters and LFOs per sound. Footsteps and
   // other noisy sounds keep three takes and a slight pitch drift so repeats never sound stamped.
@@ -117,10 +124,12 @@
   // Cut the silent tail so short sounds free their voice quickly.
   function trim(buffer){const data=buffer.getChannelData(0);let end=data.length;while(end>1&&Math.abs(data[end-1])<1e-4)end--;
     const out=new AudioBuffer({length:Math.max(1,end),numberOfChannels:1,sampleRate:buffer.sampleRate});out.copyToChannel(data.subarray(0,Math.max(1,end)),0);return out;}
-  function replay(ctx,buffers,volume,varied){
+  function replay(ctx,buffers,volume,varied,pan=0){
     const src=ctx.createBufferSource(),amp=ctx.createGain();src.buffer=buffers[Math.floor(Math.random()*buffers.length)];
-    if(varied)src.playbackRate.value=.94+Math.random()*.12;amp.gain.value=volume;src.connect(amp);amp.connect(master);src.start();
-    const voice={src,ends:ctx.currentTime+src.buffer.duration};active.push(voice);src.onended=()=>{src.disconnect();amp.disconnect();const i=active.indexOf(voice);if(i>=0)active.splice(i,1);};
+    if(varied)src.playbackRate.value=.94+Math.random()*.12;amp.gain.value=volume;src.connect(amp);
+    // A sound from off to one side comes from that side.
+    const panner=pan&&ctx.createStereoPanner?ctx.createStereoPanner():null;if(panner){panner.pan.value=Math.max(-1,Math.min(1,pan));amp.connect(panner);panner.connect(master);}else amp.connect(master);src.start();
+    const voice={src,ends:ctx.currentTime+src.buffer.duration};active.push(voice);src.onended=()=>{src.disconnect();amp.disconnect();panner?.disconnect();const i=active.indexOf(voice);if(i>=0)active.splice(i,1);};
   }
   function play(ctx,name,volume=.25,options={}){
     const recipe=recipes[name];if(!recipe||!ctx||volume<=0)return false;
@@ -131,11 +140,21 @@
       // Too many voices at once: footsteps give way first, then the oldest sound stops.
       for(let i=active.length-1;i>=0;i--)if(active[i].ends<now)active.splice(i,1);
       if(active.length>=MAX_VOICES){if(name==='step'||name==='paddle')return false;const oldest=active.shift();try{oldest.src?.stop();}catch(_){}}
-      const level=Math.min(1,volume*1.6),buffers=cache.get(key);
-      if(buffers&&ctx.createBufferSource)replay(ctx,buffers,level,VARIED.has(name));else{recipe(level,options);active.push({src:null,ends:now+.6});render(ctx,name,options,key);}
+      const level=Math.min(1,volume*1.6*(options.gain??1)*(TRIM[name]??1)),buffers=cache.get(key);
+      if(buffers&&ctx.createBufferSource)replay(ctx,buffers,level,VARIED.has(name),options.pan||0);else{recipe(level,options);active.push({src:null,ends:now+.6});render(ctx,name,options,key);}
       return true;
     }catch(_){return false;}
   }
-  root.EscapeAudio={play,recipes:Object.keys(recipes),cached:()=>cache.size,reset:()=>{cache.clear();lastPlayed.clear();active.length=0;}};
+  // Renders one sound offline and reports its loudness (RMS over the loudest 100 ms, and peak).
+  function measure(name,options={}){
+    const Offline=root.OfflineAudioContext||root.webkitOfflineAudioContext;if(!Offline||!recipes[name])return Promise.resolve(null);
+    const rate=44100,off=new Offline(1,Math.ceil(rate*1.6),rate),saved=[context,master,noiseBuffer];
+    if(!noiseBuffer){noiseBuffer=off.createBuffer(1,rate,rate);const d=noiseBuffer.getChannelData(0);let seed=7;for(let i=0;i<d.length;i++){seed=(seed*16807)%2147483647;d[i]=seed/1073741823.5-1;}}
+    try{context=off;master=off.createGain();master.connect(off.destination);recipes[name](1,options);}finally{[context,master]=saved;}
+    return off.startRendering().then(b=>{const d=b.getChannelData(0),win=Math.floor(rate*.1);let peak=0,best=0,sum=0;
+      for(let i=0;i<d.length;i++){const v=d[i]*d[i];sum+=v;if(i>=win)sum-=d[i-win]*d[i-win];if(sum>best)best=sum;if(Math.abs(d[i])>peak)peak=Math.abs(d[i]);}
+      return {name,rms:Math.sqrt(best/win),peak};});
+  }
+  root.EscapeAudio={play,measure,TRIM,recipes:Object.keys(recipes),cached:()=>cache.size,reset:()=>{cache.clear();lastPlayed.clear();active.length=0;}};
   if(typeof module!=='undefined'&&module.exports)module.exports=root.EscapeAudio;
 })(typeof globalThis!=='undefined'?globalThis:this);

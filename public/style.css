@@ -413,3 +413,8 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .builder-sky input,.builder-hint textarea,.builder-inspector input:not([type=checkbox]) { background:#21443f; color:#e4edd6; border:1px solid #789575; border-radius:6px; padding:3px 6px; font:inherit; }
 .builder-sky input[type=number] { width:62px; }
 .builder-hint { display:flex; gap:8px; align-items:flex-start; font-size:.85rem; } .builder-hint textarea { flex:1; min-width:240px; }
+
+/* Volume sliders, under the Volume button. */
+.volume-panel{flex-direction:column;gap:6px;padding:8px 10px;border-radius:10px;background:rgba(12,30,30,.94);border:1px solid #4f7a66;font-size:.8rem}
+.volume-panel label{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.volume-panel input{width:120px;accent-color:#b6dda0}

@@ -1,0 +1,124 @@
+// Ambience: a soundscape under the music for every area. Each one is a bed or two of shaped noise
+// (a breeze, a stream, surf, rain, a cave's low rumble, steam's hiss) and calls that come now and
+// then (birdsong, frogs, drips, thunder, ice creaking), all synthesised, so there are no files.
+// The scene picks a scape and a level; beds crossfade when the scape changes.
+(function(root){
+  // beds: [kind, level]; calls: [kind, [min s, max s] between, level].
+  const SCAPES={
+    meadow:{beds:[['breeze',.5]],calls:[['bird',[3,7],.5],['cricket',[7,13],.22]]},
+    garden:{beds:[['breeze',.4]],calls:[['bird',[3,6],.45],['bee',[8,14],.3]]},
+    river:{beds:[['stream',.6]],calls:[['frog',[3,7],.5],['bird',[8,14],.3]]},
+    ruins:{beds:[['wind',.4]],calls:[['drip',[4,9],.35],['crow',[10,18],.3]]},
+    quarry:{beds:[['wind',.5]],calls:[['pebbles',[5,10],.4],['drip',[6,12],.3]]},
+    desert:{beds:[['hotwind',.5]],calls:[['rattle',[8,15],.3],['hawkcry',[12,22],.25]]},
+    marsh:{beds:[['stream',.35],['insects',.25]],calls:[['frog',[2,5],.55],['owl',[12,20],.3]]},
+    jungle:{beds:[['insects',.4],['rain',.18]],calls:[['bird',[2,5],.45],['frog',[6,11],.3]]},
+    glow:{beds:[['cave',.5]],calls:[['drip',[2,5],.45],['shimmer',[6,12],.3]]},
+    orchard:{beds:[['breeze',.45]],calls:[['bird',[3,6],.45],['bee',[6,12],.35]]},
+    coast:{beds:[['surf',.6]],calls:[['gull',[5,10],.4]]},
+    hollow:{beds:[['wind',.35]],calls:[['creak',[5,10],.4],['owl',[10,18],.35]]},
+    lantern:{beds:[['insects',.25],['stream',.25]],calls:[['owl',[6,12],.4],['frog',[5,9],.35]]},
+    rooftops:{beds:[['hotwind',.35]],calls:[['bird',[5,10],.35],['hawkcry',[10,18],.3]]},
+    ants:{beds:[['hotwind',.3],['scuttle',.3]],calls:[['click',[2,5],.3]]},
+    frost:{beds:[['icewind',.5]],calls:[['creak',[6,12],.35],['tinkle',[4,8],.35]]},
+    vents:{beds:[['hiss',.4],['hum',.35]],calls:[['clank',[4,9],.4],['bubble',[5,10],.3]]},
+    grotto:{beds:[['cave',.55]],calls:[['drip',[2,4],.45],['bubble',[6,12],.3]]},
+    storm:{beds:[['rain',.5],['wind',.35]],calls:[['thunder',[9,18],.6]]},
+    tide:{beds:[['surf',.5]],calls:[['bubble',[4,8],.3],['gull',[8,16],.3]]},
+    home:{beds:[['breeze',.45]],calls:[['bird',[3,6],.5],['cricket',[8,14],.25]]},
+    gilded:{beds:[['cave',.35]],calls:[['tinkle',[3,6],.4],['shimmer',[6,10],.35]]},
+    finale:{beds:[['breeze',.4]],calls:[['bird',[2,5],.5],['shimmer',[10,16],.25]]},
+    'secret:star-garden':{beds:[['breeze',.25]],calls:[['shimmer',[2,5],.45],['cricket',[6,10],.2]]},
+    'secret:cloud-nest':{beds:[['icewind',.25]],calls:[['shimmer',[3,6],.35],['bird',[5,9],.35]]},
+    'secret:mossy-well':{beds:[['cave',.45]],calls:[['drip',[1.5,4],.5]]},
+    'secret:challenge-shrine':{beds:[['wind',.3]],calls:[['chime',[5,9],.4]]},
+    'secret:bestiary-grove':{beds:[['insects',.3],['breeze',.3]],calls:[['bird',[2,5],.45],['frog',[6,10],.3]]},
+    'secret:ice-cave':{beds:[['icewind',.4]],calls:[['tinkle',[2,5],.4],['creak',[7,12],.3]]},
+    'secret:sunken-wreck':{beds:[['surf',.35],['cave',.3]],calls:[['creak',[4,8],.4],['bubble',[3,6],.35]]}
+  };
+  // How each bed is shaped: a noise filter, and a slow swell (rate in Hz, depth 0–1).
+  const BEDS={
+    breeze:{filter:'bandpass',freq:600,q:.5,rate:.12,depth:.5,gain:.5},
+    wind:{filter:'bandpass',freq:380,q:.8,rate:.08,depth:.7,gain:.7},
+    hotwind:{filter:'bandpass',freq:900,q:.4,rate:.1,depth:.5,gain:.4},
+    icewind:{filter:'bandpass',freq:1800,q:2.2,rate:.15,depth:.6,gain:.45},
+    stream:{filter:'bandpass',freq:2600,q:.35,rate:1.3,depth:.15,gain:.35},
+    surf:{filter:'lowpass',freq:700,q:.5,rate:.09,depth:.9,gain:.9},
+    rain:{filter:'highpass',freq:3000,q:.5,rate:.05,depth:.1,gain:.3},
+    insects:{filter:'bandpass',freq:5600,q:6,rate:7,depth:.4,gain:.35},
+    cave:{filter:'lowpass',freq:240,q:.7,rate:.06,depth:.3,gain:1.2},
+    hiss:{filter:'highpass',freq:4200,q:.5,rate:.3,depth:.5,gain:.25},
+    scuttle:{filter:'bandpass',freq:3000,q:3,rate:11,depth:.6,gain:.35},
+    hum:{tone:[55,110],gain:.25}
+  };
+  const rand=(a,b)=>a+Math.random()*(b-a);
+  class EscapeAmbience{
+    constructor(){this.ctx=null;this.master=null;this.beds=[];this.calls=[];this.key=null;this.volume=0;this.noise=null;}
+    start(ctx){
+      if(this.ctx||!ctx?.createGain)return Boolean(this.ctx);
+      this.ctx=ctx;this.master=ctx.createGain();this.master.gain.value=0;this.master.connect(ctx.destination);
+      const n=ctx.createBuffer(1,ctx.sampleRate*4,ctx.sampleRate),d=n.getChannelData(0);let seed=11;for(let i=0;i<d.length;i++){seed=(seed*16807)%2147483647;d[i]=seed/1073741823.5-1;}
+      this.noise=n;return true;
+    }
+    // Switch soundscapes: the old beds fade out over two seconds as the new ones fade in.
+    setScape(key){
+      if(!this.ctx||key===this.key)return false;this.key=key;const scape=SCAPES[key]||null,t=this.ctx.currentTime;
+      for(const b of this.beds){b.gain.gain.cancelScheduledValues(t);b.gain.gain.setValueAtTime(b.gain.gain.value,t);b.gain.gain.linearRampToValueAtTime(0,t+2);for(const s of b.sources)try{s.stop(t+2.1);}catch(_){}}
+      this.beds=[];this.calls=(scape?.calls||[]).map(([kind,every,level])=>({kind,every,level,next:t+rand(1,every[1])}));
+      for(const [kind,level] of scape?.beds||[])this.beds.push(this.bed(kind,level,t));
+      return true;
+    }
+    bed(kind,level,t){
+      const spec=BEDS[kind],ctx=this.ctx,gain=ctx.createGain(),sources=[];gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(level*spec.gain,t+2);gain.connect(this.master);
+      if(spec.tone){for(const f of spec.tone){const o=ctx.createOscillator();o.frequency.value=f;o.connect(gain);o.start(t);sources.push(o);}return {gain,sources};}
+      const src=ctx.createBufferSource();src.buffer=this.noise;src.loop=true;src.playbackRate.value=rand(.97,1.03);
+      const filter=ctx.createBiquadFilter();filter.type=spec.filter;filter.frequency.value=spec.freq;filter.Q.value=spec.q;
+      // The swell: a slow oscillator nudging the level up and down around its middle.
+      const swell=ctx.createGain(),lfo=ctx.createOscillator(),depth=ctx.createGain();swell.gain.value=1-spec.depth/2;lfo.frequency.value=spec.rate*rand(.85,1.15);depth.gain.value=spec.depth/2;
+      lfo.connect(depth);depth.connect(swell.gain);src.connect(filter);filter.connect(swell);swell.connect(gain);src.start(t,Math.random()*3);lfo.start(t);sources.push(src,lfo);
+      return {gain,sources};
+    }
+    // Level 0–1 (the game's sound volume, ducked during chases and when paused).
+    setVolume(volume){if(!this.master||Math.abs(volume-this.volume)<.005)return;this.volume=volume;const t=this.ctx.currentTime;this.master.gain.cancelScheduledValues(t);this.master.gain.setTargetAtTime(volume,t,.4);}
+    // Calls due now play, each panned a little to one side.
+    tick(){
+      if(!this.ctx||this.volume<=0.001)return;const t=this.ctx.currentTime;
+      for(const c of this.calls)if(t>=c.next){c.next=t+rand(...c.every);this.call(c.kind,c.level,rand(-.7,.7));}
+    }
+    call(kind,level,pan){
+      const ctx=this.ctx,t=ctx.currentTime+.02,out=ctx.createGain(),panner=ctx.createStereoPanner?ctx.createStereoPanner():null;out.gain.value=level;
+      if(panner){panner.pan.value=pan;out.connect(panner);panner.connect(this.master);}else out.connect(this.master);
+      const tone=(freq,to,start,dur,{type='sine',gain=.3,attack=.01,vib=0}={})=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,t+start);if(to)o.frequency.exponentialRampToValueAtTime(to,t+start+dur);
+        if(vib){const l=ctx.createOscillator(),d=ctx.createGain();l.frequency.value=vib;d.gain.value=freq*.03;l.connect(d);d.connect(o.frequency);l.start(t+start);l.stop(t+start+dur+.05);}
+        g.gain.setValueAtTime(.0001,t+start);g.gain.exponentialRampToValueAtTime(gain,t+start+attack);g.gain.exponentialRampToValueAtTime(.0001,t+start+dur);o.connect(g);g.connect(out);o.start(t+start);o.stop(t+start+dur+.05);};
+      const hush=(freq,start,dur,{filter='bandpass',q=1,gain=.3,to=null,attack=.005}={})=>{const s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();s.buffer=this.noise;f.type=filter;f.Q.value=q;f.frequency.setValueAtTime(freq,t+start);if(to)f.frequency.exponentialRampToValueAtTime(to,t+start+dur);
+        g.gain.setValueAtTime(.0001,t+start);g.gain.exponentialRampToValueAtTime(gain,t+start+attack);g.gain.exponentialRampToValueAtTime(.0001,t+start+dur);s.connect(f);f.connect(g);g.connect(out);s.start(t+start,Math.random()*3);s.stop(t+start+dur+.05);};
+      const R=Math.random;
+      switch(kind){
+        case 'bird':{const n=2+Math.floor(R()*3),base=rand(2300,3200);for(let i=0;i<n;i++)tone(base*rand(.9,1.15),base*rand(1.2,1.5),i*.13,.09,{gain:.18});break;}
+        case 'cricket':for(let k=0;k<2;k++)for(let i=0;i<4;i++)tone(4500,4300,k*.45+i*.05,.035,{gain:.08});break;
+        case 'frog':for(let i=0;i<2;i++)tone(rand(95,130),80,i*.32,.22,{type:'square',gain:.07,vib:24});break;
+        case 'drip':tone(rand(1500,2100),700,0,.09,{gain:.22});hush(4000,0,.03,{gain:.04});break;
+        case 'crow':for(let i=0;i<2;i++)tone(620,430,i*.32,.24,{type:'sawtooth',gain:.05});break;
+        case 'pebbles':for(let i=0;i<3+Math.floor(R()*3);i++)hush(rand(2500,4000),i*rand(.06,.12),.03,{q:5,gain:.18});break;
+        case 'rattle':hush(5200,0,.6,{q:4,gain:.08,attack:.05});break;
+        case 'hawkcry':tone(2300,1500,0,.65,{gain:.08,vib:9,attack:.03});break;
+        case 'owl':tone(410,390,0,.32,{gain:.18,attack:.05});tone(360,330,.45,.5,{gain:.16,attack:.06});break;
+        case 'shimmer':{const scale=[1568,1760,2093,2349,2637,3136];for(let i=0;i<4;i++)tone(scale[Math.floor(R()*scale.length)],null,i*.12,.5,{gain:.05,attack:.02});break;}
+        case 'gull':for(let i=0;i<3;i++)tone(1350,950,i*.18,.14,{type:'sawtooth',gain:.035});break;
+        case 'creak':tone(rand(80,100),rand(130,160),0,.7,{type:'sawtooth',gain:.05,attack:.1});break;
+        case 'click':for(let i=0;i<3;i++)hush(6000,i*.05,.015,{q:8,gain:.12});break;
+        case 'tinkle':for(let i=0;i<3;i++)tone(rand(3000,5200),null,i*rand(.08,.18),.25,{gain:.05});break;
+        case 'clank':tone(300,290,0,.25,{type:'square',gain:.05});tone(437,420,0,.2,{type:'square',gain:.04});hush(1800,0,.08,{q:3,gain:.08});break;
+        case 'bubble':for(let i=0;i<3;i++)tone(rand(250,400),rand(700,1000),i*rand(.06,.12),.06,{gain:.12});break;
+        case 'thunder':hush(300,0,2.6,{filter:'lowpass',to:70,gain:.6,attack:.12});hush(900,.05,.4,{filter:'lowpass',to:200,gain:.25});break;
+        case 'bee':tone(220,240,0,.7,{type:'sawtooth',gain:.03,vib:30,attack:.08});break;
+        case 'chime':tone(880,null,0,2.2,{gain:.08,attack:.01});tone(1320,null,.02,1.8,{gain:.05});tone(1760,null,.04,1.2,{gain:.03});break;
+      }
+      setTimeout(()=>{try{out.disconnect();panner?.disconnect();}catch(_){}},4000);
+    }
+  }
+  Object.assign(EscapeAmbience,{SCAPES,BEDS});
+  root.EscapeAmbience=EscapeAmbience;
+  if(typeof module!=='undefined'&&module.exports)module.exports={EscapeAmbience};
+})(typeof globalThis!=='undefined'?globalThis:this);
