@@ -3,7 +3,7 @@ const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {createServer}=require('../../server/index.cjs');const {createPasskey}=require('./soft-passkey.cjs');
 async function serve(t,options={}){
   const dataDir=options.dataDir||fs.mkdtempSync(path.join(os.tmpdir(),'sally-shelf-'));const logs=[];
-  const server=createServer({dataDir,log:line=>logs.push(line),...options});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+  const server=createServer({dataDir,log:line=>logs.push(line),seedFile:path.join(dataDir,'no-seed.json'),...options});await new Promise(r=>server.listen(0,'127.0.0.1',r));
   t.after(()=>{server.close();if(!options.dataDir)fs.rmSync(dataDir,{recursive:true,force:true});});
   const base='http://127.0.0.1:'+server.address().port;
   return {base,dataDir,server,logs,origin:base};
