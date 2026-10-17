@@ -48,14 +48,15 @@ let escapeResultShown=false;
 let escapeOptions={};
 let escapeMapOpen=false;
 const escapeProgress=new EscapeProgress(escapeStore);
-// Test mode: Ctrl+Alt+U (or ?unlock=all in the address) opens every escape and challenge.
+// Test mode opens every escape and challenge; it is switched on and off in the Admin panel,
+// behind the admin passkey.
 // It is remembered in this browser until toggled off, and never changes saved records.
 const ESCAPE_TEST_KEY='sally-escape-unlock-all';
-try{escapeProgress.unlockAll=localStorage.getItem(ESCAPE_TEST_KEY)==='1'||/[?&]unlock=all\b/.test(location.search);}catch(_){}
+try{escapeProgress.unlockAll=localStorage.getItem(ESCAPE_TEST_KEY)==='1';}catch(_){}
 function toggleEscapeTestUnlock(){
   escapeProgress.unlockAll=!escapeProgress.unlockAll;
   try{if(escapeProgress.unlockAll)localStorage.setItem(ESCAPE_TEST_KEY,'1');else localStorage.removeItem(ESCAPE_TEST_KEY);}catch(_){}
-  if(typeof escapeWorld!=='undefined'&&escapeWorld){escapeWorld.refreshRegions();escapeWorldHudSignature='';renderEscapeWorldTotals();escapeWorldToast(escapeProgress.unlockAll?'Test mode: every escape and challenge is open (Ctrl+Alt+U to turn off).':'Test mode off.');}
+  if(typeof escapeWorld!=='undefined'&&escapeWorld){escapeWorld.refreshRegions();escapeWorldHudSignature='';renderEscapeWorldTotals();escapeWorldToast(escapeProgress.unlockAll?'Test mode: every escape and challenge is open (turn it off in Admin).':'Test mode off.');}
   escapeSound('click');return escapeProgress.unlockAll;
 }
 

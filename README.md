@@ -30,8 +30,8 @@ first draft; levels can be playtested, shared as text or published to Community 
 escapes and anonymous player data (`docs/PLAYDATA.md`). The first start prints a one-time setup code
 in the server log for creating the first passkey; `PUBLIC_ORIGIN` names the address passkeys belong
 to. The server keeps passkeys, published levels and player data in `DATA_DIR` (`/data` in the image;
-`compose.yaml` mounts a volume there). For testing, **Ctrl+Alt+U** (or `?unlock=all`) toggles a test
-mode that opens every escape without changing saved records.
+`compose.yaml` mounts a volume there). For testing, signed-in admins can turn on a test mode in
+the Admin panel that opens every escape without changing saved records.
 
 **Controls.** WASD or arrows, Shift run, C crawl, Q pebble (hold to throw further), L glow mushroom,
 Z spore pouch, E burrow, R tongue, F seed, X camouflage, Space look back, G map, H hint, M mute, Esc
