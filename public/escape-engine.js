@@ -32,7 +32,7 @@
       this.key=centre(...this.level.key);this.exit=centre(...this.level.exit);this.hasKey=false;
       this.loot=this.level.loot.map(([x,y,value])=>({...centre(x,y),value,taken:false}));
       this.treasure=0;this.totalTreasure=this.loot.reduce((n,p)=>n+p.value,0);
-      this.burrows=this.level.burrows;this.decoys=this.level.pebbles;this.decoy=null;this.decoyReadyAt=0;this.dug=[];
+      this.burrows=this.level.burrows;this.decoys=this.level.pebbles;this.decoy=null;this.decoyReadyAt=0;this.glows=this.level.glows||0;this.glowsUsed=0;this.flights=[];this.lights=[];this.dug=[];
       this.seeds=this.level.seeds||0;this.seedGrowth=[];this.seedReadyAt=0;this.seedsUsed=0;
       this.tongues=this.level.tongues||0;this.tongueRange=3;this.tongue=null;this.tongueReadyAt=0;this.tonguesUsed=0;this.keyByTongue=false;
       this.elapsed=0;this.accumulator=0;this.status='playing';this.paused=false;this.result=null;
@@ -147,6 +147,9 @@
         const point=centre(x,y),d=distance(p,point);
         const lit=!this.level.dark||d<=this.level.sightRadius||(this.level.glowPlants||[]).some(([x,y])=>distance(point,centre(x,y))<=1.5&&this.lineVisible(centre(x,y),point))||this.glowTrail.some(t=>t.expires>this.elapsed&&distance(point,t)<=.75&&this.lineVisible(t,point));
         if(d<=r&&lit&&this.lineVisible(p,point)&&(!this.level.gaze||d<.8||((point.x-p.x)*p.facing.x+(point.y-p.y)*p.facing.y)/d>=.5)){const id=x+','+y;this.visible.add(id);this.discovered.add(id);}
+      }
+      for(const l of this.lights)for(let y=Math.max(0,Math.floor(l.y-l.r));y<=Math.min(this.height-1,Math.ceil(l.y+l.r));y++)for(let x=Math.max(0,Math.floor(l.x-l.r));x<=Math.min(this.width-1,Math.ceil(l.x+l.r));x++){
+        const point=centre(x,y);if(distance(point,l)<=l.r&&this.lineVisible(l,point)){const id=x+','+y;this.visible.add(id);this.discovered.add(id);}
       }
     }
     activateSwitches(){
@@ -301,8 +304,63 @@
       this.burrows--;this.dug.push({x:wx,y:wy});this.invulnerableUntil=this.elapsed+0.35;
       this.notice('Under the wall. Keep moving!','burrow');return true;
     }
-    throwDecoy(){
+    // Aimed throws (a pebble or a glow mushroom, held to throw further): the throw flies along
+    // the aim, banks off walls (twice at most, losing a little each time) and lands where it
+    // runs out. A pebble clacks at each bounce, so hunters hear it there first, then where it
+    // lands; a glow mushroom lights the ground where it lands. Gaps and water pass beneath it.
+    throwAim(){const p=this.player,a=p.throwAim||p.tongueAim||p.facing,l=Math.hypot(a.x,a.y)||1;return {x:a.x/l,y:a.y/l};}
+    planThrow(power=0){
+      const p=this.player,v=this.throwAim(),step=.05,points=[copy(p)],bounces=[];let pos=copy(p),left=2.6+Math.max(0,Math.min(1,power))*3.4;
+      const solid=(x,y)=>!this.sightFloor(x,y);
+      while(left>0){
+        const n={x:pos.x+v.x*step,y:pos.y+v.y*step},tx=Math.floor(n.x),ty=Math.floor(n.y),ox=Math.floor(pos.x),oy=Math.floor(pos.y);
+        if(solid(tx,ty)||(tx!==ox&&ty!==oy&&solid(tx,oy)&&solid(ox,ty))){
+          if(bounces.length>=2)break;
+          const flipX=tx!==ox&&solid(tx,oy),flipY=ty!==oy&&solid(ox,ty);
+          if(flipX)v.x=-v.x;if(flipY)v.y=-v.y;if(!flipX&&!flipY){v.x=-v.x;v.y=-v.y;}
+          bounces.push(copy(pos));points.push(copy(pos));left*=.75;continue;
+        }
+        pos=n;left-=step;
+      }
+      // It cannot come to rest over a gap or in deep water: it rolls back to the last good ground.
+      let land=copy(pos);for(let i=0;i<30&&!this.actorFloor(Math.floor(land.x),Math.floor(land.y));i++){land={x:land.x-v.x*step,y:land.y-v.y*step};}
+      points.push(land);return {points,bounces,land};
+    }
+    launch(kind,power){
+      const plan=this.planThrow(power);if(distance(this.player,plan.land)<.5&&!plan.bounces.length){this.notice('Too close to a wall to throw.');return false;}
+      let length=0;const legs=plan.points.slice(1).map((q,i)=>{const from=plan.points[i],d=distance(from,q);length+=d;return {from,to:q,end:length};});
+      this.flights.push({kind,legs,bounces:plan.bounces.map((b,i)=>({...b,at:legs[i].end,done:false})),land:plan.land,start:this.elapsed,speed:9,length});
+      this.player.throwAim=null;this.events.push('toss');return true;
+    }
+    throwGlow(power=0){
       if(!this.active())return false;
+      if(!this.glows){this.notice(this.level.glows?'No glow mushrooms left.':'No glow mushrooms here.');return false;}
+      if(this.elapsed<this.decoyReadyAt)return false;
+      if(!this.launch('glow',power))return false;
+      this.glows--;this.glowsUsed++;this.decoyReadyAt=this.elapsed+.8;this.notice('Glow mushroom thrown.');return true;
+    }
+    updateFlights(){
+      for(const f of this.flights){
+        const travelled=(this.elapsed-f.start)*f.speed;
+        for(const b of f.bounces)if(!b.done&&travelled>=b.at){b.done=true;this.events.push('clack');
+          if(f.kind==='pebble')this.decoy={x:b.x,y:b.y,expires:this.elapsed+1.2,noticed:false,echo:true};}
+        f.pos=null;for(const leg of f.legs)if(travelled<=leg.end){const t=1-(leg.end-travelled)/Math.max(1e-6,distance(leg.from,leg.to));f.pos={x:leg.from.x+(leg.to.x-leg.from.x)*t,y:leg.from.y+(leg.to.y-leg.from.y)*t};break;}
+        if(travelled>=f.length){f.done=true;
+          if(f.kind==='pebble'){this.decoy={...f.land,expires:this.elapsed+4,noticed:false};this.events.push('decoy');}
+          else{this.lights.push({...f.land,born:this.elapsed,until:this.elapsed+12,r:2.5});this.events.push('glow');this.updateVisibility(true);}}
+      }
+      this.flights=this.flights.filter(f=>!f.done);
+      if(this.lights.length)this.lights=this.lights.filter(l=>l.until>this.elapsed);
+    }
+    // Sally standing in a glow mushroom's light is lit up like a moth's: leaves stop hiding her.
+    inLight(q=this.player){return this.lights.some(l=>distance(q,l)<=l.r&&this.lineVisible(l,q));}
+    throwDecoy(power){
+      if(!this.active())return false;
+      if(typeof power==='number'){
+        if(this.decoys===0){this.notice('No pebbles left. Use cover.');return false;}
+        if(this.elapsed<this.decoyReadyAt||!this.launch('pebble',power))return false;
+        this.decoys--;this.decoyReadyAt=this.elapsed+0.8;this.notice('Pebble tossed. Watch for the guard\'s reaction.');return true;
+      }
       if(this.decoys===0){this.notice('No pebbles left. Use cover.');return false;}
       if(this.elapsed<this.decoyReadyAt)return false;
       const p=this.player,d=p.facing,start=centre(Math.floor(p.x),Math.floor(p.y));let target=start;
@@ -476,6 +534,8 @@
       this.noteMet();
       // A tangle vine's grip stops Sally moving until it lets go.
       if(this.elapsed<this.heldUntil)input={};
+      // While a throw is held, the stick or keys aim it and Sally stands still.
+      if(input.aiming){const l=Math.hypot(input.x||0,input.y||0);if(l){this.player.throwAim={x:input.x/l,y:input.y/l};this.player.facing=Math.abs(input.x)>=Math.abs(input.y)?{x:Math.sign(input.x),y:0}:{x:0,y:Math.sign(input.y)};}input={};}
       // In the air off a bounce cap Sally follows her arc and cannot steer.
       if(this.player.flight){const f=this.player.flight,t=Math.min(1,(this.elapsed-f.start)/f.dur);this.player.x=f.from.x+(f.to.x-f.from.x)*t;this.player.y=f.from.y+(f.to.y-f.from.y)*t;input={};if(t>=1){this.player.flight=null;this.events.push('hop');}}
       const p=this.player,old=copy(p),length=Math.hypot(input.x||0,input.y||0);
@@ -507,6 +567,7 @@
         if(p.moving&&this.elapsed>=this.trailAt){this.glowTrail.push({...copy(p),born:this.elapsed,expires:this.elapsed+8});this.trailAt=this.elapsed+.18;}
       }
       this.activateSwitches();this.reactToMaze('enter');this.updateVisibility();
+      if(this.flights.length||this.lights.length)this.updateFlights();
       if(this.decoy&&this.decoy.expires<=this.elapsed)this.decoy=null;
       this.updateRivalries();for(const hunter of this.hunters)this.updateHunter(dt,hunter);this.updateRivalries();
       this.motion.update(dt,this);this.checkTailTouch();
@@ -553,7 +614,7 @@
     // A moth's glow lights Sally up: leaves no longer hide her and hunters see further.
     lit(){const p=this.player;return this.hunters.some(m=>m.kind==='moth'&&distance(m,p)<=2.6&&this.clear(m,p,true));}
     seesPlayer(h=this.hunter){
-      const p=this.player,d=distance(p,h),lit=this.hunters.length>1&&this.lit();
+      const p=this.player,d=distance(p,h),lit=this.hunters.length>1&&this.lit()||this.lights.length>0&&this.inLight(p);
       if(this.clouds.length&&this.inCloud(h))return false;
       if(this.elapsed<this.flashUntil&&d<=9&&this.clear(h,p,true)&&!(this.clouds.length&&this.inCloud(p)))return true;
       if((p.hidden&&!lit)||d>(lit?6.5:4.5)||!this.clear(h,p,true))return false;

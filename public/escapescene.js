@@ -84,6 +84,7 @@ function escapeAbilityIcon(kind){
   const art={
     burrow:'<path d="M4 21Q4 12 16 12T28 21" fill="#9b7859"/><ellipse cx="16" cy="21" rx="9" ry="4" fill="#172a2e"/><path d="M10 5l3 4m9-4-3 4m-3-7v6"/>',
     decoy:'<path d="M5 22l3-10 10-5 8 8-2 10-12 2Z" fill="#a9c4cd"/><path d="m8 12 9 3 1-8m-1 8 7 10" stroke="#617e8b"/>',
+    glow:'<circle cx="16" cy="14" r="12" fill="#6fe8d4" opacity=".25" stroke="none"/><path d="M6 15Q16 2 26 15Z" fill="#8ff0dc" stroke="#c9fff2"/><path d="M14 15v11h4V15" fill="#d9f5e4" stroke="#a8d8c4"/><circle cx="12" cy="11" r="1.5" fill="#fff" stroke="none"/><circle cx="19" cy="10" r="1.2" fill="#fff" stroke="none"/>',
     tongue:'<path d="M5 11h13a6 6 0 0 1 0 12h-6a3 3 0 0 1 0-6h6" stroke="#f5a0bb" stroke-width="5"/><path d="m5 7 4 4-4 4" stroke="#ffdfcd"/>',
     seed:'<path d="M16 27V13m0 7C5 20 4 11 5 7c8 0 12 6 11 13Zm0-5C16 6 22 4 28 5c0 7-5 11-12 10Z" fill="#a9d982" stroke="#c8efaa"/>',
     camo:'<path d="M5 22C3 10 14 4 28 5c0 14-7 23-18 20Z" fill="#8fbf80"/><path d="M7 25 23 10m-10 9-1-6m6 1 5 1" stroke="#355d46"/>',
@@ -100,7 +101,7 @@ function renderEscapeAbility(button,kind,label,key,left,total,ready=true,active=
   const description=label+(total===null?'':': '+left+' remaining')+(active?' · Active':!left&&total!==null?' · Empty':!ready?' · Recharging':'')+(key?' ['+key+']':'');
   const markup=escapeAbilityIcon(kind)+'<span class="escape-ability-name">'+label+'</span>'+(total===null?'<span class="escape-ability-state">'+(active?'Active':'Ready')+'</span>':escapeResourcePips(left,total))+(key?'<kbd>'+key+'</kbd>':'');
   if(button.innerHTML!==markup)button.innerHTML=markup;
-  const help={burrow:'Face a thin cracked wall to burrow through it.',decoy:'Face an open corridor to toss a distraction.',tongue:'Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.',seed:'Plant cover, brace an open doorway, or grow a marked vine crossing.',camo:'Blend into the ground while keeping still.',look:'Turn your gaze behind you briefly, even while moving.'};
+  const help={burrow:'Face a thin cracked wall to burrow through it.',decoy:'Hold to throw further; release to throw. While held, aim with the arrows or stick. Pebbles bank off walls and clack where they hit.',glow:'Hold to throw further; release to throw. It banks off walls and lights the ground where it lands for a while.',tongue:'Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.',seed:'Plant cover, brace an open doorway, or grow a marked vine crossing.',camo:'Blend into the ground while keeping still.',look:'Turn your gaze behind you briefly, even while moving.'};
   button.setAttribute('aria-label',description);button.title=description+'. '+help[kind];
   button.classList.toggle('escape-empty',total!==null&&!left&&!active);
   button.classList.toggle('escape-cooling',Boolean(left)&&!ready&&!active);
@@ -108,19 +109,25 @@ function renderEscapeAbility(button,kind,label,key,left,total,ready=true,active=
 }
 
 const ESCAPE_GLOWBUG_CHANCE=.25;
-// Once, on the first escape with something crawling helps against: gravel, or a creature that
-// hunts by ear or springs from close by.
+// One-time tips, each shown a few seconds into the first escape it helps in: crawling (gravel,
+// or a creature that hunts by ear or springs from close by), held throws (pebbles), and glow
+// mushrooms. One at a time, after any other message has cleared.
+const ESCAPE_TIPS=[
+  {key:'sally-escape-crawl-tip',when:g=>g.level.gravel?.length||g.hunters.some(h=>['fox','mole','cricket','scorpion','wasp','flytrap','mimic','gecko'].includes(h.kind)),
+    text:()=>mobile?'Hold Crawl to creep: slow, but silent, and slower to be spotted.':'Hold C to crawl: slow, but silent, and slower to be spotted.'},
+  {key:'sally-escape-throw-tip',when:g=>g.level.pebbles>0,
+    text:()=>mobile?'Hold Pebble to throw further and aim with the stick. Pebbles bank off walls.':'Hold Q to throw further; aim with the arrows while you hold. Pebbles bank off walls.'},
+  {key:'sally-escape-glow-tip',when:g=>g.level.glows>0,
+    text:()=>mobile?'Glow mushrooms: hold Glow, aim and let go to light up the dark for a while.':'Glow mushrooms: hold L, aim and let go to light up the dark for a while.'}
+];
+let escapeTipQueue=[];
 function escapeCrawlTip(g){
-  const KEY='sally-escape-crawl-tip';try{if(localStorage.getItem(KEY))return;}catch(_){return;}
-  if(!g.level.gravel?.length&&!g.hunters.some(h=>['fox','mole','cricket','scorpion','wasp','flytrap','mimic','gecko'].includes(h.kind)))return;
-  escapeCrawlTipPending=true;
+  escapeTipQueue=[];for(const tip of ESCAPE_TIPS){try{if(localStorage.getItem(tip.key))continue;}catch(_){return;}if(tip.when(g))escapeTipQueue.push(tip);}
 }
-// The tip waits a few seconds into the run and for any other message to clear first.
-let escapeCrawlTipPending=false;
 function tickEscapeCrawlTip(g){
-  if(!escapeCrawlTipPending||g.elapsed<3||g.messageUntil>g.elapsed||g.status!=='playing')return;
-  escapeCrawlTipPending=false;g.notice(mobile?'Hold Crawl to creep: slow, but silent, and slower to be spotted.':'Hold C to crawl: slow, but silent, and slower to be spotted.');g.messageUntil=g.elapsed+5;
-  try{localStorage.setItem('sally-escape-crawl-tip','1');}catch(_){}
+  if(!escapeTipQueue.length||g.elapsed<3||g.messageUntil>g.elapsed||g.status!=='playing')return;
+  const tip=escapeTipQueue.shift();g.notice(tip.text());g.messageUntil=g.elapsed+5;
+  try{localStorage.setItem(tip.key,'1');}catch(_){}
 }
 function startEscape(options={}){
   escapeAbandonRun();
@@ -128,7 +135,7 @@ function startEscape(options={}){
   // Now and then (about one escape in four, never in a challenge) glow bugs drift about as a bonus.
   if(options.glowbugs===undefined&&!options.challengeId&&!options.custom&&Math.random()<ESCAPE_GLOWBUG_CHANCE)options={...options,glowbugs:1+Math.floor(Math.random()*1e6)};
   startRun('escape');escapeGame=new EscapeAdventure(options.custom?{level:escapeBuildCustom(options.custom)}:options);escapeMetCount=0;escapeBestiaryNote=null;escapeCharacter=new SallyCharacter({reducedMotion:Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)});document.getElementById('escape-builder').style.display='none';escapeResultShown=false;escapeHudAt=-Infinity;
-  escapeCrawlTipPending=false;escapeCrawlTip(escapeGame);
+  escapeCrawlTip(escapeGame);
   escapeOptions=options.custom?{custom:options.custom,from:options.from||'builder'}:escapeGame.level.hidden?{hiddenId:escapeGame.level.id}:{levelId:escapeGame.level.id,challengeId:escapeGame.challenge?.id||null};
   gameState='escape';escapeLibraryOpen=false;document.getElementById('game-area').classList.remove('escape-world-open');mountEscapeChrome(true);
   document.getElementById('game-area').classList.toggle('escape-exploring',Boolean(escapeGame.level.explore));
@@ -139,12 +146,12 @@ function startEscape(options={}){
     <div class="escape-mission"><span id="escape-mission-name"></span><span id="escape-timer"></span></div>
     <div class="escape-inventory"><span id="escape-key">◇ Find the key</span><span id="escape-treasure">Treasure 0 / 10</span></div>
     <div class="escape-kit" role="group" aria-label="Sally’s abilities and breath"><div class="escape-breath"><span>Breath <kbd>Shift</kbd></span><div id="escape-stamina" role="progressbar" aria-label="Stamina" aria-valuemin="0" aria-valuemax="100"><i id="escape-stamina-fill"></i></div><div id="escape-warmth-row" style="display:none"><span>Warmth</span><div id="escape-warmth" role="progressbar" aria-label="Warmth" aria-valuemin="0" aria-valuemax="100"><i id="escape-warmth-fill"></i></div></div></div>
-    <div id="escape-tail" class="escape-tail-status" style="display:none" role="img"></div><div class="escape-actions"><button id="escape-burrow-action">Burrow <kbd>E</kbd></button><button id="escape-decoy-action">Toss pebble <kbd>Q</kbd></button><button id="escape-tongue-action" title="Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.">Tongue <kbd>R</kbd></button>
+    <div id="escape-tail" class="escape-tail-status" style="display:none" role="img"></div><div class="escape-actions"><button id="escape-burrow-action">Burrow <kbd>E</kbd></button><button id="escape-decoy-action">Toss pebble <kbd>Q</kbd></button><button id="escape-glow-action">Glow mushroom <kbd>L</kbd></button><button id="escape-tongue-action" title="Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.">Tongue <kbd>R</kbd></button>
     <button id="escape-seed-action" title="Plant on bare ground for cover, face an open doorway to brace it, or use a marked vine bank.">Seed <kbd>F</kbd></button><button id="escape-camo-action" title="Blend into the ground. You stay hidden while you keep still.">Camo <kbd>X</kbd></button><button id="escape-look-action" title="Turn your gaze behind you briefly, even while moving.">Look back <kbd>Space</kbd></button></div></div><p id="escape-objective">Find the golden key. Treasure is optional.</p><p id="escape-warning" role="status" aria-live="polite"></p>`;
   // p5 redraws synchronously on resize; the new HUD must exist first.
   const size=canvasDimensions();resizeCanvas(size.width,size.height,true);
   document.getElementById('escape-burrow-action').onclick=useEscapeBurrow;
-  document.getElementById('escape-decoy-action').onclick=useEscapeDecoy;
+  escapeBindCharge(document.getElementById('escape-decoy-action'),'pebble');escapeBindCharge(document.getElementById('escape-glow-action'),'glow');
   document.getElementById('escape-tongue-action').onclick=useEscapeTongue;
   document.getElementById('escape-look-action').onclick=useEscapeLook;
   document.getElementById('escape-seed-action').onclick=useEscapeSeed;
@@ -164,6 +171,36 @@ function leaveEscape(){
 }
 function useEscapeBurrow(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.burrow();renderEscapeHUD(true);}}
 function useEscapeDecoy(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.throwDecoy();renderEscapeHUD(true);}}
+// Held throws: press to start, hold to throw further (full power in 0.75 s), release to throw.
+// While held, the stick or arrows aim instead of walking, and a dotted line shows the flight.
+let escapeCharge=null;
+const ESCAPE_CHARGE_TIME=.75;
+function escapeChargePower(){return escapeCharge?Math.min(1,(millis()-escapeCharge.start)/1000/ESCAPE_CHARGE_TIME):0;}
+function startEscapeCharge(kind,source='key'){
+  if(gameState!=='escape'||paused||!escapeGame||escapeCharge)return;if(escapeIntroOpen){hideEscapeIntro();return;}
+  const g=escapeGame;if(!g.active())return;
+  if(kind==='pebble'&&!g.decoys){g.notice('No pebbles left. Use cover.');return;}
+  if(kind==='glow'&&!g.glows){g.notice(g.level.glows?'No glow mushrooms left.':'No glow mushrooms here.');return;}
+  if(g.elapsed<g.decoyReadyAt)return;
+  escapeCharge={kind,source,start:millis()};renderEscapeHUD(true);
+}
+function releaseEscapeCharge(kind){
+  if(!escapeCharge||(kind&&escapeCharge.kind!==kind))return;const c=escapeCharge,power=escapeChargePower();escapeCharge=null;
+  if(gameState==='escape'&&!paused&&escapeGame)c.kind==='glow'?escapeGame.throwGlow(power):escapeGame.throwDecoy(power);renderEscapeHUD(true);
+}
+function cancelEscapeCharge(){escapeCharge=null;}
+let escapeChargePointerAt=-1e9;
+function escapeBindCharge(button,kind){
+  // A click with no press and hold before it (a keyboard Enter, an assistive tap) is a quick throw.
+  button.onclick=()=>{if(millis()-escapeChargePointerAt<800||gameState!=='escape'||paused||!escapeGame)return;kind==='glow'?escapeGame.throwGlow(0):escapeGame.throwDecoy(0);renderEscapeHUD(true);};
+  button.addEventListener('pointerdown',e=>{e.preventDefault();escapeChargePointerAt=millis();unlockAudio?.();startEscapeCharge(kind,'pointer');button.setPointerCapture?.(e.pointerId);});
+  button.addEventListener('pointerup',()=>{escapeChargePointerAt=millis();releaseEscapeCharge(kind);});
+  for(const ev of ['pointercancel','lostpointercapture'])button.addEventListener(ev,()=>{if(escapeCharge?.source==='pointer')releaseEscapeCharge(kind);});
+}
+function escapeKeyReleased(){
+  const k=String(key).toLowerCase();
+  if(k==='q')releaseEscapeCharge('pebble');if(k==='l')releaseEscapeCharge('glow');
+}
 function useEscapeTongue(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.useTongue();renderEscapeHUD(true);}}
 function useEscapeCamo(){if(escapeIntroOpen){hideEscapeIntro();return;}if(escapeGame?.camouflage())escapeSound('camo');renderEscapeHUD(true);}
 function drawEscapeHawk(k,cell,clock){
@@ -184,7 +221,8 @@ function escapeKeyPressed(){
   if(escapeIntroOpen){if(k==='h'&&revealEscapeHint())return;hideEscapeIntro();return;}
   if(k==='x')useEscapeCamo();
   if(k==='e')useEscapeBurrow();
-  if(k==='q')useEscapeDecoy();
+  if(k==='q')startEscapeCharge('pebble');
+  if(k==='l')startEscapeCharge('glow');
   if(k==='r'||k==='t')useEscapeTongue();
   if(k==='v'||k===' '&&document.activeElement?.tagName!=='BUTTON')useEscapeLook();
   if(k==='f')useEscapeSeed();
@@ -210,7 +248,9 @@ function playEscape(){
   if(escapeIntroOpen&&gameState==='escape'&&!paused){const m=escapeMovement();if(m.x||m.y)hideEscapeIntro();}
   if(gameState==='escape'&&!paused&&!skipSimulationFrame&&!escapeIntroOpen){
     let {x,y,sprint,crawl}=escapeMovement();
-    escapeGame.advance(deltaTime/1000,{x,y,sprint,crawl});tickEscapeCrawlTip(escapeGame);
+    // A key held for a throw can be let go while the window was away: drop the throw then.
+    if(escapeCharge?.source==='key'&&!keyIsDown(escapeCharge.kind==='glow'?76:81))releaseEscapeCharge();
+    escapeGame.advance(deltaTime/1000,{x,y,sprint,crawl,aiming:Boolean(escapeCharge)});tickEscapeCrawlTip(escapeGame);
   }
   const events=escapeGame.drainEvents();
   escapeCharacter?.update(escapeGame,events);
@@ -248,7 +288,8 @@ function renderEscapeHUD(force=false){
   const locked=paused||!g.active()||escapeIntroOpen;
   const abilities=[
     [burrow,'burrow','Burrow','E',g.burrows,g.level.burrows,true,false],
-    [decoy,'decoy','Pebble','Q',g.decoys,g.level.pebbles,g.elapsed>=g.decoyReadyAt,false],
+    [decoy,'decoy','Pebble','Q',g.decoys,g.level.pebbles,g.elapsed>=g.decoyReadyAt,escapeCharge?.kind==='pebble'],
+    [document.getElementById('escape-glow-action'),'glow','Glow','L',g.glows,g.level.glows||0,g.elapsed>=g.decoyReadyAt,escapeCharge?.kind==='glow'],
     [tongue,'tongue','Tongue','R',g.tongues,g.level.tongues,!g.tongue&&g.elapsed>=g.tongueReadyAt,Boolean(g.tongue)],
     [document.getElementById('escape-seed-action'),'seed','Seed','F',g.seeds,g.level.seeds,g.elapsed>=g.seedReadyAt,false],
     [document.getElementById('escape-camo-action'),'camo','Camo','X',g.camos,g.level.camos,g.camoUntil<=g.elapsed,g.camoUntil>g.elapsed],
@@ -466,6 +507,7 @@ function drawEscapeVault(){
   for(const bug of g.regrowthBugs)if(!bug.eaten)drawEscapeRegrowthBug(bug,cell,g.elapsed,!g.hasTail);
   for(const bug of g.glowbugs)if(!bug.caught&&(!g.level.explore||g.visibleTile(Math.floor(bug.x),Math.floor(bug.y))))drawEscapeGlowbug(bug,cell,g.elapsed);
   if(g.droppedTail)drawEscapeDroppedTail(g.droppedTail,cell,g.elapsed);
+  drawEscapeThrows(g,cell);
   if(g.decoy){
     noFill();stroke(172,152,255,130);strokeWeight(1);const pulse=(g.elapsed%0.65)/.65;
     ellipse(g.decoy.x*cell,g.decoy.y*cell,cell*(.5+pulse*2),cell*(.5+pulse*2));noStroke();fill(193,181,255);ellipse(g.decoy.x*cell,g.decoy.y*cell,cell*.22,cell*.22);
@@ -659,6 +701,25 @@ function drawEscapeEel(h,cell,clock){
 // and stay closed and bulging while it chews. Its reach is always marked.
 // Sticky dew round a flytrap marks exactly how far it bites. Each drop shows wherever its own
 // tile is in view, so the ring can be read from a distance before the plant itself is in sight.
+// Thrown pebbles and glow mushrooms in the air (a little arc on each leg), glow mushrooms
+// lighting the ground, and, while a throw is held, the dotted line of where it will go.
+function drawEscapeThrows(g,cell){
+  for(const l of g.lights||[]){const left=l.until-g.elapsed,fade=Math.min(1,left/3,(g.elapsed-l.born)*4),pulse=1+Math.sin(g.elapsed*2.2+l.x)*.04;noStroke();
+    for(const k of [1,.7,.4]){fill(111,232,212,(14+k*16)*fade);ellipse(l.x*cell,l.y*cell,l.r*2*cell*k*pulse,l.r*2*cell*k*pulse);}
+    fill(143,240,220,230*fade);arc(l.x*cell,l.y*cell,cell*.32,cell*.26,PI,TWO_PI,CHORD);fill(217,245,228,230*fade);rect(l.x*cell-cell*.04,l.y*cell,cell*.08,cell*.12);
+    fill(255,255,255,200*fade);ellipse(l.x*cell-cell*.05,l.y*cell-cell*.06,cell*.04,cell*.04);}
+  for(const f of g.flights||[]){if(!f.pos)continue;const travelled=(g.elapsed-f.start)*f.speed,leg=f.legs.find(q=>travelled<=q.end)||f.legs.at(-1),legLen=Math.hypot(leg.to.x-leg.from.x,leg.to.y-leg.from.y),t=legLen?1-(leg.end-travelled)/legLen:1,lift=Math.sin(Math.PI*Math.max(0,Math.min(1,t)))*Math.min(.5,legLen*.12)*cell;
+    noStroke();fill(0,0,0,60);ellipse(f.pos.x*cell,f.pos.y*cell+cell*.08,cell*.16,cell*.07);
+    if(f.kind==='glow'){fill(111,232,212,90);ellipse(f.pos.x*cell,f.pos.y*cell-lift,cell*.5,cell*.5);fill(143,240,220);ellipse(f.pos.x*cell,f.pos.y*cell-lift,cell*.2,cell*.16);}
+    else{fill(193,181,255);ellipse(f.pos.x*cell,f.pos.y*cell-lift,cell*.16,cell*.16);}}
+  if(escapeCharge&&g.active()){const power=escapeChargePower(),plan=g.planThrow(power),glow=escapeCharge.kind==='glow';
+    noFill();stroke(glow?143:193,glow?240:181,glow?220:255,190);strokeWeight(Math.max(1.5,cell*.04));drawingContext.setLineDash([cell*.1,cell*.12]);
+    beginShape();for(const q of plan.points)vertex(q.x*cell,q.y*cell);endShape();drawingContext.setLineDash([]);
+    for(const b of plan.bounces){strokeWeight(Math.max(1.5,cell*.05));line(b.x*cell-cell*.1,b.y*cell-cell*.1,b.x*cell+cell*.1,b.y*cell+cell*.1);line(b.x*cell+cell*.1,b.y*cell-cell*.1,b.x*cell-cell*.1,b.y*cell+cell*.1);}
+    strokeWeight(Math.max(1,cell*.03));ellipse(plan.land.x*cell,plan.land.y*cell,glow?2.5*2*cell:cell*.45,glow?2.5*2*cell:cell*.45);
+    // The power ring round Sally fills as the throw is held.
+    stroke(255,240,190,200);strokeWeight(Math.max(2,cell*.06));arc(g.player.x*cell,g.player.y*cell,cell*.95,cell*.95,-HALF_PI,-HALF_PI+TWO_PI*Math.max(.02,power));}
+}
 function drawEscapeDew(g,h,cell,view){
   const reach=h.reach||1.6,n=Math.round(reach*9);noStroke();
   for(let k=0;k<n;k++){const a=k/n*TWO_PI+h.x,x=h.x+Math.cos(a)*reach*.97,y=h.y+Math.sin(a)*reach*.97;
