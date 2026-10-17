@@ -38,7 +38,7 @@
       this.elapsed=0;this.accumulator=0;this.status='playing';this.paused=false;this.result=null;
       this.invulnerableUntil=0;this.exitHold=0;this.closeCalls=0;this.alarms=0;this.events=[];
       // Later routes forgive one catch: Sally sheds her tail as a wriggling decoy.
-      this.tailDrop=Boolean(this.level.tailDrop&&!this.challenge);this.hasTail=true;this.tailsDropped=0;this.droppedTail=null;
+      this.tailDrop=Boolean(this.level.tailDrop&&!this.challenge);this.hasTail=true;this.tailsDropped=0;this.droppedTail=null;this.catches=[];this.lastCaptor=null;
       this.regrowthBugs=(this.level.regrowth||[]).map(p=>({...centre(...p),eaten:false}));
       // Bonus glow bugs drift around some escapes (the game rolls for them; tests and recordings
       // never pass the option, so recorded runs are unchanged). Catching one is a small bonus.
@@ -429,7 +429,10 @@
       if(item.taken)return;item.taken=true;this.treasure+=item.value;this.carried.push(item);this.notice(item.value>1?'A whole treasure chest!':'Treasure pocketed.','treasure');this.reactToMaze('treasure',item);
     }
     shedTail(captor){
+      // Who caught her and where, for the play summary; a caught run ends in finish() just after.
+      this.lastCaptor={by:captor?.kind||null,at:this.elapsed};
       if(!this.tailDrop||!this.hasTail||this.status!=='playing')return false;
+      this.noteCatch(captor?.kind||null,true);this.lastCaptor=null;
       const p=this.player;this.hasTail=false;this.tailsDropped++;
       this.droppedTail={x:p.x,y:p.y,born:this.elapsed,expires:this.elapsed+3};
       this.invulnerableUntil=this.elapsed+1.2;p.stamina=100;p.exhausted=false;
@@ -1377,12 +1380,19 @@
         if(step>=d-0.00001)h.path.shift();
       }
     }
+    // How many of each tool Sally used this run.
+    toolsUsed(){const out={pebble:(this.level.pebbles||0)-this.decoys,burrow:(this.level.burrows||0)-this.burrows,tongue:this.tonguesUsed,camo:this.camosUsed,seed:this.seedsUsed,glow:this.glowsUsed,spore:this.sporesUsed};
+      for(const k of Object.keys(out))if(!(out[k]>0))delete out[k];return out;}
+    noteCatch(by,tail){const p=this.player;if(this.catches.length<12)this.catches.push({x:Math.floor(p.x),y:Math.floor(p.y),t:+this.elapsed.toFixed(1),by:by||'?',...(tail?{tail:true}:{})});}
+    // What caught Sally when no creature did: the sky, the wind, a trap.
+    static causeOf(message){return [['hawk',/hawk/i],['wind',/gust/i],['ants',/ant column/i],['log',/log/i],['thorns',/thorns/i],['vine',/vine/i],['scorpion',/scorpion/i],['toad',/toad/i]].find(([,re])=>re.test(message||''))?.[0]||'?';}
     finish(status,message){
       if(this.status!=='playing')return;
+      if(status==='caught')this.noteCatch(this.lastCaptor?.at===this.elapsed&&this.lastCaptor.by||EscapeAdventure.causeOf(message));
       this.status=status;this.notice(message,status);
       this.tongue=null;
       const stars=status==='won'?1+Number(this.treasure>=Math.ceil(this.totalTreasure*.6))+Number(this.alarms===0&&this.hasTail):0;
-      this.result=Object.freeze({status,levelId:this.level.id,hidden:Boolean(this.level.hidden),draft:Boolean(this.level.draft),routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),blasts:this.blasts,steamed:this.steamed,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,glowbugs:this.glowbugsCaught,message});
+      this.result=Object.freeze({status,levelId:this.level.id,hidden:Boolean(this.level.hidden),draft:Boolean(this.level.draft),routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),blasts:this.blasts,steamed:this.steamed,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,glowbugs:this.glowbugsCaught,catches:this.catches.slice(),tools:this.toolsUsed(),message});
     }
     // A sound with a place: the scene pans it and lets it fade with distance from Sally.
     cue(name,at){this.events.push(name);if(at)(this.eventAt||(this.eventAt={}))[name]={x:at.x,y:at.y};}

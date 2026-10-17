@@ -89,15 +89,30 @@ async function openEscapeAdmin(message=''){
       (list.passkeys.length>1?'<button data-premove="'+escapeHtml(p.id)+'">Remove</button>':'')+'</div>').join('')+'</div>'+
     '<p><button id="admin-invite" class="escape-secondary">Invite another device</button> <button id="admin-here" class="escape-secondary">Add a passkey on this device</button></p><p id="admin-invite-out"></p>'+
     '<h3>Game levels</h3><p>Edit the game’s own escapes behind the scenes: drafts stay in this browser and never reach players. '+(Object.keys(EscapeEdits.all()).length?Object.keys(EscapeEdits.all()).length+' draft'+(Object.keys(EscapeEdits.all()).length===1?'':'s')+' saved'+(EscapeEdits.active()?', testing in game':'')+'. ':'')+'<button id="admin-workshop" class="escape-secondary">Open the level workshop</button></p>'+
+    '<h3>Player data</h3><p>Anonymous run summaries from players: how each escape ends, how long wins take, what catches Sally and where. <button id="admin-playdata" class="escape-secondary">Open player data</button></p>'+
     '<h3>Community shelf</h3><p>'+levels.length+' published level'+(levels.length===1?'':'s')+'. <button id="admin-community" class="escape-secondary">Open the shelf</button> to play, copy or take levels down.</p>';
   const $=id=>document.getElementById(id);
-  $('builder-back').onclick=closeEscapeBuilder;$('admin-builder').onclick=()=>{escapeLeaveWorkshop();openEscapeBuilder();};$('admin-workshop').onclick=()=>openEscapeWorkshop();$('admin-community').onclick=()=>openEscapeCommunity();
+  $('builder-back').onclick=closeEscapeBuilder;$('admin-builder').onclick=()=>{escapeLeaveWorkshop();openEscapeBuilder();};$('admin-workshop').onclick=()=>openEscapeWorkshop();$('admin-community').onclick=()=>openEscapeCommunity();$('admin-playdata').onclick=()=>openEscapePlayData();
   $('admin-signout').onclick=async()=>{try{await escapeBuilderApi('admin/logout',{method:'POST',body:'{}'});}catch(_){}escapeAdminSignedIn=false;closeEscapeBuilder();};
   $('admin-invite').onclick=async()=>{const out=$('admin-invite-out');try{const r=await escapeBuilderApi('admin/invite',{method:'POST',body:'{}'});const b=await r.json();
     out.innerHTML=r.ok?'Invite code: <b class="admin-code">'+escapeHtml(b.code)+'</b> — on the other device open Admin, choose “Add this device with an invite code” and enter it within '+b.minutes+' minutes. It works once.':'<span class="builder-bad">'+escapeHtml(b.error||'Could not make an invite.')+'</span>';}catch(_){out.textContent='Could not reach the server.';}};
   $('admin-here').onclick=async()=>{try{await escapePasskeyCreate('',prompt('Name for this passkey','Another passkey')||'');openEscapeAdmin('Passkey added.');}catch(e){openEscapeAdmin(escapePasskeyError(e));}};
   for(const b of document.querySelectorAll('[data-premove]'))b.onclick=async()=>{if(!confirm('Remove this passkey? It will no longer sign in.'))return;
     let note='Passkey removed.';try{const r=await escapeBuilderApi('admin/passkeys/'+encodeURIComponent(b.dataset.premove),{method:'DELETE'});if(!r.ok)note=(await r.json().catch(()=>({}))).error||'Could not remove it.';}catch(_){note='Could not reach the server.';}openEscapeAdmin(note);};
+}
+
+// Player data: a row per escape (and per challenge), and an export of every run for tuning.
+async function openEscapePlayData(){
+  const panel=escapeBuilderShow();panel.innerHTML='<p>Loading…</p>';
+  let data=null;try{const r=await escapeBuilderApi('playdata/summary');if(r.ok)data=await r.json();else if(r.status===401){openEscapeAdmin();return;}}catch(_){}
+  const head='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Admin</button><h2>Player data</h2>'+(data?.runs?'<a class="escape-secondary admin-export" href="/api/playdata/export" download>Export all runs</a>':'')+'</div>';
+  if(!data){panel.innerHTML=head+'<p class="builder-bad">Could not reach the server.</p>';}
+  else{const pct=n=>Math.round(n*100)+'%',num=id=>{const i=EscapeCatalog.levels.findIndex(l=>l.id===id);return i>=0?i+1+' · ':'★ ';};
+    panel.innerHTML=head+'<p>'+data.runs+' run'+(data.runs===1?'':'s')+' over '+data.days+' day'+(data.days===1?'':'s')+(data.from?' since '+data.from:'')+' · '+Math.ceil(data.bytes/1024)+' KB stored. Export hands every run over as one file for tuning.</p>'+
+      (data.levels.length?'<div class="playdata-wrap"><table class="playdata"><thead><tr><th>Escape</th><th>Plays</th><th>Won</th><th>Median win</th><th>Caught</th><th>Quit</th><th>Failed</th><th>Caught most by</th><th>Catch spots (x,y ×n)</th></tr></thead><tbody>'+
+        data.levels.map(l=>'<tr><td>'+escapeHtml(num(l.id)+l.name+(l.ch?' (challenge)':''))+'</td><td>'+l.plays+'</td><td>'+pct(l.winRate)+'</td><td>'+(l.medianWin===null?'—':l.medianWin+'s')+'</td><td>'+l.caught+'</td><td>'+l.quit+'</td><td>'+l.failed+'</td><td>'+
+          escapeHtml(l.catchers.map(([k,n])=>(EscapeBuilder.ENEMIES[k]||k)+' ×'+n).join(', ')||'—')+'</td><td>'+escapeHtml(l.hotspots.map(([x,y,n])=>x+','+y+' ×'+n).join('  ')||'—')+'</td></tr>').join('')+'</tbody></table></div>':'<p>No runs yet. They arrive a few at a time as people play.</p>');}
+  document.getElementById('builder-back').onclick=()=>openEscapeAdmin();
 }
 
 // The level workshop: every escape in the game, opened in the builder for behind-the-scenes

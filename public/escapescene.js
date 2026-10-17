@@ -10,7 +10,11 @@ function escapeRecordSummary(level,saved,challenge=false){
 function escapeToolkit(level){return [[level.camos||0,'camouflage'],[level.seeds||0,'seed pod'],[level.tongues||0,'tongue grab'],[level.burrows,'burrow'],[level.pebbles,'pebble']].filter(([n])=>n>0).map(([n,label])=>n+' '+label+(n>1&&label!=='camouflage'?'s':'')).concat(level.requiredTreasure?[level.requiredTreasure+' treasure to escape']:[],level.timeLimit?[level.timeLimit+' second escape']:[],level.tailDrop?['spare tail']:[],level.regrowth?.length?[level.regrowth.length+' regrowth bug'+(level.regrowth.length>1?'s':'')]:[],level.hawk?['hawk overhead']:[],level.antTrails?[level.antTrails.length+' ant column'+(level.antTrails.length>1?'s':'')]:[],level.guards.some(h=>h.kind==='gecko')?['gecko thief']:[],level.cold?['cold rooms']:[],level.vents?[level.vents.length+' steam vents']:[]);}
 let escapeGame=null,escapeIntroOpen=false,escapeCharacter=null;
 // Leaving a route part-way counts as an attempt, so the first-try bonus stays honest.
-function escapeAbandonRun(){if(escapeGame&&escapeGame.status==='playing'&&!escapeGame.challenge&&escapeGame.elapsed>3){escapeProgress.attempt(escapeGame.level.id);escapeGame.status='abandoned';}}
+// Anonymous play data: a run left part-way counts as quit once it has really started.
+const escapeDevice=()=>typeof mobile!=='undefined'&&mobile?'touch':'desk';
+function escapeRecordQuit(){if(typeof EscapePlayData!=='undefined'&&escapeGame?.status==='playing'&&escapeGame.elapsed>3)EscapePlayData.record(escapeGame,'quit',escapeDevice());}
+if(typeof window!=='undefined'&&typeof EscapePlayData!=='undefined'){window.addEventListener('pagehide',()=>{escapeRecordQuit();EscapePlayData.flush(true);});if(typeof setTimeout==='function')setTimeout(()=>EscapePlayData.flush(),8000);}
+function escapeAbandonRun(){escapeRecordQuit();if(escapeGame&&escapeGame.status==='playing'&&!escapeGame.challenge&&escapeGame.elapsed>3){escapeProgress.attempt(escapeGame.level.id);escapeGame.status='abandoned';}}
 // Full cards always show the hint; otherwise only where an area teaches a new idea.
 // The opening tip repeats the hint in game, so it follows the same rule.
 function escapeHintOpen(g){const index=EscapeCatalog.levels.indexOf(g.level),best=escapeProgress.data.levels[g.level.id],open=(typeof introMode==='undefined'?'full':introMode)==='full'||(index===0||EscapeCatalog.regions.includes(index))&&!best;if(!open&&!g.challenge&&g.message===g.level.hint)g.message='';return open;}
@@ -335,7 +339,7 @@ function renderEscapeHUD(force=false){
 function showEscapeResult(){
   escapeResultShown=true;gameState='escapeResult';clearTouchInput();suppressHeldKeys();
   const r=escapeGame.result,won=r.status==='won';
-  escapeProgress.record(r);const firstTry=won&&!r.challengeId&&escapeProgress.lastFirstTry,perfect=won&&!r.challengeId&&escapeProgress.lastPerfect;document.getElementById('escape-result').classList.toggle('escape-first-try',firstTry&&!perfect);document.getElementById('escape-result').classList.toggle('escape-perfect',perfect);
+  escapeProgress.record(r);if(typeof EscapePlayData!=='undefined')EscapePlayData.record(escapeGame,r.status,escapeDevice());const firstTry=won&&!r.challengeId&&escapeProgress.lastFirstTry,perfect=won&&!r.challengeId&&escapeProgress.lastPerfect;document.getElementById('escape-result').classList.toggle('escape-first-try',firstTry&&!perfect);document.getElementById('escape-result').classList.toggle('escape-perfect',perfect);
   document.getElementById('game-area').classList.add('escape-results-open');
   document.getElementById('escape-result-location').textContent=r.levelName;
   document.getElementById('escape-result-title').textContent=won?(r.challengeId?'Challenge complete!':perfect?'Perfect escape! First try, every star, every treasure.':firstTry?'First try! Sally escaped!':'Sally escaped!'):r.status==='failed'?'Challenge missed':'Nearly… try another route';
