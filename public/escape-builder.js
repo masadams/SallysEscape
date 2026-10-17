@@ -4,7 +4,7 @@
 // fromRoute turns any escape in the game back into a model, so every escape can be edited.
 (function(root){
   const KEY='sally-escape-custom-v1',VERSION=3;
-  const TILES={'#':'Wall','.':'Floor','L':'Leaves','N':'Gravel','B':'Cracked wall','M':'Mud','~':'Water','_':'Gap','c':'Crumbling floor','T':'Tangle vine','S':'Crack (Sally only)','o':'Spore puffball','t':'Tide flat'};
+  const TILES={'#':'Wall','.':'Floor','L':'Leaves','N':'Gravel','B':'Cracked wall','M':'Mud','~':'Water','_':'Gap','c':'Crumbling floor','T':'Tangle vine','S':'Crack (Sally only)','o':'Spore puffball','t':'Tide flat','m':'Moss (silent)'};
   const MARKS={'@':'Sally','K':'Key','X':'Hatch','1':'Treasure 1','2':'Treasure 2','3':'Chest 3'};
   const ENEMIES={snake:'Snake',beetle:'Beetle',scorpion:'Scorpion',toad:'Toad',spider:'Spider',cricket:'Cricket',moth:'Moth',mimic:'Mimic',millipede:'Millipede',cobra:'King cobra',flytrap:'Flytrap',crab:'Hermit crab',fox:'Snow fox',heron:'Bog heron',mantis:'Praying mantis',wasp:'Wasp nest',dragonfly:'Dragonfly',mole:'Mole',bat:'Echo bat',eel:'Eel',angler:'Angler',fish:'Reef fish','sea-snake':'Sea snake',owl:'Owl',gecko:'Gecko'};
   // Enemies that stay on their post; the rest walk their patrol.
@@ -28,8 +28,8 @@
   const clampNum=(n,a,b,d=a)=>Number.isFinite(Number(n))?Math.max(a,Math.min(b,Number(n))):d;
   // Whole-level extras the game supports beyond the map: the sky, the weather, and what lives there.
   const LAYERS={shade:'Awning (shade from the hawk)',glowPlants:'Glow plant (light in the dark)',regrowth:'Regrowth bug (grows back a lost tail)'};
-  const EXTRAS=()=>({hint:'',tailDrop:false,timeLimit:0,camos:0,seeds:0,glows:0,gaze:false,sightRadius:0,dark:false,living:false,abyss:false,biome:'',
-    hawk:null,storm:null,tide:null,caps:[],wind:[],antTrails:[],seedCrossings:[],rootWheel:null,rivalries:[],shade:[],glowPlants:[],regrowth:[],regions:[],messages:{}});
+  const EXTRAS=()=>({hint:'',tailDrop:false,timeLimit:0,camos:0,seeds:0,glows:0,spores:0,gaze:false,sightRadius:0,dark:false,living:false,abyss:false,biome:'',
+    hawk:null,storm:null,tide:null,caps:[],wind:[],echoes:[],currents:[],tunnels:[],antTrails:[],seedCrossings:[],rootWheel:null,rivalries:[],shade:[],glowPlants:[],regrowth:[],regions:[],messages:{}});
 
   function blank(width=21,height=13){
     width=clampInt(width,LIMITS.minW,LIMITS.maxW);height=clampInt(height,LIMITS.minH,LIMITS.maxH);
@@ -85,7 +85,7 @@
     keep.cold=model.cold.filter(inside);keep.warm=model.warm.filter(inside);keep.links=model.links.slice();
     for(const k of Object.keys(LAYERS))keep[k]=(model[k]||[]).filter(inside);
     keep.caps=(model.caps||[]).filter(c=>inside(c.at)&&inside(c.to));keep.antTrails=(model.antTrails||[]).map(t=>({...t,path:t.path.filter(inside)})).filter(t=>t.path.length>1);
-    keep.wind=(model.wind||[]).filter(z=>inside([z.area[2],z.area[3]]));keep.regions=(model.regions||[]).filter(r=>inside([r.area[2],r.area[3]]));
+    keep.wind=(model.wind||[]).filter(z=>inside([z.area[2],z.area[3]]));keep.echoes=(model.echoes||[]).filter(a=>inside([a[2],a[3]]));keep.currents=(model.currents||[]).filter(z=>inside([z.area[2],z.area[3]]));keep.tunnels=(model.tunnels||[]).filter(t=>t.every(inside));keep.regions=(model.regions||[]).filter(r=>inside([r.area[2],r.area[3]]));
     keep.seedCrossings=(model.seedCrossings||[]).filter(c=>[...c.banks,...c.tiles].every(inside));keep.rootWheel=model.rootWheel&&inside(model.rootWheel)?model.rootWheel:null;
     for(const ch of ['@','K','X'])if(!keep.map.some(r=>r.includes(ch))){const spot=findFloor(keep);if(spot)paint(keep,...spot,ch);}
     prune(keep);return keep;
@@ -192,6 +192,11 @@
   function setCapEnd(model,x,y){const c=(model.caps||[]).find(c=>!c.to);if(!c||!walkable(at(model,x,y))||same(c.at,[x,y]))return false;c.to=[x,y];return true;}
   // Wind lanes, trigger areas: a rectangle dragged between two corners.
   const rect=(x1,y1,x2,y2)=>[Math.min(x1,x2),Math.min(y1,y2),Math.max(x1,x2),Math.max(y1,y2)];
+  // Echo halls (sound carries further), water currents (push a swimmer) and burrow pairs (two mounds).
+  function addEcho(model,x1,y1,x2,y2){model.echoes=model.echoes||[];if(model.echoes.length>=8)return false;model.echoes.push(rect(x1,y1,x2,y2));return true;}
+  function addCurrent(model,x1,y1,x2,y2){model.currents=model.currents||[];if(model.currents.length>=12)return false;model.currents.push({area:rect(x1,y1,x2,y2),dir:[1,0],speed:1.2});return true;}
+  function setCurrent(model,i,changes){const z=(model.currents||[])[i];if(!z)return false;if(changes.dir!==undefined)z.dir=DIRS[clampInt(changes.dir,0,3)].slice();if(changes.speed!==undefined)z.speed=clampNum(changes.speed,.4,3,1.2);return true;}
+  function addTunnel(model,a,b){model.tunnels=model.tunnels||[];if(model.tunnels.length>=6||same(a,b))return false;const ok=([x,y])=>{const c=model.map[y]?.[x];return c&&!['#','B','_','~','S'].includes(c);};if(!ok(a)||!ok(b))return false;model.tunnels.push([a.slice(),b.slice()]);return true;}
   function addWind(model,x1,y1,x2,y2){if((model.wind||[]).length>=12)return false;model.wind=model.wind||[];model.wind.push({area:rect(x1,y1,x2,y2),dir:[1,0],period:5,on:1.6,offset:0});return true;}
   function addRegion(model,x1,y1,x2,y2){if((model.regions||[]).length>=12)return false;model.regions=model.regions||[];const id='r'+(model.nextId=(model.nextId||1)+1);model.regions.push({id,area:rect(x1,y1,x2,y2),requiresKey:false});return id;}
   // An ant column marches a loop through the points it is given, in order.
@@ -215,7 +220,7 @@
   function removeExtraAt(model,x,y){
     let hit=false;for(const k of Object.keys(LAYERS)){const n=(model[k]||[]).length;model[k]=(model[k]||[]).filter(p=>!same(p,[x,y]));hit=hit||model[k].length<n;}
     const inRect=a=>x>=a[0]&&x<=a[2]&&y>=a[1]&&y<=a[3];
-    for(const [k,test] of [['caps',c=>same(c.at,[x,y])||same(c.to,[x,y])],['seedCrossings',c=>[...c.banks,...c.tiles].some(p=>same(p,[x,y]))],['wind',z=>inRect(z.area)],['regions',r=>inRect(r.area)],['antTrails',t=>t.path.some(p=>same(p,[x,y]))]]){
+    for(const [k,test] of [['caps',c=>same(c.at,[x,y])||same(c.to,[x,y])],['seedCrossings',c=>[...c.banks,...c.tiles].some(p=>same(p,[x,y]))],['wind',z=>inRect(z.area)],['currents',z=>inRect(z.area)],['tunnels',t=>t.some(p=>same(p,[x,y]))],['echoes',a=>inRect(a)],['regions',r=>inRect(r.area)],['antTrails',t=>t.path.some(p=>same(p,[x,y]))]]){
       const n=(model[k]||[]).length;model[k]=(model[k]||[]).filter(v=>!test(v));if(model[k].length<n){hit=true;break;}}
     if(!hit&&same(model.rootWheel,[x,y])){model.rootWheel=null;hit=true;}
     if(hit)prune(model);return hit;
@@ -232,7 +237,7 @@
   // Whole-level settings, the sky and the weather.
   function setSettings(model,changes){
     for(const k of ['tailDrop','gaze','dark','living','abyss'])if(changes[k]!==undefined)model[k]=Boolean(changes[k]);
-    for(const [k,lo,hi] of [['timeLimit',0,600],['camos',0,5],['seeds',0,5],['glows',0,5],['sightRadius',0,12]])if(changes[k]!==undefined)model[k]=clampNum(changes[k],lo,hi,0);
+    for(const [k,lo,hi] of [['timeLimit',0,600],['camos',0,5],['seeds',0,5],['glows',0,5],['spores',0,5],['sightRadius',0,12]])if(changes[k]!==undefined)model[k]=clampNum(changes[k],lo,hi,0);
     if(changes.hint!==undefined)model.hint=String(changes.hint).slice(0,400);if(changes.biome!==undefined)model.biome=changes.biome==='desert'?'desert':'';
     for(const [k,fields] of [['hawk',['every','warn','first']],['storm',['every','warn','first']],['tide',['period','high','offset']]])
       if(changes[k]!==undefined)model[k]=changes[k]?Object.fromEntries(fields.map(f=>[f,clampNum(changes[k][f],0,120,f==='offset'?0:6)])):null;
@@ -264,6 +269,7 @@
     // A tongue grab reaches three tiles in a straight line.
     if(model.tongues>0)for(const id of seen){const [x,y]=id.split(',').map(Number);for(const [dx,dy] of DIRS)for(let d=1;d<=3;d++){const c=at(model,x+dx*d,y+dy*d);if(c===undefined||solid(c)||c==='B')break;open.add((x+dx*d)+','+(y+dy*d));}}
     if(!open.has(find(model,'K')[0].join()))problems.push('Sally cannot reach the key.');
+    for(const t of model.tunnels||[])if(t.some(([x,y])=>['#','B','_','~','S'].includes(rows[y]?.[x])))problems.push('A burrow mound must sit on open ground.');
     if(!seen.has(find(model,'X')[0].join()))problems.push('Sally cannot reach the hatch.');
     const total=treasureTotal(model);if(model.requiredTreasure>total)problems.push('The hatch asks for more treasure than the level holds.');
     for(const g of model.guards){if(!roamable(at(model,...g.spawn)))problems.push(ENEMIES[g.kind]+' stands on a wall.');
@@ -315,9 +321,9 @@
       ...(model.cold.length?{cold:model.cold.map(([x,y])=>[x,y,x,y])}:{}),...(model.warm.length?{warm:model.warm.map(p=>p.slice())}:{}),
       burrows:clampInt(model.burrows,0,5),pebbles:clampInt(model.pebbles,0,5),tongues:clampInt(model.tongues,0,5),explore:Boolean(model.explore),requiredTreasure:clampInt(model.requiredTreasure,0,99),
       ...(model.sightRadius?{sightRadius:model.sightRadius}:model.explore?{sightRadius:5}:{}),
-      ...(model.tailDrop?{tailDrop:true}:{}),...(model.timeLimit?{timeLimit:model.timeLimit}:{}),...(model.camos?{camos:model.camos}:{}),...(model.seeds?{seeds:model.seeds}:{}),...(model.glows?{glows:model.glows}:{}),
+      ...(model.tailDrop?{tailDrop:true}:{}),...(model.timeLimit?{timeLimit:model.timeLimit}:{}),...(model.camos?{camos:model.camos}:{}),...(model.seeds?{seeds:model.seeds}:{}),...(model.glows?{glows:model.glows}:{}),...(model.spores?{spores:model.spores}:{}),
       ...(model.gaze?{gaze:true}:{}),...(model.dark?{dark:true}:{}),...(model.living?{living:true}:{}),...(model.abyss?{abyss:true}:{}),...(model.biome?{biome:model.biome}:{}),
-      ...some('hawk',model.hawk),...some('storm',model.storm),...some('tide',model.tide),...some('caps',(model.caps||[]).filter(c=>c.to)),...some('wind',model.wind),
+      ...some('hawk',model.hawk),...some('storm',model.storm),...some('tide',model.tide),...some('caps',(model.caps||[]).filter(c=>c.to)),...some('wind',model.wind),...some('echoes',model.echoes),...some('currents',model.currents),...some('tunnels',model.tunnels),
       ...some('antTrails',(model.antTrails||[]).filter(t=>t.path.length>1)),...some('seedCrossings',model.seedCrossings),...some('rootWheel',model.rootWheel),...some('rivalries',model.rivalries),
       ...some('shade',model.shade),...some('glowPlants',model.glowPlants),...some('regrowth',model.regrowth)};
   }
@@ -326,11 +332,11 @@
   function fromRoute(route){
     const m=blank(route.map[0].length,route.map.length);m.map=route.map.slice();m.id='custom-'+String(route.id||'escape').toLowerCase().replace(/[^a-z0-9-]/g,'-').slice(0,40);
     Object.assign(m,{name:String(route.name||'').slice(0,40),brief:String(route.brief||'').slice(0,140),hint:String(route.hint||'').slice(0,400),burrows:route.burrows||0,pebbles:route.pebbles||0,tongues:route.tongues||0,
-      explore:Boolean(route.explore),requiredTreasure:route.requiredTreasure||0,tailDrop:Boolean(route.tailDrop),timeLimit:route.timeLimit||0,camos:route.camos||0,seeds:route.seeds||0,glows:route.glows||0,gaze:Boolean(route.gaze),
+      explore:Boolean(route.explore),requiredTreasure:route.requiredTreasure||0,tailDrop:Boolean(route.tailDrop),timeLimit:route.timeLimit||0,camos:route.camos||0,seeds:route.seeds||0,glows:route.glows||0,spores:route.spores||0,gaze:Boolean(route.gaze),
       sightRadius:route.sightRadius||0,dark:Boolean(route.dark),living:Boolean(route.living),abyss:Boolean(route.abyss),biome:route.biome||'',source:route.id});
     const copy=v=>v==null?null:JSON.parse(JSON.stringify(v));
     for(const k of ['hawk','storm','tide','rootWheel'])m[k]=copy(route[k]);
-    for(const k of ['caps','wind','antTrails','seedCrossings','shade','glowPlants','regrowth'])m[k]=copy(route[k])||[];
+    for(const k of ['caps','wind','echoes','currents','tunnels','antTrails','seedCrossings','shade','glowPlants','regrowth'])m[k]=copy(route[k])||[];
     const ids={},guardOf=(g,sleep)=>{const id=newId(m,'e');if(g.id)ids[g.id]=id;const out={id,kind:g.kind||'snake',spawn:g.spawn.slice(),facing:g.facing??Math.PI,patrol:(g.patrol||[g.spawn]).map(p=>p.slice()),sleep};
       if(g.lure)out.lure=g.lure.slice();if(g.axis)out.axis=g.axis;if(g.looks)out.looks=g.looks.slice();if(g.buried)out.buried=true;for(const k of ['range','every','speed','offset'])if(g[k]!==undefined)out[k]=g[k];return out;};
     m.guards=[...(route.guards||[]).map(g=>guardOf(g,false)),...(route.reinforcements||[]).map(g=>guardOf(g,true))];
@@ -373,7 +379,7 @@
   // Checks every field of a saved, shared or published level (old version-1 levels included)
   // and returns a clean model, or null when it is not a Sally level.
   function sanitize(r){
-    if(!r||!Array.isArray(r.map)||r.map.length<LIMITS.minH||r.map.length>LIMITS.maxH||!r.map.every(row=>typeof row==='string'&&row.length===r.map[0].length&&row.length>=LIMITS.minW&&row.length<=LIMITS.maxW&&/^[#.LNBM~_cTSot@KX1-5]+$/.test(row)))return null;
+    if(!r||!Array.isArray(r.map)||r.map.length<LIMITS.minH||r.map.length>LIMITS.maxH||!r.map.every(row=>typeof row==='string'&&row.length===r.map[0].length&&row.length>=LIMITS.minW&&row.length<=LIMITS.maxW&&/^[#.LNBM~_cTSotm@KX1-5]+$/.test(row)))return null;
     const w=r.map[0].length,h=r.map.length,model={version:VERSION,id:safeId(r.id,/^custom-[a-z0-9-]{1,40}$/)||'custom-'+Date.now().toString(36),name:String(r.name||'Shared escape').slice(0,40),brief:String(r.brief||'').slice(0,140),author:String(r.author||'').slice(0,30),
       map:r.map.slice(),burrows:clampInt(r.burrows,0,5),pebbles:clampInt(r.pebbles,0,5),tongues:clampInt(r.tongues,0,5),explore:Boolean(r.explore),requiredTreasure:clampInt(r.requiredTreasure,0,99),nextId:clampInt(r.nextId,1,1e6)};
     let n=0;const fresh=prefix=>prefix+(1e6+(++n));
@@ -395,11 +401,14 @@
     model.links=list(r.links,200).filter(l=>Array.isArray(l)&&typeof l[0]==='string'&&typeof l[1]==='string'&&l[0].length<20&&l[1].length<20).map(l=>l[2]==='close'?[l[0],l[1],'close']:[l[0],l[1]]);
     // The extras: settings, sky and weather, and the things placed on top of the map.
     const pts=(v,n)=>list(v,n).map(p=>point(p,w,h)).filter(Boolean),area=a=>{const p=point(a,w,h),q=point(Array.isArray(a)?a.slice(2):null,w,h);return p&&q?[Math.min(p[0],q[0]),Math.min(p[1],q[1]),Math.max(p[0],q[0]),Math.max(p[1],q[1])]:null;};
-    Object.assign(model,EXTRAS());setSettings(model,{hint:r.hint||'',tailDrop:r.tailDrop,gaze:r.gaze,dark:r.dark,living:r.living,abyss:r.abyss,timeLimit:r.timeLimit||0,camos:r.camos||0,seeds:r.seeds||0,glows:r.glows||0,sightRadius:r.sightRadius||0,biome:r.biome||'',
+    Object.assign(model,EXTRAS());setSettings(model,{hint:r.hint||'',tailDrop:r.tailDrop,gaze:r.gaze,dark:r.dark,living:r.living,abyss:r.abyss,timeLimit:r.timeLimit||0,camos:r.camos||0,seeds:r.seeds||0,glows:r.glows||0,spores:r.spores||0,sightRadius:r.sightRadius||0,biome:r.biome||'',
       hawk:r.hawk||null,storm:r.storm||null,tide:r.tide||null});
     for(const k of Object.keys(LAYERS))model[k]=pts(r[k],120);
     model.caps=list(r.caps,12).map(c=>({at:point(c?.at,w,h),to:point(c?.to,w,h)})).filter(c=>c.at);
     model.wind=list(r.wind,12).map(z=>({area:area(z?.area),dir:DIRS.find(([dx,dy])=>dx===z?.dir?.[0]&&dy===z?.dir?.[1])?.slice()||[1,0],period:clampNum(z?.period,1,30,5),on:clampNum(z?.on,.2,30,1.6),offset:clampNum(z?.offset,0,30,0)})).filter(z=>z.area);
+    model.echoes=list(r.echoes,8).map(area).filter(Boolean);
+    model.currents=list(r.currents,12).map(z=>({area:area(z?.area),dir:DIRS.find(([dx,dy])=>dx===z?.dir?.[0]&&dy===z?.dir?.[1])?.slice()||[1,0],speed:clampNum(z?.speed,.4,3,1.2)})).filter(z=>z.area);
+    model.tunnels=list(r.tunnels,6).map(t=>Array.isArray(t)?[point(t[0],w,h),point(t[1],w,h)]:[]).filter(t=>t[0]&&t[1]);
     model.antTrails=list(r.antTrails,6).map(t=>({path:pts(t?.path,16),groups:clampNum(t?.groups,1,8,3),size:clampNum(t?.size,1,8,3),speed:clampNum(t?.speed,.3,4,1.5)})).filter(t=>t.path.length);
     model.seedCrossings=list(r.seedCrossings,8).map(c=>({id:safeId(c?.id,/^[a-z0-9-]{1,30}$/)||fresh('seed-'),banks:pts(c?.banks,4),tiles:pts(c?.tiles,12)})).filter(c=>c.banks.length&&c.tiles.length);
     model.rootWheel=point(r.rootWheel,w,h);
@@ -418,7 +427,7 @@
   const api={TILES,MARKS,ENEMIES,POSTED,LIMITS,COLORS,MODES,TRIGGERS,HAZARDS,SPEEDS,blank,paint,resize,addEnemy,removeEnemy,turnEnemy,addPatrol,clearPatrol,setSleep,
     paintDoor,removeDoorTile,setDoor,addTrigger,removeAt,toggleLink,linksFrom,linksTo,sourceAt,doorAt,triggerAt,hazardAt,guardAt,addHazard,setLogEnd,setHazard,paintClimate,doorName,
     validate,toRoute,fromRoute,treasureTotal,exportText,importText,sanitize,loadAll,saveOne,removeOne,
-    LAYERS,DIRS,toggleLayer,addCap,setCapEnd,addWind,setWind,addRegion,setRegion,addAntPoint,setAnts,addSeedCrossing,setRootWheel,toggleRival,removeExtraAt,setGuard,setSettings,setMessage,setLinkAction,regionAt};
+    LAYERS,DIRS,toggleLayer,addCap,setCapEnd,addWind,setWind,addEcho,addCurrent,setCurrent,addTunnel,addRegion,setRegion,addAntPoint,setAnts,addSeedCrossing,setRootWheel,toggleRival,removeExtraAt,setGuard,setSettings,setMessage,setLinkAction,regionAt};
   root.EscapeBuilder=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

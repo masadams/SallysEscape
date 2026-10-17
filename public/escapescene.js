@@ -84,6 +84,7 @@ function escapeAbilityIcon(kind){
   const art={
     burrow:'<path d="M4 21Q4 12 16 12T28 21" fill="#9b7859"/><ellipse cx="16" cy="21" rx="9" ry="4" fill="#172a2e"/><path d="M10 5l3 4m9-4-3 4m-3-7v6"/>',
     decoy:'<path d="M5 22l3-10 10-5 8 8-2 10-12 2Z" fill="#a9c4cd"/><path d="m8 12 9 3 1-8m-1 8 7 10" stroke="#617e8b"/>',
+    spore:'<circle cx="12" cy="14" r="7" fill="#d6e896" opacity=".7" stroke="none"/><circle cx="20" cy="12" r="6" fill="#c4dc84" opacity=".75" stroke="none"/><circle cx="17" cy="20" r="6" fill="#e2efb0" opacity=".7" stroke="none"/><path d="M8 27q8-4 16 0" stroke="#8fae5a"/>',
     glow:'<circle cx="16" cy="14" r="12" fill="#6fe8d4" opacity=".25" stroke="none"/><path d="M6 15Q16 2 26 15Z" fill="#8ff0dc" stroke="#c9fff2"/><path d="M14 15v11h4V15" fill="#d9f5e4" stroke="#a8d8c4"/><circle cx="12" cy="11" r="1.5" fill="#fff" stroke="none"/><circle cx="19" cy="10" r="1.2" fill="#fff" stroke="none"/>',
     tongue:'<path d="M5 11h13a6 6 0 0 1 0 12h-6a3 3 0 0 1 0-6h6" stroke="#f5a0bb" stroke-width="5"/><path d="m5 7 4 4-4 4" stroke="#ffdfcd"/>',
     seed:'<path d="M16 27V13m0 7C5 20 4 11 5 7c8 0 12 6 11 13Zm0-5C16 6 22 4 28 5c0 7-5 11-12 10Z" fill="#a9d982" stroke="#c8efaa"/>',
@@ -102,7 +103,7 @@ function renderEscapeAbility(button,kind,label,key,left,total,ready=true,active=
   const markup=escapeAbilityIcon(kind)+'<span class="escape-ability-name">'+label+'</span>'+(total===null?'<span class="escape-ability-state">'+(active?'Active':'Ready')+'</span>':escapeResourcePips(left,total))+(key?'<kbd>'+key+'</kbd>':'');
   // Compare with what was last written: reading innerHTML back serialises the button every time.
   if(button._markup!==markup){button.innerHTML=markup;button._markup=markup;}
-  const help={burrow:'Face a thin cracked wall to burrow through it.',decoy:'Hold to throw further; release to throw. While held, aim with the arrows or stick. Pebbles bank off walls and clack where they hit.',glow:'Hold to throw further; release to throw. It banks off walls and lights the ground where it lands for a while.',tongue:'Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.',seed:'Plant cover, brace an open doorway, or grow a marked vine crossing.',camo:'Blend into the ground while keeping still.',look:'Turn your gaze behind you briefly, even while moving.'};
+  const help={burrow:'Face a thin cracked wall to burrow through it.',spore:'Hold to throw further; release to throw. A spore cloud hides Sally, even moving, and blinds any hunter inside it.',decoy:'Hold to throw further; release to throw. While held, aim with the arrows or stick. Pebbles bank off walls and clack where they hit.',glow:'Hold to throw further; release to throw. It banks off walls and lights the ground where it lands for a while.',tongue:'Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.',seed:'Plant cover, brace an open doorway, or grow a marked vine crossing.',camo:'Blend into the ground while keeping still.',look:'Turn your gaze behind you briefly, even while moving.'};
   if(button._description!==description){button._description=description;button.setAttribute('aria-label',description);button.title=description+'. '+help[kind];}
   button.classList.toggle('escape-empty',total!==null&&!left&&!active);
   button.classList.toggle('escape-cooling',Boolean(left)&&!ready&&!active);
@@ -121,6 +122,13 @@ const ESCAPE_TIPS=[
     text:()=>mobile?'That crunch carries. Hold Crawl to creep: slow, but silent, and slower to be spotted.':'That crunch carries. Hold C to crawl: slow, but silent, and slower to be spotted.'},
   {key:'sally-escape-throw-tip',live:g=>g.level.pebbles>0&&g.decoys<g.level.pebbles,
     text:()=>mobile?'Next time, hold Pebble to throw further and aim with the stick. Pebbles bank off walls.':'Next time, hold Q to throw further and aim with the arrows. Pebbles bank off walls.'},
+  {key:'sally-escape-tunnel-tip',live:g=>g.tunnels.length>0&&g.tunnels.some(t=>Math.min(Math.hypot(t.a.x-g.player.x,t.a.y-g.player.y),Math.hypot(t.b.x-g.player.x,t.b.y-g.player.y))<3),
+    text:()=>mobile?'A burrow mound: stand on it and tap Burrow to come up out of its partner.':'A burrow mound: stand on it and press E to come up out of its partner.'},
+  {key:'sally-escape-spore-tip',live:g=>g.level.spores>0&&g.elapsed>3,
+    text:()=>mobile?'Spore pouches: hold Spores, aim and let go. The cloud hides Sally, even moving.':'Spore pouches: hold Z, aim and let go. The cloud hides Sally, even moving, and blinds hunters inside.'},
+  {key:'sally-escape-moss-tip',live:g=>g.moss.size>0&&g.moss.has(g.tileKey(g.player)),text:()=>'Moss underfoot: not a sound, even at a run.'},
+  {key:'sally-escape-echo-tip',live:g=>g.echoes.length>0&&g.inEcho(g.player)&&g.player.noisy,text:()=>'This hall echoes: every sound here carries much further.'},
+  {key:'sally-escape-current-tip',live:g=>g.currents.length>0&&g.player.swimming&&g.currents.some(c=>g.player.x>=c.x1&&g.player.x<c.x2+1&&g.player.y>=c.y1&&g.player.y<c.y2+1),text:()=>'A current! It carries Sally along. Swim with it, or find another way.'},
   {key:'sally-escape-glow-tip',live:g=>g.level.glows>0&&g.elapsed>3,
     text:()=>mobile?'Glow mushrooms: hold Glow, aim and let go to light up the dark for a while.':'Glow mushrooms: hold L, aim and let go to light up the dark for a while.'}
 ];
@@ -152,12 +160,12 @@ function startEscape(options={}){
     <div class="escape-mission"><span id="escape-mission-name"></span><span id="escape-timer"></span></div>
     <div class="escape-inventory"><span id="escape-key">◇ Find the key</span><span id="escape-treasure">Treasure 0 / 10</span></div>
     <div class="escape-kit" role="group" aria-label="Sally’s abilities and breath"><div class="escape-breath"><span>Breath <kbd>Shift</kbd></span><div id="escape-stamina" role="progressbar" aria-label="Stamina" aria-valuemin="0" aria-valuemax="100"><i id="escape-stamina-fill"></i></div><div id="escape-warmth-row" style="display:none"><span>Warmth</span><div id="escape-warmth" role="progressbar" aria-label="Warmth" aria-valuemin="0" aria-valuemax="100"><i id="escape-warmth-fill"></i></div></div></div>
-    <div id="escape-tail" class="escape-tail-status" style="display:none" role="img"></div><div class="escape-actions"><button id="escape-burrow-action">Burrow <kbd>E</kbd></button><button id="escape-decoy-action">Toss pebble <kbd>Q</kbd></button><button id="escape-glow-action">Glow mushroom <kbd>L</kbd></button><button id="escape-tongue-action" title="Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.">Tongue <kbd>R</kbd></button>
+    <div id="escape-tail" class="escape-tail-status" style="display:none" role="img"></div><div class="escape-actions"><button id="escape-burrow-action">Burrow <kbd>E</kbd></button><button id="escape-decoy-action">Toss pebble <kbd>Q</kbd></button><button id="escape-glow-action">Glow mushroom <kbd>L</kbd></button><button id="escape-spore-action">Spore pouch <kbd>Z</kbd></button><button id="escape-tongue-action" title="Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.">Tongue <kbd>R</kbd></button>
     <button id="escape-seed-action" title="Plant on bare ground for cover, face an open doorway to brace it, or use a marked vine bank.">Seed <kbd>F</kbd></button><button id="escape-camo-action" title="Blend into the ground. You stay hidden while you keep still.">Camo <kbd>X</kbd></button><button id="escape-look-action" title="Turn your gaze behind you briefly, even while moving.">Look back <kbd>Space</kbd></button></div></div><p id="escape-objective">Find the golden key. Treasure is optional.</p><p id="escape-warning" role="status" aria-live="polite"></p>`;
   // p5 redraws synchronously on resize; the new HUD must exist first.
   const size=canvasDimensions();resizeCanvas(size.width,size.height,true);
   document.getElementById('escape-burrow-action').onclick=useEscapeBurrow;
-  escapeBindCharge(document.getElementById('escape-decoy-action'),'pebble');escapeBindCharge(document.getElementById('escape-glow-action'),'glow');
+  escapeBindCharge(document.getElementById('escape-decoy-action'),'pebble');escapeBindCharge(document.getElementById('escape-glow-action'),'glow');escapeBindCharge(document.getElementById('escape-spore-action'),'spore');
   document.getElementById('escape-tongue-action').onclick=useEscapeTongue;
   document.getElementById('escape-look-action').onclick=useEscapeLook;
   document.getElementById('escape-seed-action').onclick=useEscapeSeed;
@@ -187,12 +195,13 @@ function startEscapeCharge(kind,source='key'){
   const g=escapeGame;if(!g.active())return;
   if(kind==='pebble'&&!g.decoys){g.notice('No pebbles left. Use cover.');return;}
   if(kind==='glow'&&!g.glows){g.notice(g.level.glows?'No glow mushrooms left.':'No glow mushrooms here.');return;}
+  if(kind==='spore'&&!g.spores){g.notice(g.level.spores?'No spore pouches left.':'No spore pouches here.');return;}
   if(g.elapsed<g.decoyReadyAt)return;
   escapeCharge={kind,source,start:millis()};renderEscapeHUD(true);
 }
 function releaseEscapeCharge(kind){
   if(!escapeCharge||(kind&&escapeCharge.kind!==kind))return;const c=escapeCharge,power=escapeChargePower();escapeCharge=null;
-  if(gameState==='escape'&&!paused&&escapeGame)c.kind==='glow'?escapeGame.throwGlow(power):escapeGame.throwDecoy(power);renderEscapeHUD(true);
+  if(gameState==='escape'&&!paused&&escapeGame)(c.kind==='glow'?escapeGame.throwGlow(power):c.kind==='spore'?escapeGame.throwSpore(power):escapeGame.throwDecoy(power));renderEscapeHUD(true);
 }
 function cancelEscapeCharge(){escapeCharge=null;}
 let escapeChargePointerAt=-1e9;
@@ -205,7 +214,7 @@ function escapeBindCharge(button,kind){
 }
 function escapeKeyReleased(){
   const k=String(key).toLowerCase();
-  if(k==='q')releaseEscapeCharge('pebble');if(k==='l')releaseEscapeCharge('glow');
+  if(k==='q')releaseEscapeCharge('pebble');if(k==='l')releaseEscapeCharge('glow');if(k==='z')releaseEscapeCharge('spore');
 }
 function useEscapeTongue(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.useTongue();renderEscapeHUD(true);}}
 function useEscapeCamo(){if(escapeIntroOpen){hideEscapeIntro();return;}if(escapeGame?.camouflage())escapeSound('camo');renderEscapeHUD(true);}
@@ -229,6 +238,7 @@ function escapeKeyPressed(){
   if(k==='e')useEscapeBurrow();
   if(k==='q')startEscapeCharge('pebble');
   if(k==='l')startEscapeCharge('glow');
+  if(k==='z')startEscapeCharge('spore');
   if(k==='r'||k==='t')useEscapeTongue();
   if(k==='v'||k===' '&&document.activeElement?.tagName!=='BUTTON')useEscapeLook();
   if(k==='f')useEscapeSeed();
@@ -256,7 +266,7 @@ function playEscape(){
   if(gameState==='escape'&&!paused&&!skipSimulationFrame&&!escapeIntroOpen){
     let {x,y,sprint,crawl}=escapeMovement();
     // A key held for a throw can be let go while the window was away: drop the throw then.
-    if(escapeCharge?.source==='key'&&!keyIsDown(escapeCharge.kind==='glow'?76:81))releaseEscapeCharge();
+    if(escapeCharge?.source==='key'&&!keyIsDown({glow:76,spore:90}[escapeCharge.kind]||81))releaseEscapeCharge();
     escapeGame.advance(deltaTime/1000,{x,y,sprint,crawl,aiming:Boolean(escapeCharge)});tickEscapeCrawlTip(escapeGame);
   }
   const events=escapeGame.drainEvents();
@@ -305,6 +315,7 @@ function renderEscapeHUD(force=false){
     [burrow,'burrow','Burrow','E',g.burrows,g.level.burrows,true,false],
     [decoy,'decoy','Pebble','Q',g.decoys,g.level.pebbles,g.elapsed>=g.decoyReadyAt,escapeCharge?.kind==='pebble'],
     [document.getElementById('escape-glow-action'),'glow','Glow','L',g.glows,g.level.glows||0,g.elapsed>=g.decoyReadyAt,escapeCharge?.kind==='glow'],
+    [document.getElementById('escape-spore-action'),'spore','Spores','Z',g.spores,g.level.spores||0,g.elapsed>=g.decoyReadyAt,escapeCharge?.kind==='spore'],
     [tongue,'tongue','Tongue','R',g.tongues,g.level.tongues,!g.tongue&&g.elapsed>=g.tongueReadyAt,Boolean(g.tongue)],
     [document.getElementById('escape-seed-action'),'seed','Seed','F',g.seeds,g.level.seeds,g.elapsed>=g.seedReadyAt,false],
     [document.getElementById('escape-camo-action'),'camo','Camo','X',g.camos,g.level.camos,g.camoUntil<=g.elapsed,g.camoUntil>g.elapsed],
@@ -319,7 +330,7 @@ function renderEscapeHUD(force=false){
   const priority={patrol:0,recover:0,decoy:1,search:2,alert:3,chase:4,windup:5,charge:6,sting:7,leap:6,emerge:0,still:0,follow:0,dig:1,buried:1,rise:5,glimmer:5,swoop:6,rooted:0,reveal:5,lunge:6,retract:1,clash:2,glare:5,return:1},hunter=g.hunters.length?g.hunters.reduce((a,b)=>priority[a.state]>=priority[b.state]?a:b):{kind:'none',state:'patrol'};
   const moods={patrol:'',alert:hunter.reason==='heard'?'It heard you. Find quiet floor or cover!':'It is looking your way. Find cover!',chase:'Spotted! Break sight or distract it.',decoy:'Following the pebble. Slip past!',search:'Searching. Keep quiet.'};
   const beetleWarning=hunter.kind==='owl'&&['glare','swoop'].includes(hunter.state)?'An owl has seen you! Leave the marked spot before it swoops.':hunter.kind==='mimic'&&['reveal','lunge'].includes(hunter.state)?'That chest is a mimic! Change direction!':hunter.kind==='moth'&&['glimmer','swoop'].includes(hunter.state)?'Pale wings gathering! Step away from the glowing mark.':hunter.kind==='cricket'&&hunter.state==='rise'?'The ground is heaving! Step away.':['toad','spider'].includes(hunter.kind)&&['windup','leap'].includes(hunter.state)?(hunter.kind==='toad'?'Toad tongue! Break its line of sight.':'Spider aiming silk! Leave the marked ground.'):(g.logs||[]).some(l=>l.warning)?'A log is about to roll! Get out of its lane.':hunter.kind==='toad'&&['windup','tongue'].includes(hunter.state)?'Toad tongue! Break its line of sight.':hunter.kind==='spider'&&hunter.state==='rush'?'A plucked web brings the spider!':hunter.kind==='cricket'&&hunter.state==='chirp'?'A cricket is about to chirp!':hunter.kind==='scorpion'&&['windup','sting','raise'].includes(hunter.state)?(hunter.state==='raise'?'Scorpion tail rising! Get out of its ring.':'Scorpion striking! Change direction!'):['windup','charge'].includes(hunter.state)?'Beetle '+(hunter.state==='windup'?'aiming':'charging')+' from '+(Math.abs(hunter.x-g.player.x)>Math.abs(hunter.y-g.player.y)?hunter.x<g.player.x?'the left':'the right':hunter.y<g.player.y?'above':'below')+'! Dodge sideways.':null;
-  document.getElementById('escape-warning').textContent=paused?'Paused':g.vents.some(v=>v.warning&&v.tiles.some(([x,y])=>Math.hypot(x+.5-g.player.x,y+.5-g.player.y)<2.2))?'A vent is hissing! Clear its lane.':g.player.chilled?(g.player.warmth<=0?'Sally is frozen stiff! Crawl to a warm stone.':'Sally is freezing! Get to a warm stone or warm ground.'):g.hunters.some(h=>h.kind==='gecko'&&h.state==='flee')?'Catch the gecko before it reaches its burrow!':g.hunters.some(h=>h.kind==='gecko'&&h.state==='dash')?'A gecko is after your treasure! Outrun it or hide.':g.antTrails.length&&g.antAt(g.player,2)?'Ants marching! Cross in the gaps between groups.':g.hawk&&['stalk','dive'].includes(g.hawk.state)?(g.shaded()||g.player.hidden?'The hawk is circling. Stay put—you are hidden.':'A hawk is circling! Get under an awning, into leaves, or press X to blend in.'):g.droppedTail?'Your tail is wriggling. The hunters want it—run!':beetleWarning||(priority[hunter.state]<3?(growing&&growing.expires-g.elapsed<=1.2?'The seed growth is fading. Clear the vines or find fresh cover.':crossing&&crossing.expiresAt-g.elapsed<=1.2?'The crossing is folding! Clear the planks or doorway.':hunter.state==='clash'?'The hunters clash! Slip past.':g.player.swimming?'Swimming slows Sally. Aim for the next island.':g.player.webbed?'Silk slows your feet. Move off the web.':g.pendingSpawns.length?'A den is opening. Keep clear of the shaking ground.':null):null)|| (g.player.hidden?(hunter.state==='chase'?'Hidden, but it remembers where you were.':'Hidden in the leaves. Wait for an opening.'):['alert','chase'].includes(hunter.state)?moods[hunter.state]:g.player.noisy&&!g.player.sprinting?'Gravel is noisy. Step onto dark floor to stay quiet.':g.messageUntil>g.elapsed?g.message:moods[hunter.state]??(hunter.state==='rooted'?'The garden stirs.':['still','follow'].includes(hunter.state)?'Leaves rustle in the ruins.':hunter.kind==='scorpion'?'Scorpion recovering. Slip past.':hunter.kind==='beetle'?'The beetle is catching its breath.':'The hunter is recovering. Slip past.'));
+  document.getElementById('escape-warning').textContent=paused?'Paused':g.vents.some(v=>v.warning&&v.tiles.some(([x,y])=>Math.hypot(x+.5-g.player.x,y+.5-g.player.y)<2.2))?'A vent is hissing! Clear its lane.':g.player.chilled?(g.player.warmth<=0?'Sally is frozen stiff! Crawl to a warm stone.':'Sally is freezing! Get to a warm stone or warm ground.'):g.hunters.some(h=>h.kind==='gecko'&&h.state==='flee')?'Catch the gecko before it reaches its burrow!':g.hunters.some(h=>h.kind==='gecko'&&h.state==='dash')?'A gecko is after your treasure! Outrun it or hide.':g.antTrails.length&&g.antAt(g.player,2)?'Ants marching! Cross in the gaps between groups.':g.hawk&&['stalk','dive'].includes(g.hawk.state)?(g.shaded()||g.player.hidden?'The hawk is circling. Stay put—you are hidden.':'A hawk is circling! Get under an awning, into leaves, or press X to blend in.'):g.droppedTail?'Your tail is wriggling. The hunters want it—run!':beetleWarning||(priority[hunter.state]<3?(growing&&growing.expires-g.elapsed<=1.2?'The seed growth is fading. Clear the vines or find fresh cover.':crossing&&crossing.expiresAt-g.elapsed<=1.2?'The crossing is folding! Clear the planks or doorway.':hunter.state==='clash'?'The hunters clash! Slip past.':g.player.swimming?'Swimming slows Sally. Aim for the next island.':g.player.webbed?'Silk slows your feet. Move off the web.':g.pendingSpawns.length?'A den is opening. Keep clear of the shaking ground.':null):null)|| (g.player.hidden?(hunter.state==='chase'?'Hidden, but it remembers where you were.':(g.player.underground?'Underground. Nothing can reach Sally here.':g.inCloud?.(g.player)&&g.clouds?.length?'Hidden in the spores, even on the move.':g.moss?.has(g.tileKey(g.player))&&!g.player.moving?'Hidden. Wait for an opening.':'Hidden in the leaves. Wait for an opening.')):['alert','chase'].includes(hunter.state)?moods[hunter.state]:g.player.noisy&&!g.player.sprinting?'Gravel is noisy. Step onto dark floor to stay quiet.':g.messageUntil>g.elapsed?g.message:moods[hunter.state]??(hunter.state==='rooted'?'The garden stirs.':['still','follow'].includes(hunter.state)?'Leaves rustle in the ruins.':hunter.kind==='scorpion'?'Scorpion recovering. Slip past.':hunter.kind==='beetle'?'The beetle is catching its breath.':'The hunter is recovering. Slip past.'));
 }
 function showEscapeResult(){
   escapeResultShown=true;gameState='escapeResult';clearTouchInput();suppressHeldKeys();
@@ -518,6 +529,16 @@ function drawEscapeMood(ctx,mood,W,H,clock){
       ctx.beginPath();ctx.moveTo(x0,0);ctx.lineTo(x0+top,0);ctx.lineTo(x0+top+slant+bottom-top,H);ctx.lineTo(x0+slant,H);ctx.closePath();ctx.fill();}}
   ctx.restore();
 }
+// Moss, echo halls, currents and burrow mounds.
+function drawEscapeTricks(g,cell,view){
+  const seen=(x,y)=>!view.follow||g.visibleTile(x,y);
+  for(const key of g.moss){const [x,y]=key.split(',').map(Number);if(!seen(x,y))continue;noStroke();fill(78,128,70,150);rect(x*cell+2,y*cell+2,cell-4,cell-4,cell*.2);fill(118,170,92,170);for(const [dx,dy] of [[.25,.3],[.6,.25],[.4,.6],[.75,.7],[.2,.78]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.16,cell*.12);}
+  for(const e of g.echoes){noFill();stroke(185,166,232,40);strokeWeight(Math.max(1,cell*.03));for(let y=e.y1;y<=e.y2;y++)for(let x=e.x1;x<=e.x2;x++){if(!seen(x,y)||!g.floor(x,y))continue;arc((x+.5)*cell,(y+.85)*cell,cell*.55,cell*.4,PI*1.15,PI*1.85);}}
+  if(g.player.noisy&&g.echoes.length&&g.inEcho(g.player)){noFill();for(let k=0;k<3;k++){const r=((g.elapsed*1.6+k/3)%1);stroke(200,185,245,150*(1-r));strokeWeight(Math.max(1,cell*.04));ellipse(g.player.x*cell,g.player.y*cell,cell*(1+r*6),cell*(1+r*6));}}
+  for(const c of g.currents){stroke(200,240,250,90);strokeWeight(Math.max(1,cell*.04));const [dx,dy]=c.dir,phase=(g.elapsed*c.speed*.8)%1;
+    for(let y=c.y1;y<=c.y2;y++)for(let x=c.x1;x<=c.x2;x++){if(!seen(x,y)||g.grid[y][x]!=='U')continue;for(let k=0;k<2;k++){const t=(phase+k*.5)%1,cx=x+.5+dx*(t-.5)*.8+(dy?(k?.22:-.22):0),cy=y+.5+dy*(t-.5)*.8+(dx?(k?.22:-.22):0);line(cx*cell,cy*cell,(cx-dx*.22)*cell,(cy-dy*.22)*cell);}}}
+  for(const t of g.tunnels)for(const m of [t.a,t.b]){if(!seen(Math.floor(m.x),Math.floor(m.y)))continue;noStroke();fill(96,72,46);ellipse(m.x*cell,m.y*cell+cell*.06,cell*.72,cell*.5);fill(40,28,18);ellipse(m.x*cell,m.y*cell+cell*.04,cell*.34,cell*.22);fill(150,118,80);for(const [dx,dy] of [[-.28,-.08],[.3,-.02],[.05,-.2]])ellipse((m.x+dx)*cell,(m.y+dy)*cell,cell*.09,cell*.07);}
+}
 // Sunlight rippling across water, in Full lighting.
 function drawEscapeWaterLight(g,cell,view){
   if(!escapeLightingFull())return;const t=g.elapsed;
@@ -554,6 +575,7 @@ function drawEscapeVault(){
   background(10,18,25);push();translate(ox,oy);textFont('sans-serif');textAlign(CENTER,CENTER);
   drawEscapeTiles(g,cell,palette,index);
   drawEscapeWaterLight(g,cell,view);drawEscapeLightningShadows(g,cell);
+  drawEscapeTricks(g,cell,view);
   if(g.level.rootWheel){const [x,y]=g.level.rootWheel,angle=g.wheelAngle;push();translate((x+.5)*cell,(y+.5)*cell);rotate(angle);noFill();stroke(106,147,76,95);strokeWeight(cell*.11);ellipse(0,0,cell*2.7,cell*2.7);for(let a=0;a<TWO_PI;a+=PI/2)line(0,0,Math.cos(a)*cell*1.35,Math.sin(a)*cell*1.35);pop();}
   for(const gate of g.gates){
     const s=gate.switch,label=gate.closingAt!==null?'!':gate.duration&&gate.open?String(Math.max(0,Math.ceil(gate.expiresAt-g.elapsed))):gate.sealed?'×':gate.open?'✓':s?gate.id==='blue'?'B':'A':'◇',gateColor=gate.sealed?[230,137,148]:gate.color;
@@ -666,7 +688,8 @@ function drawEscapeVault(){
   if(flight){noStroke();fill(0,0,0,70);ellipse(g.player.x*cell,g.player.y*cell+cell*.1,cell*.7,cell*.25);push();translate(0,-lift);}
   // Crawling, Sally hugs the ground: a little smaller and dimmer, with a hush mark over her.
   const low=g.player.crawling;if(low){push();translate(g.player.x*cell,g.player.y*cell);scale(.86);translate(-g.player.x*cell,-g.player.y*cell);drawingContext.globalAlpha=.82;}
-  drawEscapeLizard(g.motion.lizard,cell,g.motion.clock,g.player.swimming,!g.hasTail,escapeCharacter?.face);
+  if(g.player.underground){const u=g.player.underground,t=Math.min(1,(g.elapsed-u.start)/u.dur),x=(u.from.x+(u.to.x-u.from.x)*t)*cell,y=(u.from.y+(u.to.y-u.from.y)*t)*cell;noStroke();fill(110,82,54,180);for(let k=0;k<4;k++)ellipse(x-(u.to.x-u.from.x)*cell*k*.04,y-(u.to.y-u.from.y)*cell*k*.04,cell*(.34-k*.06),cell*(.22-k*.04));}
+  else   drawEscapeLizard(g.motion.lizard,cell,g.motion.clock,g.player.swimming,!g.hasTail,escapeCharacter?.face);
   if(low){drawingContext.globalAlpha=1;pop();noStroke();fill(214,232,190,150);textSize(cell*.3);text('shh',g.player.x*cell,(g.player.y-.62)*cell);}
   if(flight)pop();
   drawingContext.restore();drawingContext.restore();
@@ -822,13 +845,14 @@ function drawEscapeThrows(g,cell){
     fill(255,255,255,200*fade);ellipse(l.x*cell-cell*.05,l.y*cell-cell*.06,cell*.04,cell*.04);}
   for(const f of g.flights||[]){if(!f.pos)continue;const travelled=(g.elapsed-f.start)*f.speed,leg=f.legs.find(q=>travelled<=q.end)||f.legs.at(-1),legLen=Math.hypot(leg.to.x-leg.from.x,leg.to.y-leg.from.y),t=legLen?1-(leg.end-travelled)/legLen:1,lift=Math.sin(Math.PI*Math.max(0,Math.min(1,t)))*Math.min(.5,legLen*.12)*cell;
     noStroke();fill(0,0,0,60);ellipse(f.pos.x*cell,f.pos.y*cell+cell*.08,cell*.16,cell*.07);
-    if(f.kind==='glow'){fill(111,232,212,90);ellipse(f.pos.x*cell,f.pos.y*cell-lift,cell*.5,cell*.5);fill(143,240,220);ellipse(f.pos.x*cell,f.pos.y*cell-lift,cell*.2,cell*.16);}
+    if(f.kind==='spore'){fill(214,232,150,110);ellipse(f.pos.x*cell,f.pos.y*cell-lift,cell*.34,cell*.34);fill(190,214,120);ellipse(f.pos.x*cell,f.pos.y*cell-lift,cell*.2,cell*.18);}
+    else if(f.kind==='glow'){fill(111,232,212,90);ellipse(f.pos.x*cell,f.pos.y*cell-lift,cell*.5,cell*.5);fill(143,240,220);ellipse(f.pos.x*cell,f.pos.y*cell-lift,cell*.2,cell*.16);}
     else{fill(193,181,255);ellipse(f.pos.x*cell,f.pos.y*cell-lift,cell*.16,cell*.16);}}
-  if(escapeCharge&&g.active()){const power=escapeChargePower(),plan=g.planThrow(power),glow=escapeCharge.kind==='glow';
+  if(escapeCharge&&g.active()){const power=escapeChargePower(),plan=g.planThrow(power),glow=escapeCharge.kind==='glow',spore=escapeCharge.kind==='spore';
     noFill();stroke(glow?143:193,glow?240:181,glow?220:255,190);strokeWeight(Math.max(1.5,cell*.04));drawingContext.setLineDash([cell*.1,cell*.12]);
     beginShape();for(const q of plan.points)vertex(q.x*cell,q.y*cell);endShape();drawingContext.setLineDash([]);
     for(const b of plan.bounces){strokeWeight(Math.max(1.5,cell*.05));line(b.x*cell-cell*.1,b.y*cell-cell*.1,b.x*cell+cell*.1,b.y*cell+cell*.1);line(b.x*cell+cell*.1,b.y*cell-cell*.1,b.x*cell-cell*.1,b.y*cell+cell*.1);}
-    strokeWeight(Math.max(1,cell*.03));ellipse(plan.land.x*cell,plan.land.y*cell,glow?2.5*2*cell:cell*.45,glow?2.5*2*cell:cell*.45);
+    strokeWeight(Math.max(1,cell*.03));ellipse(plan.land.x*cell,plan.land.y*cell,glow?2.5*2*cell:spore?1.9*2*cell:cell*.45,glow?2.5*2*cell:spore?1.9*2*cell:cell*.45);
     // The power ring round Sally fills as the throw is held.
     stroke(255,240,190,200);strokeWeight(Math.max(2,cell*.06));arc(g.player.x*cell,g.player.y*cell,cell*.95,cell*.95,-HALF_PI,-HALF_PI+TWO_PI*Math.max(.02,power));}
 }

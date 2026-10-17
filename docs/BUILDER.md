@@ -70,6 +70,10 @@ Sally takes that. (Plates and levers work doors; only the key and chests wake en
 lights the ground around where it lands for about twelve seconds; give them to fogged or dark
 levels.
 
+**Moss** is a tile (silent ground). Under Extras: **Water current** (two corners over water; Select
+it to set the direction and strength), **Echo hall** (two corners) and **Burrow pair** (click one
+mound, then its partner). Level settings set **Spore pouches** (0–5).
+
 ## Playing, saving and sharing
 The status line explains anything that stops a level being playable (no way to the key, a door
 with nothing linked, a heavy plate with no beetle…). **▶ Playtest** runs it. **Save** keeps it in

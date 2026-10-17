@@ -5,13 +5,13 @@
 // open to every player.
 let escapeBuilderModel=null,escapeBuilderTool='#',escapeBuilderColor=0,escapeBuilderPick=null,escapeBuilderPainting=false,escapeBuilderNote='',escapeBuilderAnchor=null;
 const ESCAPE_BUILDER_STORE=(()=>{try{return typeof localStorage==='undefined'?null:localStorage;}catch(_){return null;}})();
-const ESCAPE_BUILDER_LOOK={'#':['#2d4a43',''],'.':['#183029',''],'L':['#2f6b45','❀'],'N':['#3b3a32','∴'],'B':['#3c5a5e','⟋'],'M':['#4a3a26','≈'],'~':['#1f5a76','~'],'_':['#07120f',''],'c':['#3d3424','⁘'],'T':['#24452a','෴'],'o':['#2a3a2a','●'],'t':['#5a5040','≋'],'S':['#2d4a43','⦚'],'@':['#183029','🦎'],'K':['#183029','🔑'],'X':['#1d5a4f','⇩'],'1':['#183029','◆'],'2':['#183029','◆◆'],'3':['#183029','▣']};
+const ESCAPE_BUILDER_LOOK={'#':['#2d4a43',''],'.':['#183029',''],'L':['#2f6b45','❀'],'N':['#3b3a32','∴'],'B':['#3c5a5e','⟋'],'M':['#4a3a26','≈'],'~':['#1f5a76','~'],'_':['#07120f',''],'c':['#3d3424','⁘'],'T':['#24452a','෴'],'o':['#2a3a2a','●'],'t':['#5a5040','≋'],'m':['#3f6b3a','ʬ'],'S':['#2d4a43','⦚'],'@':['#183029','🦎'],'K':['#183029','🔑'],'X':['#1d5a4f','⇩'],'1':['#183029','◆'],'2':['#183029','◆◆'],'3':['#183029','▣']};
 const ESCAPE_BUILDER_ENEMY={snake:'🐍',beetle:'🪲',scorpion:'🦂',toad:'🐸',spider:'🕷',cricket:'🦗',moth:'🦋',mimic:'🎁',millipede:'🐛',cobra:'👑',flytrap:'🌺',crab:'🦀',fox:'🦊',heron:'🦩',mantis:'🌿',wasp:'🐝',dragonfly:'🪰',mole:'🐹',bat:'🦇',eel:'🪱',angler:'🎣',fish:'🐟','sea-snake':'🌊',owl:'🦉',gecko:'🐾'};
 const ESCAPE_BUILDER_TRIGGER={plate:'◉',heavy:'⬛',lever:'⚲',switch:'▣'},ESCAPE_BUILDER_HAZARD={vent:'♨',thorns:'⋀',log:'●'};
 const ESCAPE_BUILDER_ARROW=['→','↓','←','↑'];
 // The extras placed on top of the map: what each tool is called and how it looks on the grid.
 const ESCAPE_BUILDER_EXTRAS={'layer:shade':['⛱','Awning: shade where the hawk cannot dive'],'layer:glowPlants':['✺','Glow plant: light in a dark level'],'layer:regrowth':['✿','Regrowth bug: grows back a lost tail'],
-  cap:['🍄','Bounce cap: click the cap, then where it throws Sally'],wind:['≋','Wind lane: click two opposite corners'],area:['▢','Trigger area: click two corners; walking in can open doors or wake enemies'],
+  cap:['🍄','Bounce cap: click the cap, then where it throws Sally'],wind:['≋','Wind lane: click two opposite corners'],current:['⇶','Water current: click two corners over water; it pushes a swimmer along'],echo:['◎','Echo hall: click two corners; sound carries further inside'],tunnel:['⛏','Burrow pair: click one mound, then its partner'],area:['▢','Trigger area: click two corners; walking in can open doors or wake enemies'],
   ants:['🐜','Ant column: click the points of its loop in order'],seedbed:['🌱','Seed bed: click the two banks either side of a gap; a planted seed grows a crossing'],wheel:['✣','Root wheel'],rival:['⚔','Rivals: click two enemies who fight when they meet']};
 
 function escapeBuilderApi(path,options={}){return fetch('/api/'+path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});}
@@ -171,6 +171,9 @@ function escapeBuilderCell(x,y,ch,linked){
   const hasAt=list=>(list||[]).some(q=>q[0]===x&&q[1]===y),inRect=a=>x>=a[0]&&x<=a[2]&&y>=a[1]&&y<=a[3];let shadow='';
   if(hasAt(m.shade))shadow+='inset 0 -5px 0 #c96a48aa,';if(hasAt(m.glowPlants)&&!glyph)glyph='✺';if(hasAt(m.regrowth)&&!glyph)glyph='✿';
   const wind=(m.wind||[]).find(z=>inRect(z.area));if(wind){bg='linear-gradient(#9ec4e033,#9ec4e033),'+bg;if(!glyph)glyph='<span style="opacity:.55">'+ESCAPE_BUILDER_ARROW[EscapeBuilder.DIRS.findIndex(([dx,dy])=>dx===wind.dir[0]&&dy===wind.dir[1])]+'</span>';}
+  const current=(m.currents||[]).find(z=>inRect(z.area));if(current){bg='linear-gradient(#5ac8e044,#5ac8e044),'+bg;if(!glyph)glyph='<span style="opacity:.7">'+['⇒','⇓','⇐','⇑'][EscapeBuilder.DIRS.findIndex(([dx,dy])=>dx===current.dir[0]&&dy===current.dir[1])]+'</span>';}
+  if((m.echoes||[]).some(a=>inRect(a)))shadow+='inset 0 0 0 2px #b9a6e888,';
+  if((m.tunnels||[]).some(t=>hasAt(t)))glyph='⛏';
   if((m.regions||[]).some(r=>inRect(r.area)))shadow+='inset 0 0 0 2px #e8c45a88,';
   const cap=(m.caps||[]).find(c=>c.at[0]===x&&c.at[1]===y);if(cap)glyph='🍄';else if((m.caps||[]).some(c=>c.to&&c.to[0]===x&&c.to[1]===y))glyph='◎';
   const ant=(m.antTrails||[]).findIndex(t=>hasAt(t.path));if(ant>=0&&!glyph)glyph='<span style="color:#d79a60">∙</span>';
@@ -227,6 +230,9 @@ function escapeBuilderInspector(){
   else if(p.kind==='wind'){const z=m.wind[p.index];if(!z)return '';const dir=B.DIRS.findIndex(([dx,dy])=>dx===z.dir[0]&&dy===z.dir[1]);
     html='<b>≋ Wind lane</b> '+z.area.slice(0,2).join(',')+'–'+z.area.slice(2).join(',')+' blows <select data-insp="wdir">'+ESCAPE_BUILDER_ARROW.map((a,i)=>'<option value="'+i+'"'+(i===dir?' selected':'')+'>'+a+'</option>').join('')+'</select>'+
       '<label>gust every <input type="number" step="0.1" data-insp="wperiod" value="'+z.period+'"></label><label>lasting <input type="number" step="0.1" data-insp="won" value="'+z.on+'"></label><label>delay <input type="number" step="0.1" data-insp="woffset" value="'+z.offset+'"></label>';}
+  else if(p.kind==='current'){const z=m.currents[p.index];if(!z)return '';const dir=B.DIRS.findIndex(([dx,dy])=>dx===z.dir[0]&&dy===z.dir[1]);
+    html='<b>⇶ Water current</b> '+z.area.slice(0,2).join(',')+'–'+z.area.slice(2).join(',')+' flows <select data-insp="cdir">'+ESCAPE_BUILDER_ARROW.map((a,i)=>'<option value="'+i+'"'+(i===dir?' selected':'')+'>'+a+'</option>').join('')+'</select>'+
+      '<label>strength <input type="number" step="0.1" min="0.4" max="3" data-insp="cspeed" value="'+z.speed+'"></label> (a swimmer moves about 1.3 tiles a second: stronger than that, nobody swims against it)';}
   else if(p.kind==='ants'){const t=m.antTrails[p.index];if(!t)return '';
     html='<b>🐜 Ant column</b> marching '+t.path.length+' points <label>groups <input type="number" min="1" max="8" data-insp="agroups" value="'+t.groups+'"></label><label>ants per group <input type="number" min="1" max="8" data-insp="asize" value="'+t.size+'"></label><label>speed <input type="number" step="0.1" min="0.3" max="4" data-insp="aspeed" value="'+t.speed+'"></label> <button data-insp="anew">Start a new column</button>';}
   else if(p.kind==='cap'){const c=m.caps[p.index];if(!c)return '';html='<b>🍄 Bounce cap</b> at '+c.at.join(',')+' · '+(c.to?'throws Sally to '+c.to.join(','):'<b>click where it throws Sally</b>');}
@@ -238,7 +244,7 @@ function escapeBuilderSettings(){
     check=(k,label)=>'<label class="builder-check"><input type="checkbox" data-set="'+k+'"'+(m[k]?' checked':'')+'> '+label+'</label>',
     sky=(k,label,fields)=>'<div class="builder-sky"><label class="builder-check"><input type="checkbox" data-sky="'+k+'"'+(m[k]?' checked':'')+'> '+label+'</label>'+(m[k]?fields.map(([f,l])=>'<label>'+l+' <input type="number" step="0.1" min="0" max="120" data-skyf="'+k+'.'+f+'" value="'+m[k][f]+'"></label>').join(''):'')+'</div>';
   return '<details class="builder-more"'+(escapeBuilderSettings.open?' open':'')+'><summary>Level settings and weather</summary><div class="builder-settings">'+
-    num('camos','Camouflage',5)+num('seeds','Seeds',5)+num('glows','Glow mushrooms',5)+num('timeLimit','Time limit (s, 0 = none)')+num('sightRadius','Sight (tiles, 0 = default)',12)+
+    num('camos','Camouflage',5)+num('seeds','Seeds',5)+num('glows','Glow mushrooms',5)+num('spores','Spore pouches',5)+num('timeLimit','Time limit (s, 0 = none)')+num('sightRadius','Sight (tiles, 0 = default)',12)+
     check('tailDrop','Spare tail (one catch forgiven)')+check('dark','Dark (glow plants light it)')+check('gaze','Sally sees only ahead')+check('living','Living garden')+check('abyss','Bottomless gaps')+
     '<label class="builder-check"><input type="checkbox" data-set="biome"'+(m.biome==='desert'?' checked':'')+'> Desert sand</label></div>'+
     sky('hawk','Hawk overhead',[['every','dives every s'],['warn','warning s'],['first','first dive at s']])+
@@ -291,6 +297,7 @@ function escapeBuilderPickAt(x,y){
   const ant=(m.antTrails||[]).findIndex(q=>q.path.some(p=>p[0]===x&&p[1]===y));if(ant>=0)return {kind:'ants',index:ant};
   if(s&&!s.startsWith('enter:'))return {kind:'source',id:s};if(h)return {kind:'hazard',id:h.id};if(d)return {kind:'door',id:d.id};
   const wind=(m.wind||[]).findIndex(z=>x>=z.area[0]&&x<=z.area[2]&&y>=z.area[1]&&y<=z.area[3]);if(wind>=0&&!s)return {kind:'wind',index:wind};
+  const current=(m.currents||[]).findIndex(z=>x>=z.area[0]&&x<=z.area[2]&&y>=z.area[1]&&y<=z.area[3]);if(current>=0&&!s)return {kind:'current',index:current};
   return s?{kind:'source',id:s}:null;
 }
 function escapeBuilderApply(x,y){
@@ -322,10 +329,13 @@ function escapeBuilderApply(x,y){
   if(t.startsWith('layer:'))return B.toggleLayer(m,t.slice(6),x,y);
   if(t==='cap'){if((m.caps||[]).some(c=>!c.to)){if(!B.setCapEnd(m,x,y))escapeBuilderNote='Pick open floor for the landing.';else escapeBuilderPick={kind:'cap',index:m.caps.length-1};return true;}
     if(!B.addCap(m,x,y)){escapeBuilderNote='Caps go on open floor.';return true;}escapeBuilderNote='Now click where the cap throws Sally.';return true;}
-  if(t==='wind'||t==='area'||t==='seedbed'){
-    if(!escapeBuilderAnchor){escapeBuilderAnchor=[x,y];escapeBuilderNote=t==='seedbed'?'Now click the other bank, in the same row or column.':'Now click the opposite corner.';return true;}
+  if(t==='wind'||t==='area'||t==='seedbed'||t==='current'||t==='echo'||t==='tunnel'){
+    if(!escapeBuilderAnchor){escapeBuilderAnchor=[x,y];escapeBuilderNote=t==='seedbed'?'Now click the other bank, in the same row or column.':t==='tunnel'?'Now click the partner mound.':'Now click the opposite corner.';return true;}
     const [ax,ay]=escapeBuilderAnchor;escapeBuilderAnchor=null;
-    if(t==='wind'){B.addWind(m,ax,ay,x,y);escapeBuilderPick={kind:'wind',index:m.wind.length-1};escapeBuilderNote='Set which way it blows and how often below.';}
+    if(t==='current'){if(B.addCurrent(m,ax,ay,x,y)){escapeBuilderPick={kind:'current',index:m.currents.length-1};escapeBuilderNote='Set which way it flows and how strong below.';}}
+    else if(t==='echo'){if(!B.addEcho(m,ax,ay,x,y))escapeBuilderNote='That is as many echo halls as a level can hold.';}
+    else if(t==='tunnel'){if(!B.addTunnel(m,[ax,ay],[x,y]))escapeBuilderNote='Both mounds go on open ground, apart from each other.';}
+    else if(t==='wind'){B.addWind(m,ax,ay,x,y);escapeBuilderPick={kind:'wind',index:m.wind.length-1};escapeBuilderNote='Set which way it blows and how often below.';}
     else if(t==='area'){const id=B.addRegion(m,ax,ay,x,y);if(id){escapeBuilderPick={kind:'source',id:'enter:'+id};escapeBuilderTool='link';escapeBuilderNote='Now click the doors or sleeping enemies walking in should affect.';}}
     else if(!B.addSeedCrossing(m,[ax,ay],[x,y]))escapeBuilderNote='The two banks must be in the same row or column with a gap between.';
     return true;}
@@ -367,6 +377,7 @@ function wireEscapeBuilder(){
   for(const el of document.querySelectorAll('[data-ginsp]'))el.onchange=e=>{const k=el.dataset.ginsp;B.setGuard(m,p.id,{[k]:k==='buried'?e.target.checked:k==='axis'?e.target.value:val(e)});rerender();};
   const looks=document.querySelectorAll('[data-look]');for(const el of looks)el.onchange=()=>{B.setGuard(m,p.id,{looks:[...looks].filter(q=>q.checked).map(q=>Number(q.dataset.look)*Math.PI/2)});rerender();};
   for(const [k,f] of [['wdir','dir'],['wperiod','period'],['won','on'],['woffset','offset']])if(insp(k))insp(k).onchange=e=>{B.setWind(m,p.index,{[f]:Number(e.target.value)});rerender();};
+  for(const [k,f] of [['cdir','dir'],['cspeed','speed']])if(insp(k))insp(k).onchange=e=>{B.setCurrent(m,p.index,{[f]:Number(e.target.value)});rerender();};
   for(const [k,f] of [['agroups','groups'],['asize','size'],['aspeed','speed']])if(insp(k))insp(k).onchange=e=>{B.setAnts(m,p.index,{[f]:Number(e.target.value)});rerender();};
   if(insp('anew'))insp('anew').onclick=()=>{escapeBuilderTool='ants';escapeBuilderAnchor='new';escapeBuilderNote='Click the first point of the new column.';rerender();};
   const more=document.querySelector('.builder-more');if(more)more.ontoggle=()=>{escapeBuilderSettings.open=more.open;};

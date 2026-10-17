@@ -67,6 +67,13 @@
       if(this.tide)this.applyTide(true);
       // Mushroom Grotto: spore puffballs burst into hiding clouds; bounce caps fling Sally across.
       this.puffs=(this.level.puffballs||[]).map(([x,y])=>({x,y,key:x+','+y,readyAt:0}));this.clouds=[];
+      // Moss muffles every step, even a sprint. Echo halls carry sound much further. Currents push
+      // a swimmer along. Burrow pairs are linked mounds: dig into one, come up out of the other.
+      this.moss=new Set((this.level.moss||[]).map(([x,y])=>x+','+y));
+      this.echoes=(this.level.echoes||[]).map(([x1,y1,x2,y2])=>({x1,y1,x2,y2}));
+      this.currents=(this.level.currents||[]).map(c=>{const [x1,y1,x2,y2]=c.area;return {x1,y1,x2,y2,dir:c.dir,speed:c.speed||1.2};});
+      this.tunnels=(this.level.tunnels||[]).map(([a,b])=>({a:centre(...a),b:centre(...b)}));this.tunnelReadyAt=0;
+      this.spores=this.level.spores||0;this.sporesUsed=0;this.tunnelsUsed=0;
       this.caps=(this.level.caps||[]).map(c=>({at:c.at.slice(),to:c.to.slice(),key:c.at.join(','),readyAt:0}));
       this.vents=(this.level.vents||[]).map(v=>{const [dx,dy]=v.dir,tiles=[];for(let i=1;i<=(v.length||4);i++){const x=v.at[0]+dx*i,y=v.at[1]+dy*i;if(!this.floor(x,y))break;tiles.push([x,y]);}
         return {...v,tiles,keys:new Set(tiles.map(([x,y])=>x+','+y)),period:v.period||5,on:v.on||1.6,offset:v.offset||0,warn:v.warn||.9,active:false,warning:false};});
@@ -268,7 +275,10 @@
       }
       return [];
     }
+    inEcho(q){return this.echoes.some(e=>q.x>=e.x1&&q.x<e.x2+1&&q.y>=e.y1&&q.y<e.y2+1);}
     audible(a,b,range){
+      // A sound made in an echo hall carries nearly twice as far.
+      if(this.echoes.length&&this.inEcho(b))range*=1.8;
       if(Math.floor(a.x)===Math.floor(b.x)&&Math.floor(a.y)===Math.floor(b.y))return this.clear(a,b);
       // A route of more than `range` steps is at least `range` tiles long even after its start is trimmed.
       const path=this.route(a,b,null,Math.floor(range));return path.length>0 && path.length<=range;
@@ -290,6 +300,7 @@
     active(){return this.status==='playing'&&!this.paused;}
     burrow(){
       if(!this.active())return false;
+      if(this.tunnels.length&&this.useTunnel())return true;
       if(this.burrows===0){this.notice('No burrows left. Find a way around.');return false;}
       const p=this.player,x=Math.floor(p.x),y=Math.floor(p.y),d=p.facing;
       const wx=x+d.x,wy=y+d.y,landing=centre(x+2*d.x,y+2*d.y);
@@ -303,6 +314,15 @@
       this.updateVisibility(true);
       this.burrows--;this.dug.push({x:wx,y:wy});this.invulnerableUntil=this.elapsed+0.35;
       this.notice('Under the wall. Keep moving!','burrow');return true;
+    }
+    // A burrow pair: standing on a mound, Sally digs in and comes up out of its partner a moment
+    // later. Nothing can catch her while she is underground, and nothing can follow.
+    useTunnel(){
+      const p=this.player,t=this.tunnels.find(t=>distance(p,t.a)<.7||distance(p,t.b)<.7);if(!t)return false;
+      if(this.elapsed<this.tunnelReadyAt)return true;
+      const from=distance(p,t.a)<.7?t.a:t.b,to=from===t.a?t.b:t.a;
+      p.underground={from:copy(from),to:copy(to),start:this.elapsed,dur:.9};this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+1.3);
+      this.tunnelReadyAt=this.elapsed+1.8;this.tunnelsUsed++;this.events.push('tunnel');return true;
     }
     // Aimed throws (a pebble or a glow mushroom, held to throw further): the throw flies along
     // the aim, banks off walls (twice at most, losing a little each time) and lands where it
@@ -332,6 +352,13 @@
       this.flights.push({kind,legs,bounces:plan.bounces.map((b,i)=>({...b,at:legs[i].end,done:false})),land:plan.land,start:this.elapsed,speed:9,length});
       this.player.throwAim=null;this.events.push('toss');return true;
     }
+    throwSpore(power=0){
+      if(!this.active())return false;
+      if(!this.spores){this.notice(this.level.spores?'No spore pouches left.':'No spore pouches here.');return false;}
+      if(this.elapsed<this.decoyReadyAt)return false;
+      if(!this.launch('spore',power))return false;
+      this.spores--;this.sporesUsed++;this.decoyReadyAt=this.elapsed+.8;this.notice('Spore pouch thrown.');return true;
+    }
     throwGlow(power=0){
       if(!this.active())return false;
       if(!this.glows){this.notice(this.level.glows?'No glow mushrooms left.':'No glow mushrooms here.');return false;}
@@ -347,6 +374,7 @@
         f.pos=null;for(const leg of f.legs)if(travelled<=leg.end){const t=1-(leg.end-travelled)/Math.max(1e-6,distance(leg.from,leg.to));f.pos={x:leg.from.x+(leg.to.x-leg.from.x)*t,y:leg.from.y+(leg.to.y-leg.from.y)*t};break;}
         if(travelled>=f.length){f.done=true;
           if(f.kind==='pebble'){this.decoy={...f.land,expires:this.elapsed+4,noticed:false};this.events.push('decoy');}
+          else if(f.kind==='spore'){this.clouds.push({...f.land,r:1.9,born:this.elapsed,until:this.elapsed+6});this.events.push('puff');}
           else{this.lights.push({...f.land,born:this.elapsed,until:this.elapsed+12,r:2.5});this.events.push('glow');this.updateVisibility(true);}}
       }
       this.flights=this.flights.filter(f=>!f.done);
@@ -537,6 +565,7 @@
       // While a throw is held, the stick or keys aim it and Sally stands still.
       if(input.aiming){const l=Math.hypot(input.x||0,input.y||0);if(l){this.player.throwAim={x:input.x/l,y:input.y/l};this.player.facing=Math.abs(input.x)>=Math.abs(input.y)?{x:Math.sign(input.x),y:0}:{x:0,y:Math.sign(input.y)};}input={};}
       // In the air off a bounce cap Sally follows her arc and cannot steer.
+      if(this.player.underground){const u=this.player.underground;input={};if(this.elapsed-u.start>=u.dur){this.player.x=u.to.x;this.player.y=u.to.y;this.player.underground=null;this.motion.resetPlayer?.(this.player);this.events.push('tunnel');this.updateVisibility(true);}}
       if(this.player.flight){const f=this.player.flight,t=Math.min(1,(this.elapsed-f.start)/f.dur);this.player.x=f.from.x+(f.to.x-f.from.x)*t;this.player.y=f.from.y+(f.to.y-f.from.y)*t;input={};if(t>=1){this.player.flight=null;this.events.push('hop');}}
       const p=this.player,old=copy(p),length=Math.hypot(input.x||0,input.y||0);
       const dx=length>0?(input.x||0)/Math.max(1,length):0,dy=length>0?(input.y||0)/Math.max(1,length):0;
@@ -552,16 +581,20 @@
       if(this.wind.length&&!p.flight){const gust=this.wind.find(w=>this.gustPhase(w).active&&w.keys.has(this.tileKey(p)));if(gust)for(const [axis,d] of [['x',gust.dir[0]],['y',gust.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*2.3*dt};if(this.fits(next))p[axis]=next[axis];
         // A gust that shoves Sally against a ledge over a gap blows her off it.
         else if(this.grid[Math.floor(next.y+d*(axis==='y'?.3:0))]?.[Math.floor(next.x+d*(axis==='x'?.3:0))]==='P'&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(null)){this.finish('caught','A gust blew Sally off the ledge. Watch the streaks: when they thicken, get out of the lane or brace against a wall.');return;}}}
+      if(this.currents.length&&this.water(p)&&!p.underground){const c=this.currents.find(c=>p.x>=c.x1&&p.x<c.x2+1&&p.y>=c.y1&&p.y<c.y2+1);
+        if(c)for(const [axis,d] of [['x',c.dir[0]],['y',c.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*c.speed*dt};if(this.fits(next))p[axis]=next[axis];}}
       p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);if(p.swimming&&!this.water(old))this.events.push('splash');p.moving=distance(old,p)>0.0001;p.sprinting=sprint&&p.moving;p.crawling=crawl&&p.moving&&!p.swimming;this.playerVelocity={x:(p.x-old.x)/dt,y:(p.y-old.y)/dt};
       p.stamina=Math.max(0,Math.min(100,p.stamina+(p.sprinting?-24:18)*dt));
       if(this.camoUntil>this.elapsed&&p.moving){this.camoUntil=0;this.notice('Moving broke the camouflage.');}
       p.camo=this.camoUntil>this.elapsed;
-      if(this.puffs.length)this.updatePuffs();
+      if(this.puffs.length)this.updatePuffs();else if(this.clouds.length)this.clouds=this.clouds.filter(c=>c.until>this.elapsed);
       if(this.caps.length&&!p.flight&&p.moving){const cap=this.caps.find(c=>c.key===this.tileKey(p)&&this.elapsed>=c.readyAt);if(cap){p.flight={from:centre(...cap.at),to:centre(...cap.to),start:this.elapsed,dur:.55};cap.readyAt=this.elapsed+1;this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+.6);this.events.push('hop');}}
-      p.hidden=!p.moving&&!this.heldBy&&(this.grid[Math.floor(p.y)][Math.floor(p.x)]==='L'||p.camo)||this.clouds.length>0&&!this.heldBy&&this.inCloud(p);
+      p.hidden=Boolean(p.underground)||!p.moving&&!this.heldBy&&(this.grid[Math.floor(p.y)][Math.floor(p.x)]==='L'||p.camo)||this.clouds.length>0&&!this.heldBy&&this.inCloud(p);
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
       // A crawl makes no sound, even on gravel.
-      p.noisy=p.sprinting||(p.moving&&!p.crawling&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='N');
+      p.silent=this.moss.size>0&&this.moss.has(this.tileKey(p));p.loud=p.sprinting&&!p.silent;
+      p.noisy=p.loud||(p.moving&&!p.crawling&&!p.silent&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='N');
+      if(p.noisy&&this.echoes.length&&this.elapsed>=(this.echoAt||0)&&this.inEcho(p)){this.echoAt=this.elapsed+1.2;this.events.push('echo');}
       if(this.level.dark){
         this.glowTrail=this.glowTrail.filter(t=>t.expires>this.elapsed);
         if(p.moving&&this.elapsed>=this.trailAt){this.glowTrail.push({...copy(p),born:this.elapsed,expires:this.elapsed+8});this.trailAt=this.elapsed+.18;}
@@ -614,6 +647,7 @@
     // A moth's glow lights Sally up: leaves no longer hide her and hunters see further.
     lit(){const p=this.player;return this.hunters.some(m=>m.kind==='moth'&&distance(m,p)<=2.6&&this.clear(m,p,true));}
     seesPlayer(h=this.hunter){
+      if(this.player.underground)return false;
       const p=this.player,d=distance(p,h),lit=this.hunters.length>1&&this.lit()||this.lights.length>0&&this.inLight(p);
       if(this.clouds.length&&this.inCloud(h))return false;
       if(this.elapsed<this.flashUntil&&d<=9&&this.clear(h,p,true)&&!(this.clouds.length&&this.inCloud(p)))return true;
@@ -654,7 +688,7 @@
       if(h.kind==='fox'){this.updateFox(dt,h);return;}
       const p=this.player,previousState=h.state;
       // Nearby visible danger overrides a lure; a pebble cannot make it ignore a bite.
-      const seen=this.seesPlayer(h)&&!(p.crawling&&distance(h,p)>(this.hunters.length>1&&this.lit()?5.5:3.5)&&this.elapsed>=this.flashUntil),heard=(p.noisy||p.sprinting)&&!p.hidden&&this.audible(h,p,p.sprinting?6:3.5);
+      const seen=this.seesPlayer(h)&&!(p.crawling&&distance(h,p)>(this.hunters.length>1&&this.lit()?5.5:3.5)&&this.elapsed>=this.flashUntil),heard=(p.noisy||p.loud)&&!p.hidden&&this.audible(h,p,p.loud?6:3.5);
       const lure=this.decoy&&this.audible(h,this.decoy,9)&&!(seen&&distance(h,p)<1.2);
       let target,speed=1.25;
       if(lure){
@@ -732,7 +766,7 @@
         if(remaining<.05||this.elapsed>=h.phaseUntil||!this.fits(next,.22,h)){h.state='sniff';h.phaseUntil=this.elapsed+1.6;h.path=[];return;}
         h.x=next.x;h.y=next.y;h.distanceMoved+=step;return;
       }
-      const heard=(p.noisy||p.sprinting)&&this.audible(h,p,7)||p.moving&&!p.hidden&&this.audible(h,p,p.crawling?1:2.6),lure=this.decoy&&this.decoy.expires!==h.lastLure&&this.audible(h,this.decoy,7);
+      const heard=(p.noisy||p.loud)&&this.audible(h,p,7)||p.moving&&!p.hidden&&!p.silent&&this.audible(h,p,p.crawling?1:2.6),lure=this.decoy&&this.decoy.expires!==h.lastLure&&this.audible(h,this.decoy,7);
       if((heard||lure)&&this.elapsed>=(h.calmUntil||0)){
         const target=lure&&!heard?copy(this.decoy):this.lead(.2);if(lure)h.lastLure=this.decoy.expires;
         const d=Math.min(distance(h,target)+.4,4.5),a=Math.atan2(target.y-h.y,target.x-h.x);
@@ -838,7 +872,7 @@
       const p=this.player;
       if(h.state==='nest'){
         if(this.elapsed<h.readyAt)return;
-        const noisy=(p.sprinting||p.noisy)&&!p.hidden&&distance(p,h.nest)<3.5,touch=distance(p,h.nest)<.8,pebble=this.decoy&&this.decoy.expires!==h.lastLure&&distance(this.decoy,h.nest)<1.6,bumped=this.hunters.some(o=>o!==h&&o.state==='charge'&&distance(o,h.nest)<1);
+        const noisy=(p.loud||p.noisy)&&!p.hidden&&distance(p,h.nest)<(this.inEcho(p)?6.3:3.5),touch=distance(p,h.nest)<.8,pebble=this.decoy&&this.decoy.expires!==h.lastLure&&distance(this.decoy,h.nest)<1.6,bumped=this.hunters.some(o=>o!==h&&o.state==='charge'&&distance(o,h.nest)<1);
         if(noisy||touch||pebble||bumped){if(pebble)h.lastLure=this.decoy.expires;h.state='stir';h.phaseUntil=this.elapsed+.45;this.cue('buzz',h);this.notice('The wasp nest is buzzing!','buzz');}
         return;
       }
@@ -931,7 +965,7 @@
     // short of her, sniffs about and digs back down. A pebble's thud draws it too.
     moleHears(h){
       const p=this.player;if(!p.moving||p.flight||p.swimming||this.grid[Math.floor(p.y)]?.[Math.floor(p.x)]==='L')return null;
-      return distance(p,h)<=(p.sprinting?8:p.noisy?6:p.crawling?2:4.5)?copy(p):null;
+      if(p.silent)return null;return distance(p,h)<=(p.loud?8:p.noisy?6:p.crawling?2:4.5)*(this.inEcho(p)?1.5:1)?copy(p):null;
     }
     updateMole(dt,h){
       const p=this.player;
@@ -1139,7 +1173,7 @@
         h.x=next.x;h.y=next.y;h.distanceMoved+=step;return;
       }
       if(h.state==='stunned'||h.state==='recover'){if(this.elapsed>=h.phaseUntil){h.state='patrol';h.aim=null;}return;}
-      const seen=this.seesPlayer(h),heard=this.player.noisy&&!this.player.hidden&&this.audible(h,this.player,this.player.sprinting?6:3.5);
+      const seen=this.seesPlayer(h),heard=this.player.noisy&&!this.player.hidden&&this.audible(h,this.player,this.player.loud?6:3.5);
       if(seen){
         h.awareness=Math.min(1,h.awareness+dt/.6);h.state='alert';h.reason='seen';
         h.facing=Math.atan2(this.player.y-h.y,this.player.x-h.x);
