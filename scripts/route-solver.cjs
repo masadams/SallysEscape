@@ -139,7 +139,7 @@ function sprintBot(options){
   const g=new EscapeAdventure(options),run=target=>{for(const pt of g.route(g.player,target)||[]){let n=0;while(Math.hypot(pt.x-g.player.x,pt.y-g.player.y)>.1&&n++<200&&g.status==='playing'){const dx=pt.x-g.player.x,dy=pt.y-g.player.y,L=Math.hypot(dx,dy);g.advance(1/120,{x:dx/L,y:dy/L,sprint:true});}}};
   run(g.key);for(let i=0;i<240&&g.status==='playing';i++)run(g.exit);return g.status;
 }
-module.exports={clone,record,extractPlan,search,verify,sprintBot,Peaceful};
+module.exports={clone,record,extractPlan,search,verify,sprintBot,Peaceful,go,wait,frame,bad,optionsFor,ACT};
 if(require.main===module){
   const [mode,arg,hints]=process.argv.slice(2);const fixtures=path.join(__dirname,'../tests/fixtures/escape-playthroughs.json');
   if(mode==='sprint'){console.log(arg,sprintBot(optionsFor(arg)));process.exit(0);}

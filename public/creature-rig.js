@@ -7,7 +7,8 @@
   const difference=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
   const offset=(p,angle,length)=>({x:p.x+Math.cos(angle)*length,y:p.y+Math.sin(angle)*length});
   function fits(p,r,floor){
-    return [[0,0],[-r,-r],[-r,r],[r,-r],[r,r]].every(([x,y])=>floor(Math.floor(p.x+x),Math.floor(p.y+y)));
+    const x0=Math.floor(p.x-r),x1=Math.floor(p.x+r),y0=Math.floor(p.y-r),y1=Math.floor(p.y+r);
+    return floor(Math.floor(p.x),Math.floor(p.y))&&floor(x0,y0)&&floor(x0,y1)&&floor(x1,y0)&&floor(x1,y1);
   }
   function clear(a,b,r,floor){
     const steps=Math.max(1,Math.ceil(distance(a,b)/.045));
@@ -100,11 +101,15 @@
         model.trail.update(actor);model.head=copy(actor);model.distance+=travelled;
         model.instantSpeed=speed;
         model.speed+=(speed-model.speed)*(1-Math.exp(-dt*14));
-        this.pose(model,kind);
+        // Only Sally's feet and a snake's or cobra's tail are felt in play; every other body is
+        // posed when it is next drawn, from the same state, so the result is identical.
+        if(kind==='lizard'||actor.kind==='snake'||actor.kind==='cobra'||!actor.kind){this.pose(model,kind);model.stale=false;}else model.stale=true;
       }
       this.updateFeet(dt);
       this.snakes.forEach((snake,i)=>{const flick=(this.clock+i*.71)%3.7;snake.tongue=flick>3.36&&flick<3.58?Math.sin((flick-3.36)/.22*Math.PI):0;});
     }
+    // Poses any body left stale by update; called once per drawn frame.
+    refresh(){for(const snake of this.snakes)if(snake?.stale){this.pose(snake,'snake');snake.stale=false;}}
     pose(model,kind){
       const snake=kind==='snake',count=snake?34:15,spacing=snake?.098:.086;
       const profile=[52,58,40,60,68,71,65,50,28,15,11,9,7,4,0];
