@@ -8737,7 +8737,7 @@
   //   _ gap   c crumbling floor  @ start  K key  X exit  1-5 treasure of that value
   //   o spore puffball  t tide flat (dry at low tide, water at high tide)  m moss (silent)  I ice wall (reflects a sentinel's gaze)
   // What an edited escape keeps from the game's own copy: its place on the trail and its ties.
-  const EDIT_KEEP=['unlockAfter','unlockChallenges','unlockAny','expedition','hidden','bonus','secret','stars','revision'];
+  const EDIT_KEEP=['unlockAfter','unlockChallenges','unlockAny','hidden','bonus','secret','stars','revision'];
   function fromMap(level){
     const rows=level.map,tiles=(chars)=>{const out=[];rows.forEach((row,y)=>[...row].forEach((ch,x)=>{if(chars.includes(ch))out.push([x,y]);}));return out;};
     const one=ch=>{const found=tiles(ch);if(found.length!==1)throw new Error(level.id+' needs exactly one '+ch);return found[0];};
@@ -8755,11 +8755,11 @@
     // New areas add their escapes to the end of the trail.
     if(route.append){if(levels.some(l=>l.id===route.id))throw new Error('Duplicate route '+route.id);const {append,...rest}=route;levels.push({burrows:0,pebbles:0,tongues:0,...rest,revision:1});continue;}
     const i=levels.findIndex(l=>l.id===route.id);if(i<0)throw new Error('Unknown rebuilt route '+route.id);
-    const old=levels[i],keep={};for(const k of ['unlockAfter','unlockChallenges','expedition'])if(old[k]!==undefined)keep[k]=old[k];
+    const old=levels[i],keep={};for(const k of ['unlockAfter','unlockChallenges'])if(old[k]!==undefined)keep[k]=old[k];
     levels[i]={burrows:0,pebbles:0,tongues:0,...keep,...route,revision:(old.revision||1)+1};
   }
   for(const level of levels)if(level.map)fromMap(level);
-  // Paired expeditions let players choose a route before rejoining the harder path.
+  // Paired escapes let players choose a way before rejoining the harder path.
   for(const [entry,a,b,join] of [[1,2,3,4],[6,7,8,9],[10,11,12,13],[14,15,16,17],[18,19,20,21],[24,25,26,27],[28,29,30,31],[33,34,35,36],[38,39,40,41],[43,44,45,46]]){
     levels[b-1].unlockAny=entry===1?[levels[0].id,levels[1].id]:[levels[entry-1].id];levels[join-1].unlockAny=[levels[a-1].id,levels[b-1].id];
   }

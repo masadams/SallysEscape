@@ -1,39 +1,52 @@
 # Sally’s Escape
 
-A standalone top-down stealth and exploration game: 78 escapes, 21 optional challenges, a walkable maze overworld, limited tools and eleven creature types.
+A top-down stealth and exploration game in the browser. Sally, a small garden lizard, is carried
+far from home by a flood and must sneak back across the Overgrowth: 100 escapes in 21 areas, 14
+hidden escapes, 21 challenges, 29 kinds of creature, and a walkable world map. Along the way she
+learns she is one of the lost Wayfinders (the story is in `docs/STORY.md`).
 
-Explore themed courtyards and branching passages along a clear main route. The world map shows your best stars under every flag, challenge badges, and lifetime totals for stars, treasure, challenges and hidden caches. Each courtyard hides two glinting treasure caches to find on foot, a friendly villager with tips, and golden flies that Sally can chase down or grab with her tongue (R). Cloud shadows drift across the trail and a slow day–night cycle passes every four minutes.
+**Playing.** The title screen shows who is playing (up to six players share a browser, each with
+their own progress and settings), with Continue, Players, Options and Extras (community levels and
+the level builder). On the world map Sally walks between areas, talks to villagers, finds caches,
+catches golden flies and enters escapes at their flags; the Journal holds the Story pages, the Great
+Map and the Bestiary. In an escape the toolbar is just ☰ Menu, Pause and Full screen; pausing opens
+Resume, Restart, Options, Map and Leave. Options holds sound, music and ambience volume, lighting,
+start cards and full screen.
 
-Early escapes are one-touch: any catch ends the run. From Venom Depths (escape 24) onward Sally can drop her tail once per run; it wriggles as a decoy while she escapes, but a tailless Sally is a little slower and cannot earn the third star. The Shedding Hollow adds glowing regrowth bugs that grow the tail back, and the Lantern Marsh beyond it remixes darkness, timed doors, biting plants and rival hunters, watched over by owls that see far down a narrow beam and swoop onto the spot they lock.
+**Escapes.** Early escapes are one-touch; from Venom Depths (escape 24) Sally can drop her tail once
+as a decoy, and pink regrowth bugs grow it back. Every hunter has its own job (`docs/ENEMIES.md`), and
+traps, cold rooms, steam, storms and tides change the routes. Escaping on the first attempt earns a
+First try badge; earning every star in an area masters it and lends Sally its colours. About one
+escape in four, a few glow bugs drift about: free one for a little bonus treasure.
 
-Some branches open in parallel and also need completed challenges: Sunbaked Rooftops opens after Canopy Crown once four challenges are done. A hawk's shadow follows Sally there; awnings, leaves and camouflage (X: stay still to vanish) keep her safe. The Ant Kingdom branches off Venom Depths once eight challenges are done: ant columns march around fixed trails and walk over anything in their way, and gecko thieves dart out to steal the last treasure Sally picked up—chase one down before it reaches its burrow. Frost Hollow follows the Lantern Marsh: only its marked rooms are cold, draining a warmth meter until Sally is slow and cannot sprint, while glowing warm stones thaw her and cold-blooded hunters crawl on the ice. Steam Vents branches off the Rooftops once twelve challenges are done: wall vents hiss, then fire jets down their lanes on a rhythm. A live jet blocks its lane and blows Sally clear, and it knocks walking hunters aside, dazed—so luring a hunter into the steam is a tactic. See `docs/ROADMAP.md` for the regions still to come. Challenges are always one-touch.
+**Sound and light.** Effects are synthesised with Web Audio; the adaptive music is composed in code
+with Tone.js; each area has its own ambience; footsteps follow the ground and caves echo
+(`docs/MUSIC.md`). Lighting and per-area moods are in `docs/LIGHTING.md`.
 
-Escaping a route on your very first attempt (no catch, no quitting part-way) earns a **First try** badge: its stars turn mint and a ✓ joins the flag on the world map.
+**Builder and admin.** The level builder (under Extras, for admins signed in with a passkey) paints
+maps, places creatures, doors, triggers and hazards, and has a Quick build that makes a playable
+first draft; levels can be playtested, shared as text or published to Community levels
+(`docs/BUILDER.md`). **Admin** manages passkeys, the community shelf, the workshop for the game's own
+escapes and anonymous player data (`docs/PLAYDATA.md`). The first start prints a one-time setup code
+in the server log for creating the first passkey; `PUBLIC_ORIGIN` names the address passkeys belong
+to. The server keeps passkeys, published levels and player data in `DATA_DIR` (`/data` in the image;
+`compose.yaml` mounts a volume there). For testing, **Ctrl+Alt+U** (or `?unlock=all`) toggles a test
+mode that opens every escape without changing saved records.
 
-Every hunter has its own job, so each one changes the route rather than just being dodged. Strikes aim where Sally is heading:
-- **Beetle:** charges down a lane and smashes cracked walls.
-- **Scorpion:** a living trap with a strike ring and a rhythmic tail.
-- **Toad:** fires its tongue down clear lines.
-- **Spider:** leaves tripwire webs.
-- **Cricket:** raises the alarm.
-- **Moth:** lights Sally up.
-- **Mimic:** poses as treasure.
-
-Traps (one-use and crumbling bridges, crumbling floor, rolling logs, thorns) and text-drawn level maps are described in `docs/ENEMIES.md`. `scripts/route-solver.cjs` records winning runs for the test fixtures.
-
-Every escape opens with a short intro card; the hunters wait until you press a key or move. **Cards** in the toolbar switches between Brief (the hint stays folded behind **Show hint [H]** except where an area teaches something new), Full and Off. A challenge opens once its escape is cleared and its area has enough stars; open challenges glow on the world map. Sound effects are synthesised in the browser with Web Audio and cached as buffers after their first play. The adaptive music is composed in code with Tone.js: each region has its own style and each escape its own tune, fading between exploring, tension and chases, with an alarm hit when something gives chase (see `docs/MUSIC.md`). Earn every star in an area to master it: Sally can then wear that area's colours (**Colours** on the world map). About one escape in four (never a challenge), a few glow bugs drift about; touch one or grab it with your tongue for a little bonus treasure. **Level builder** (on the start menu, for admins signed in with a passkey): paint a map, place enemies with patrols, doors and bridges with plates, levers and heavy plates, hazards and cold ground, link triggers to what they open or wake, then playtest, save in this browser, share as one line of text, or publish to **Community levels**, which every player can open from the start menu (see `docs/BUILDER.md`). **Admin** (under the start menu buttons) manages passkeys and the shelf: the first start prints a one-time setup code in the server log for creating the first passkey, and `PUBLIC_ORIGIN` names the address passkeys belong to. The server keeps passkeys and published levels in `DATA_DIR` (`/data` in the image; `compose.yaml` mounts a volume there). For testing, **Ctrl+Alt+U** (or `?unlock=all` in the address) toggles a test mode that opens every escape and challenge without changing saved records. The Quiet Vault and Leafy Crossroads are available immediately; later regions are physically gated. Choose between paired routes. Harder paths rejoin after either route; later chapters retain their progression gates. The original MazeAdventure campaign, shop, upgrades, gauntlet, leaderboard API and database are absent.
-
-Desktop: WASD or arrows, Shift sprint, Q pebble, E burrow, R tongue, F seed, X camouflage, Space look back, G map, Escape pause. Phones use landscape orientation, a left thumbstick and right action buttons. Rotating to portrait pauses a run until resumed. Completion stays inside the playfield.
+**Controls.** WASD or arrows, Shift run, C crawl, Q pebble (hold to throw further), L glow mushroom,
+Z spore pouch, E burrow, R tongue, F seed, X camouflage, Space look back, G map, H hint, M mute, Esc
+pause. On the world map R grabs golden flies and Enter enters an escape. Phones use landscape, a left
+thumbstick and right action buttons; rotating to portrait pauses a run.
 
 ## Self hosting
 
-Deploy `compose.yaml` from this repository in Portainer. Set `IMAGE_TAG=latest` and `NPM_NETWORK=nginx_default` (or your existing proxy network). In Nginx Proxy Manager, point your chosen hostname to `sallys-escape:8080`. No database volume, API hostname or Netlify project is required. This static game serves its own code and p5 library; progress is stored on each browser/device under this game’s own save key. MazeAdventure records do not carry into it.
+Deploy `compose.yaml` from this repository in Portainer. Set `IMAGE_TAG=latest` and `NPM_NETWORK=nginx_default` (or your existing proxy network). In Nginx Proxy Manager, point your chosen hostname to `sallys-escape:8080`. No database volume, API hostname or Netlify project is required. The game serves its own code and libraries; progress is stored in each browser, per player.
 
 For private images, use your existing GitHub Container Registry credentials in Portainer. GitHub Actions tests the game, builds the image, checks its HTTP health and publishes both amd64 and arm64 images after a successful main-branch run.
 
 ## Development
 
-Node 24. Run `npm ci`, `npm run prepare:static`, `npm test`, then `npm start`. The only development dependency is p5; the production server uses Node’s built-in HTTP and filesystem libraries.
+Node 24. Run `npm ci`, `npm run prepare:static`, `npm test`, then `npm start`. The development dependencies are p5 and Tone.js (copied into `public/vendor/` by `npm run prepare:static`); the production server uses only Node’s built-in libraries.
 
-The music direction is mysterious folk adventure, written in code rather than shipped as audio files. Music and progression notes are in `docs/`.
+Design notes are in `docs/`: the story, roadmap, creatures, music, lighting, builder and player data.
 

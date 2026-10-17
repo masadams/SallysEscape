@@ -1,6 +1,6 @@
 # Level builder
 
-The builder is on the start menu.
+The builder is under **Extras** on the start menu.
 
 ## Signing in with a passkey
 The builder and the **Admin** area (a link under the start menu buttons) need an admin signed in
@@ -95,7 +95,7 @@ with nothing linked, a heavy plate with no beetle…). **▶ Playtest** runs it.
 this browser. **Share** gives one line of text (`SALLY2:…`) to paste into **Import** anywhere.
 **⇪ Publish to community** puts it on the shared shelf.
 
-**Community levels** (start menu) lists every published level for every player, with each
+**Community levels** (Extras on the start menu) lists every published level for every player, with each
 player's best time. Level makers can copy a community level into the builder or take it down.
 
 ## The level workshop (game levels)

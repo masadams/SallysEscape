@@ -73,7 +73,7 @@
  "#.#.#.#.###.#######.###.###.#####.#",
  "#@#.......#..............1#.......#",
  "###################################"],guards:[{spawn:[17,13],facing:0,patrol:[[5,5],[17,9],[29,11],[17,17],[9,15]]},{kind:"millipede",spawn:[13,17],facing:PI,patrol:[[13,17]]},{kind:"flytrap",spawn:[32,1],facing:PI,patrol:[[32,1]]},{kind:"flytrap",spawn:[33,8],facing:-PI/2,patrol:[[33,8]]}]},
-{id:"the-long-way-home",name:"The Long Way Home",brief:"Eight rooms, every danger the burrow knows, and no checkpoints. Then the way back.",hint:"No checkpoints. Meadow snakes, a timed bridge, a steam hall, a frozen room where a fox listens, rolling logs, a scorpion garden, a swim under a heron's gaze and a king cobra's vault. Taking the key wakes hunters for the way home. The hatch wants six treasure.",bonus:{areas:10},pebbles:3,tongues:2,seeds:0,explore:false,tailDrop:true,requiredTreasure:6,map:[
+{id:"the-long-way-home",name:"The Long Way Home",brief:"Eight rooms, every danger on the trail, and no checkpoints. Then the way back.",hint:"No checkpoints. Meadow snakes, a timed bridge, a steam hall, a frozen room where a fox listens, rolling logs, a scorpion garden, a swim under a heron's gaze and a king cobra's vault. Taking the key wakes hunters for the way home. The hatch wants six treasure.",bonus:{areas:10},pebbles:3,tongues:2,seeds:0,explore:false,tailDrop:true,requiredTreasure:6,map:[
  "#############################################",
  "#..............#.....____.....#.............#",
  "#.@.........1..#.....____.....#...........1.#",

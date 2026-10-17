@@ -49,52 +49,9 @@
   #escape-result button { display: block; width: 100%; margin: 8px 0 0; padding: 10px; }
 }
 
-.options-title {
-  font-size: 2em;
-  margin-bottom: 20px;
-  text-shadow:
-    0 0 10px rgba(0,255,255,0.8),
-    0 0 20px rgba(0,255,255,0.8);
-}
-
-.option-item {
-  margin: 15px 0;
-  font-size: 1.2em;
-}
-
-.option-item label {
-  margin-right: 10px;
-}
-
-.option-item p {
-  margin-bottom: 10px;
-}
-
-/* Tron-button styles are reused from your existing CSS */
-.tron-button {
-  padding: 10px 20px;
-  font-size: 1.2em;
-  background-color: rgba(0,200,0,0.8);
-  border: 2px solid rgba(0,255,0,0.5);
-  border-radius: 8px;
-  cursor: pointer;
-  color: #fff;
-  box-shadow:
-    0 0 10px rgba(0,255,0,0.5),
-    0 0 20px rgba(0,255,0,0.5);
-  transition: background-color 0.2s;
-  margin: 10px;
-}
-
-.tron-button:hover {
-  background-color: rgba(0,230,0,0.9);
-}
-
-
 /* Escape is a standalone playfield; its controls live inside the stage. */
 body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 70%); }
 .escape-mode { width:min(1040px,100%) !important; gap:0 !important; }
-.escape-mode .title-box { display:none; }
 .escape-mode #game-container { max-width:1040px; padding:0; overflow:hidden; border-radius:20px; }
 .escape-mode #game-container canvas { display:block; }
 #escape-stage-ui { position:absolute; inset:0; z-index:3; pointer-events:none; }
@@ -414,10 +371,9 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .builder-sky input[type=number] { width:62px; }
 .builder-hint { display:flex; gap:8px; align-items:flex-start; font-size:.85rem; } .builder-hint textarea { flex:1; min-width:240px; }
 
-/* Volume sliders, under the Volume button. */
-.volume-panel{flex-direction:column;gap:6px;padding:8px 10px;border-radius:10px;background:rgba(12,30,30,.94);border:1px solid #4f7a66;font-size:.8rem}
-.volume-panel label{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.volume-panel input{width:120px;accent-color:#b6dda0}
+
+
+
 
 /* Admin: player data table */
 .playdata-wrap { overflow-x:auto; }

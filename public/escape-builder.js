@@ -27,7 +27,7 @@
   const clampInt=(n,a,b)=>Math.max(a,Math.min(b,Math.round(Number(n)||0)));
   const clampNum=(n,a,b,d=a)=>Number.isFinite(Number(n))?Math.max(a,Math.min(b,Number(n))):d;
   // Whole-level extras the game supports beyond the map: the sky, the weather, and what lives there.
-  const LAYERS={shade:'Awning (shade from the hawk)',glowPlants:'Glow plant (light in the dark)',regrowth:'Regrowth bug (grows back a lost tail)'};
+  const LAYERS={shade:'Awning (shade from the hawk)',glowPlants:'Glow plant (light in the dark)',regrowth:'Pink regrowth bug (grows back a lost tail)'};
   const EXTRAS=()=>({hint:'',tailDrop:false,timeLimit:0,camos:0,seeds:0,glows:0,spores:0,gaze:false,sightRadius:0,dark:false,living:false,abyss:false,biome:'',
     hawk:null,storm:null,tide:null,caps:[],wind:[],echoes:[],currents:[],tunnels:[],antTrails:[],seedCrossings:[],rootWheel:null,rivalries:[],shade:[],glowPlants:[],regrowth:[],regions:[],messages:{}});
 

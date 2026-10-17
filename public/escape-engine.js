@@ -306,7 +306,7 @@
       if(this.burrows===0){this.notice('No burrows left. Find a way around.');return false;}
       const p=this.player,x=Math.floor(p.x),y=Math.floor(p.y),d=p.facing;
       const wx=x+d.x,wy=y+d.y,landing=centre(x+2*d.x,y+2*d.y);
-      if(this.grid[wy]?.[wx]==='G'){const gate=this.gates.find(g=>g.tiles.some(([x,y])=>x===wx&&y===wy));this.notice(gate?.sealed?'This passage is sealed. Find a new way around.':gate?.switch?'This gate needs its matching switch.':'The ruins control this passage. Look for another route.');return false;}
+      if(this.grid[wy]?.[wx]==='G'){const gate=this.gates.find(g=>g.tiles.some(([x,y])=>x===wx&&y===wy));this.notice(gate?.sealed?'This passage is sealed. Find a new way around.':gate?.switch?'This gate needs its matching switch.':'Something controls this passage. Look for another route.');return false;}
       if(!['#','B'].includes(this.grid[wy]?.[wx]) || wx<=0||wy<=0||wx>=this.width-1||wy>=this.height-1||!this.fits(landing)){
         this.notice('Face a thin wall with an open tile on the other side.');return false;
       }
@@ -389,7 +389,7 @@
       if(typeof power==='number'){
         if(this.decoys===0){this.notice('No pebbles left. Use cover.');return false;}
         if(this.elapsed<this.decoyReadyAt||!this.launch('pebble',power))return false;
-        this.decoys--;this.decoyReadyAt=this.elapsed+0.8;this.notice('Pebble tossed. Watch for the guard\'s reaction.');return true;
+        this.decoys--;this.decoyReadyAt=this.elapsed+0.8;this.notice('Pebble tossed. Watch for the hunter\'s reaction.');return true;
       }
       if(this.decoys===0){this.notice('No pebbles left. Use cover.');return false;}
       if(this.elapsed<this.decoyReadyAt)return false;
@@ -400,7 +400,7 @@
       if(distance(start,target)<0.5){this.notice('Face an open corridor to toss a pebble.');return false;}
       this.decoys--;this.decoyReadyAt=this.elapsed+0.8;
       this.decoy={...target,expires:this.elapsed+4,noticed:false};
-      this.notice('Pebble tossed. Watch for the guard\'s reaction.','decoy');return true;
+      this.notice('Pebble tossed. Watch for the hunter\'s reaction.','decoy');return true;
     }
     tongueTarget(){
       const p=this.player,d=p.tongueAim||p.facing,targets=[];
@@ -444,7 +444,7 @@
         if(['mimic','fish','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','crab','owl','gecko','echofrog','sentinel','cloudray'].includes(h.kind)||['emerge','dig','buried','rise','clash'].includes(h.state))continue;
         h.tailLureUntil=this.elapsed+2.4;h.path=[];h.targetId=null;
       }
-      this.notice(this.regrowthBugs.some(b=>!b.eaten)?'Tail dropped! It wriggles as a decoy. Run—then eat a glowing bug to regrow it.':'Tail dropped! It wriggles as a decoy. Run! The next catch is final.','tailDrop');
+      this.notice(this.regrowthBugs.some(b=>!b.eaten)?'Tail dropped! It wriggles as a decoy. Run—then eat a pink regrowth bug to grow it back.':'Tail dropped! It wriggles as a decoy. Run! The next catch is final.','tailDrop');
       return true;
     }
     camouflage(){
@@ -535,7 +535,7 @@
       for(const b of this.glowbugs){if(b.caught)continue;const t=this.elapsed*.9+b.phase;b.x=b.home.x+Math.sin(t)*.32;b.y=b.home.y+Math.sin(t*1.7)*.22;}
       const p=this.player;for(const b of this.glowbugs)if(!b.caught&&distance(p,b)<0.55)this.catchGlowbug(b);
     }
-    catchGlowbug(b){if(b.caught)return;b.caught=true;this.glowbugsCaught++;const left=this.glowbugs.filter(g=>!g.caught).length;this.notice('Glow bug caught! A little bonus treasure.'+(left?' '+left+' still drifting about.':' That was the last one.'),'glowbug');}
+    catchGlowbug(b){if(b.caught)return;b.caught=true;this.glowbugsCaught++;const left=this.glowbugs.filter(g=>!g.caught).length;this.notice('Glow bug freed! It drifts off toward the lanterns. A little bonus treasure.'+(left?' '+left+' still drifting about.':' That was the last one.'),'glowbug');}
     eatRegrowthBug(bug){
       if(bug.eaten||this.hasTail)return;bug.eaten=true;this.hasTail=true;
       this.notice('Crunch! Sally\'s tail grows back.','regrow');
@@ -626,9 +626,9 @@
       const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='sentinel'&&h.kind!=='cloudray'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(h.kind==='beetle'&&h.state==='charge'?.62:.48)&&this.clear(p,h));
       if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
       if(this.elapsed>=this.invulnerableUntil && captor){
-        this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. Try another route through the ruins.':captor.kind==='mimic'?'The plant snapped at its marked spot. Provoke it from a distance or step aside when it opens.':captor.kind==='fox'?'A snow fox heard Sally and pounced. Stand still, keep to quiet ground, or toss a pebble to send it pouncing elsewhere.':captor.kind==='crab'?'A hermit crab scuttled out and pinched Sally. Pass its lane while it is tucked in, or send it back into its shell with a pebble.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'The guard spotted you. Break sight at a corner or use a pebble.');return;
+        this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. It crept up while Sally looked away. Keep it in view as you back off.':captor.kind==='mimic'?'That chest was a mimic! Watch for its tell, or throw a pebble to make it snap first.':captor.kind==='fox'?'A snow fox heard Sally and pounced. Stand still, keep to quiet ground, or toss a pebble to send it pouncing elsewhere.':captor.kind==='crab'?'A hermit crab scuttled out and pinched Sally. Pass its lane while it is tucked in, or send it back into its shell with a pebble.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'A hunter spotted you. Break sight at a corner or use a pebble.');return;
       }
-      if(this.challenge?.noChase&&this.alarms>0){this.finish('failed','A guard gave chase. Break sight before it is sure next time.');return;}
+      if(this.challenge?.noChase&&this.alarms>0){this.finish('failed','A hunter gave chase. Break sight before it is sure next time.');return;}
       if(this.challenge?.noChill&&this.player.chilled){this.finish('failed','Sally got too cold. Thaw on warm stones before the frost slows her.');return;}
       if(this.challenge?.noTheft&&this.stolen>0){this.finish('failed','A gecko got away with your treasure. Catch thieves before they reach their burrows.');return;}
       if(this.timeLimit&&this.elapsed>=this.timeLimit){this.finish('failed','Time ran out. Try a shorter route or save a burrow for the return.');return;}

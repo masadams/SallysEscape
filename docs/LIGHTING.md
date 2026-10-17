@@ -5,7 +5,7 @@ Lighting is purely visual: what creatures see, and what Sally can see, is decide
 
 ## Full and Simple
 
-**Lighting: Full / Simple** in the toolbar is saved per browser. Simple is the plain, flat look.
+**Lighting: Full / Simple** in Options is saved per player. Simple is the plain, flat look.
 
 ## Performance
 
