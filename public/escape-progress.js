@@ -13,8 +13,8 @@
     'challenge-shrine':{name:'the Challenge Shrine',challenges:20},
     'bestiary-grove':{name:'the Bestiary Grove',bestiary:true},
     'ice-cave':{name:'the Ice Cave',caches:['frost-north','frost-south'],clue:'Cold air seeps through the rock. Find both treasure caches in Frost Hollow to open the Ice Cave.'},
-    'sunken-wreck':{name:'the Sunken Wreck',mastered:'tide',clue:'A mast pokes through the reeds. Earn every star in the Tide Pools to reach the Sunken Wreck.'},
-    'sallys-burrow':{name:'Sally\u2019s Burrow',story:true,cleared:'home',clue:'Home is just through here. Reach it the long way: clear escape 100.'}
+    'sunken-wreck':{name:'the Sunken Wreck',mastered:'tide',clue:'A mast pokes through the reeds off Sun and Sea. Earn every star in the Tide Pools to reach the Sunken Wreck.'},
+    'sallys-burrow':{name:'Sally\u2019s Burrow',story:true,cleared:'home',clue:'Home is just through here. Clear escape 100, Home, to reach it.'}
   };
   class EscapeProgress{
     constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],challengesSeen:[],attempts:{},masterySeen:[],skin:'classic',whisper:false,hidden:{},met:[],secrets:[],items:[],story:[]};this.lastPerfect=false;this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
@@ -92,9 +92,9 @@
       if(rule.items){const n=rule.items.filter(i=>this.data.items.includes(i)).length;return {open:all||n>=rule.items.length,have:n,need:rule.items.length,hint:rule.clue};}
       if(rule.cache){const found=this.data.secrets.includes(id);return {open:found,have:found?1:0,need:1,hint:rule.clue,cache:rule.cache};}
       if(rule.stars)return {open:all||this.stars()>=rule.stars,have:this.stars(),need:rule.stars,hint:'Earn '+rule.stars+' stars to open '+rule.name+'.'};
-      if(rule.flies)return {open:all||this.data.goldflies>=rule.flies,have:this.data.goldflies,need:rule.flies,hint:'Catch '+rule.flies+' golden flies to open '+rule.name+'.'};
+      if(rule.flies)return {open:all||this.data.goldflies>=rule.flies,have:this.data.goldflies,need:rule.flies,hint:'Catch '+rule.flies+' golden flies or free glow bugs to open '+rule.name+'.'};
       if(rule.challenges){const n=this.challengesCleared();return {open:all||n>=rule.challenges,have:n,need:rule.challenges,hint:'Beat '+rule.challenges+' challenges to open '+rule.name+'.'};}
-      if(rule.bestiary){const kinds=this.creatureKinds(),n=kinds.filter(k=>this.data.met.includes(k)).length;return {open:all||n>=kinds.length,have:n,need:kinds.length,hint:'Meet every creature in the bestiary to open '+rule.name+'.'};}
+      if(rule.bestiary){const kinds=this.creatureKinds(),n=kinds.filter(k=>this.data.met.includes(k)).length;return {open:all||n>=kinds.length,have:n,need:kinds.length,hint:'Meet every creature on the trail to open '+rule.name+'.'};}
       if(rule.caches){const n=rule.caches.filter(c=>this.data.caches.includes(c)).length;return {open:all||n>=rule.caches.length,have:n,need:rule.caches.length,hint:rule.clue};}
       if(rule.mastered){const c=chapters.find(c=>c.theme===rule.mastered),open=all||Boolean(c&&this.mastered(c));return {open,have:open?1:0,need:1,hint:rule.clue};}
       if(rule.cleared){const open=all||Boolean(this.data.levels[rule.cleared]?.cleared);return {open,have:open?1:0,need:1,hint:rule.clue};}

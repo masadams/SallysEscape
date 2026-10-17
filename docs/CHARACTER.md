@@ -43,7 +43,4 @@ Failed attempts have no celebration, and buttons do not wait for the animation.
   Confirm result controls remain reachable, including after a perfect escape.
 - Enable reduced motion: expressions remain, celebration movements stop.
 
-Validation: 46 targeted tests pass (character state, interface, audio, tail,
-tongue and gaze mechanics). The portrait artwork was rasterised and inspected.
-Live browser layout and animation review remains outstanding because this
-environment's local browser preview was unavailable.
+Tests cover the character state, interface, audio, tail, tongue and gaze mechanics.

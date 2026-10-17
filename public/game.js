@@ -1,15 +1,13 @@
 // Each player's settings and progress live in their own corner of the browser's storage.
 const escapeStore=(()=>{try{if(typeof EscapePlayers!=='undefined')return EscapePlayers.storage();return typeof localStorage==='undefined'?null:localStorage;}catch(_){return null;}})()||{getItem:()=>null,setItem(){},removeItem(){}};
-let gameState='start',gameMode='escape',mobile=false,paused=false,pauseStartedAt=0,pausedDuration=0,skipSimulationFrame=false;
+let gameState='start',mobile=false,paused=false,pauseStartedAt=0,pausedDuration=0,skipSimulationFrame=false;
 let isMuted=false,audioUnlocked=false,soundVolume=.25,musicVolume=1,ambienceVolume=.5,escapeAudio=null,musicOn=true,escapeMusic=null,introMode='brief';
 const touchInput={up:false,down:false,left:false,right:false,sprint:false,crawl:false},touchStick={x:0,y:0,pointer:null},suppressedKeys=new Set();
 const controlCodes={ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40,Shift:16,c:67,l:76,z:90,w:87,a:65,s:83,d:68,q:81,e:69,r:82,f:70,g:71,' ':32,Enter:13};
-const colorSound={play:()=>escapeSound('key')},coinSound={play:()=>escapeSound('treasure')};
 function gameKeyDown(code){return !suppressedKeys.has(code)&&keyIsDown(code);}
 function suppressHeldKeys(){Object.values(controlCodes).forEach(c=>suppressedKeys.add(c));}
 function getAudioContext(){return escapeAudio||(escapeAudio=new (window.AudioContext||window.webkitAudioContext)());}
 function unlockAudio(){try{const c=getAudioContext();c.resume();audioUnlocked=true;startEscapeMusic(c);}catch(_){}}
-function playEffect(effect){effect?.play();}
 function gameNow(){return (paused?pauseStartedAt:millis())-pausedDuration;}
 function isRunActive(){return gameState==='escape'&&!paused;}
 function isMobileDevice(){return windowWidth<=600||Boolean(window.matchMedia?.('(pointer: coarse)')?.matches)||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);}
@@ -20,7 +18,7 @@ function escapeDensityCap(){return Math.min(typeof displayDensity==='function'?d
 let toolbarAt=-1e9;
 function canvasDimensions(){return {width:Math.max(240,Math.min(windowWidth-(mobile?16:24),1400)),height:Math.max(mobile?220:360,Math.min(920,windowHeight-(mobile?16:24)))};}
 function clearTouchInput() { Object.keys(touchInput).forEach(key=>{touchInput[key]=false;});touchStick.x=0;touchStick.y=0;touchStick.pointer=null;const knob=document.getElementById('movement-stick-knob');if(knob)knob.style.transform='translate(-50%,-50%)'; }
-function mobilePortraitBlocked(){const blocked=mobile&&windowHeight>windowWidth&&['escapeSelect','escape','escapeResult','playing','challenge','gauntlet','playerCaught','playerCaughtChallenge','gauntletCaught','gauntletWon'].includes(gameState);document.body?.classList?.toggle('mobile-portrait',blocked);document.body?.classList?.toggle('mobile-game',mobile);return blocked;}
+function mobilePortraitBlocked(){const blocked=mobile&&windowHeight>windowWidth&&['escapeSelect','escape','escapeResult'].includes(gameState);document.body?.classList?.toggle('mobile-portrait',blocked);document.body?.classList?.toggle('mobile-game',mobile);return blocked;}
 function setupMovementStick(){
  const stick=document.getElementById('movement-stick'),knob=document.getElementById('movement-stick-knob');
  const release=e=>{if(e.pointerId!==touchStick.pointer)return;touchStick.x=0;touchStick.y=0;touchStick.pointer=null;knob.style.transform='translate(-50%,-50%)';};
@@ -45,8 +43,8 @@ function toggleFullscreen(){const d=document,el=d.documentElement;
   else{const ask=(el.requestFullscreen||el.webkitRequestFullscreen)?.call(el,{navigationUI:'hide'});ask?.then?.(()=>screen.orientation?.lock?.('landscape').catch(()=>{})).catch(()=>{});}}
 let fullscreenAsked=false;
 function closeToolbarMenu(){const bar=document.getElementById('game-toolbar');bar?.classList.remove('toolbar-open');document.getElementById('menu-button')?.setAttribute('aria-expanded','false');}
-// Volume: two sliders behind the Volume button, for effects and ambience (0–100 maps to 0–0.5)
-// and for music (0–100%). Saved with the other settings.
+// Volume: three sliders in Options, for effects (0–100 maps to 0–0.5), music and ambience
+// (0–100%). Saved with the other settings, per player.
 function setupVolumePanel(){const sound=document.getElementById('sound-volume'),music=document.getElementById('music-volume'),ambience=document.getElementById('ambience-volume');if(!sound||!music)return;
   sound.value=Math.round(soundVolume*200);music.value=Math.round(musicVolume*100);if(ambience)ambience.value=Math.round(ambienceVolume*100);
   sound.oninput=()=>{soundVolume=Number(sound.value)/200;saveSettings();if(typeof escapeSound==='function')escapeSound('click');};
@@ -59,7 +57,7 @@ function setup(){mobile=isMobileDevice();document.getElementById('menu-button').
  document.addEventListener('fullscreenchange',updateToolbar);document.addEventListener('webkitfullscreenchange',updateToolbar);
  // A tap outside the open menu closes it; on a phone the first tap anywhere goes full screen.
  document.addEventListener('pointerdown',e=>{if(!e.target.closest?.('#game-toolbar'))closeToolbarMenu();if(mobile&&!fullscreenAsked&&fullscreenAvailable()&&!isFullscreen()){fullscreenAsked=true;toggleFullscreen();}},true);
- for(const id of ['mute-button','music-button','cards-button','pause-button','escape-map-button','end-run-button','restart-run-button'])document.getElementById(id)?.addEventListener('click',()=>closeToolbarMenu());
+ for(const id of ['pause-button','escape-map-button','end-run-button','restart-run-button'])document.getElementById(id)?.addEventListener('click',()=>closeToolbarMenu());
 const size=canvasDimensions();createCanvas(size.width,size.height).parent('game-container');pixelDensity(escapeDensityCap());frameRate(60);setupMovementStick();try{const settings=JSON.parse(escapeStore.getItem('sally-escape-settings')||'{}');isMuted=settings.muted===true;if(['full','simple'].includes(settings.lighting))escapeLightingMode=settings.lighting;if(Number.isFinite(settings.sound))soundVolume=Math.max(0,Math.min(.5,settings.sound));if(Number.isFinite(settings.musicLevel))musicVolume=Math.max(0,Math.min(1,settings.musicLevel));if(Number.isFinite(settings.ambience))ambienceVolume=Math.max(0,Math.min(1,settings.ambience));musicOn=settings.music!==false;if(['brief','full','off'].includes(settings.cards))introMode=settings.cards;}catch(_){}setupVolumePanel();setupMenus();document.getElementById('music-button').onclick=()=>{unlockAudio();musicOn=!musicOn;saveSettings();};document.getElementById('lighting-button').onclick=()=>{escapeLightingMode=escapeLightingMode==='full'&&!escapeLightingAuto?'simple':'full';escapeLightingAuto=false;escapeSlowFrames=0;escapeFrameAvg=16;saveSettings();};document.getElementById('cards-button').onclick=()=>{introMode=({brief:'full',full:'off',off:'brief'})[introMode];saveSettings();};document.getElementById('play-button').onclick=showEscapeSelect;document.getElementById('builder-button').onclick=()=>openEscapeBuilder();document.getElementById('admin-button').onclick=()=>openEscapeAdmin();document.getElementById('community-button').onclick=()=>openEscapeCommunity();document.getElementById('mute-button').onclick=()=>{unlockAudio();isMuted=!isMuted;saveSettings();};document.getElementById('pause-button').onclick=togglePause;document.getElementById('end-run-button').onclick=showEscapeSelect;{const rb=document.getElementById('restart-run-button');if(rb)rb.onclick=()=>escapeRestart();}
  for(const action of Object.keys(touchInput)){const b=document.getElementById('touch-'+action);b.addEventListener('pointerdown',e=>{e.preventDefault();if(paused||(!isRunActive()&&gameState!=='escapeSelect'))return;unlockAudio();touchInput[action]=true;b.setPointerCapture?.(e.pointerId);});for(const event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>touchInput[action]=false);}
  escapeBindCharge(document.getElementById('touch-camo'),'pebble');escapeBindCharge(document.getElementById('touch-glow'),'glow');escapeBindCharge(document.getElementById('touch-spore'),'spore');

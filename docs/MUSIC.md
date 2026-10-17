@@ -45,7 +45,7 @@ gives chase, a low boom and a clashing chord hit, and the tempo lifts by about
 a fifth; it settles back when the chase ends. A chase holds for 2.5 s,
 so a hunter flickering in and out of sight does not pump the mix. A capture,
 an escape or leaving the level always cuts through. Pausing ducks the music.
-**Music: On/Off** in the toolbar is saved per browser, and **Sound: Off**
+**Music: On/Off** in Options is saved per player, and **Sound: Off**
 silences both music and effects.
 
 ## Moods and styles
@@ -103,7 +103,7 @@ plays softer on the world map and the menu, and ducks during a chase and while p
 
 ## Volume
 
-**Volume** in the toolbar opens three sliders, saved per browser: Sound (effects), Music and
+**Options** has three sliders, saved per player: Sound (effects), Music and
 Ambience. **Sound: Off** still silences everything.
 
 ## Sound effects

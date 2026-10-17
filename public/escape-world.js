@@ -14,11 +14,11 @@
   // Signposts greet Sally at each courtyard and report how many stars it holds.
   const signs=chapters.map((c,i)=>({chapter:i,x:c.x-3,y:c.y-6}));
   // One friendly local lives in every courtyard and chats when Sally is close.
-  const folk=[['tortoise','Old Moss'],['snail','Pip'],['frog','Reed'],['beetle','Brass'],['tortoise','Gravel'],['frog','Dusty'],['snail','Murk'],['frog','Fern'],['beetle','Glimmer'],['snail','Bramble'],['frog','Coral'],['tortoise','Husk'],['beetle','Wick'],['frog','Tiles'],['beetle','Pincer'],['tortoise','Frostbite'],['snail','Rivet'],['frog','Morel'],['tortoise','Gale'],['snail','Shelly'],['tortoise','Granny Sedge']];
+  const folk=[['tortoise','Old Moss'],['snail','Pip'],['frog','Reed'],['beetle','Brass'],['tortoise','Gravel'],['frog','Dusty'],['snail','Murk'],['frog','Fern'],['beetle','Glimmer'],['snail','Briar'],['frog','Coral'],['tortoise','Husk'],['beetle','Wick'],['frog','Tiles'],['beetle','Pincer'],['tortoise','Flurry'],['snail','Rivet'],['frog','Morel'],['tortoise','Gale'],['snail','Shelly'],['tortoise','Granny Sedge']];
   const npcs=chapters.map((c,i)=>({chapter:i,x:c.x+3,y:c.y+5,kind:folk[i][0],name:folk[i][1]}));
-  // Sealed spots for later: small clearings walled off from the trail, each marked with a standing
-  // stone (or, inside a courtyard, a fairy ring or a lightning-struck stump), 
-  // none of them can be reached yet.
+  // Secret spots: small clearings walled off from the trail, each marked with a standing
+  // stone (or, inside a courtyard, a fairy ring or a lightning-struck stump). Each opens on a
+  // deed (see EscapeProgress.SECRET_RULES).
   const secrets=[
     {id:'star-garden',name:'Star Garden',x:79,y:68,rx:5,ry:4},{id:'cloud-nest',name:'Cloud Nest',x:70,y:4,rx:4,ry:2},
     {id:'mossy-well',name:'Mossy Well',x:47,y:31,rx:3,ry:3},{id:'moss-den',name:'Old Moss\'s Den',x:25,y:56,rx:3,ry:3},
@@ -159,7 +159,7 @@
       this.player.moving=Math.hypot(old.x-this.player.x,old.y-this.player.y)>1e-6;this.player.sprinting=Boolean(input.sprint&&this.player.moving);this.motion.update(dt,this);
     }
   }
-  EscapeWorld.chapters=chapters;
+  EscapeWorld.chapters=chapters;EscapeWorld.secrets=secrets;
   root.EscapeWorld=EscapeWorld;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeWorld};
 })(typeof globalThis!=='undefined'?globalThis:this);

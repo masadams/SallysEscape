@@ -1,7 +1,7 @@
-# Level review: repetition and hunter difficulty
+# Level review: repetition and hunter difficulty (historical)
 
-This is a snapshot of all 78 escapes, taken before the layout and difficulty
-pass.
+A snapshot of the first 78 escapes, taken before the text-map rebuild and the difficulty pass.
+Every escape has since been redrawn; this is kept as the record of what that pass set out to fix.
 
 ## Why the layouts feel the same
 

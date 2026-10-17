@@ -61,7 +61,7 @@ const escapePasskeyError=e=>e?.name==='NotAllowedError'?'The passkey prompt was 
 // with the server's one-time setup code (first time) or an invite code from a signed-in admin.
 function renderEscapeAdminLock({title='Admin',next=()=>openEscapeAdmin(),status=null,message=''}={}){
   const panel=document.getElementById('escape-builder'),setup=Boolean(status?.setupNeeded),works=escapePasskeysWork();
-  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Menu</button><h2>'+escapeHtml(title)+'</h2></div><div id="builder-lock" class="builder-lock">'+
+  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Main menu</button><h2>'+escapeHtml(title)+'</h2></div><div id="builder-lock" class="builder-lock">'+
     (title==='Level builder'?'<p>The builder is for level makers. Sign in with your admin passkey to start building.</p>':'<p>Admins manage passkeys and the community shelf here.</p>')+
     (!works?'<p class="builder-bad">Passkeys need the game opened over https (or on localhost) in a current browser.</p>':'')+
     (status===null?'<p class="builder-bad">Could not reach the server.</p>':setup?'<p><b>First time:</b> no admin passkey exists yet. Enter the one-time setup code printed in the server log, then create a passkey on this device.</p>':'<button id="admin-signin" class="escape-primary">Sign in with passkey</button>')+
@@ -83,7 +83,7 @@ async function openEscapeAdmin(message=''){
   if(!list){const s=await escapeAdminStatus();renderEscapeAdminLock({title:'Admin',status:s});return;}
   let levels=[];try{const r=await fetch('/api/levels');if(r.ok)levels=(await r.json()).levels||[];}catch(_){}
   const day=t=>t?String(t).slice(0,10):'—';
-  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Menu</button><h2>Admin</h2><button id="admin-builder" class="escape-secondary">Level builder</button><button id="admin-signout" class="escape-secondary">Sign out</button></div>'+
+  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Main menu</button><h2>Admin</h2><button id="admin-builder" class="escape-secondary">Level builder</button><button id="admin-signout" class="escape-secondary">Sign out</button></div>'+
     (message?'<p class="builder-status">'+escapeHtml(message)+'</p>':'')+
     '<h3>Passkeys</h3><div class="builder-list">'+list.passkeys.map(p=>'<div class="builder-saved"><b>'+escapeHtml(p.name)+'</b> <span>added '+day(p.createdAt)+' · last used '+day(p.lastUsedAt)+(p.id===list.current?' · this session':'')+'</span>'+
       (list.passkeys.length>1?'<button data-premove="'+escapeHtml(p.id)+'">Remove</button>':'')+'</div>').join('')+'</div>'+
@@ -298,7 +298,7 @@ function renderEscapeBuilder(){
   const tool=(id,label,title)=>'<button class="builder-tool'+(escapeBuilderTool===id?' builder-tool-on':'')+'" data-tool="'+id+'" title="'+escapeHtml(title)+'">'+label+'</button>';
   const problems=B.validate(m),linked=escapeBuilderLinked();
   const ws=escapeBuilderWorkshop;
-  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">'+(ws?'← Workshop':'← Menu')+'</button><h2>'+(ws?'✎ '+escapeHtml(escapeWorkshopLabel(ws.key)):'Level builder')+'</h2>'+
+  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">'+(ws?'← Workshop':'← Main menu')+'</button><h2>'+(ws?'✎ '+escapeHtml(escapeWorkshopLabel(ws.key)):'Level builder')+'</h2>'+
     '<label>Name <input id="builder-name" maxlength="40" value="'+escapeHtml(m.name)+'"></label><label>Brief <input id="builder-brief" maxlength="140" value="'+escapeHtml(m.brief)+'"></label><label>Made by <input id="builder-author" maxlength="30" value="'+escapeHtml(m.author||'')+'"></label></div>'+
     '<div class="builder-settings"><label>Width <input id="builder-w" type="number" min="'+B.LIMITS.minW+'" max="'+B.LIMITS.maxW+'" value="'+w+'"></label><label>Height <input id="builder-h" type="number" min="'+B.LIMITS.minH+'" max="'+B.LIMITS.maxH+'" value="'+h+'"></label>'+
     ['burrows','pebbles','tongues'].map(k=>'<label>'+k[0].toUpperCase()+k.slice(1)+' <input data-count="'+k+'" type="number" min="0" max="5" value="'+m[k]+'"></label>').join('')+
@@ -466,12 +466,12 @@ const ESCAPE_COMMUNITY_BEST='sally-escape-community-best';
 function escapeCommunityBest(){try{return JSON.parse(ESCAPE_BUILDER_STORE?.getItem(ESCAPE_COMMUNITY_BEST)||'{}')||{};}catch(_){return {};}}
 function escapeCommunityRecord(id,seconds){const best=escapeCommunityBest();if(!(best[id]<=seconds))best[id]=+seconds.toFixed(1);try{ESCAPE_BUILDER_STORE?.setItem(ESCAPE_COMMUNITY_BEST,JSON.stringify(best));}catch(_){}}
 async function openEscapeCommunity(){
-  const panel=escapeBuilderShow();panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Menu</button><h2>Community levels</h2></div><p>Loading…</p>';
+  const panel=escapeBuilderShow();panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Main menu</button><h2>Community levels</h2></div><p>Loading…</p>';
   document.getElementById('builder-back').onclick=closeEscapeBuilder;
   let levels=null;try{const r=await fetch('/api/levels');if(r.ok)levels=(await r.json()).levels;}catch(_){}
   await escapeAdminStatus();const maker=escapeAdminSignedIn,best=escapeCommunityBest(),B=EscapeBuilder;
   const clean=Array.isArray(levels)?levels.map(l=>({...B.sanitize(l),publishedAt:l.publishedAt})).filter(l=>l.id&&!B.validate(l).length):null;
-  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Menu</button><h2>Community levels</h2>'+(maker?'<button id="community-builder" class="escape-secondary">Level builder</button>':'')+'</div>'+
+  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Main menu</button><h2>Community levels</h2>'+(maker?'<button id="community-builder" class="escape-secondary">Level builder</button>':'')+'</div>'+
     (clean===null?'<p class="builder-bad">Could not reach the community shelf. Try again in a moment.</p>':!clean.length?'<p>No community levels yet. Level makers publish them from the level builder.</p>':
     '<div class="builder-list community-list">'+clean.map(l=>'<div class="builder-saved"><b>'+escapeHtml(l.name)+'</b> <span>'+(l.author?'by '+escapeHtml(l.author)+' · ':'')+l.map[0].length+'×'+l.map.length+' · '+l.guards.length+' enemies'+(best[l.id]?' · your best '+best[l.id]+'s':'')+'</span>'+
       (l.brief?'<em>'+escapeHtml(l.brief)+'</em>':'')+'<button data-cplay="'+l.id+'" class="escape-primary">Play</button>'+(maker?'<button data-cedit="'+l.id+'">Copy to builder</button><button data-cremove="'+l.id+'">Take down</button>':'')+'</div>').join('')+'</div>');
