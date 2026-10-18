@@ -39,3 +39,13 @@ test('a flood of reports from one visitor is turned away',async t=>{
   for(let i=0;i<3;i++)assert.equal((await call(base,'/api/playdata',{body})).status,204);
   assert.equal((await call(base,'/api/playdata',{body})).status,429);
 });
+
+test('turning sharing off keeps no new runs and throws away the ones waiting to be sent',t=>{
+  delete data[P.KEY];delete data['sally-escape-playdata-off'];global.localStorage.removeItem=k=>{delete data[k];};
+  const realFetch=global.fetch;global.fetch=undefined;t.after(()=>{global.fetch=realFetch;P.setEnabled(true);});
+  assert.equal(P.enabled(),true,'sharing starts on');
+  assert.equal(P.record(new EscapeAdventure({levelId:EscapeCatalog.levels[3].id}),'quit'),true);assert.equal(P.pending(),1);
+  P.setEnabled(false);assert.equal(P.enabled(),false);assert.equal(P.pending(),0,'waiting runs are dropped');
+  assert.equal(P.record(new EscapeAdventure({levelId:EscapeCatalog.levels[4].id}),'won'),false);assert.equal(P.pending(),0);assert.equal(P.flush(),false);
+  P.setEnabled(true);assert.equal(P.record(new EscapeAdventure({levelId:EscapeCatalog.levels[4].id}),'won'),true);
+});
