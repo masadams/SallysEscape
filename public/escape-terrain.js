@@ -28,7 +28,9 @@ const ESCAPE_TERRAIN_TINT={hedge:[[58,104,58],.62],grass:[[56,92,48],.5],earth:[
 const escapeTerrainLum=c=>.3*c[0]+.59*c[1]+.11*c[2];
 function escapeTerrainTint(c,material){const t=ESCAPE_TERRAIN_TINT[material];if(!t)return c;const [tc,k]=t,scale=escapeTerrainLum(c)/Math.max(1,escapeTerrainLum(tc));return c.map((v,i)=>Math.max(0,Math.min(255,Math.round(v*(1-k)+tc[i]*scale*k))));}
 const escapeTerrainMix=(c,k)=>c.map(v=>Math.max(0,Math.min(255,Math.round(k>0?v+(255-v)*k:v*(1+k)))));
-const escapeTerrainSolid=(g,x,y)=>{const t=g.grid[y]?.[x];return t===undefined||t==='#'||t==='B'||t==='G'||t==='Y';};
+// Gates count as open ground here, so the terrain looks the same whether a gate is shut or open
+// and does not need redrawing when one moves; the gate itself is drawn on top.
+const escapeTerrainSolid=(g,x,y)=>{const t=g.grid[y]?.[x];return t===undefined||t==='#'||t==='B'||t==='Y';};
 const escapeTerrainWater=t=>t==='U'||t==='P';
 
 // ---- Ground ---------------------------------------------------------------------------------------

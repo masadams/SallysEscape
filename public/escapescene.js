@@ -551,12 +551,12 @@ function escapeCloseView(){try{return escapeStore.getItem(ESCAPE_CLOSE_VIEW_KEY)
 function toggleEscapeCloseView(){try{escapeStore.setItem(ESCAPE_CLOSE_VIEW_KEY,escapeCloseView()?'0':'1');}catch(_){}updateToolbar();}
 // The floor, walls and other still tiles, drawn once into an offscreen layer and copied each frame;
 // the layer is redrawn only when the map itself changes (a smashed wall, flattened leaves).
-let escapeTileCache=null;
+let escapeTileCache=null,escapeTerrainBase=null;
 function drawEscapeStillTiles(g,cell,palette,index){
   // Full lighting draws continuous ground, water and solid walls first (escape-terrain.js); Simple
   // keeps the plain tiles.
   const terrain=escapeLightingFull()&&typeof drawEscapeTerrainGround==='function',deepWater=terrain&&escapeTerrainDeepIsWater(index);
-  if(terrain){drawEscapeTerrainGround(g,cell,palette);drawEscapeTerrainWater(g,cell,index,palette);drawEscapeTerrainWalls(g,cell,palette);}
+  if(terrain){const base=escapeTerrainBase;if(base?.layer)image(base.layer,0,0,g.width*cell,g.height*cell);else{drawEscapeTerrainGround(g,cell,palette);drawEscapeTerrainWater(g,cell,index,palette);drawEscapeTerrainWalls(g,cell,palette);}}
   for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){
     const tile=g.grid[y][x],floor=g.floor(x,y);
     if(!terrain||tile==='G'||tile==='Y'){noStroke();fill(...palette[floor?0:1]);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*0.12);
@@ -595,7 +595,15 @@ function drawEscapeTiles(g,cell,palette,index){
   const key=g.level.id+'|'+cell+'|'+index+'|'+escapeLightingFull()+'|'+g.grid.map(r=>r.join('')).join('/'),w=g.width*cell,h=g.height*cell;
   // Without a real p5 sketch (the test harness) the tiles are simply drawn every frame.
   if(!p5.instance?._renderer||!drawingContext.drawImage)drawEscapeStillTiles(g,cell,palette,index);
-  else{if(escapeTileCache?.key!==key){
+  else{
+    // The terrain has a layer of its own that only changes when walls or water do, so a gate
+    // opening redraws the light tile layer without redrawing the ground beneath it.
+    if(escapeLightingFull()&&typeof drawEscapeTerrainGround==='function'){const baseKey=g.level.id+'|'+cell+'|'+index+'|'+g.grid.map(r=>r.join('')).join('/').replace(/G/g,'g');
+      if(escapeTerrainBase?.key!==baseKey){if(!escapeTerrainBase||escapeTerrainBase.w!==w||escapeTerrainBase.h!==h||escapeTerrainBase.d!==pixelDensity()){escapeTerrainBase?.layer.remove();escapeTerrainBase={layer:createGraphics(w,h),w,h,d:pixelDensity()};}
+        const layer=escapeTerrainBase.layer,host=p5.instance,renderer=host._renderer;layer.clear();
+        host._renderer=layer._renderer;try{push();drawEscapeTerrainGround(g,cell,palette);drawEscapeTerrainWater(g,cell,index,palette);drawEscapeTerrainWalls(g,cell,palette);pop();}finally{host._renderer=renderer;}
+        escapeTerrainBase.key=baseKey;escapeTileCache&&(escapeTileCache.key=null);}}
+    if(escapeTileCache?.key!==key){
     if(!escapeTileCache||escapeTileCache.w!==w||escapeTileCache.h!==h||escapeTileCache.d!==pixelDensity()){escapeTileCache?.layer.remove();escapeTileCache={layer:createGraphics(w,h),w,h,d:pixelDensity()};}
     const layer=escapeTileCache.layer,host=p5.instance,renderer=host._renderer;layer.clear();
     // Point the drawing calls at the layer for one pass, then back at the screen.
