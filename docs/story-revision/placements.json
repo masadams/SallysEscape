@@ -1,0 +1,1165 @@
+{
+  "baselineCommit": "8b97dfd642536bc242a809ea2db511f50ae2e578",
+  "coordinateConvention": "zero-based integer grid cells [x,y]",
+  "scope": "42 optional notes in 42 normal campaign levels; no gameplay implemented",
+  "notes": [
+    {
+      "id": "level-note:meadow:1",
+      "area": 1,
+      "areaTheme": "meadow",
+      "levelId": "quiet-vault",
+      "levelName": "The Quiet Vault",
+      "at": [
+        15,
+        11
+      ],
+      "staticWalkStepsFromSpawn": 24,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "The Empty Hook",
+      "author": "Old Moss — journal scrap",
+      "kind": "observation",
+      "placement": "A lantern bracket rubbing, beneath a proposed broken clay rim in the southeast corner.",
+      "body": "The hook is sound. The glass is sound. I have cleaned both twice. What is missing is the little line of light that used to reach them. I shall check the next marker tomorrow. If that fails, I shall ask for help.",
+      "rewardSketch": "a twig bridge",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing"
+      ]
+    },
+    {
+      "id": "level-note:meadow:2",
+      "area": 1,
+      "areaTheme": "meadow",
+      "levelId": "moonlit-escape",
+      "levelName": "Moonlit Escape",
+      "at": [
+        8,
+        1
+      ],
+      "staticWalkStepsFromSpawn": 31,
+      "initialFloorDegree": 1,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "A Quiet Visitor",
+      "author": "F. — folded leaf",
+      "kind": "practical",
+      "placement": "Folded leaf in the northern dead end; expose one pale corner around the last turn.",
+      "body": "I waited in the leaves while a snake passed so close that I could count the scales beneath his chin. He did not see me. Then I moved to get a better look. An experiment with a clear result.",
+      "rewardSketch": "a twig bridge",
+      "levelRevision": 3,
+      "liveChecks": [
+        "moving guard sightlines and approach timing"
+      ]
+    },
+    {
+      "id": "level-note:garden:1",
+      "area": 2,
+      "areaTheme": "garden",
+      "levelId": "switchback-garden",
+      "levelName": "Switchback Garden",
+      "at": [
+        1,
+        8
+      ],
+      "staticWalkStepsFromSpawn": 35,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Not Yet Mended",
+      "author": "Old Moss — work list",
+      "kind": "character",
+      "placement": "Work slip tucked against the west wall, in a corner of the lower room.",
+      "body": "Mend west wall. Find missing trowel. Mend west wall. Find out who is writing mend west wall on every page. It is my handwriting. This makes the matter harder to take up with anyone.",
+      "rewardSketch": "a fallen bracket",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access"
+      ]
+    },
+    {
+      "id": "level-note:garden:2",
+      "area": 2,
+      "areaTheme": "garden",
+      "levelId": "buried-observatory",
+      "levelName": "Buried Observatory",
+      "at": [
+        1,
+        1
+      ],
+      "staticWalkStepsFromSpawn": 48,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "The Dry Copy",
+      "author": "Pip — storage label",
+      "kind": "history",
+      "placement": "A folded storage label at the northwest wall; proposed small wall-mounted paper sleeve.",
+      "body": "One copy in the shelter. One with the keeper. Never leave both on the same shelf. The well keeper hid his behind the thin, cracked hedge southeast of the Garden Ruins. I hope he remembers which bit. All hedges look rather alike from down here.",
+      "rewardSketch": "a fallen bracket",
+      "levelRevision": 3,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access"
+      ],
+      "secretClue": {
+        "secret": "mossy-well",
+        "rule": "cracked hedge contact after secrets revealed"
+      }
+    },
+    {
+      "id": "level-note:river:1",
+      "area": 3,
+      "areaTheme": "river",
+      "levelId": "reed-bank",
+      "levelName": "Reed Bank",
+      "at": [
+        21,
+        3
+      ],
+      "staticWalkStepsFromSpawn": 22,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "What the River Kept",
+      "author": "Reed — bark rubbing",
+      "kind": "mystery",
+      "placement": "Bark strip at the northeast room corner, above the drawn floor waterline; no new swim required.",
+      "body": "Before the water rose, I copied the little feet on the old crossing. They point beneath the river, not along it. I cannot tell whether this is a road that drowned or a road that knew the water was coming.",
+      "rewardSketch": "a reed crossing",
+      "levelRevision": 3,
+      "liveChecks": [
+        "moving guard sightlines and approach timing"
+      ]
+    },
+    {
+      "id": "level-note:river:2",
+      "area": 3,
+      "areaTheme": "river",
+      "levelId": "forked-fort",
+      "levelName": "Forked Fort",
+      "at": [
+        17,
+        6
+      ],
+      "staticWalkStepsFromSpawn": 35,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Reach, Then Think",
+      "author": "F. — practice scrap",
+      "kind": "practical",
+      "placement": "Practice scrap along the inside wall of the lower east room, outside the actual key tile.",
+      "body": "A tongue is splendid for fetching something from the far bank. Less splendid for fetching yourself after it. Before reaching for the key, I now make certain I know where my feet will go next. This is a recent improvement.",
+      "rewardSketch": "a reed crossing",
+      "levelRevision": 3,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "moving logs on approach"
+      ]
+    },
+    {
+      "id": "level-note:ruins:1",
+      "area": 4,
+      "areaTheme": "ruins",
+      "levelId": "backlash-hall",
+      "levelName": "Backlash Hall",
+      "at": [
+        23,
+        9
+      ],
+      "staticWalkStepsFromSpawn": 28,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "The Return Passage",
+      "author": "Brass — repair docket",
+      "kind": "practical",
+      "placement": "Repair docket against the east wall of the lower room; collectable before touching the key.",
+      "body": "The doors were built in pairs. When one closes, look for the passage its mechanism has released. Do not spend the whole afternoon arguing with the closed one. I did that yesterday. The open passage was behind me.",
+      "rewardSketch": "two linked doors",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state"
+      ]
+    },
+    {
+      "id": "level-note:ruins:2",
+      "area": 4,
+      "areaTheme": "ruins",
+      "levelId": "turning-citadel",
+      "levelName": "Turning Citadel",
+      "at": [
+        22,
+        7
+      ],
+      "staticWalkStepsFromSpawn": 29,
+      "initialFloorDegree": 1,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "For the Next Small Feet",
+      "author": "Unsigned — wall rubbing",
+      "kind": "history",
+      "placement": "Small rubbing in the one-exit pocket just southeast of centre, not on a reaction trigger.",
+      "body": "The return route is marked on the back. If the front is damaged, turn the sheet over. If both sides are damaged, leave a fresh mark where you found the trouble. Someone smaller may be following you.",
+      "rewardSketch": "two linked doors",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state"
+      ]
+    },
+    {
+      "id": "level-note:quarry:1",
+      "area": 5,
+      "areaTheme": "quarry",
+      "levelId": "razor-crossing",
+      "levelName": "Razor Crossing",
+      "at": [
+        8,
+        7
+      ],
+      "staticWalkStepsFromSpawn": 20,
+      "initialFloorDegree": 1,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "First Lesson",
+      "author": "F. — practice book leaf",
+      "kind": "character",
+      "placement": "Practice leaf in the small western dead end; only the paper edge is visible from its entrance.",
+      "body": "I asked when I would be taught the secret of being a Wayfinder. My teacher told me to sit beside a snake and watch which way it turned. I asked again the next day. Same snake. Same answer.",
+      "rewardSketch": "a worn stair",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state"
+      ]
+    },
+    {
+      "id": "level-note:quarry:2",
+      "area": 5,
+      "areaTheme": "quarry",
+      "levelId": "crown-of-thorns",
+      "levelName": "Crown of Thorns",
+      "at": [
+        29,
+        1
+      ],
+      "staticWalkStepsFromSpawn": 40,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "The Careful Door",
+      "author": "F. — trial archive slip",
+      "kind": "history",
+      "placement": "Trial record at the northeast corner of the upper room; proposed scuffed slate on wall edge.",
+      "body": "The old burrow north of the Garden Ruins opens to care, not coins: one perfect escape in each of five different areas. I thought five perfect escapes in one area would do. The door and I have agreed to disagree. — F.",
+      "rewardSketch": "a worn stair",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state"
+      ],
+      "secretClue": {
+        "secret": "gilded-burrow",
+        "rule": "perfect escape in five distinct areas; existing hiddenOpen rule"
+      }
+    },
+    {
+      "id": "level-note:desert:1",
+      "area": 6,
+      "areaTheme": "desert",
+      "levelId": "sting-stair",
+      "levelName": "Sting Stair",
+      "at": [
+        27,
+        1
+      ],
+      "staticWalkStepsFromSpawn": 83,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Shade for Small Things",
+      "author": "Dusty — clay-roof sketch",
+      "kind": "character",
+      "placement": "Roof sketch at the northeast corner of the upper chamber, away from a scorpion spawn.",
+      "body": "The first little roof was for the glow bugs. The second was for the keeper who tended them. By noon everyone wanted a roof, including the scorpion. I made his a little farther from the others.",
+      "rewardSketch": "a little clay roof",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing"
+      ]
+    },
+    {
+      "id": "level-note:desert:2",
+      "area": 6,
+      "areaTheme": "desert",
+      "levelId": "split-jaw",
+      "levelName": "Split Jaw",
+      "at": [
+        8,
+        1
+      ],
+      "staticWalkStepsFromSpawn": 55,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "When the Tail Rises",
+      "author": "F. — sand-stained scrap",
+      "kind": "practical",
+      "placement": "Sand-stained scrap at the north edge of the western room, requiring a lateral turn.",
+      "body": "The raised tail is a warning, not an invitation to hurry straight past. I step out of the marked sting, wait, then move. I have underlined wait because that was the part I kept leaving out.",
+      "rewardSketch": "a little clay roof",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state",
+        "moving logs on approach"
+      ]
+    },
+    {
+      "id": "level-note:marsh:1",
+      "area": 7,
+      "areaTheme": "marsh",
+      "levelId": "mire-mouth",
+      "levelName": "Mire Mouth",
+      "at": [
+        27,
+        1
+      ],
+      "staticWalkStepsFromSpawn": 28,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "A Map with Roots",
+      "author": "Murk — bark label",
+      "kind": "history",
+      "placement": "Bark label at the northeast wall corner; a short look behind the room edge reveals it.",
+      "body": "The roots lifted this path by half a shell-length. I changed the drawing. The next spring they lifted it again. If your map and the garden disagree, look at both before deciding which one is being difficult.",
+      "rewardSketch": "a bent root",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state"
+      ]
+    },
+    {
+      "id": "level-note:marsh:2",
+      "area": 7,
+      "areaTheme": "marsh",
+      "levelId": "hungry-observatory",
+      "levelName": "Hungry Observatory",
+      "at": [
+        20,
+        2
+      ],
+      "staticWalkStepsFromSpawn": 31,
+      "initialFloorDegree": 1,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "A Better Way to Listen",
+      "author": "F. — folded reed",
+      "kind": "practical",
+      "placement": "Rolled reed in the narrow northern pocket near the eastern half; not in a frog spawn.",
+      "body": "A stone makes a noise where it lands. In these halls, a frog may make the next noise somewhere else. Watch where the hunters actually go. They have not promised to follow the first sound you meant them to hear.",
+      "rewardSketch": "a bent root",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state"
+      ]
+    },
+    {
+      "id": "level-note:jungle:1",
+      "area": 8,
+      "areaTheme": "jungle",
+      "levelId": "fern-cloister",
+      "levelName": "Fern Cloister",
+      "at": [
+        6,
+        7
+      ],
+      "staticWalkStepsFromSpawn": 25,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Wrapped on Purpose",
+      "author": "Old Moss — relay label",
+      "kind": "history",
+      "placement": "Dry relay label along the west interior wall of a lower room; proposed bark flap, no added collision.",
+      "body": "These sheets belong to the path, not the shelter. If the roof falls, move them somewhere dry and leave a mark. Do not take them all home for safekeeping. A perfectly safe map that nobody can find is a very poor map.",
+      "rewardSketch": "a wrapped leaf",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state"
+      ]
+    },
+    {
+      "id": "level-note:jungle:2",
+      "area": 8,
+      "areaTheme": "jungle",
+      "levelId": "canopy-crown",
+      "levelName": "Canopy Crown",
+      "at": [
+        5,
+        13
+      ],
+      "staticWalkStepsFromSpawn": 5,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "A Small Provision",
+      "author": "F. — leaf parcel label",
+      "kind": "character",
+      "placement": "Parcel label at the southwest corner near the start-side room; an easy discovery after the harder first jungle note.",
+      "body": "Left three berries here for the next traveller. Returned to find two berries and a thank-you scratched into the bark. I had rather expected an empty parcel. It is pleasant to be wrong about someone.",
+      "rewardSketch": "a wrapped leaf",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state"
+      ]
+    },
+    {
+      "id": "level-note:glow:1",
+      "area": 9,
+      "areaTheme": "glow",
+      "levelId": "glowcap-grotto",
+      "levelName": "Glowcap Grotto",
+      "at": [
+        11,
+        1
+      ],
+      "staticWalkStepsFromSpawn": 18,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "The Part That Answers",
+      "author": "Old keeper — stone rubbing",
+      "kind": "mystery",
+      "placement": "Rubbing against the north wall in a central room; a faint static carved-foot motif, not a light effect.",
+      "body": "Ink can tell you where a path was. Feet can tell you where it is. Set the drawing beside the mark and listen with your toes. If nothing answers, leave the sheet for someone else. Copying it was still worth doing.",
+      "rewardSketch": "a carved footprint",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access"
+      ]
+    },
+    {
+      "id": "level-note:glow:2",
+      "area": 9,
+      "areaTheme": "glow",
+      "levelId": "nightbloom-reach",
+      "levelName": "Nightbloom Reach",
+      "at": [
+        7,
+        1
+      ],
+      "staticWalkStepsFromSpawn": 16,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Cold Light",
+      "author": "Glimmer — keeper scrap",
+      "kind": "practical",
+      "placement": "Keeper scrap on the north side of the western room; different ink from the Waystone rubbing.",
+      "body": "A glow mushroom can help you see the ground. It may also help something else see you. I used to hold one directly over my head. I have since developed a more considerate relationship with the dark.",
+      "rewardSketch": "a carved footprint",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state"
+      ]
+    },
+    {
+      "id": "level-note:orchard:1",
+      "area": 10,
+      "areaTheme": "orchard",
+      "levelId": "sleeping-orchard",
+      "levelName": "Sleeping Orchard",
+      "at": [
+        24,
+        13
+      ],
+      "staticWalkStepsFromSpawn": 44,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Leave a Margin",
+      "author": "Briar — orchard tally",
+      "kind": "character",
+      "placement": "Orchard tally at the southeast corner of the lower room; proposed root-edge paper pin.",
+      "body": "Three little ones. Three appetites. One path to the feeding beds. I drew the path very carefully, then used the margin to count their meals. The margin is full now. I should have drawn a smaller path.",
+      "rewardSketch": "three snail shells",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state",
+        "living growth can change the floor route"
+      ]
+    },
+    {
+      "id": "level-note:orchard:2",
+      "area": 10,
+      "areaTheme": "orchard",
+      "levelId": "the-heartwood",
+      "levelName": "The Heartwood",
+      "at": [
+        28,
+        4
+      ],
+      "staticWalkStepsFromSpawn": 36,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Nothing Straight Stays Straight",
+      "author": "F. — corrected field copy",
+      "kind": "history",
+      "placement": "Corrected field copy at the southeast edge of the upper eastern room; paper follows the wall, not a moving obstacle.",
+      "body": "Old Moss says I draw the hedges too straight. The hedges agree with him. I have stopped giving them corners and started marking the gaps between their roots. Those are what a traveller needs, after all.",
+      "rewardSketch": "three snail shells",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state",
+        "living growth can change the floor route"
+      ]
+    },
+    {
+      "id": "level-note:coast:1",
+      "area": 11,
+      "areaTheme": "coast",
+      "levelId": "sunken-caravan",
+      "levelName": "The Sunken Caravan",
+      "at": [
+        19,
+        3
+      ],
+      "staticWalkStepsFromSpawn": 26,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Not for Sale",
+      "author": "Coast keeper — cargo docket",
+      "kind": "history",
+      "placement": "Cargo docket against the interior wall of the upper eastern room; proposed tied paper sleeve.",
+      "body": "Six oilcloths, twelve lengths of cord, two spare lantern panes. Leave one bundle at every beach shelter. The crabs are carrying it above the tide. Do not offer them coins. They have asked for a dry place to sleep.",
+      "rewardSketch": "an oilcloth bundle",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state"
+      ]
+    },
+    {
+      "id": "level-note:coast:2",
+      "area": 11,
+      "areaTheme": "coast",
+      "levelId": "tideglass-lagoon",
+      "levelName": "Tideglass Lagoon",
+      "at": [
+        1,
+        1
+      ],
+      "staticWalkStepsFromSpawn": 12,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "The Shelf Above the Sea",
+      "author": "Coral — packing note",
+      "kind": "mystery",
+      "placement": "Packing note in the northwest corner; the dry shelf is proposed wall art, not a new raised platform.",
+      "body": "I kept a copy of their stores list. Enough for the crossing, the inspection and the return. They expected to come back. I put the list on the high shelf because expecting a thing does not keep the tide out.",
+      "rewardSketch": "an oilcloth bundle",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "key/treasure/entry reaction state"
+      ]
+    },
+    {
+      "id": "level-note:hollow:1",
+      "area": 12,
+      "areaTheme": "hollow",
+      "levelId": "shedskin-gully",
+      "levelName": "Shedskin Gully",
+      "at": [
+        29,
+        8
+      ],
+      "staticWalkStepsFromSpawn": 31,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "What Was Left",
+      "author": "Unsigned Wayfinder — rest record",
+      "kind": "character",
+      "placement": "Rest record against the east wall of the middle-lower room, away from the warm-stone tile.",
+      "body": "Tail lost. Pride injured. Rest of lizard present and hungry. Have decided to call this a successful escape. Whoever finds this shelter next: the stone near the entrance keeps its warmth after sunset.",
+      "rewardSketch": "a shed tail",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing"
+      ]
+    },
+    {
+      "id": "level-note:hollow:2",
+      "area": 12,
+      "areaTheme": "hollow",
+      "levelId": "old-shedding-tree",
+      "levelName": "The Old Shedding Tree",
+      "at": [
+        25,
+        5
+      ],
+      "staticWalkStepsFromSpawn": 32,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "A Patch of Sun",
+      "author": "Husk — shelter label",
+      "kind": "history",
+      "placement": "Shelter label at the eastern edge of an upper room; proposed folded leaf weighted with a painted pebble.",
+      "body": "Please leave the warm stones clear. Someone coming through may be colder than you are. If you have been lying on the best one all morning, there is probably enough warmth left for somebody else. I write this chiefly to remind myself.",
+      "rewardSketch": "a shed tail",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state"
+      ]
+    },
+    {
+      "id": "level-note:lantern:1",
+      "area": 13,
+      "areaTheme": "lantern",
+      "levelId": "firefly-ford",
+      "levelName": "Firefly Ford",
+      "at": [
+        11,
+        1
+      ],
+      "staticWalkStepsFromSpawn": 15,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Keep the Lid On",
+      "author": "Wick — lantern-care slip",
+      "kind": "history",
+      "placement": "Care slip at the north wall near the western middle room; no glow-bug collectible added.",
+      "body": "If the lantern goes dark, check for living glow bugs before you throw it away. A sheltered colony can wait a long time. I check this one every morning. It makes a small light when the lid is lifted.",
+      "rewardSketch": "a lantern hook",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access"
+      ]
+    },
+    {
+      "id": "level-note:lantern:2",
+      "area": 13,
+      "areaTheme": "lantern",
+      "levelId": "moonwell-keep",
+      "levelName": "Moonwell Keep",
+      "at": [
+        25,
+        12
+      ],
+      "staticWalkStepsFromSpawn": 34,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Three Hooks",
+      "author": "Wick — maintenance tally",
+      "kind": "mystery",
+      "placement": "Maintenance tally at the inside corner of the lower eastern room, off switch and reaction cells.",
+      "body": "Glass repaired: three. Hooks secured: three. Bugs alive: yes. Path answering: no. I have drawn the break on the back. If someone can join it, everything else is ready. I would very much like to stop writing no.",
+      "rewardSketch": "a lantern hook",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state"
+      ]
+    },
+    {
+      "id": "level-note:rooftops:1",
+      "area": 14,
+      "areaTheme": "rooftops",
+      "levelId": "sunbaked-ledge",
+      "levelName": "Sunbaked Ledge",
+      "at": [
+        1,
+        3
+      ],
+      "staticWalkStepsFromSpawn": 32,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "The Lunch Route",
+      "author": "Fennel — roof sketch",
+      "kind": "character",
+      "placement": "Roof sketch at the northwest room edge; proposed wall peg below the roofline, not a new awning.",
+      "body": "Shortest route: ridge. Safest route: beneath the awnings. Route taken: ridge. Lunch remaining: one damp berry. Please amend the first description to shortest route if you are not carrying anything you would like to keep.",
+      "rewardSketch": "an awning",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "hawk cover and warning timing"
+      ]
+    },
+    {
+      "id": "level-note:rooftops:2",
+      "area": 14,
+      "areaTheme": "rooftops",
+      "levelId": "weathervane-spire",
+      "levelName": "Weathervane Spire",
+      "at": [
+        13,
+        9
+      ],
+      "staticWalkStepsFromSpawn": 53,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "A Place to Wait",
+      "author": "Tiles — stair note",
+      "kind": "practical",
+      "placement": "Stair note in the western corner of the lower central room; do not claim the paper itself grants hawk cover.",
+      "body": "Choose your next shelter before leaving this one. When the hawk calls, an awning is worth more than a very good plan to run faster. The little diagram below shows an awning. It does not show me running faster.",
+      "rewardSketch": "an awning",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "key/treasure/entry reaction state",
+        "hawk cover and warning timing",
+        "moving logs on approach"
+      ]
+    },
+    {
+      "id": "level-note:ants:1",
+      "area": 15,
+      "areaTheme": "ants",
+      "levelId": "anthill-gate",
+      "levelName": "Anthill Gate",
+      "at": [
+        20,
+        1
+      ],
+      "staticWalkStepsFromSpawn": 24,
+      "initialFloorDegree": 3,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Small Corrections",
+      "author": "Ant surveyor — punched leaf",
+      "kind": "history",
+      "placement": "Punched leaf along the north edge of the eastern room; visibly separate from the ant trail.",
+      "body": "Third bend: one antenna-width farther east. Fourth bend: unchanged. Fifth bend: cleared after roof fall. Copy sent to surface keeper. Copy retained below. The bottom is covered in tiny marks, all made with great care.",
+      "rewardSketch": "a crumb and antennae",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "moving ant groups"
+      ]
+    },
+    {
+      "id": "level-note:ants:2",
+      "area": 15,
+      "areaTheme": "ants",
+      "levelId": "queens-chamber",
+      "levelName": "The Queen’s Chamber",
+      "at": [
+        10,
+        11
+      ],
+      "staticWalkStepsFromSpawn": 29,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Uncollected",
+      "author": "Ant storekeeper — stores label",
+      "kind": "mystery",
+      "placement": "Stores label at the western corner of a lower chamber; a proposed wall slot, not an extra loot chest.",
+      "body": "One return parcel for the travelling party. Sealed. Dry. No insects inside except authorised inspectors. Checked again today. Beneath the neat instructions, a much smaller hand has written: We have not given their place to anybody else.",
+      "rewardSketch": "a crumb and antennae",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state",
+        "moving ant groups"
+      ]
+    },
+    {
+      "id": "level-note:frost:1",
+      "area": 16,
+      "areaTheme": "frost",
+      "levelId": "frostbite-steps",
+      "levelName": "Frostbite Steps",
+      "at": [
+        1,
+        3
+      ],
+      "staticWalkStepsFromSpawn": 17,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Leave This Clear",
+      "author": "Flurry — shelter scrap",
+      "kind": "practical",
+      "placement": "Shelter scrap at the northwest room corner; keep it off ice and warm-stone cells.",
+      "body": "Rest on a warm stone before trying the next crossing. The keepers also left a cache at each edge of Frost Hollow, north and south. Find both, and the old ice shelter can open. A cold traveller should not have to arrive empty-pawed.",
+      "rewardSketch": "a warm stone",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "cold exposure and return to warmth"
+      ],
+      "secretClue": {
+        "secret": "ice-cave",
+        "rule": "both frost-north and frost-south caches after secrets revealed"
+      }
+    },
+    {
+      "id": "level-note:frost:2",
+      "area": 16,
+      "areaTheme": "frost",
+      "levelId": "winter-heart",
+      "levelName": "Winter Heart",
+      "at": [
+        25,
+        1
+      ],
+      "staticWalkStepsFromSpawn": 36,
+      "initialFloorDegree": 3,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Until We Return",
+      "author": "F. — frost-stiff paper",
+      "kind": "character",
+      "placement": "Frost-stiff paper near the north wall of the eastern room; this is an open-room edge, not guaranteed cover.",
+      "body": "I tried to tell a sentinel that we might be late. It pointed to the warm stone beside its post. There is patience, and then there is whatever they have. I checked the stone before leaving. Still warm.",
+      "rewardSketch": "a warm stone",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state",
+        "cold exposure and return to warmth"
+      ]
+    },
+    {
+      "id": "level-note:vents:1",
+      "area": 17,
+      "areaTheme": "vents",
+      "levelId": "kettle-works",
+      "levelName": "Kettle Works",
+      "at": [
+        27,
+        3
+      ],
+      "staticWalkStepsFromSpawn": 32,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Held Together",
+      "author": "Rivet — repair docket",
+      "kind": "character",
+      "placement": "Repair docket against the east wall of the upper room, outside all authored steam lanes.",
+      "body": "Valve repaired with wire. Wire repaired with string. String replaced after beetle ate it. If you have brought more wire, I shall be pleased to see you. If you are a beetle, I should like a word.",
+      "rewardSketch": "a wired valve",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing"
+      ]
+    },
+    {
+      "id": "level-note:vents:2",
+      "area": 17,
+      "areaTheme": "vents",
+      "levelId": "great-boiler",
+      "levelName": "The Great Boiler",
+      "at": [
+        26,
+        1
+      ],
+      "staticWalkStepsFromSpawn": 31,
+      "initialFloorDegree": 3,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Count the Quiet",
+      "author": "Old works keeper — pipe sketch",
+      "kind": "practical",
+      "placement": "Pipe sketch along the north edge of the eastern middle room; not at the boiler-door tile.",
+      "body": "The hiss tells you a jet is coming. Watch one full burst before choosing the crossing. Count the quiet as well as the noise. It is the quiet you will be walking through. These pipes have never been impressed by hurry.",
+      "rewardSketch": "a wired valve",
+      "levelRevision": 2,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gate state and return access",
+        "key/treasure/entry reaction state",
+        "moving ant groups"
+      ]
+    },
+    {
+      "id": "level-note:grotto:1",
+      "area": 18,
+      "areaTheme": "grotto",
+      "levelId": "puffball-hollow",
+      "levelName": "Puffball Hollow",
+      "at": [
+        27,
+        3
+      ],
+      "staticWalkStepsFromSpawn": 26,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "The First Little Cap",
+      "author": "Morel — growing label",
+      "kind": "character",
+      "placement": "Growing label at the east wall of the upper room; proposed bark tag, no extra spore source.",
+      "body": "The smallest cap grew by the pool. I nearly brushed it away. Its children light the shelf now. At the Fairy Ring, three caps answer one another. Watch their order, then touch them with your tongue in the same order. They prefer a polite introduction.",
+      "rewardSketch": "a mushroom cap",
+      "levelRevision": 1,
+      "liveChecks": [
+        "moving guard sightlines and approach timing"
+      ],
+      "secretClue": {
+        "secret": "fairy-ring",
+        "rule": "repeat existing three-cap tongue sequence after secrets revealed"
+      }
+    },
+    {
+      "id": "level-note:grotto:2",
+      "area": 18,
+      "areaTheme": "grotto",
+      "levelId": "fairy-ring",
+      "levelName": "The Sinkhole Ring",
+      "at": [
+        33,
+        13
+      ],
+      "staticWalkStepsFromSpawn": 36,
+      "initialFloorDegree": 3,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Many Hands",
+      "author": "Unsigned — map-copy instruction",
+      "kind": "history",
+      "placement": "Map-copy instruction along the east edge of a lower chamber; open-room candidate, not a safe alcove.",
+      "body": "A good correction needs the route, the date and the name of whoever walked it. If you cannot write your name, leave your mark. There are claw scratches, pinpricks, a shell-shaped smudge and one small print made in mud.",
+      "rewardSketch": "a mushroom cap",
+      "levelRevision": 1,
+      "liveChecks": [
+        "moving guard sightlines and approach timing"
+      ]
+    },
+    {
+      "id": "level-note:storm:1",
+      "area": 19,
+      "areaTheme": "storm",
+      "levelId": "gale-steps",
+      "levelName": "Gale Steps",
+      "at": [
+        29,
+        5
+      ],
+      "staticWalkStepsFromSpawn": 31,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "After the Fright",
+      "author": "Gale — folded shelter slip",
+      "kind": "character",
+      "placement": "Shelter slip near the northeast room corner, outside any authored hazard cell; lightning still needs live testing.",
+      "body": "Sit beneath the ledge until you can feel your feet. Then choose the next ledge. Near the heights stands the struck oak. Its hollow shows a glint only when lightning comes. Look from shelter; nothing in a tree is worth forgetting where you are standing.",
+      "rewardSketch": "a shelter ledge",
+      "levelRevision": 1,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "gust timing near approach"
+      ],
+      "secretClue": {
+        "secret": "struck-oak",
+        "rule": "existing lightning-timed glint interaction after secrets revealed"
+      }
+    },
+    {
+      "id": "level-note:storm:2",
+      "area": 19,
+      "areaTheme": "storm",
+      "levelId": "eye-of-the-storm",
+      "levelName": "Eye of the Storm",
+      "at": [
+        24,
+        1
+      ],
+      "staticWalkStepsFromSpawn": 29,
+      "initialFloorDegree": 3,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "A Dry Corner",
+      "author": "F. — storm shelter record",
+      "kind": "history",
+      "placement": "Shelter record on the north side of the eastern room; exposed approach, so collect silently and read later.",
+      "body": "Two lizards fit here if one stops complaining. Three fit if everyone leaves their packs outside. The roof holds through a hard storm. I have marked it for whoever comes after us. Bring the packs back in before leaving.",
+      "rewardSketch": "a shelter ledge",
+      "levelRevision": 1,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "storm flash visibility",
+        "gust timing near approach"
+      ]
+    },
+    {
+      "id": "level-note:tide:1",
+      "area": 20,
+      "areaTheme": "tide",
+      "levelId": "low-water",
+      "levelName": "Low Water",
+      "at": [
+        21,
+        11
+      ],
+      "staticWalkStepsFromSpawn": 24,
+      "initialFloorDegree": 3,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Tide Table",
+      "author": "Shelly — shell-weighted slip",
+      "kind": "practical",
+      "placement": "Tide slip along the south side of the eastern room; open-room edge above tide-flat cells, not safe at every phase.",
+      "body": "The shallow route is not always a walking route. Wait and watch what the water uncovers. I once drew a perfectly good path while the tide was out, then forgot to mention the tide. This note is the correction.",
+      "rewardSketch": "a shell and tide line",
+      "levelRevision": 1,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "tide and adjacent water state"
+      ]
+    },
+    {
+      "id": "level-note:tide:2",
+      "area": 20,
+      "areaTheme": "tide",
+      "levelId": "great-tide",
+      "levelName": "The Great Tide",
+      "at": [
+        33,
+        6
+      ],
+      "staticWalkStepsFromSpawn": 33,
+      "initialFloorDegree": 3,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "Things the Water Returns",
+      "author": "Coast keeper — salvage label",
+      "kind": "mystery",
+      "placement": "Salvage label at the east edge of the upper-middle room; no bottle object or arrival proof before finale.",
+      "body": "A mast shows through the reeds off Sun and Sea. The way to it waits for every star in the Tide Pools. I have kept the loose planks on shore. They tell us a boat broke. They do not tell us what happened to its travellers.",
+      "rewardSketch": "a shell and tide line",
+      "levelRevision": 1,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "tide and adjacent water state"
+      ],
+      "secretClue": {
+        "secret": "sunken-wreck",
+        "rule": "master all Tide Pools stars after secrets revealed"
+      }
+    },
+    {
+      "id": "level-note:home:1",
+      "area": 21,
+      "areaTheme": "home",
+      "levelId": "dusk-meadow",
+      "levelName": "Dusk Meadow",
+      "at": [
+        21,
+        11
+      ],
+      "staticWalkStepsFromSpawn": 30,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "A Familiar Wall",
+      "author": "Old Moss — old route copy",
+      "kind": "history",
+      "placement": "Old route copy near the south edge of the eastern room; no need to collect it to understand the final map.",
+      "body": "Near end of the oldest circuit: wall, gate, warm stone. The drawing below is faded. Someone has repaired the gate twice and marked each repair. Important places do not always look important. Sometimes they look like somewhere you sit.",
+      "rewardSketch": "a gate and warm stone",
+      "levelRevision": 1,
+      "liveChecks": [
+        "moving guard sightlines and approach timing"
+      ]
+    },
+    {
+      "id": "level-note:home:2",
+      "area": 21,
+      "areaTheme": "home",
+      "levelId": "home",
+      "levelName": "Home",
+      "at": [
+        35,
+        5
+      ],
+      "staticWalkStepsFromSpawn": 42,
+      "initialFloorDegree": 2,
+      "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
+      "placementStatus": "candidate-needs-playtest",
+      "title": "The Last Small Line",
+      "author": "Old keeper — rubbing, with Sally’s observation",
+      "kind": "reflection",
+      "placement": "Keeper rubbing at the northeast interior corner before the final hatch; leave the last approach uncluttered.",
+      "body": "The old instruction says to copy every turn before going farther. Beneath it, someone has added: And when you get home, draw that too. Sally smooths the little page she has carried through the garden. There is still room beside her stone.",
+      "rewardSketch": "a gate and warm stone",
+      "levelRevision": 1,
+      "liveChecks": [
+        "moving guard sightlines and approach timing",
+        "tide and adjacent water state"
+      ]
+    }
+  ],
+  "audit": {
+    "normalLevelCount": 100,
+    "noteCount": 42,
+    "checks": [
+      "unique IDs",
+      "normal level and area membership",
+      "compiled level revision",
+      "ordinary floor anchor",
+      "authored feature exclusion",
+      "initial-state floor graph reachable without opening gates or spending aids",
+      "25–65 words per note",
+      "manuscript scene coverage"
+    ],
+    "notChecked": [
+      "collision radius",
+      "patrol sightlines and movement",
+      "visibility/fog legibility",
+      "safe return after key or treasure reactions",
+      "cold, tide, storm and hunter interactions during approach",
+      "controller/touch interactions",
+      "runtime performance"
+    ]
+  }
+}
