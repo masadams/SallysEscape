@@ -1,0 +1,29 @@
+Sally's Escape
+Copyright (c) 2026 masadams. All rights reserved.
+
+This repository and everything in it (the game, its source code, levels, story
+and text, characters, artwork, music and sound design, and documentation) is
+proprietary and is protected by copyright.
+
+You may view the contents of this repository on GitHub. No other right is
+granted. Without prior written permission from the copyright holder you may not
+copy, modify, merge, publish, distribute, host, sublicense, sell, or create
+derivative works from any part of it, in whole or in part.
+
+Forking this repository on GitHub, as permitted by GitHub's Terms of Service,
+does not grant any of these rights.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES
+OR OTHER LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR ITS
+USE.
+
+Third-party components
+----------------------
+The following bundled libraries are not covered by the above and remain under
+their own licenses, included alongside them:
+
+- p5.js (public/vendor/p5.min.js): GNU LGPL 2.1, see public/vendor/p5.license.txt
+- Tone.js (public/vendor/Tone.js): MIT, see public/vendor/Tone.license.txt
+
+For permission requests, contact the copyright holder through GitHub (@masadams).

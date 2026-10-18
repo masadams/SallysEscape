@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Sally's Escape: standalone exploration and stealth adventure",
+  "license": "UNLICENSED",
   "engines": {
     "node": ">=24"
   },
