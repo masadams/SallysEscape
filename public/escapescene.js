@@ -249,6 +249,7 @@ function escapeKeyPressed(k=String(key).toLowerCase(),code=keyCode){
   if(gameState==='escapeSelect'){if(!escapeLibraryOpen&&(code===13||k==='enter')&&document.activeElement?.tagName!=='BUTTON')enterEscapeWorld();return;}
   if(gameState==='escapeResult'&&k==='r'){startEscape({...escapeOptions,skipIntro:true,quick:true});return;}
   if(gameState==='escape'&&k==='g'){toggleEscapeMap();return;}
+  if(gameState==='escape'&&['-','_','=','+'].includes(k)){escapeZoom(k==='-'||k==='_'?-1:1);return;}
   if(gameState!=='escape'||paused)return;
   if(escapeIntroOpen){if(k==='h'&&revealEscapeHint())return;hideEscapeIntro();return;}
   if(k==='x')useEscapeCamo();
@@ -717,8 +718,38 @@ function drawEscapeLightningShadows(g,cell){
   for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){if(g.sightFloor(x,y)||!(g.sightFloor(x,y+1)||g.sightFloor(x+1,y)))continue;
     quad(x*cell,(y+1)*cell,(x+1)*cell,(y+1)*cell,(x+1+dx)*cell,(y+1+dy)*cell,(x+dx)*cell,(y+1+dy)*cell);quad((x+1)*cell,y*cell,(x+1)*cell,(y+1)*cell,(x+1+dx)*cell,(y+1+dy)*cell,(x+1+dx)*cell,(y+dy)*cell);}
 }
+// Where the map can go on screen. Phones keep their fixed bands. On a desktop or a TV the panels
+// over the map (the run's details and tools at the top left, the menu at the top right) are
+// measured, and the map goes either below them or beside them, whichever lets it be drawn bigger.
+let escapeHudBox={at:-1e9,w:0,h:0,left:null,right:null};
+function escapeHudArea(){
+  if(millis()-escapeHudBox.at<500&&escapeHudBox.w===width&&escapeHudBox.h===height)return escapeHudBox;
+  const box={at:millis(),w:width,h:height,left:null,right:null},host=document.getElementById('game-container')?.getBoundingClientRect?.();
+  if(host&&host.width){const sx=width/host.width,sy=height/host.height,grow=(b,r)=>{const x0=(r.left-host.left)*sx,y0=(r.top-host.top)*sy,x1=(r.right-host.left)*sx,y1=(r.bottom-host.top)*sy;return b?{x0:Math.min(b.x0,x0),y0:Math.min(b.y0,y0),x1:Math.max(b.x1,x1),y1:Math.max(b.y1,y1)}:{x0,y0,x1,y1};};
+    for(const el of document.querySelectorAll('#scoreboard *')){const r=el.getBoundingClientRect?.();if(!r||!r.width||!r.height||el.children.length)continue;
+      if((r.top-host.top)*sy<height*.4&&(r.left-host.left)*sx<width*.6)box.left=grow(box.left,r);}
+    const bar=document.querySelector('#escape-stage-ui #game-toolbar')?.getBoundingClientRect?.();if(bar&&bar.width)box.right=grow(null,bar);}
+  return escapeHudBox=box;
+}
+// Zoom steps: 1 fits the whole map; the rest draw it bigger and follow Sally. Saved per player.
+const ESCAPE_ZOOMS=[1,1.3,1.7,2.2];
+function escapeZoomStep(){const z=escapeProgress.data.zoom;return Number.isInteger(z)&&z>=0&&z<ESCAPE_ZOOMS.length?z:0;}
+function escapeZoom(dir){
+  const next=Math.max(0,Math.min(ESCAPE_ZOOMS.length-1,escapeZoomStep()+dir));if(next===escapeZoomStep())return false;escapeProgress.setZoom?.(next);
+  escapeGame?.notice?.('Zoom: '+['Fit the whole map','Close','Closer','Closest'][next]);return true;
+}
+function escapeLayout(g){
+  if(mobile){const close=escapeCloseView(),top=close?8:45,bottom=close?8:65;return {x:0,y:top,w:width,h:height-top-bottom,close};}
+  const hud=escapeHudArea(),pad=12,bottom=18,barBottom=hud.right?hud.right.y1+8:56;
+  if(!hud.left)return {x:pad,y:barBottom,w:width-pad*2,h:height-barBottom-bottom};
+  const below={x:pad,y:Math.max(hud.left.y1,barBottom-48)+8,w:width-pad*2},beside={x:hud.left.x1+14,y:barBottom,w:0};below.h=height-below.y-bottom;beside.w=width-beside.x-pad;beside.h=height-beside.y-bottom;
+  // In the follow view the map scrolls under the panels anyway, so it takes the whole screen.
+  const overview=escapeProgress.data.view==='overview',zoom=ESCAPE_ZOOMS[escapeZoomStep()],fit=r=>escapeCameraFor(g,r.w,r.h,overview,false,zoom);
+  const a=fit(below);if(a.follow)return {x:pad,y:barBottom,w:width-pad*2,h:height-barBottom-bottom};
+  const b=beside.w>200?fit(beside):null;return b&&!b.follow&&b.cell>a.cell*1.02?beside:below;
+}
 function drawEscapeVault(){
-  const g=escapeGame,close=mobile&&escapeCloseView(),top=mobile?(close?8:45):height<=550?126:164,bottom=mobile?(close?8:65):70,view=escapeCameraFor(g,width,height-top-bottom,escapeProgress.data.view==='overview',close);escapeCameraMotion(view,g,width,height-top-bottom);view.oy+=top;const {cell,ox,oy}=view;
+  const g=escapeGame,area=escapeLayout(g),close=Boolean(area.close),view=escapeCameraFor(g,area.w,area.h,escapeProgress.data.view==='overview',close,mobile?1:ESCAPE_ZOOMS[escapeZoomStep()]);escapeCameraMotion(view,g,area.w,area.h);view.ox+=area.x;view.oy+=area.y;const {cell,ox,oy}=view;
   const palettes=[[[16,30,36],[39,65,74],[65,93,101]],[[19,34,29],[48,74,56],[78,103,76]],[[33,29,26],[77,63,48],[108,89,66]],[[21,28,37],[46,61,80],[75,91,109]],[[22,24,41],[54,57,85],[86,89,124]],[[14,31,26],[38,68,49],[58,92,66]],[[34,29,20],[80,67,39],[123,102,60]],[[16,30,39],[34,61,73],[55,90,103]],[[26,22,37],[62,48,76],[100,81,116]]];
   const index=EscapeCatalog.levels.indexOf(g.level),deepPalettes=[[[21,30,26],[53,75,58],[94,112,79]],[[22,29,35],[51,69,82],[91,111,124]],[[35,27,24],[80,58,45],[125,91,63]],[[27,23,38],[66,51,82],[103,82,125]],[[29,27,20],[75,68,39],[118,106,62]],[[32,27,20],[82,65,40],[132,108,65]]];
   const wakingPalettes=[[[14,32,28],[47,76,52],[87,113,73]],[[25,19,35],[62,49,75],[103,81,127]],[[19,31,43],[58,80,92],[96,123,141]],[[33,24,23],[79,65,57],[121,101,81]],[[29,22,36],[72,56,91],[118,91,141]]];

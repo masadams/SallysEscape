@@ -40,6 +40,8 @@ function pollEscapePad(){
   }
   if(gameState!=='escape')return;
   if(pressed(ESCAPE_PAD.VIEW)){escapeKeyPressed('g',71);return;}
+  // The right stick zooms: push up to come in closer, down to see more; it steps, held or not.
+  const zy=pad.axes[3]||0;if(Math.abs(zy)>.6){if(!escapePad.zoomHeld||millis()-escapePad.zoomAt>450){escapePad.zoomHeld=true;escapePad.zoomAt=millis();if(typeof escapeZoom==='function')escapeZoom(zy<0?1:-1);}}else escapePad.zoomHeld=false;
   // A start card or a big moment: any button moves on, as any key does.
   if(escapeIntroOpen||escapeMoment){if(now.some((b,i)=>b&&!was[i]))escapeKeyPressed(' ',32);return;}
   for(const [name,action] of Object.entries(ESCAPE_PAD_ACTIONS)){const i=ESCAPE_PAD[name];
