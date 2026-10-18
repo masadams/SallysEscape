@@ -443,7 +443,7 @@ const escapeFx=typeof EscapeFeel!=='undefined'?new EscapeFeel.Particles():{items
 let escapeFxDecoy=null,escapeFxClock=0,escapeSkid={at:0,puff:0,v:null};const escapeSkidSeen=new WeakMap();
 function tickEscapeFx(g){
   escapeFxClock+=Math.min(.1,deltaTime/1000);escapeFx.update(escapeFxClock,deltaTime/1000);
-  if(g.decoy&&g.decoy!==escapeFxDecoy&&typeof EscapeFeel!=='undefined')EscapeFeel.land(escapeFx,g.decoy,escapeFxClock,Math.random,g);escapeFxDecoy=g.decoy;
+  if(g.decoy&&g.decoy!==escapeFxDecoy&&typeof EscapeFeel!=='undefined')EscapeFeel.land(escapeFx,g.decoy,escapeFxClock,Math.random,g);escapeFxDecoy=g.decoy;tickEscapeAtmo(g);
   // A hunter thrown into a skid sprays dust out to the side it is sliding from, with a scrape.
   for(const h of g.hunters)if(h.skidAt&&h.skidAt!==escapeSkidSeen.get(h)&&typeof EscapeFeel!=='undefined'){escapeSkidSeen.set(h,h.skidAt);const a=h.skidFrom?.heading??h.facing;
     for(let i=0;i<9;i++){const side=(i%2?1:-1)*(1.2+Math.random()*.6);escapeFx.add('dust',h.x,h.y+.15,{t:escapeFxClock,life:.55+Math.random()*.25,size:.15+Math.random()*.12,vx:Math.cos(a)*(1.8+Math.random()*1.4)+Math.cos(a+side)*1.1,vy:Math.sin(a)*(1.8+Math.random()*1.4)+Math.sin(a+side)*1.1-.25,color:[186,170,138]});}
@@ -540,7 +540,7 @@ function drawEscapeFx(g,cell){
         for(const [weight,alpha] of [[cell*.16,wide],[Math.max(1,cell*.018),thin]]){if(!alpha)continue;strokeWeight(weight);let prev=at(p.rays[n-1],n-1);
           for(let i=0;i<n;i++){const q=at(p.rays[i],i);if(Math.abs(q[0]-prev[0])+Math.abs(q[1]-prev[1])<gap){stroke(...p.color,alpha*fade*Math.pow(.75,Math.max(q[2],prev[2])));line(prev[0]*cell,prev[1]*cell,q[0]*cell,q[1]*cell);}prev=q;}}}
       continue;}
-    if(!full||p.kind==='print')continue;noStroke();
+    if(!full||p.kind==='print')continue;noStroke();if(drawEscapeAtmoParticle(p,cell,age,k))continue;
     if(p.kind==='dust'){fill(...p.color,120*k);ellipse(p.x*cell,p.y*cell,cell*p.size*(1+age*2),cell*p.size*(1+age*2));}
     else if(p.kind==='leaf'){push();translate(p.x*cell,p.y*cell);rotate(p.angle);fill(...p.color,220*k);ellipse(0,0,cell*p.size*1.6,cell*p.size*.8);pop();}
     else if(p.kind==='spark'){fill(...p.color,255*k);ellipse(p.x*cell,p.y*cell,cell*p.size,cell*p.size);}}
@@ -579,6 +579,7 @@ function drawEscapeStillTiles(g,cell,palette,index){
       for(const dy of [.3,.65])line((x+.2)*cell,(y+dy)*cell,(x+.8)*cell,(y+dy)*cell);
     }
   }
+  if(escapeLightingFull())drawEscapeAtmoGround(g,cell,palette,index);
   for(const key of g.ice||[]){const [x,y]=key.split(',').map(Number);noStroke();fill(143,196,220);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*.12);fill(205,235,248,200);triangle(x*cell+cell*.18,y*cell+cell*.2,x*cell+cell*.55,y*cell+cell*.16,x*cell+cell*.2,y*cell+cell*.55);stroke(230,248,255,160);strokeWeight(Math.max(1,cell*.03));line(x*cell+cell*.62,y*cell+cell*.3,x*cell+cell*.8,y*cell+cell*.72);}
   // Full lighting: soft shadows where floor meets a wall above or to the left, so mazes read in depth.
   if(escapeLightingFull())for(let y=1;y<g.height;y++)for(let x=1;x<g.width;x++){if(!g.floor(x,y))continue;noStroke();
@@ -623,7 +624,9 @@ function escapePlace(level){
 // Light sources glow (additively) over the lit ground, before the darkness goes on top.
 function drawEscapeLights(g,cell,mood){
   if(!escapeLightingFull())return;const strength=g.level.dark||g.level.explore||mood?.night?1:.55,ctx=drawingContext;ctx.save();ctx.globalCompositeOperation='lighter';
-  for(const s of EscapeLighting.lightSources(g)){const x=s.x*cell,y=s.y*cell,r=s.r*cell,[R,G,B]=s.color,a=s.alpha*strength,grad=ctx.createRadialGradient(x,y,0,x,y,r);
+  // The glow bug that follows Sally gives off a faint light of its own where it is dark.
+  const sources=EscapeLighting.lightSources(g);if(escapeCompanion&&escapeProgress.companion?.()&&(g.level.dark||mood?.night))sources.push({x:escapeCompanion.x,y:escapeCompanion.y,r:1.1,color:[120,230,210],alpha:.14});
+  for(const s of sources){const x=s.x*cell,y=s.y*cell,r=s.r*cell,[R,G,B]=s.color,a=s.alpha*strength,grad=ctx.createRadialGradient(x,y,0,x,y,r);
     grad.addColorStop(0,'rgba('+R+','+G+','+B+','+a+')');grad.addColorStop(.45,'rgba('+R+','+G+','+B+','+a*.45+')');grad.addColorStop(1,'rgba('+R+','+G+','+B+',0)');ctx.fillStyle=grad;ctx.fillRect(x-r,y-r,r*2,r*2);}
   ctx.restore();
 }
@@ -718,6 +721,7 @@ function drawEscapeVault(){
   background(10,18,25);push();translate(ox,oy);textFont('sans-serif');textAlign(CENTER,CENTER);
   drawEscapeTiles(g,cell,palette,index);
   drawEscapeWaterLight(g,cell,view);drawEscapeLightningShadows(g,cell);
+  drawEscapeWet(g,cell,view);drawEscapeSway(g,cell,view);drawEscapeDapple(g,cell);
   drawEscapeTricks(g,cell,view);drawEscapePrints(g,cell);
   if(g.level.rootWheel){const [x,y]=g.level.rootWheel,angle=g.wheelAngle;push();translate((x+.5)*cell,(y+.5)*cell);rotate(angle);noFill();stroke(106,147,76,95);strokeWeight(cell*.11);ellipse(0,0,cell*2.7,cell*2.7);for(let a=0;a<TWO_PI;a+=PI/2)line(0,0,Math.cos(a)*cell*1.35,Math.sin(a)*cell*1.35);pop();}
   for(const gate of g.gates){
@@ -828,7 +832,7 @@ function drawEscapeVault(){
   g.hunters.filter(h=>h.kind==='angler').forEach(h=>drawEscapeAngler(h,cell,g.elapsed));
   g.motion.refresh?.();
   for(const h of g.hunters)if(h.kind==='flytrap')drawEscapeDew(g,h,cell,view);
-  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='angler'||h.kind==='cloudray')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='wasp'?drawEscapeWaspNest(h,cell,g.elapsed):h.kind==='dragonfly'?drawEscapeDragonfly(h,cell,g.elapsed):h.kind==='mole'?drawEscapeMole(h,cell,g.elapsed):h.kind==='bat'?drawEscapeBat(h,cell,g.elapsed,g):h.kind==='eel'?drawEscapeEel(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='echofrog'?drawEscapeEchoFrog(h,cell,g.elapsed):h.kind==='sentinel'?drawEscapeSentinel(h,cell,g.elapsed):h.kind==='chameleon'?drawEscapeChameleon(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');});
+  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='angler'||h.kind==='cloudray')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}const breathing=escapeBreathe(g,h,i,cell);if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='wasp'?drawEscapeWaspNest(h,cell,g.elapsed):h.kind==='dragonfly'?drawEscapeDragonfly(h,cell,g.elapsed):h.kind==='mole'?drawEscapeMole(h,cell,g.elapsed):h.kind==='bat'?drawEscapeBat(h,cell,g.elapsed,g):h.kind==='eel'?drawEscapeEel(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='echofrog'?drawEscapeEchoFrog(h,cell,g.elapsed):h.kind==='sentinel'?drawEscapeSentinel(h,cell,g.elapsed):h.kind==='chameleon'?drawEscapeChameleon(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');if(breathing)pop();});
   drawingContext.save();drawingContext.globalAlpha*=g.player.hidden?.48:1;
   for(const h of g.hunters)if(h.state==='clash'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noFill();stroke(255,193,107,180);strokeWeight(cell*.035);ellipse(h.x*cell,h.y*cell,cell*(.9+Math.sin(g.elapsed*14)*.08),cell*.75);}
   // Mid-flight off a bounce cap, Sally rises over her shadow.
@@ -848,7 +852,7 @@ function drawEscapeVault(){
   for(const h of g.hunters)if(h.kind==='cloudray')drawEscapeCloudRay(h,cell,g.elapsed);
   if(g.player.frozenUntil>g.elapsed){const p=g.player,k=Math.min(1,(g.player.frozenUntil-g.elapsed)/1.6);noStroke();fill(200,236,250,120*k);ellipse(p.x*cell,p.y*cell,cell*.9,cell*.9);stroke(235,250,255,200*k);strokeWeight(Math.max(1,cell*.035));for(let a=0;a<6;a++){const r=a*Math.PI/3;line(p.x*cell,p.y*cell,(p.x+Math.cos(r)*.45)*cell,(p.y+Math.sin(r)*.45)*cell);}}
   for(const h of g.hunters)if(h.kind!=='millipede'&&h.state!=='rooted'&&h.state!=='patrol'&&!(['angler','flytrap'].includes(h.kind)&&h.state!=='snap')&&!(h.kind==='heron'&&h.state!=='aim')&&!(h.kind==='mantis'&&h.state!=='raise')&&!(h.kind==='wasp'&&h.state!=='stir')&&h.kind!=='dragonfly'&&h.kind!=='cloudray'&&h.kind!=='sentinel'&&!(h.kind==='mole'&&h.state!=='surface')&&!(h.kind==='bat'&&h.state!=='dive')&&!(h.kind==='eel'&&h.state!=='ripple')&&!(h.kind==='crab'&&!['peek','scuttle'].includes(h.state))&&h.kind!=='fox'&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y))))escapeHunterMark(h,cell,g);
-  drawEscapeFx(g,cell);
+  drawEscapeFx(g,cell);drawEscapeMotes(g,cell);
   const place=escapePlace(g.level),mood=place?EscapeLighting.moodFor(place.key,place.step):null;
   drawEscapeLights(g,cell,mood);
   if(view.follow)drawEscapeFog(g,cell);
