@@ -345,7 +345,7 @@ function renderEscapeHUD(force=false){
   const locked=paused||!g.active()||escapeIntroOpen;
   const abilities=[
     // On a level with soft dirt the same button, held, digs in: it is always ready there.
-    g.soil.size?[burrow,'burrow',g.level.burrows?'Burrow · Dig':'Dig in','E',Math.max(1,g.burrows),g.level.burrows||null,true,Boolean(g.player.dig)]:[burrow,'burrow','Burrow','E',g.burrows,g.level.burrows,true,false],
+    g.soil.size||g.tunnels.length?[burrow,'burrow',g.level.burrows?(g.soil.size?'Burrow · Dig':'Burrow · Tunnel'):g.soil.size?'Dig in':'Tunnel','E',Math.max(1,g.burrows),g.level.burrows||null,true,Boolean(g.player.dig||g.player.underground)]:[burrow,'burrow','Burrow','E',g.burrows,g.level.burrows,true,false],
     [decoy,'decoy','Pebble','Q',g.decoys,g.level.pebbles,g.elapsed>=g.decoyReadyAt,escapeCharge?.kind==='pebble'],
     [document.getElementById('escape-glow-action'),'glow','Glow','L',g.glows,g.level.glows||0,g.elapsed>=g.decoyReadyAt,escapeCharge?.kind==='glow'],
     [document.getElementById('escape-spore-action'),'spore','Spores','Z',g.spores,g.level.spores||0,g.elapsed>=g.decoyReadyAt,escapeCharge?.kind==='spore'],
