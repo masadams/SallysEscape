@@ -15,8 +15,9 @@ web game in `public/`, shown full screen.
 - Offline it plays the newest version it has downloaded; on a device that has never been online, the
   copy built into the APK.
 - So a new APK is only needed when the app itself changes, not for every game update.
-- Back on a remote or phone acts like Escape in the game; a controller's buttons reach the game as a
-  gamepad. Leave with the Home button.
+- Back on a remote, phone or controller goes back one step in the game (as Escape does); at the main
+  menu it asks once, and a second Back closes the app. The title also has a Quit button. A controller's
+  buttons reach the game as a gamepad.
 - A page may only start sound after a press, and controller buttons don't count as one, so the app
   turns the first controller press on a page into a key press the game ignores (F12). That is what
   lets sound play on a TV played with only a controller.

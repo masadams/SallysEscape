@@ -8743,7 +8743,7 @@
     const one=ch=>{const found=tiles(ch);if(found.length!==1)throw new Error(level.id+' needs exactly one '+ch);return found[0];};
     level.width=Math.max(...rows.map(r=>r.length));level.height=rows.length;level.rooms=[];
     rows.forEach((row,y)=>{let start=null;[...row,'#'].forEach((ch,x)=>{const open=ch!=='#'&&ch!==' ';if(open&&start===null)start=x;if(!open&&start!==null){level.rooms.push([start,y,x-1,y]);start=null;}});});
-    level.cover=tiles('L');level.gravel=tiles('N');level.cracks=tiles('B');level.mud=tiles('M');level.water=tiles('~');level.gaps=tiles('_');level.crumble=tiles('c');level.vines=tiles('T');level.slits=tiles('S');level.puffballs=tiles('o');level.moss=tiles('m');level.ice=tiles('I');level.tideFlats=tiles('t');
+    level.cover=tiles('L');level.gravel=tiles('N');level.cracks=tiles('B');level.mud=tiles('M');level.water=tiles('~');level.gaps=tiles('_');level.crumble=tiles('c');level.vines=tiles('T');level.slits=tiles('S');level.puffballs=tiles('o');level.moss=tiles('m');level.ice=tiles('I');level.tideFlats=tiles('t');level.soil=tiles('d');
     level.spawn=one('@');level.key=one('K');level.exit=one('X');
     level.loot=[];rows.forEach((row,y)=>[...row].forEach((ch,x)=>{if(/[1-5]/.test(ch))level.loot.push([x,y,Number(ch)]);}));
     return level;
@@ -8786,13 +8786,17 @@
   const hiddenRoutes=typeof module!=='undefined'&&module.exports?require('./escape-hidden.js'):root.EscapeHidden||[];
   const hidden=hiddenRoutes.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,...route,hidden:true,revision:1}));
   hidden.forEach(level=>{const n=glowsFor(level,99);if(n!==undefined)level.glows=n;});
+  // Little Explorers (escape-kids.js): gentle levels for young children, outside the trail like the
+  // Gilded Burrow. Slow, simple creatures (cunning 0, moving at 60%) and catches that can't end a run.
+  const kidsRoutes=typeof module!=='undefined'&&module.exports?require('./escape-kids.js'):root.EscapeKids||[];
+  const kids=kidsRoutes.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,gentle:.6,...route,kids:true,revision:1}));
   // Workshop drafts (escape-edits.js), only while its test-in-game switch is on in this browser.
   // A draft keeps its escape's place: id, unlock rules, secret and bonus ties stay the game's.
   // A draft that fails to build is skipped, so a bad edit can never stop the game loading.
   const edits=root.EscapeEdits?.overrides?.()||{},originals={};
   for(const [list,prefix] of [[levels,'level:'],[hidden,'hidden:']])list.forEach((old,i)=>{const route=edits[prefix+old.id];if(!route)return;
     try{list[i]=applyEdit(old,route);originals[prefix+old.id]=freeze(old);}catch(e){if(typeof console!=='undefined')console.warn('Workshop draft for '+old.id+' skipped: '+e.message);}});
-  const catalog=freeze({levels,challenges,regions,hidden});
+  const catalog=freeze({levels,challenges,regions,hidden,kids});
   // Custom levels from the builder go through the same text-map path as every rebuilt route.
   function applyEdit(old,route){const keep={};for(const k of EDIT_KEEP)if(old[k]!==undefined)keep[k]=old[k];
     return fromMap({burrows:0,pebbles:0,tongues:0,...JSON.parse(JSON.stringify(route)),...keep,id:old.id,draft:true});}

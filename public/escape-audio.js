@@ -102,6 +102,14 @@
     toss:(v)=>{noise(v,{dur:.16,gain:.09,filter:'bandpass',freq:700,to:2200,q:1.4,attack:.02});},
     clack:(v)=>{noise(v,{dur:.035,gain:.4,freq:3200,q:6});tone(v,{freq:1900,to:1500,dur:.05,type:'square',gain:.04});},
     glow:(v)=>{for(const [f,d] of [[880,0],[1320,.07],[1760,.14]])tone(v,{freq:f,to:f*1.01,dur:.5,delay:d,type:'sine',gain:.05,attack:.05});noise(v,{dur:.3,gain:.05,filter:'highpass',freq:5000,attack:.05});},
+    // Little Explorers: a soft, friendly "boing" for a catch (never a fail sound) and a bright pair
+    // of notes for a checkpoint.
+    oops:(v)=>{tone(v,{freq:520,to:260,dur:.22,type:'sine',gain:.16});tone(v,{freq:300,to:620,dur:.2,delay:.22,type:'sine',gain:.14});},
+    checkpoint:(v)=>notes(v,[[1047,0,.09],[1319,.09,.09],[1568,.18,.16]],{type:'triangle',gain:.12}),
+    // Digging in: a scrabble of claws in dirt; a soft thump as she settles under; a pop back out.
+    dig:(v)=>{for(let i=0;i<6;i++)noise(v,{dur:.07,delay:i*.11,gain:.14,filter:'bandpass',freq:900+i*120,q:1.4});},
+    buried:(v)=>{noise(v,{dur:.25,gain:.18,filter:'lowpass',freq:420,to:140});tone(v,{freq:110,to:70,dur:.2,type:'sine',gain:.16});},
+    unbury:(v)=>{noise(v,{dur:.18,gain:.12,filter:'lowpass',freq:800,to:300});tone(v,{freq:240,to:420,dur:.12,type:'sine',gain:.1});},
     ping:(v)=>{tone(v,{freq:3400,to:4200,dur:.06,type:'sine',gain:.08});tone(v,{freq:3400,to:4200,dur:.05,delay:.12,type:'sine',gain:.04});},
     puff:(v)=>{noise(v,{dur:.45,gain:.16,filter:'lowpass',freq:900,to:300,attack:.01});tone(v,{freq:160,to:90,dur:.2,type:'sine',gain:.12});},
     buzz:(v)=>{tone(v,{freq:210,to:240,dur:.55,type:'sawtooth',gain:.07,attack:.05,wobble:18,wobbleRate:42});noise(v,{dur:.5,gain:.05,freq:1600,q:3,attack:.05});},

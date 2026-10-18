@@ -119,7 +119,8 @@ Rebuilt routes are drawn as text, one character per tile:
 
 ```
 # wall   . floor   L leaf cover   N noisy gravel   B cracked wall   M mud   ~ water
-_ gap    c crumbling floor   T tangle vine   S crack   o spore puffball   t tide flat   @ start   K key   X exit   1-5 treasure of that value
+_ gap    c crumbling floor   T tangle vine   S crack   o spore puffball   t tide flat   d soft dirt (dig in)
+@ start   K key   X exit   1-5 treasure of that value
 ```
 
 Guards, gates and traps keep their own lists, with coordinates matching the map.

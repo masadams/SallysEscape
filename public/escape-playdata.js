@@ -27,7 +27,7 @@
     return out;
   }
   // Only the game's own escapes count: builder playtests, community levels and workshop drafts do not.
-  const counts=game=>Boolean(game?.level&&!game.level.custom&&!game.level.draft&&game.level.id);
+  const counts=game=>Boolean(game?.level&&!game.level.custom&&!game.level.kids&&!game.level.draft&&game.level.id);
   function record(game,outcome,device){
     if(!enabled()||!counts(game)||game.playDataSent)return false;game.playDataSent=true;
     const q=read();q.push(summary(game,outcome,device));write(q);

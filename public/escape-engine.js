@@ -34,12 +34,16 @@
       this.challenge=options.challengeId?catalog.EscapeCatalog.challenges.find(c=>c.id===options.challengeId):null;
       if(options.challengeId&&!this.challenge)throw new Error('Unknown Escape challenge');
       // Tests and tools may pass a level object directly; the game uses the catalog.
-      this.level=options.level||(options.hiddenId?catalog.EscapeCatalog.hidden.find(l=>l.id===options.hiddenId):catalog.EscapeCatalog.levels.find(l=>l.id===(this.challenge?.levelId||options.levelId||'quiet-vault')));
+      this.level=options.level||(options.kidsId?(catalog.EscapeCatalog.kids||[]).find(l=>l.id===options.kidsId):options.hiddenId?catalog.EscapeCatalog.hidden.find(l=>l.id===options.hiddenId):catalog.EscapeCatalog.levels.find(l=>l.id===(this.challenge?.levelId||options.levelId||'quiet-vault')));
       if(!this.level)throw new Error('Unknown Escape level');
       this.cunning=CUNNING[Math.max(0,Math.min(3,Math.round(this.level.cunning??2)))];
       this.grid=catalog.escapeGridFor(this.level);this.height=this.grid.length;this.width=this.grid[0].length;
       this.player={...centre(...this.level.spawn),facing:{x:0,y:-1},tongueAim:null,stamina:100,exhausted:false,moving:false,sprinting:false,crawling:false,hidden:false,noisy:false};
-      this.hunters=this.level.guards.map(guard=>this.makeHunter(guard));
+      this.hunters=this.level.guards.map(guard=>this.makeHunter(guard));for(const h of this.hunters)h.restState=h.state;
+      // Gentle levels (Little Explorers, for young children) can't be lost: a catch is an "Oops!"
+      // that hops Sally back to the last checkpoint she reached, and the creatures move slower.
+      this.gentle=this.level.gentle?{pace:typeof this.level.gentle==='number'?this.level.gentle:.6}:null;this.oopses=0;
+      this.checkpoints=(this.level.checkpoints||[]).map(c=>({...centre(...c),reached:false}));this.checkpoint={...centre(...this.level.spawn)};
       this.pendingSpawns=[];this.spawnedReinforcements=new Set();this.webs=[];this.glowTrail=[];this.trailAt=0;
       this.hunter=this.hunters[0]||null;this.patrol=this.hunter?.patrol||[];
       this.gates=(this.level.gates||[]).map(g=>({...g,open:Boolean(g.initialOpen),sealed:false,closingAt:null,expiresAt:null,pressed:false,warned:false,activations:0,switch:g.switch?centre(...g.switch):null,plates:(g.plates||[]).map(p=>centre(...p)),levers:(g.levers||[]).map(p=>centre(...p)),heavyPlates:(g.heavyPlates||[]).map(p=>centre(...p)),tiles:g.tiles.map(p=>p.slice())}));
@@ -86,6 +90,8 @@
       // Moss muffles every step, even a sprint. Echo halls carry sound much further. Currents push
       // a swimmer along. Burrow pairs are linked mounds: dig into one, come up out of the other.
       this.moss=new Set((this.level.moss||[]).map(([x,y])=>x+','+y));
+      // Soft dirt patches (d on a text map) where Sally can dig herself in; see dig() in step.
+      this.soil=new Set((this.level.soil||[]).map(([x,y])=>x+','+y));this.digs=0;
       // Ice walls are walls that a frost sentinel's gaze glances off.
       this.ice=new Set((this.level.ice||[]).map(([x,y])=>x+','+y));
       this.echoes=(this.level.echoes||[]).map(([x1,y1,x2,y2])=>({x1,y1,x2,y2}));
@@ -319,6 +325,8 @@
     burrow(){
       if(!this.active())return false;
       if(this.tunnels.length&&this.useTunnel())return true;
+      // On soft dirt the same button, held, digs Sally in instead (see step).
+      if(this.soil.has(this.tileKey(this.player)))return false;
       if(this.burrows===0){this.notice('No burrows left. Find a way around.');return false;}
       const p=this.player,x=Math.floor(p.x),y=Math.floor(p.y),d=p.facing;
       const wx=x+d.x,wy=y+d.y,landing=centre(x+2*d.x,y+2*d.y);
@@ -450,6 +458,7 @@
     shedTail(captor){
       // Who caught her and where, for the play summary; a caught run ends in finish() just after.
       this.lastCaptor={by:captor?.kind||null,at:this.elapsed};
+      if(this.gentle&&this.status==='playing')return this.oops(captor);
       if(!this.tailDrop||!this.hasTail||this.status!=='playing')return false;
       this.noteCatch(captor?.kind||null,true);this.lastCaptor=null;
       const p=this.player;this.hasTail=false;this.tailsDropped++;
@@ -465,6 +474,21 @@
       }
       this.notice(this.regrowthBugs.some(b=>!b.eaten)?'Tail dropped! It wriggles as a decoy. Run—then eat a pink regrowth bug to grow it back.':'Tail dropped! It wriggles as a decoy. Run! The next catch is final.','tailDrop');
       return true;
+    }
+    // A gentle level's catch: back to the last checkpoint, safe for a moment, and every creature
+    // forgets her and goes back to its rounds.
+    oops(captor){
+      this.noteCatch(captor?.kind||null,true);this.lastCaptor=null;this.oopses++;
+      const p=this.player;p.x=this.checkpoint.x;p.y=this.checkpoint.y;p.dig=null;p.stamina=100;p.exhausted=false;p.moving=false;
+      this.heldUntil=0;this.heldBy=null;this.invulnerableUntil=this.elapsed+2.5;
+      for(const h of this.hunters){h.graceUntil=Math.max(h.graceUntil||0,this.elapsed+3);h.awareness=0;h.lastKnown=null;h.aim=null;h.path=[];h.targetId=null;h.tailLureUntil=0;
+        if(h.restState)h.state=h.restState;}
+      this.notice('Oops! Try again from here.','oops');
+      return true;
+    }
+    updateCheckpoints(){
+      const p=this.player;
+      for(const c of this.checkpoints)if(!c.reached&&distance(p,c)<.8){c.reached=true;this.checkpoint={x:c.x,y:c.y};this.notice('Checkpoint! You will start here if a creature catches you.','checkpoint');}
     }
     camouflage(){
       if(!this.active())return false;
@@ -584,7 +608,7 @@
       this.updateSeedGrowth();this.updateTimedGates();this.updateClosingGates();
       this.webs=this.webs.filter(w=>w.expires>this.elapsed&&(!w.owner||this.hunters.includes(w.owner)));this.updateTripwires();
       this.updateEmergences();
-      this.noteMet();
+      this.noteMet();if(this.gentle)this.updateCheckpoints();
       // A tangle vine's grip stops Sally moving until it lets go.
       if(this.elapsed<this.heldUntil)input={};
       // While a throw is held, the stick or keys aim it and Sally stands still.
@@ -592,6 +616,15 @@
       // In the air off a bounce cap Sally follows her arc and cannot steer.
       if(this.player.underground){const u=this.player.underground;input={};if(this.elapsed-u.start>=u.dur){this.player.x=u.to.x;this.player.y=u.to.y;this.player.underground=null;this.motion.resetPlayer?.(this.player);this.events.push('tunnel');this.updateVisibility(true);}}
       if(this.player.flight){const f=this.player.flight,t=Math.min(1,(this.elapsed-f.start)/f.dur);this.player.x=f.from.x+(f.to.x-f.from.x)*t;this.player.y=f.from.y+(f.to.y-f.from.y)*t;input={};if(t>=1){this.player.flight=null;this.events.push('hop');}}
+      // Digging in: held on a soft dirt patch, Sally scrabbles for 0.75 s (noisy, dust flying), then
+      // lies buried, hidden from everything and safe, until the button is let go.
+      if(this.soil.size){const q=this.player;
+        if(input.dig&&(q.dig||this.soil.has(this.tileKey(q)))&&!q.swimming&&!q.flight&&!q.underground){
+          if(!q.dig){q.dig={start:this.elapsed,buried:false};this.cue('dig',q);}
+          if(!q.dig.buried&&this.elapsed-q.dig.start>=EscapeAdventure.DIG_TIME){q.dig.buried=true;this.digs++;this.cue('buried',q);}
+          input={};
+        }else if(q.dig){const was=q.dig.buried;q.dig=null;if(was)this.cue('unbury',q);}
+      }
       const p=this.player,old=copy(p),length=Math.hypot(input.x||0,input.y||0);
       const dx=length>0?(input.x||0)/Math.max(1,length):0,dy=length>0?(input.y||0)/Math.max(1,length):0;
       if(length&&this.elapsed>=(this.lookUntil||0)){p.facing=Math.abs(dx)>=Math.abs(dy)?{x:Math.sign(dx),y:0}:{x:0,y:Math.sign(dy)};p.tongueAim={x:(input.x||0)/length,y:(input.y||0)/length};}
@@ -599,7 +632,7 @@
       if(p.exhausted&&p.stamina>=25)p.exhausted=false;
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
       if(this.cold.size)this.updateWarmth(dt);
-      const crawl=Boolean(input.crawl&&length>0&&!this.water(p)),sprint=!crawl&&Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',speed=(sprint?4:crawl?1.25:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72:1)*(this.water(p)?.55:1);
+      const crawl=Boolean(input.crawl&&!this.water(p)),sprint=!crawl&&Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',speed=(sprint?4:crawl?1.25:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72:1)*(this.water(p)?.55:1);
       for(const [axis,direction] of [['x',dx],['y',dy]]){
         const next={...p,[axis]:p[axis]+direction*speed*dt};if(this.fits(next)&&!(this.vents.length&&this.inJet(next)&&!this.inJet(p)))p[axis]=next[axis];
       }
@@ -608,7 +641,7 @@
         else if(this.grid[Math.floor(next.y+d*(axis==='y'?.3:0))]?.[Math.floor(next.x+d*(axis==='x'?.3:0))]==='P'&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(null)){this.finish('caught','A gust blew Sally off the ledge. Watch the streaks: when they thicken, get out of the lane or brace against a wall.');return;}}}
       if(this.currents.length&&this.water(p)&&!p.underground){const c=this.currents.find(c=>p.x>=c.x1&&p.x<c.x2+1&&p.y>=c.y1&&p.y<c.y2+1);
         if(c)for(const [axis,d] of [['x',c.dir[0]],['y',c.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*c.speed*dt};if(this.fits(next))p[axis]=next[axis];}}
-      p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);if(p.swimming&&!this.water(old))this.events.push('splash');p.moving=distance(old,p)>0.0001;p.sprinting=sprint&&p.moving;p.crawling=crawl&&p.moving&&!p.swimming;this.playerVelocity={x:(p.x-old.x)/dt,y:(p.y-old.y)/dt};this.trackSally(dt);
+      p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);if(p.swimming&&!this.water(old))this.events.push('splash');p.moving=distance(old,p)>0.0001;p.sprinting=sprint&&p.moving;p.crawling=crawl&&!p.swimming;this.playerVelocity={x:(p.x-old.x)/dt,y:(p.y-old.y)/dt};this.trackSally(dt);
       p.stamina=Math.max(0,Math.min(100,p.stamina+(p.sprinting?-24:18)*dt));
       if(this.camoUntil>this.elapsed&&p.moving){this.camoUntil=0;this.notice('Moving broke the camouflage.');}
       p.camo=this.camoUntil>this.elapsed;
@@ -619,6 +652,7 @@
       // A crawl makes no sound, even on gravel.
       p.silent=this.moss.size>0&&this.moss.has(this.tileKey(p));p.loud=p.sprinting&&!p.silent;
       p.noisy=p.loud||(p.moving&&!p.crawling&&!p.silent&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='N');
+      if(p.dig){if(p.dig.buried){p.hidden=true;p.noisy=false;this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+.05);}else p.noisy=true;}
       if(p.noisy&&this.echoes.length&&this.elapsed>=(this.echoAt||0)&&this.inEcho(p)){this.echoAt=this.elapsed+1.2;this.events.push('echo');}
       if(this.level.dark){
         this.glowTrail=this.glowTrail.filter(t=>t.expires>this.elapsed);
@@ -627,7 +661,7 @@
       this.activateSwitches();this.reactToMaze('enter');this.updateVisibility();
       if(this.flights.length||this.lights.length)this.updateFlights();
       if(this.decoy&&this.decoy.expires<=this.elapsed)this.decoy=null;
-      this.updateRivalries();for(const hunter of this.hunters)this.updateHunter(dt,hunter);this.updateRivalries();
+      this.updateRivalries();for(const hunter of this.hunters)this.updateHunter(dt*(this.gentle?.pace||1),hunter);this.updateRivalries();
       this.motion.update(dt,this);this.checkTailTouch();
       if(this.vents.length)this.updateVents();
       if(this.vines.length)this.updateVines();if(this.status!=='playing')return;
@@ -672,7 +706,8 @@
     // A moth's glow lights Sally up: leaves no longer hide her and hunters see further.
     lit(){const p=this.player;return this.hunters.some(m=>m.kind==='moth'&&distance(m,p)<=2.6&&this.clear(m,p,true));}
     seesPlayer(h=this.hunter){
-      if(this.player.underground)return false;
+      // Just after a gentle level's "Oops!" nothing notices her for a moment.
+      if(this.player.underground||this.player.dig?.buried||this.gentle&&this.elapsed<this.invulnerableUntil)return false;
       const p=this.player,d=distance(p,h),lit=this.hunters.length>1&&this.lit()||this.lights.length>0&&this.inLight(p);
       if(this.clouds.length&&this.inCloud(h))return false;
       if(this.elapsed<this.flashUntil&&d<=9&&this.clear(h,p,true)&&!(this.clouds.length&&this.inCloud(p)))return true;
@@ -1518,13 +1553,13 @@
       this.status=status;this.notice(message,status);
       this.tongue=null;
       const stars=status==='won'?1+Number(this.treasure>=Math.ceil(this.totalTreasure*.6))+Number(this.alarms===0&&this.hasTail):0;
-      this.result=Object.freeze({status,levelId:this.level.id,hidden:Boolean(this.level.hidden),draft:Boolean(this.level.draft),routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),blasts:this.blasts,steamed:this.steamed,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,glowbugs:this.glowbugsCaught,catches:this.catches.slice(),tools:this.toolsUsed(),message});
+      this.result=Object.freeze({status,levelId:this.level.id,hidden:Boolean(this.level.hidden),kids:Boolean(this.level.kids),oopses:this.oopses,draft:Boolean(this.level.draft),routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),blasts:this.blasts,steamed:this.steamed,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,glowbugs:this.glowbugsCaught,catches:this.catches.slice(),tools:this.toolsUsed(),digs:this.digs,message});
     }
     // A sound with a place: the scene pans it and lets it fade with distance from Sally.
     cue(name,at){this.events.push(name);if(at)(this.eventAt||(this.eventAt={}))[name]={x:at.x,y:at.y};}
     drainEvents(){const events=this.events;this.events=[];this.lastEventAt=this.eventAt||{};this.eventAt={};return events;}
   }
-  EscapeAdventure.CUNNING=CUNNING;
+  EscapeAdventure.CUNNING=CUNNING;EscapeAdventure.DIG_TIME=.75;
   root.EscapeAdventure=EscapeAdventure;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeAdventure};
 })(typeof globalThis!=='undefined'?globalThis:this);

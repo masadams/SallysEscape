@@ -70,7 +70,7 @@ Sally takes that. (Plates and levers work doors; only the key and chests wake en
 lights the ground around where it lands for about twelve seconds; give them to fogged or dark
 levels.
 
-**Moss** is a tile (silent ground). Under Extras: **Water current** (two corners over water; Select
+**Moss** is a tile (silent ground); **Soft dirt** is a tile Sally can dig into (hold Burrow). Under Extras: **Water current** (two corners over water; Select
 it to set the direction and strength), **Echo hall** (two corners) and **Burrow pair** (click one
 mound, then its partner). Level settings set **Spore pouches** (0–5).
 
