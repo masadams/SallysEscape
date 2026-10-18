@@ -205,17 +205,19 @@ function escapeWorldShades(w,palettes){
 }
 // Ground, tracks and walls never change, so they are drawn once into 16-tile chunks and reused.
 const ESCAPE_CHUNK=16;let escapeWorldChunks={key:null,map:new Map()};
+// The ground is drawn once per chunk at a fixed size (the closest zoom, for the screen) and scaled to
+// the current zoom, so easing the zoom in and out never throws the drawn chunks away.
 function escapeWorldTerrain(w,palettes,cell,x1,x2,y1,y2){
-  const key=cell+':'+w.terrainVersion;if(escapeWorldChunks.key!==key||escapeWorldChunks.world!==w)escapeWorldChunks={key,world:w,map:new Map()};
+  const base=Math.round(Math.max(30,Math.min(84,height/11))),key=base+':'+w.terrainVersion;if(escapeWorldChunks.key!==key||escapeWorldChunks.world!==w)escapeWorldChunks={key,world:w,map:new Map()};
   for(let cy=Math.floor(y1/ESCAPE_CHUNK);cy<=Math.floor(y2/ESCAPE_CHUNK);cy++)for(let cx=Math.floor(x1/ESCAPE_CHUNK);cx<=Math.floor(x2/ESCAPE_CHUNK);cx++){
     const id=cx+','+cy;let chunk=escapeWorldChunks.map.get(id);
-    if(!chunk){chunk=createGraphics(ESCAPE_CHUNK*cell,ESCAPE_CHUNK*cell);chunk.pixelDensity(1);chunk.push();chunk.translate(-cx*ESCAPE_CHUNK*cell,-cy*ESCAPE_CHUNK*cell);
+    if(!chunk){chunk=createGraphics(ESCAPE_CHUNK*base,ESCAPE_CHUNK*base);chunk.pixelDensity(1);chunk.push();chunk.translate(-cx*ESCAPE_CHUNK*base,-cy*ESCAPE_CHUNK*base);
       // Neighbouring tiles are drawn too, so crowns that overhang a chunk edge match on both sides.
-      drawEscapeWorldTerrain(chunk,w,palettes,cell,Math.max(0,cx*ESCAPE_CHUNK-1),Math.min(w.width-1,cx*ESCAPE_CHUNK+ESCAPE_CHUNK),Math.max(0,cy*ESCAPE_CHUNK-1),Math.min(w.height-1,cy*ESCAPE_CHUNK+ESCAPE_CHUNK));chunk.pop();
+      drawEscapeWorldTerrain(chunk,w,palettes,base,Math.max(0,cx*ESCAPE_CHUNK-1),Math.min(w.width-1,cx*ESCAPE_CHUNK+ESCAPE_CHUNK),Math.max(0,cy*ESCAPE_CHUNK-1),Math.min(w.height-1,cy*ESCAPE_CHUNK+ESCAPE_CHUNK));chunk.pop();
       escapeWorldChunks.map.set(id,chunk);
       if(escapeWorldChunks.map.size>36){const [oldest,g]=escapeWorldChunks.map.entries().next().value;g.remove();escapeWorldChunks.map.delete(oldest);}
     }else{escapeWorldChunks.map.delete(id);escapeWorldChunks.map.set(id,chunk);}
-    image(chunk,cx*ESCAPE_CHUNK*cell,cy*ESCAPE_CHUNK*cell);
+    image(chunk,cx*ESCAPE_CHUNK*cell,cy*ESCAPE_CHUNK*cell,ESCAPE_CHUNK*cell+.5,ESCAPE_CHUNK*cell+.5);
   }
 }
 // Tiles the trail, entrances, signs, villagers and caches use; ground details keep clear of them.
