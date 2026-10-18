@@ -26,11 +26,9 @@ asks only for internet access. File names from the server are checked before any
 
 ## Releases
 
-A signed APK is built only for a version tag:
-
-    git tag v1.0 && git push origin v1.0
-
-The **Android app** workflow builds it and attaches `SallysEscape-1.0.apk` to a GitHub release.
+A signed APK is built only for a release. On GitHub open **Actions → Android app → Run workflow**,
+pick `main`, enter a version such as `1.0` and run it (or push a tag: `git tag v1.0 && git push origin v1.0`).
+The workflow builds the APK, tags main `v1.0` and attaches `SallysEscape-1.0.apk` to a GitHub release.
 Pull requests that touch `android/` get an unsigned test build (downloadable from the run's
 artifacts) so the app is known to compile.
 
