@@ -17,6 +17,11 @@ web game in `public/`, shown full screen.
 - So a new APK is only needed when the app itself changes, not for every game update.
 - Back on a remote or phone acts like Escape in the game; a controller's buttons reach the game as a
   gamepad. Leave with the Home button.
+- A page may only start sound after a press, and controller buttons don't count as one, so the app
+  turns the first controller press on a page into a key press the game ignores (F12). That is what
+  lets sound play on a TV played with only a controller.
+- On a TV the game draws at 1× and uses the big-screen layout; Options → Credits shows the version,
+  whether sound is running, the screen size and the frame rate, to help when something is off.
 
 ## Safety
 

@@ -8,16 +8,26 @@ function gameKeyDown(code){return !suppressedKeys.has(code)&&keyIsDown(code);}
 function suppressHeldKeys(){Object.values(controlCodes).forEach(c=>suppressedKeys.add(c));}
 // A 'balanced' context uses bigger audio buffers than the default, so music and effects don't crackle when the game is busy.
 function getAudioContext(){if(escapeAudio)return escapeAudio;const A=window.AudioContext||window.webkitAudioContext;try{escapeAudio=new A({latencyHint:'balanced'});}catch(_){escapeAudio=new A();}return escapeAudio;}
-function unlockAudio(){try{const c=getAudioContext();c.resume();audioUnlocked=true;startEscapeMusic(c);}catch(_){}}
+// Browsers keep sound off until the player presses something. Every press tries again until the sound
+// is really running: a controller's buttons alone do not count as a press on some devices (a TV), and
+// the sound can be suspended again when the app goes to the background.
+function unlockAudio(){try{const c=getAudioContext();if(c.state!=='running')c.resume?.()?.catch?.(()=>{});audioUnlocked=true;startEscapeMusic(c);}catch(_){}}
+const audioRunning=()=>escapeAudio?.state==='running';
+if(typeof document!=='undefined'){for(const type of ['pointerdown','keydown','touchend'])document.addEventListener(type,()=>{if(!audioRunning())unlockAudio();},true);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&audioUnlocked&&!audioRunning())unlockAudio();});}
 function gameNow(){return (paused?pauseStartedAt:millis())-pausedDuration;}
 function isRunActive(){return gameState==='escape'&&!paused;}
-function isMobileDevice(){return windowWidth<=600||Boolean(window.matchMedia?.('(pointer: coarse)')?.matches)||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);}
+// A TV (an Android TV box such as the NVIDIA Shield) says "Android" like a phone but has no touch
+// screen: it gets the big-screen layout, and draws at 1× (from across the room the extra sharpness
+// is not seen, and these boxes have a phone's graphics power driving a TV's pixels).
+function isTvDevice(){const ua=navigator.userAgent||'';return /Android TV|GoogleTV|SHIELD|AFT[A-Z]|BRAVIA|SmartTV|\bTV\b/i.test(ua)||(/Android/i.test(ua)&&!navigator.maxTouchPoints&&!window.matchMedia?.('(pointer: coarse)')?.matches);}
+function isMobileDevice(){if(isTvDevice())return false;return windowWidth<=600||Boolean(window.matchMedia?.('(pointer: coarse)')?.matches)||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);}
 // A phone's screen may have three device pixels per CSS pixel; drawing all of them costs nine
 // times the work for little visible gain. Cap it: 2× on a desktop, 1.5× on a phone. The game
 // steps lower by itself if frames run slow (escapeWatchFrameRate).
 // A big monitor or TV is limited too: about 2560×1440 drawn pixels in all, which the browser then
 // scales up, so a 4K screen does not cost four times the work.
-function escapeDensityCap(){const w=typeof width==='number'&&width>0?width:canvasDimensions().width,h=typeof height==='number'&&height>0?height:canvasDimensions().height;return Math.max(1,Math.min(typeof displayDensity==='function'?displayDensity():1,mobile?1.5:2,Math.sqrt(3.7e6/(w*h))));}
+function escapeDensityCap(){const w=typeof width==='number'&&width>0?width:canvasDimensions().width,h=typeof height==='number'&&height>0?height:canvasDimensions().height;return Math.max(1,Math.min(typeof displayDensity==='function'?displayDensity():1,isTvDevice()?1:mobile?1.5:2,Math.sqrt(3.7e6/(w*h))));}
 let toolbarAt=-1e9;
 // Text and buttons: Normal, Large or Extra large, for a big monitor or a TV across the room. Auto
 // picks from the screen: Large from about 2200 CSS pixels wide, Extra large from about 3200.
@@ -87,6 +97,14 @@ function openOptions(){const panel=document.getElementById('options-panel');if(!
   const fs=document.getElementById('options-fullscreen');if(fs){fs.style.display=fullscreenAvailable()?'':'none';fs.textContent=isFullscreen()?'Exit full screen':'Full screen';}
   panel.style.display='flex';document.getElementById('options-close')?.focus();}
 function closeOptions(){const panel=document.getElementById('options-panel');if(panel)panel.style.display='none';}
+// Credits and copyright, from the title screen's Extras or from Options; shows the build it is.
+function openCredits(){const panel=document.getElementById('credits-panel');if(!panel)return;closeOptions();closeToolbarMenu();if(gameState==='escape'&&!paused)togglePause();
+  panel.style.display='flex';document.getElementById('credits-close')?.focus();const v=document.getElementById('credits-version');
+  if(v){const facts=()=>{const c=escapeAudio,fps=typeof frameRate==='function'?Math.round(frameRate()):0;
+    return 'Sound '+(c?c.state+(c.sampleRate?' '+Math.round(c.sampleRate/100)/10+' kHz':''):'not started')+' · Screen '+width+'×'+height+' @'+(typeof pixelDensity==='function'?pixelDensity():1)+'x of '+(window.devicePixelRatio||1)+'x · '+fps+' fps';};
+    const show=()=>{v.textContent=[v.dataset.version,facts()].filter(Boolean).join(' · ');};show();
+    if(!v.dataset.version)fetch('version.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j?.version&&j.version!=='dev'){v.dataset.version='Version '+String(j.version).slice(0,7);show();}}).catch(()=>{});}}
+function closeCredits(){const panel=document.getElementById('credits-panel');if(panel)panel.style.display='none';}
 // Players: who is playing, with their stars; pick one (the game reloads as them), rename, remove or add.
 function playerChip(){const chip=document.getElementById('player-chip');if(!chip||typeof EscapePlayers==='undefined')return;const p=EscapePlayers.current(),sum=EscapePlayers.summary(p.id),c=EscapePlayers.COLORS[p.color]?.[1]||'#7cc46a';
   const esc=t=>String(t).replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';');chip.innerHTML='<span class="player-dot" style="background:'+c+'"></span>Playing as <b>'+esc(p.name)+'</b> · ★ '+sum.stars;
@@ -123,6 +141,7 @@ function openPlayers(){if(typeof EscapePlayers==='undefined')return;renderPlayer
 function setupMenus(){
   const $=id=>document.getElementById(id);
   $('options-button')&&($('options-button').onclick=openOptions);$('title-options')&&($('title-options').onclick=openOptions);
+  for(const id of ['credits-button','options-credits'])$(id)&&($(id).onclick=openCredits);$('credits-close')&&($('credits-close').onclick=closeCredits);
   $('options-close')&&($('options-close').onclick=closeOptions);$('options-fullscreen')&&($('options-fullscreen').onclick=()=>{toggleFullscreen();setTimeout(()=>{const b=$('options-fullscreen');if(b)b.textContent=isFullscreen()?'Exit full screen':'Full screen';},300);});
   $('players-button')&&($('players-button').onclick=openPlayers);$('players-close')&&($('players-close').onclick=()=>{$('players-panel').style.display='none';});
   $('players-new')&&($('players-new').onsubmit=e=>{e.preventDefault();const name=$('players-name').value;const p=EscapePlayers.create(name,playersNewColor);if(p){EscapePlayers.select(p.id);location.reload();}});

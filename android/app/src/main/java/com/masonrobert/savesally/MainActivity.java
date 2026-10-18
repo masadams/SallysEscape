@@ -27,6 +27,8 @@ public class MainActivity extends Activity {
 
     private WebView web;
     private GameFiles files;
+    /** Whether this page has had a press that lets it start sound (see dispatchKeyEvent). */
+    private boolean pressed;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -45,6 +47,9 @@ public class MainActivity extends Activity {
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         s.setSupportMultipleWindows(false);
         web.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap icon) { pressed = false; }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri url = request.getUrl();
@@ -90,6 +95,21 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() { web.destroy(); super.onDestroy(); }
+
+    // The page may only start sound after a press, and a controller's buttons reach it as a gamepad,
+    // which does not count. So the first controller press on a page also sends the page one key (F12,
+    // which the game ignores) as a real press; from then on the game's sound can play.
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        boolean pad = (event.getSource() & (InputDevice.SOURCE_GAMEPAD | InputDevice.SOURCE_JOYSTICK)) != 0;
+        if (pad && !pressed && event.getAction() == KeyEvent.ACTION_DOWN) {
+            pressed = true;
+            long now = android.os.SystemClock.uptimeMillis();
+            web.dispatchKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_F12, 0));
+            web.dispatchKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_F12, 0));
+        }
+        return super.dispatchKeyEvent(event);
+    }
 
     // Back on a TV remote or phone acts like Escape in the game (pause, close a menu, go back) rather
     // than closing the app. A controller's B button already reaches the game as a gamepad button.
