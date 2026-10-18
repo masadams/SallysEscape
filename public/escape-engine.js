@@ -9,7 +9,9 @@
   // How sharp hunters are, by the level's cunning (0 to 3; early areas 0, the last stretch 3): how far
   // ahead a snake reads Sally, how much looping it takes before it reads the loop, how close it feels
   // her when facing away, how quickly it turns and recovers from a skid, and its pace.
-  const CUNNING=[{lead:0,loop:Infinity,feel:0,turn:.85,snap:.35,pace:.92},{lead:.55,loop:8,feel:1.8,turn:.93,snap:.7,pace:.96},{lead:1,loop:5.5,feel:3,turn:1,snap:1,pace:1},{lead:1.2,loop:4.2,feel:3.6,turn:1.1,snap:1,pace:1.03}];
+  // For every hunter on the common chase: react (how long it takes to be sure it saw her), memory (how long
+  // it keeps after her once she is out of sight) and search (how long it hunts the spot before giving up).
+  const CUNNING=[{lead:0,loop:Infinity,feel:0,turn:.85,snap:.35,pace:.92,react:1.35,memory:1,search:1.2},{lead:.55,loop:8,feel:1.8,turn:.93,snap:.7,pace:.96,react:1.15,memory:1.25,search:1.6},{lead:1,loop:5.5,feel:3,turn:1,snap:1,pace:1,react:1,memory:1.5,search:2},{lead:1.2,loop:4.2,feel:3.6,turn:1.1,snap:1,pace:1.03,react:.85,memory:1.8,search:2.6}];
   // lead is how far ahead it reads Sally: 1 aims where she will be by the time it gets there, 0 where she is.
   const MOMENTUM={snake:{turn:2.4,grip:.55,accel:1.6,pulse:1.5,lead:.85},cobra:{turn:2,grip:.5,accel:1.3,pulse:1.1,lead:1},'sea-snake':{turn:2.4,grip:.55,accel:1.6,pulse:1.4,lead:.85},fish:{turn:4.5,grip:.6,accel:2.5,pulse:2.2,lead:.5},chameleon:{turn:3.5,grip:.55,accel:2,pulse:1,lead:.4}};
   // Hunters heavy enough to press a heavy plate.
@@ -715,7 +717,7 @@
         h.state='decoy';h.awareness=0;h.lastKnown=null;target=this.decoy;speed=1.7;
       }else if(seen||heard){
         h.reason=seen?'seen':'heard';h.lastKnown=copy(p);h.lastObserved=this.elapsed;
-        const sure=p.crawling&&!heard?1.2:0.7;h.awareness=Math.min(1,h.awareness+dt/sure);
+        const sure=(p.crawling&&!heard?1.2:0.7)*this.cunning.react;h.awareness=Math.min(1,h.awareness+dt/sure);
         h.state=h.awareness>=1?'chase':'alert';target=h.lastKnown;
         if(h.state==='alert'){
           if(h.awareness-dt/sure<=0)this.cue('warning',h);
@@ -724,9 +726,9 @@
       }else if(h.state==='alert'){
         h.awareness=Math.max(0,h.awareness-dt*1.5);speed=0;
         if(h.awareness===0){h.lastKnown=null;h.state='patrol';}
-      }else if(h.lastKnown&&this.elapsed-h.lastObserved<1.5){h.state='chase';target=h.lastKnown;speed=2.75;}
+      }else if(h.lastKnown&&this.elapsed-h.lastObserved<this.cunning.memory){h.state='chase';target=h.lastKnown;speed=2.75;}
       else if(h.state==='chase'){
-        h.state='search';h.searchUntil=this.elapsed+2;h.awareness=0;
+        h.state='search';h.searchUntil=this.elapsed+this.cunning.search;h.awareness=0;
         this.closeCalls++;this.notice('Lost it. Catch your breath.','lost');target=h.lastKnown;speed=1.3;
       }else if(h.state==='search'&&this.elapsed<h.searchUntil){
         target=h.lastKnown;speed=1.3;if(target&&distance(h,target)<0.15){h.facing+=dt;speed=0;}

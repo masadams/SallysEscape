@@ -46,9 +46,13 @@ to twice, losing a quarter of their reach each time, and fly over gaps and water
 
 Each escape has a **cunning** from 0 to 3, which makes the same creature sharper further along the
 trail: 0 in the first two areas, 1 through the Venom Depths, 2 through the middle and 3 from the Steam
-Vents on. For now it shapes the snakes and other heavy chasers (king cobra, sea snake, fish,
+Vents on. It shapes the snakes and other heavy chasers (king cobra, sea snake, fish,
 chameleon): how far ahead they read Sally, how soon they read a loop, how close they feel her, how
-sharply they turn and whip round, and a little of their pace.
+sharply they turn and whip round, and a little of their pace. Every hunter on the common chase
+(snake, cobra, chameleon and the like) also reacts faster, keeps after Sally longer once she slips
+out of sight, and searches the spot longer as cunning rises: at 0 it takes about a third longer to
+be sure, gives up after a second and searches for just over one; at 3 it is sure sooner, keeps on
+for almost two seconds and searches for over two and a half.
 
 
 | Hunter | Job | What it does | How to beat it |
