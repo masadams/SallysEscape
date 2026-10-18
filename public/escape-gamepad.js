@@ -30,9 +30,9 @@ function pollEscapePad(){
   // A pad press does not unlock sound everywhere, so each new press tries again until it plays.
   if(now.some((b,i)=>b&&!was[i])&&typeof unlockAudio==='function'&&typeof escapeAudio!=='undefined'&&escapeAudio?.state!=='running')unlockAudio();
   const menu=escapePadMenu();
-  if(menu){escapePad.x=0;escapePad.y=0;escapePad.sprint=false;escapePad.crawl=false;if(escapePad.active)escapePadNavigate(menu,ax,ay,pressed,was.length>0);return;}
+  if(menu){escapePad.x=0;escapePad.y=0;escapePad.sprint=false;escapePad.crawl=false;escapePad.dig=false;if(escapePad.active)escapePadNavigate(menu,ax,ay,pressed,was.length>0);return;}
   escapePad.nav.dir=null;
-  escapePad.x=Math.max(-1,Math.min(1,ax));escapePad.y=Math.max(-1,Math.min(1,ay));escapePad.sprint=down(ESCAPE_PAD.RT);escapePad.crawl=down(ESCAPE_PAD.LT);
+  escapePad.x=Math.max(-1,Math.min(1,ax));escapePad.y=Math.max(-1,Math.min(1,ay));escapePad.sprint=down(ESCAPE_PAD.RT);escapePad.crawl=down(ESCAPE_PAD.LT);escapePad.dig=down(ESCAPE_PAD.B);
   if(!was.length)return;
   if(pressed(ESCAPE_PAD.START)){if(gameState==='escape')togglePause();else document.getElementById('menu-button')?.click();return;}
   if(gameState==='escapeSelect'){

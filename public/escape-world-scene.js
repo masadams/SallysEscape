@@ -112,9 +112,9 @@ function escapeWorldFoundCache(cache){
   escapeSound('cache');renderEscapeWorldTotals();
 }
 function escapeMovement(){
-  if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return {x:0,y:0,sprint:false,crawl:false};
+  if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return {x:0,y:0,sprint:false,crawl:false,dig:false};
   const pad=typeof escapePad!=='undefined'?escapePad:{x:0,y:0};
-  return {x:pad.x+touchStick.x+Number(gameKeyDown(39)||gameKeyDown(68)||touchInput.right)-Number(gameKeyDown(37)||gameKeyDown(65)||touchInput.left),y:pad.y+touchStick.y+Number(gameKeyDown(40)||gameKeyDown(83)||touchInput.down)-Number(gameKeyDown(38)||gameKeyDown(87)||touchInput.up),sprint:gameKeyDown(16)||touchInput.sprint||Boolean(pad.sprint),crawl:gameKeyDown(67)||touchInput.crawl||Boolean(pad.crawl)};
+  return {x:pad.x+touchStick.x+Number(gameKeyDown(39)||gameKeyDown(68)||touchInput.right)-Number(gameKeyDown(37)||gameKeyDown(65)||touchInput.left),y:pad.y+touchStick.y+Number(gameKeyDown(40)||gameKeyDown(83)||touchInput.down)-Number(gameKeyDown(38)||gameKeyDown(87)||touchInput.up),sprint:gameKeyDown(16)||touchInput.sprint||Boolean(pad.sprint),crawl:gameKeyDown(67)||touchInput.crawl||Boolean(pad.crawl),dig:gameKeyDown(69)||Boolean(touchInput.dig)||Boolean(pad.dig)};
 }
 function mountEscapeChrome(active){
   const stage=document.getElementById('escape-stage-ui'),area=document.getElementById('game-area'),container=document.getElementById('game-container');

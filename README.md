@@ -6,8 +6,8 @@ hidden escapes, 21 challenges, 29 kinds of creature, and a walkable world map. A
 learns she is one of the lost Wayfinders (the story is in `docs/STORY.md`).
 
 **Playing.** The title screen shows who is playing (up to six players share a browser, each with
-their own progress and settings), with Continue, Players, Options and Extras (community levels and
-the level builder). On the world map Sally walks between areas, talks to villagers, finds caches,
+their own progress and settings), with Continue, Little Explorers, Players, Options and Extras
+(community levels and the level builder). On the world map Sally walks between areas, talks to villagers, finds caches,
 catches golden flies and enters escapes at their flags; the Journal holds the Story pages, the Great
 Map and the Bestiary. In an escape the toolbar is just ☰ Menu, Pause and Full screen; pausing opens
 Resume, Restart, Options, Map and Leave. Options holds sound, music and ambience volume, lighting,
@@ -34,16 +34,30 @@ to. The server keeps passkeys, published levels and player data in `DATA_DIR` (`
 the Admin panel that opens every escape without changing saved records.
 
 **Controls.** WASD or arrows, Shift run, C crawl, Q pebble (hold to set the distance: the throw swings out and back while held), L glow mushroom,
-Z spore pouch, E burrow, R tongue, F seed, X camouflage, Space look back, G map, H hint, M mute, Esc
-pause. On the world map R grabs golden flies and Enter enters an escape. Phones use landscape, a left
+Z spore pouch, E burrow (held on soft dirt: dig in), R tongue, F seed, X camouflage, Space look back, G map, H hint, M mute, Esc
+goes back (pauses an escape, steps back a screen; the world map also has a Main menu button). On the world map R grabs golden flies and Enter enters an escape. Phones use landscape, a left
 thumbstick and right action buttons; rotating to portrait pauses a run.
 
 **Controllers.** Any standard pad (Xbox, PlayStation, Switch Pro, Steam Deck): left stick or d-pad
-moves, RT sprints, LT crawls, A looks back, B burrows, X pebble, Y tongue, LB glow mushroom, RB spore
+moves, RT sprints, LT crawls (held still too), A looks back, B burrows (held on soft dirt: dig in), X pebble, Y tongue, LB glow mushroom, RB spore
 pouch, L3 camouflage, R3 seed; held throws aim with the stick. Start pauses, View/Select opens the map.
 On the world map A enters an escape and Y grabs golden flies. In menus the stick or d-pad moves
 between buttons, A presses and B goes back. The tool buttons show pad labels once a pad is used, and
 big moments rumble where the pad supports it.
+
+**Little Explorers.** Ten gentle levels for young players (about 5 and up), from the title screen and
+outside the campaign. Each teaches one thing (walking, keys, leaves, crouching, a button, a pebble,
+running, a maze, swimming, then all of it). They can't be lost: a catch is an "Oops!" that hops Sally back
+to the last checkpoint flag, the creatures are slow and simple, and glowing dots lead to the key and the
+door. Every level finished earns a sticker (each player's own). Levels are in `public/escape-kids.js`.
+
+**Digging in.** A few escapes have patches of soft dirt (`d` on a text map). Holding Burrow on one, Sally
+digs for 0.75 s (noisy: hunters nearby hear it), then lies buried, hidden from everything and safe even
+from ants, until the button is let go. Stone, water and every other ground can't be dug.
+
+**Android app.** `android/` holds the app for phones, tablets and Android TV (`android/README.md`).
+Back goes back one step as Esc does, and at the main menu a second Back closes the app; the title also
+has a Quit button inside the app.
 
 **Hard mode.** An option that hides every drawn hint (gaze cones, ? and ! marks, aim lines, rings and
 warnings), so only the creatures themselves give their plans away. Escapes won in hard mode earn a ◆ mark.

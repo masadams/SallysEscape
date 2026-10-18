@@ -90,6 +90,8 @@
       // Moss muffles every step, even a sprint. Echo halls carry sound much further. Currents push
       // a swimmer along. Burrow pairs are linked mounds: dig into one, come up out of the other.
       this.moss=new Set((this.level.moss||[]).map(([x,y])=>x+','+y));
+      // Soft dirt patches (d on a text map) where Sally can dig herself in; see dig() in step.
+      this.soil=new Set((this.level.soil||[]).map(([x,y])=>x+','+y));this.digs=0;
       // Ice walls are walls that a frost sentinel's gaze glances off.
       this.ice=new Set((this.level.ice||[]).map(([x,y])=>x+','+y));
       this.echoes=(this.level.echoes||[]).map(([x1,y1,x2,y2])=>({x1,y1,x2,y2}));
@@ -323,6 +325,8 @@
     burrow(){
       if(!this.active())return false;
       if(this.tunnels.length&&this.useTunnel())return true;
+      // On soft dirt the same button, held, digs Sally in instead (see step).
+      if(this.soil.has(this.tileKey(this.player)))return false;
       if(this.burrows===0){this.notice('No burrows left. Find a way around.');return false;}
       const p=this.player,x=Math.floor(p.x),y=Math.floor(p.y),d=p.facing;
       const wx=x+d.x,wy=y+d.y,landing=centre(x+2*d.x,y+2*d.y);
@@ -475,7 +479,7 @@
     // forgets her and goes back to its rounds.
     oops(captor){
       this.noteCatch(captor?.kind||null,true);this.lastCaptor=null;this.oopses++;
-      const p=this.player;p.x=this.checkpoint.x;p.y=this.checkpoint.y;p.stamina=100;p.exhausted=false;p.moving=false;
+      const p=this.player;p.x=this.checkpoint.x;p.y=this.checkpoint.y;p.dig=null;p.stamina=100;p.exhausted=false;p.moving=false;
       this.heldUntil=0;this.heldBy=null;this.invulnerableUntil=this.elapsed+2.5;
       for(const h of this.hunters){h.graceUntil=Math.max(h.graceUntil||0,this.elapsed+3);h.awareness=0;h.lastKnown=null;h.aim=null;h.path=[];h.targetId=null;h.tailLureUntil=0;
         if(h.restState)h.state=h.restState;}
@@ -612,6 +616,15 @@
       // In the air off a bounce cap Sally follows her arc and cannot steer.
       if(this.player.underground){const u=this.player.underground;input={};if(this.elapsed-u.start>=u.dur){this.player.x=u.to.x;this.player.y=u.to.y;this.player.underground=null;this.motion.resetPlayer?.(this.player);this.events.push('tunnel');this.updateVisibility(true);}}
       if(this.player.flight){const f=this.player.flight,t=Math.min(1,(this.elapsed-f.start)/f.dur);this.player.x=f.from.x+(f.to.x-f.from.x)*t;this.player.y=f.from.y+(f.to.y-f.from.y)*t;input={};if(t>=1){this.player.flight=null;this.events.push('hop');}}
+      // Digging in: held on a soft dirt patch, Sally scrabbles for 0.75 s (noisy, dust flying), then
+      // lies buried, hidden from everything and safe, until the button is let go.
+      if(this.soil.size){const q=this.player;
+        if(input.dig&&(q.dig||this.soil.has(this.tileKey(q)))&&!q.swimming&&!q.flight&&!q.underground){
+          if(!q.dig){q.dig={start:this.elapsed,buried:false};this.cue('dig',q);}
+          if(!q.dig.buried&&this.elapsed-q.dig.start>=EscapeAdventure.DIG_TIME){q.dig.buried=true;this.digs++;this.cue('buried',q);}
+          input={};
+        }else if(q.dig){const was=q.dig.buried;q.dig=null;if(was)this.cue('unbury',q);}
+      }
       const p=this.player,old=copy(p),length=Math.hypot(input.x||0,input.y||0);
       const dx=length>0?(input.x||0)/Math.max(1,length):0,dy=length>0?(input.y||0)/Math.max(1,length):0;
       if(length&&this.elapsed>=(this.lookUntil||0)){p.facing=Math.abs(dx)>=Math.abs(dy)?{x:Math.sign(dx),y:0}:{x:0,y:Math.sign(dy)};p.tongueAim={x:(input.x||0)/length,y:(input.y||0)/length};}
@@ -639,6 +652,7 @@
       // A crawl makes no sound, even on gravel.
       p.silent=this.moss.size>0&&this.moss.has(this.tileKey(p));p.loud=p.sprinting&&!p.silent;
       p.noisy=p.loud||(p.moving&&!p.crawling&&!p.silent&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='N');
+      if(p.dig){if(p.dig.buried){p.hidden=true;p.noisy=false;this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+.05);}else p.noisy=true;}
       if(p.noisy&&this.echoes.length&&this.elapsed>=(this.echoAt||0)&&this.inEcho(p)){this.echoAt=this.elapsed+1.2;this.events.push('echo');}
       if(this.level.dark){
         this.glowTrail=this.glowTrail.filter(t=>t.expires>this.elapsed);
@@ -693,7 +707,7 @@
     lit(){const p=this.player;return this.hunters.some(m=>m.kind==='moth'&&distance(m,p)<=2.6&&this.clear(m,p,true));}
     seesPlayer(h=this.hunter){
       // Just after a gentle level's "Oops!" nothing notices her for a moment.
-      if(this.player.underground||this.gentle&&this.elapsed<this.invulnerableUntil)return false;
+      if(this.player.underground||this.player.dig?.buried||this.gentle&&this.elapsed<this.invulnerableUntil)return false;
       const p=this.player,d=distance(p,h),lit=this.hunters.length>1&&this.lit()||this.lights.length>0&&this.inLight(p);
       if(this.clouds.length&&this.inCloud(h))return false;
       if(this.elapsed<this.flashUntil&&d<=9&&this.clear(h,p,true)&&!(this.clouds.length&&this.inCloud(p)))return true;
@@ -1539,13 +1553,13 @@
       this.status=status;this.notice(message,status);
       this.tongue=null;
       const stars=status==='won'?1+Number(this.treasure>=Math.ceil(this.totalTreasure*.6))+Number(this.alarms===0&&this.hasTail):0;
-      this.result=Object.freeze({status,levelId:this.level.id,hidden:Boolean(this.level.hidden),kids:Boolean(this.level.kids),oopses:this.oopses,draft:Boolean(this.level.draft),routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),blasts:this.blasts,steamed:this.steamed,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,glowbugs:this.glowbugsCaught,catches:this.catches.slice(),tools:this.toolsUsed(),message});
+      this.result=Object.freeze({status,levelId:this.level.id,hidden:Boolean(this.level.hidden),kids:Boolean(this.level.kids),oopses:this.oopses,draft:Boolean(this.level.draft),routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),blasts:this.blasts,steamed:this.steamed,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,glowbugs:this.glowbugsCaught,catches:this.catches.slice(),tools:this.toolsUsed(),digs:this.digs,message});
     }
     // A sound with a place: the scene pans it and lets it fade with distance from Sally.
     cue(name,at){this.events.push(name);if(at)(this.eventAt||(this.eventAt={}))[name]={x:at.x,y:at.y};}
     drainEvents(){const events=this.events;this.events=[];this.lastEventAt=this.eventAt||{};this.eventAt={};return events;}
   }
-  EscapeAdventure.CUNNING=CUNNING;
+  EscapeAdventure.CUNNING=CUNNING;EscapeAdventure.DIG_TIME=.75;
   root.EscapeAdventure=EscapeAdventure;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeAdventure};
 })(typeof globalThis!=='undefined'?globalThis:this);
