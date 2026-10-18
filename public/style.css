@@ -612,3 +612,4 @@ body.ui-large #escape-stage-ui>*,body.ui-large #escape-world-ui,body.ui-large .g
 body.ui-xl #escape-stage-ui>*,body.ui-xl #escape-world-ui,body.ui-xl .game-dialog-card,body.ui-xl #start-menu-container>*{zoom:1.75}
 /* The title screen fills the window too, its art and card growing with it. */
 @media (min-width:1500px){#start-menu-container{width:100%;min-height:calc(100vh - 24px);grid-template-columns:minmax(0,1fr) minmax(300px,34%)}}
+.escape-endless{font-size:1.05em;line-height:1;color:#f1ce7a}

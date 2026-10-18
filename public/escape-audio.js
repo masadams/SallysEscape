@@ -126,6 +126,8 @@
     wingbeat:(v)=>{for(let i=0;i<5;i++)noise(v,{dur:.05,delay:i*.055,gain:.14-i*.018,filter:'bandpass',freq:1100+i*60,q:1.2,attack:.006});},
     tweet:(v)=>{for(const [f,d,u] of [[3200,0,4100],[3600,.11,4400],[3000,.24,3800]])tone(v,{freq:f,to:u,dur:.07,delay:d,type:'sine',gain:.07});},
     plop:(v)=>{tone(v,{freq:520,to:180,dur:.12,type:'sine',gain:.12});noise(v,{dur:.18,delay:.03,gain:.08,freq:900,to:400,q:1});},
+    // A magpie's harsh chatter, raising the alarm.
+    caw:(v)=>{for(let i=0;i<4;i++){noise(v,{dur:.07,delay:i*.09,gain:.22,filter:'bandpass',freq:1900-i*60,q:4,attack:.004});tone(v,{freq:900-i*30,to:700,dur:.06,delay:i*.09,type:'sawtooth',gain:.05});}},
     // Places: water lapping at a bank, a drip somewhere in a cave.
     lap:(v)=>{noise(v,{dur:.5,gain:.07,filter:'lowpass',freq:500,to:900,q:1.2,attack:.15});noise(v,{dur:.3,delay:.25,gain:.04,filter:'bandpass',freq:1400,to:700,q:1,attack:.05});},
     drip:(v)=>{tone(v,{freq:1400,to:2600,dur:.06,type:'sine',gain:.08});tone(v,{freq:900,to:1300,dur:.12,delay:.05,type:'sine',gain:.03});},

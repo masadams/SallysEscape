@@ -74,6 +74,10 @@ levels.
 it to set the direction and strength), **Echo hall** (two corners) and **Burrow pair** (click one
 mound, then its partner). Level settings set **Spore pouches** (0–5).
 
+**Unlimited pouches** (level settings) makes every tool bottomless, as in the Magpie Roost. The
+**Magpie** (Creatures) stays on its perch and looks at each of its patrol points in turn; see
+ENEMIES.md for how it caws and steals.
+
 **Cunning** (0–3, level settings) is how sharp the hunters are. At 0 a snake chases where Sally is, a
 little slower, and is slow to recover from a skid. At 2 (the default for new levels) it reads where
 she is going and feels her close by. At 3 it reads a loop within a turn or so. The game's own areas

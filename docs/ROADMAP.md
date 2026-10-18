@@ -8,7 +8,7 @@ What the game has now, how its areas open, and the rules every escape follows. T
 | Part | What it is |
 | --- | --- |
 | The trail | 100 escapes in 21 areas, from Sunny Meadow to The Road Home, every one drawn as a text map with a recorded winning run (`tests/fixtures`). |
-| Hidden escapes | 15 more: the Gilded Burrow's three, the Bramble Maze and The Long Way Home bonus escapes, and the secret spots (Star Garden, Mossy Well, Cloud Nest, Shrine, Bestiary Grove, Ice Cave, Sunken Wreck, Blind Grove). |
+| Hidden escapes | 20 more: the Gilded Burrow's three, the Bramble Maze and The Long Way Home bonus escapes, the secret spots (Star Garden, Mossy Well, Cloud Nest, Shrine, Bestiary Grove, Ice Cave, Sunken Wreck, Blind Grove), and the Magpie Roost's five. |
 | Challenges | 21 one-touch challenges; each opens once its escape is cleared and its area has enough stars, and some areas need a number of them. |
 | Hunters | 29 creature kinds, each with its own job (`docs/ENEMIES.md`), plus the hawk and ant columns; the Bestiary in the Journal. |
 | Tools and tricks | Pebbles, burrows, tongue, seeds, camouflage, glow mushrooms, spore pouches, crawling; burrow pairs, moss, echo halls, currents, traps, cold rooms, steam, storms and tides. |

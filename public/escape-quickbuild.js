@@ -17,7 +17,7 @@
     frost:{name:'Frost',walkers:['fox','owl'],posted:['sentinel'],decor:[['L',.04]],cold:true,ice:true,words:['Frost','Icicle','Snowdrift','Rime']},
     grotto:{name:'Glow grotto',walkers:['bat','moth','spider'],posted:['flytrap','mimic'],decor:[['L',.04],['m',.04]],dark:true,words:['Glimmer','Cavern','Lantern','Grotto']},
     jungle:{name:'Jungle',walkers:['snake','spider','chameleon'],posted:['mantis','wasp'],decor:[['L',.06],['T',.03],['m',.03]],words:['Vine','Canopy','Fern','Jungle']},
-    ruins:{name:'Ruins',walkers:['beetle','owl','gecko'],posted:['mimic','millipede','scorpion'],decor:[['N',.05],['L',.04]],echo:true,words:['Old','Broken','Mossy','Fallen']}
+    ruins:{name:'Ruins',walkers:['beetle','owl','gecko'],posted:['mimic','millipede','scorpion','magpie'],decor:[['N',.05],['L',.04]],echo:true,words:['Old','Broken','Mossy','Fallen']}
   };
   const DIFFICULTY={1:{name:'Gentle',foes:.75,cover:4,toll:4,loops:.5},2:{name:'Tricky',foes:1,cover:5,toll:6,loops:.4},3:{name:'Hard',foes:1.35,cover:6,toll:7,loops:.3}};
   const FEATURES=[...new Set(Object.values(THEMES).flatMap(t=>[...t.walkers,...t.posted]))];

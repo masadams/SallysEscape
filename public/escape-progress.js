@@ -16,6 +16,8 @@
     'sunken-wreck':{name:'the Sunken Wreck',mastered:'tide',clue:'A mast pokes through the reeds off Sun and Sea. Earn every star in the Tide Pools to reach the Sunken Wreck.'},
     // Open to every player once the early trail is behind them: an escape with no drawn hints at all.
     'blind-grove':{name:'the Blind Grove',story:true,areas:4},
+    // A bonus area for everyone halfway along the trail: five escapes where Sally's pouches never run out.
+    'magpie-roost':{name:'the Magpie Roost',story:true,areas:6},
     'sallys-burrow':{name:'Sally\u2019s Burrow',story:true,cleared:'home',clue:'Home is just through here. Clear escape 100, Home, to reach it.'}
   };
   const GLOW_GIFTS=[{at:40,skin:'firefly',text:'40 glow bugs freed! Sally can wear Firefly colours.'},{at:75,skin:'moonbeam',text:'75 glow bugs freed! Sally can wear Moonbeam colours.'},{at:100,companion:true,text:'100 glow bugs freed! One of them stays with Sally now, a little sea-green light of her own.'}];

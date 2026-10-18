@@ -247,7 +247,76 @@
  "#......L....3......L..#.#",
  "#####..##########..####.#",
  "#X..L..L..........L....1#",
+ "#########################"]},
+// The Magpie Roost: magpies hoard pebbles and shiny things, so here Sally's pouches never run
+  // out. The magpie keeps watch, caws to call the hunters, and flies off to steal anything shiny
+  // that is thrown, which ends the distraction but leaves its perch blind for a while.
+  {id:"roost-gate",name:"Roost Gate",secret:"magpie-roost",unlimited:true,explore:false,tailDrop:true,brief:"Magpies hoard pebbles here, so Sally's pouch never empties. Throw all you like, but a magpie flies off to steal every one.",hint:"The magpie watches the crossing. Throw a pebble past it: while it is off stealing, its perch is blind, and the hallway snake goes to look.",pebbles:1,tongues:1,guards:[{kind:"magpie",spawn:[13,5],facing:-PI/2,patrol:[[13,1],[13,9]]},{spawn:[10,4],facing:0,patrol:[[2,4],[22,4]]},{spawn:[19,2],facing:0,patrol:[[16,2],[22,2]]},{spawn:[8,7],facing:PI,patrol:[[2,7],[9,7]]}],map:[
+ "#########################",
+ "#@......L......#.......K#",
+ "#..............#..L.....#",
+ "#....L....3....#.....2..#",
+ "#..............L........#",
+ "######.#####.......######",
+ "#..........#...#.......3#",
+ "#.L....N...#...#...L....#",
+ "#.....1....#.......2....#",
+ "#X.........#..L.........#",
  "#########################"]}
+,
+  {id:"glint-alley",name:"Glint Alley",secret:"magpie-roost",unlimited:true,explore:false,tailDrop:true,brief:"The key sits on an island in a pit, and two magpies watch the room around it.",hint:"Only a tongue grab reaches the key, from the pit's edge. A pebble thrown to one side sends a magpie off; time the grab while the snake is away.",pebbles:1,tongues:1,guards:[{kind:"magpie",spawn:[9,8],facing:-PI/2,patrol:[[15,4],[9,4]]},{kind:"magpie",spawn:[19,8],facing:-PI/2,patrol:[[15,4],[19,4]]},{spawn:[12,4],facing:0,patrol:[[9,4],[19,4]]},{spawn:[20,2],facing:PI,patrol:[[3,2],[25,2]]}],map:[
+ "#############################",
+ "#@.......L.........L.......X#",
+ "#...........................#",
+ "#..3...#######.#######...2..#",
+ "#......#.............#......#",
+ "#..L...#...._______..#..L...#",
+ "#......#...._..K.._..#......#",
+ "#......#...._______..#......#",
+ "#..N...#.............#...N..#",
+ "#......#......3......#......#",
+ "#############################"]}
+,
+  {id:"burrow-warren",name:"Burrow Warren",secret:"magpie-roost",unlimited:true,explore:false,tailDrop:true,brief:"Rooms sealed by cracked walls: dig as often as you like, but every room has something watching.",hint:"Burrow through the cracked walls from room to room. A magpie that sees you dig will caw, so dig while it looks away.",pebbles:1,burrows:1,guards:[{spawn:[9,2],facing:0,patrol:[[7,2],[11,2]]},{kind:"magpie",spawn:[8,8],facing:0,patrol:[[11,7],[9,6]]},{spawn:[15,7],facing:PI/2,patrol:[[15,6],[15,9]]},{kind:"magpie",spawn:[24,8],facing:PI,patrol:[[19,7],[22,6]]},{spawn:[22,3],facing:0,patrol:[[19,3],[25,3]]}],map:[
+ "###########################",
+ "#@....#.....B.....#......X#",
+ "#.....#.....#.....B.......#",
+ "#..L..B..L..#..L..#...L...#",
+ "#.....#.....#.....#.......#",
+ "###B#####.####B####.#######",
+ "#.....#.....#.....#.......#",
+ "#..2..B..N..B..3..#...L...#",
+ "#.....#.....#.....B.......#",
+ "#..L..#.....#..L..#...K...#",
+ "###########################"]}
+,
+  {id:"seedfall-court",name:"Seedfall Court",secret:"magpie-roost",unlimited:true,explore:false,tailDrop:true,brief:"An open court with almost nowhere to hide, so grow your own: seeds and camouflage never run out here.",hint:"Plant a seed ahead of you for fresh cover, or blend in and keep still. The magpie in the middle turns to watch every side in turn.",pebbles:1,seeds:1,camos:1,guards:[{spawn:[15,2],facing:0,patrol:[[3,2],[25,2]]},{spawn:[13,7],facing:PI,patrol:[[3,7],[25,7]]},{kind:"magpie",spawn:[14,4],facing:0,patrol:[[25,4],[14,8],[3,4],[14,1]]}],map:[
+ "#############################",
+ "#@.........N.......N.......K#",
+ "#...........................#",
+ "#....L.......2.......L......#",
+ "#...........................#",
+ "#.......N.........N.........#",
+ "#...........................#",
+ "#....3...............1......#",
+ "#...........................#",
+ "#X.........L.......L........#",
+ "#############################"]}
+,
+  {id:"glitter-keep",name:"Glitter Keep",secret:"magpie-roost",unlimited:true,explore:false,tailDrop:false,brief:"The magpies' treasure house. Every pouch is bottomless, and three magpies keep watch over the key on its bridge.",hint:"Spores hide you even on the move, glow mushrooms and pebbles send a magpie flapping, and a tongue reaches the key from the bridge. Use everything.",pebbles:1,tongues:1,glows:1,spores:1,burrows:1,seeds:1,camos:1,guards:[{kind:"magpie",spawn:[4,6],facing:0,patrol:[[12,6],[4,10]]},{kind:"magpie",spawn:[28,6],facing:PI,patrol:[[20,6],[28,10]]},{kind:"magpie",spawn:[24,2],facing:PI,patrol:[[18,2],[24,4]]},{spawn:[10,2],facing:0,patrol:[[3,2],[14,2]]},{spawn:[20,10],facing:PI,patrol:[[3,10],[29,10]]},{kind:"beetle",spawn:[25,3],facing:PI,patrol:[[18,3],[30,3]]}],map:[
+ "#################################",
+ "#@......L.......#.......L......2#",
+ "#...............#...............#",
+ "#...3....N......B.......N...L...#",
+ "#...............#...............#",
+ "####.######.#########.######.####",
+ "#...............................#",
+ "#..L.....#______..______#.....L.#",
+ "#.....N..#______K.______#..N....#",
+ "#........#______..______#.......#",
+ "#...2.........L....L.........3..#",
+ "#X..............................#",
+ "#################################"]}
   ];
   root.EscapeHidden=routes;
   if(typeof module!=='undefined'&&module.exports)module.exports=routes;
