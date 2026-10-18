@@ -780,7 +780,7 @@ function drawEscapeVault(){
     // Many fine rays, so the gaze hugs walls and corners instead of cutting across them, reaching as
     // far as the guard really sees (further when Sally stands in light), and fading with distance.
     const p=g.player,range=(g.hunters.length>1&&g.lit()||g.lights.length>0&&g.inLight(p))?6.5:4.5,step=.15;
-    noStroke();fill(245,171,105,18);const glow=drawingContext.createRadialGradient(h.x*cell,h.y*cell,0,h.x*cell,h.y*cell,range*cell);glow.addColorStop(0,'rgba(245,171,105,.16)');glow.addColorStop(1,'rgba(245,171,105,0)');drawingContext.fillStyle=glow;
+    noStroke();fill(245,171,105,18);const glow=drawingContext.createRadialGradient?.(h.x*cell,h.y*cell,0,h.x*cell,h.y*cell,range*cell);if(glow){glow.addColorStop(0,'rgba(245,171,105,.16)');glow.addColorStop(1,'rgba(245,171,105,0)');drawingContext.fillStyle=glow;}
     beginShape();vertex(h.x*cell,h.y*cell);
     for(let a=-cone;a<=cone+.001;a+=cone/24){let reach=0,from=h;for(let d=step;d<=range;d+=step){const to={x:h.x+Math.cos(ang+a)*d,y:h.y+Math.sin(ang+a)*d};if(!g.clear(from,to,true))break;reach=d;from=to;}vertex((h.x+Math.cos(ang+a)*reach)*cell,(h.y+Math.sin(ang+a)*reach)*cell);}endShape(CLOSE);
   }
