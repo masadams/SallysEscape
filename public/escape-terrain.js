@@ -20,7 +20,7 @@ function escapeTerrainSet(g){
   const place=typeof escapePlace==='function'?escapePlace(g.level):null,set=place&&ESCAPE_TERRAIN_SETS[place.key];
   if(set)return {wall:set[0],ground:set[1]};
   if(g.level.biome==='desert')return {wall:'sand',ground:'sand'};
-  return g.level.dark?{wall:'rock',ground:'cave'}:{wall:'stone',ground:'flag'};
+  return g.level.dark?{wall:'rock',ground:'cave'}:{wall:'hedge',ground:'grass'};
 }
 // Each material leans the area's colours toward its own (green hedges, brown earth, pale snow),
 // keeping the palette's brightness so dark places stay dark.
@@ -66,15 +66,18 @@ function escapeTerrainEarth(g,cell,base,near,W,H){
     beginShape();for(let k=0;k<5;k++){const d=k*.18;vertex((px+Math.cos(a+Math.sin(k*1.3)*.4)*d)*cell,(py+Math.sin(a+Math.sin(k*1.3)*.4)*d)*cell);}endShape();}
   noStroke();for(let i=0;i<W*H*.08;i++){const px=ESCAPE_TERRAIN_HASH(i,27,3)*W,py=ESCAPE_TERRAIN_HASH(i,28,3)*H;if(!near(px,py))continue;fill(...dark,22);ellipse(px*cell,py*cell,cell*.7,cell*.42);fill(...dark,18);ellipse(px*cell,py*cell,cell*.42,cell*.25);}
 }
-// Flagstones laid in staggered rows that ignore the tile grid; the walls cover what spills over.
+// Flagstones of uneven size, laid in rows that ignore the tile grid, with soft worn joints and
+// the odd crack or tuft of moss; the walls cover what spills over.
 function escapeTerrainFlag(g,cell,base,near,W,H){
-  const sw=.92,sh=.66;strokeWeight(Math.max(1,cell*.03));
-  for(let row=0;row*sh<H+1;row++){const off=(row%2)*sw*.5+ESCAPE_TERRAIN_HASH(row,31,3)*.2;
-    for(let col=-1;col*sw<W+1;col++){const x0=col*sw+off,y0=row*sh,cx=x0+sw/2,cy=y0+sh/2;if(!near(cx,cy)&&!near(x0+.1,y0+.1)&&!near(x0+sw-.1,y0+sh-.1))continue;
-      const r=ESCAPE_TERRAIN_HASH(col,row,32),tone=escapeTerrainMix(base,(r-.5)*.22);fill(...tone);stroke(...escapeTerrainMix(base,-.42),120);
-      rect(x0*cell+1,y0*cell+1,sw*cell-2,sh*cell-2,cell*(.05+r*.06));
-      if(r<.18){noFill();stroke(...escapeTerrainMix(base,-.4),70);line((x0+.2)*cell,(y0+.15)*cell,(x0+.45)*cell,(y0+.4)*cell);line((x0+.45)*cell,(y0+.4)*cell,(x0+.4)*cell,(y0+.6)*cell);}
-      else if(r>.86){noStroke();fill(96,140,80,40);ellipse((x0+sw*.8)*cell,(y0+sh*.85)*cell,cell*.22,cell*.1);}}}
+  const joint=escapeTerrainMix(base,-.32);strokeWeight(Math.max(1,cell*.022));
+  let y0=0,row=0;while(y0<H+1){const sh=.5+ESCAPE_TERRAIN_HASH(row,30,3)*.3;let x0=-ESCAPE_TERRAIN_HASH(row,31,3)*.8,col=0;
+    while(x0<W+1){const sw=.55+ESCAPE_TERRAIN_HASH(col,row,33)*.75,cx=x0+sw/2,cy=y0+sh/2;
+      if(near(cx,cy)||near(x0+.1,y0+.1)||near(x0+sw-.1,y0+sh-.1)){const r=ESCAPE_TERRAIN_HASH(col,row,32);fill(...escapeTerrainMix(base,(r-.5)*.14));stroke(...joint,60);
+        rect(x0*cell+1,y0*cell+1,sw*cell-2,sh*cell-2,cell*(.08+r*.08));
+        if(r<.14){noFill();stroke(...joint,55);line((x0+sw*.25)*cell,(y0+sh*.2)*cell,(x0+sw*.5)*cell,(y0+sh*.6)*cell);}
+        else if(r>.84){noStroke();fill(96,140,80,46);ellipse((x0+sw*.85)*cell,(y0+sh*.92)*cell,cell*.24,cell*.09);}}
+      x0+=sw;col++;}
+    y0+=sh;row++;}
   noStroke();
 }
 function escapeTerrainCave(g,cell,base,near,W,H){
