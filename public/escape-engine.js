@@ -5,8 +5,8 @@
   const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   const copy=p=>({x:p.x,y:p.y});
   // How heavy hunters handle in a chase (see glideHunter): turning speed in radians a second, the share of
-  // speed kept through a sharp turn, and how quickly they get back up to full speed.
-  const MOMENTUM={snake:{turn:2.4,grip:.55,accel:1.6},cobra:{turn:2,grip:.5,accel:1.3},'sea-snake':{turn:2.4,grip:.55,accel:1.6},fish:{turn:4.5,grip:.6,accel:2.5},chameleon:{turn:3.5,grip:.55,accel:2}};
+  // speed kept through a sharp turn, how quickly they get back up to full speed, and lunges a second.
+  const MOMENTUM={snake:{turn:2.4,grip:.55,accel:1.6,pulse:1.5},cobra:{turn:2,grip:.5,accel:1.3,pulse:1.1},'sea-snake':{turn:2.4,grip:.55,accel:1.6,pulse:1.4},fish:{turn:4.5,grip:.6,accel:2.5,pulse:2.2},chameleon:{turn:3.5,grip:.55,accel:2,pulse:1}};
   // Hunters heavy enough to press a heavy plate.
   const HEAVY=new Set(['beetle']);
   const centre=(x,y)=>({x:x+0.5,y:y+0.5});
@@ -1391,7 +1391,7 @@
     // limited turning speed, loses speed in a sharp turn and builds it back on a straight run. Cut back
     // hard and it swings wide past you; in a narrow corridor it coils round on the spot.
     glideHunter(target,budget,h,m){
-      const dt=this.hunterDt;if(h.heading===undefined){h.heading=Math.atan2(target.y-h.y,target.x-h.x);h.glide=.7;} // It whips round on first sight; the momentum is in what follows.
+      const dt=this.hunterDt;if(h.heading===undefined){h.heading=Math.atan2(target.y-h.y,target.x-h.x);h.glide=.7;h.gphase=(h.x*.37+h.y*.61)%1;} // It whips round on first sight; the momentum is in what follows.
       if(this.grid[Math.floor(h.y)]?.[Math.floor(h.x)]==='M')budget*=.72;
       if(h.kind==='sea-snake')budget*=this.water(h)?1.05:.65;
       if(this.cold.has(this.tileKey(h)))budget*=.6;
@@ -1400,9 +1400,15 @@
       while(h.path.length>1&&distance(h,h.path[0])<.5)h.path.shift();
       const point=h.path[0]||target;if(distance(h,point)<.03){h.path.shift();return;}
       const want=Math.atan2(point.y-h.y,point.x-h.x),diff=Math.atan2(Math.sin(want-h.heading),Math.cos(want-h.heading));
-      const turn=Math.max(-m.turn*dt,Math.min(m.turn*dt,diff));h.heading+=turn;
-      const aim=Math.abs(diff)>1.1?m.grip:1;h.glide+=(aim-h.glide)*Math.min(1,dt*m.accel*(aim<h.glide?2.5:1));
-      const step=Math.min(budget*h.glide,Math.max(distance(h,point),.02)+.4),dx=Math.cos(h.heading)*step,dy=Math.sin(h.heading)*step;
+      // A sharp turn at speed throws it into a skid: it slides on, braking hard, then whips round.
+      if(Math.abs(diff)>1.5&&h.glide>.75&&!(h.skidUntil>this.elapsed)){h.skidUntil=this.elapsed+.38;h.skidAt=this.elapsed;h.skidFrom={x:h.x,y:h.y,heading:h.heading};}
+      const skidding=h.skidUntil>this.elapsed;
+      // Slow, it snaps round; fast, it cannot.
+      const rate=m.turn*(1+(1-h.glide)*2.4)*(skidding?.3:1),turn=Math.max(-rate*dt,Math.min(rate*dt,diff));h.heading+=turn;
+      const aim=skidding?m.grip*.55:Math.abs(diff)>1.1?m.grip:1;h.glide+=(aim-h.glide)*Math.min(1,dt*m.accel*(aim<h.glide?(skidding?1.4:2.5):1));
+      // It moves in lunges, a surge and a check, rather than gliding at an even pace.
+      const beat=(this.elapsed*m.pulse+h.gphase)%1,surge=beat<.3?1.22:.9;
+      const step=Math.min(budget*h.glide*surge,Math.max(distance(h,point),.02)+.4),dx=Math.cos(h.heading)*step,dy=Math.sin(h.heading)*step;
       const go=(x,y)=>{const next={x,y};if(!this.clear(h,next,false,h)||!this.fits(next,.22,h))return false;h.distanceMoved+=Math.hypot(x-h.x,y-h.y);h.x=x;h.y=y;return true;};
       if(!go(h.x+dx,h.y+dy)&&!go(h.x+dx,h.y)&&!go(h.x,h.y+dy)){h.heading+=turn;h.glide=Math.min(h.glide,m.grip);}
       h.facing=h.heading;
