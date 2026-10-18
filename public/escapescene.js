@@ -553,10 +553,14 @@ function toggleEscapeCloseView(){try{escapeStore.setItem(ESCAPE_CLOSE_VIEW_KEY,e
 // the layer is redrawn only when the map itself changes (a smashed wall, flattened leaves).
 let escapeTileCache=null;
 function drawEscapeStillTiles(g,cell,palette,index){
+  // Full lighting draws continuous ground, water and solid walls first (escape-terrain.js); Simple
+  // keeps the plain tiles.
+  const terrain=escapeLightingFull()&&typeof drawEscapeTerrainGround==='function',deepWater=terrain&&escapeTerrainDeepIsWater(index);
+  if(terrain){drawEscapeTerrainGround(g,cell,palette);drawEscapeTerrainWater(g,cell,index,palette);drawEscapeTerrainWalls(g,cell,palette);}
   for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){
     const tile=g.grid[y][x],floor=g.floor(x,y);
-    noStroke();fill(...palette[floor?0:1]);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*0.12);
-    if(!floor){stroke(...palette[2]);strokeWeight(1);line((x+.15)*cell,(y+.12)*cell,(x+.85)*cell,(y+.12)*cell);}
+    if(!terrain||tile==='G'||tile==='Y'){noStroke();fill(...palette[floor?0:1]);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*0.12);
+    if(!floor){stroke(...palette[2]);strokeWeight(1);line((x+.15)*cell,(y+.12)*cell,(x+.85)*cell,(y+.12)*cell);}}
     // A crack: drawn as wall with a dark, jagged slit only Sally fits through.
     if(tile==='Y'){noStroke();fill(...palette[1]);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*0.12);fill(6,10,12);beginShape();for(const [dx,dy] of [[.42,0],[.56,.22],[.48,.45],[.6,.7],[.52,1],[.42,1],[.46,.7],[.36,.45],[.46,.22],[.36,0]])vertex((x+dx)*cell,(y+dy)*cell);endShape(CLOSE);}
     if(tile==='B'){
@@ -574,13 +578,14 @@ function drawEscapeStillTiles(g,cell,palette,index){
     // In the Mushroom Grotto a gap is a black sinkhole with a faint glowing rim, and on Storm Heights
     // a sheer drop with a pale edge, not a channel.
     if(tile==='P'&&index>=78&&index<88){const storm=index>=83;noStroke();fill(...(storm?[8,10,16]:[6,4,10]));rect(x*cell,y*cell,cell,cell);for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])if(g.grid[y+dy]?.[x+dx]!=='P'&&g.floor(x+dx,y+dy)){fill(...(storm?[200,210,225,80]:[170,130,230,70]));if(dx)rect((x+(dx>0?.88:0))*cell,y*cell,cell*.12,cell);else rect(x*cell,(y+(dy>0?.88:0))*cell,cell,cell*.12);}if((x*7+y*13)%11===0){fill(190,160,255,60+40*Math.sin(g.elapsed*2+x));ellipse((x+.5)*cell,(y+.5)*cell,cell*.08,cell*.08);}}
-    else if(tile==='P'){
+    else if(tile==='P'&&!deepWater){
       noStroke();fill(14,47,66);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*.12);stroke(64,126,155,150);strokeWeight(cell*.025);
       for(const dy of [.3,.65])line((x+.2)*cell,(y+dy)*cell,(x+.8)*cell,(y+dy)*cell);
     }
   }
   if(escapeLightingFull())drawEscapeAtmoGround(g,cell,palette,index);
-  for(const key of g.ice||[]){const [x,y]=key.split(',').map(Number);noStroke();fill(143,196,220);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*.12);fill(205,235,248,200);triangle(x*cell+cell*.18,y*cell+cell*.2,x*cell+cell*.55,y*cell+cell*.16,x*cell+cell*.2,y*cell+cell*.55);stroke(230,248,255,160);strokeWeight(Math.max(1,cell*.03));line(x*cell+cell*.62,y*cell+cell*.3,x*cell+cell*.8,y*cell+cell*.72);}
+  if(terrain&&g.ice?.size)drawEscapeZone(g.ice,cell,()=>true,[143,196,220],255,0);
+  for(const key of g.ice||[]){const [x,y]=key.split(',').map(Number);noStroke();if(!terrain){fill(143,196,220);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*.12);}fill(205,235,248,200);triangle(x*cell+cell*.18,y*cell+cell*.2,x*cell+cell*.55,y*cell+cell*.16,x*cell+cell*.2,y*cell+cell*.55);stroke(230,248,255,160);strokeWeight(Math.max(1,cell*.03));line(x*cell+cell*.62,y*cell+cell*.3,x*cell+cell*.8,y*cell+cell*.72);}
   // Full lighting: soft shadows where floor meets a wall above or to the left, so mazes read in depth.
   if(escapeLightingFull())for(let y=1;y<g.height;y++)for(let x=1;x<g.width;x++){if(!g.floor(x,y))continue;noStroke();
     if(!g.floor(x,y-1))for(let i=0;i<3;i++){fill(0,0,0,[58,32,14][i]);rect(x*cell,y*cell+i*cell*.07,cell,cell*.07);}
@@ -598,7 +603,7 @@ function drawEscapeTiles(g,cell,palette,index){
     escapeTileCache.key=key;
   }
   drawingContext.drawImage(escapeTileCache.layer.elt,0,0,w,h);}
-  for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.grid[y][x]==='U'){
+  if(!escapeLightingFull())for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.grid[y][x]==='U'){
       noStroke();fill(22,99,121);rect(x*cell,y*cell,cell,cell);stroke(112,213,211,100);strokeWeight(cell*.035);const tide=Math.sin(g.elapsed*1.4+x*.5+y)*.05;for(const dy of [.3,.7])line((x+.15)*cell,(y+dy+tide)*cell,(x+.85)*cell,(y+dy-tide)*cell);
     }
 }
@@ -677,7 +682,8 @@ function drawEscapeMood(ctx,mood,W,H,clock){
 // Moss, echo halls, currents and burrow mounds.
 function drawEscapeTricks(g,cell,view){
   const seen=(x,y)=>!view.follow||g.visibleTile(x,y);
-  for(const key of g.moss){const [x,y]=key.split(',').map(Number);if(!seen(x,y))continue;noStroke();fill(78,128,70,150);rect(x*cell+2,y*cell+2,cell-4,cell-4,cell*.2);fill(118,170,92,170);for(const [dx,dy] of [[.25,.3],[.6,.25],[.4,.6],[.75,.7],[.2,.78]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.16,cell*.12);}
+  const mossSheet=escapeLightingFull()&&typeof drawEscapeZone==='function';if(mossSheet&&g.moss.size)drawEscapeZone(g.moss,cell,seen,[78,128,70],130,0);
+  for(const key of g.moss){const [x,y]=key.split(',').map(Number);if(!seen(x,y))continue;noStroke();if(!mossSheet){fill(78,128,70,150);rect(x*cell+2,y*cell+2,cell-4,cell-4,cell*.2);}fill(118,170,92,170);for(const [dx,dy] of [[.25,.3],[.6,.25],[.4,.6],[.75,.7],[.2,.78]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.16,cell*.12);}
   for(const e of g.echoes){noFill();stroke(185,166,232,40);strokeWeight(Math.max(1,cell*.03));for(let y=e.y1;y<=e.y2;y++)for(let x=e.x1;x<=e.x2;x++){if(!seen(x,y)||!g.floor(x,y))continue;arc((x+.5)*cell,(y+.85)*cell,cell*.55,cell*.4,PI*1.15,PI*1.85);}}
   if(g.player.noisy&&g.echoes.length&&g.inEcho(g.player)){noFill();for(let k=0;k<3;k++){const r=((g.elapsed*1.6+k/3)%1);stroke(200,185,245,150*(1-r));strokeWeight(Math.max(1,cell*.04));ellipse(g.player.x*cell,g.player.y*cell,cell*(1+r*6),cell*(1+r*6));}}
   for(const c of g.currents){stroke(200,240,250,90);strokeWeight(Math.max(1,cell*.04));const [dx,dy]=c.dir,phase=(g.elapsed*c.speed*.8)%1;
@@ -720,7 +726,7 @@ function drawEscapeVault(){
   const palette=g.level.custom?[[24,40,34],[58,84,70],[110,140,110]]:g.level.hidden?[[38,30,14],[96,76,32],[176,144,64]]:index>=93?homePalettes[(index-93)%homePalettes.length]:index>=88?tidePalettes[(index-88)%tidePalettes.length]:index>=83?stormPalettes[(index-83)%stormPalettes.length]:index>=78?grottoPalettes[(index-78)%grottoPalettes.length]:index>=73?ventPalettes[(index-73)%ventPalettes.length]:index>=68?frostPalettes[(index-68)%frostPalettes.length]:index>=63?antPalettes[(index-63)%antPalettes.length]:index>=58?rooftopPalettes[(index-58)%rooftopPalettes.length]:index>=53?lanternPalettes[(index-53)%lanternPalettes.length]:index>=49?hollowPalettes[(index-49)%hollowPalettes.length]:index>=47?biomePalettes[index-47]:index>=42?livingPalettes[index-42]:index>=37?glowPalettes[index-37]:index>=32?junglePalettes[index-32]:index>=27?wakingPalettes[index-27]:palettes[index]||(index>=17?deepPalettes[(index-17)%deepPalettes.length]:palettes[0]);
   background(10,18,25);push();translate(ox,oy);textFont('sans-serif');textAlign(CENTER,CENTER);
   drawEscapeTiles(g,cell,palette,index);
-  drawEscapeWaterLight(g,cell,view);drawEscapeLightningShadows(g,cell);
+  drawEscapeWaterSurface(g,cell,view,index);drawEscapeLightningShadows(g,cell);
   drawEscapeWet(g,cell,view);drawEscapeSway(g,cell,view);drawEscapeDapple(g,cell);
   drawEscapeTricks(g,cell,view);drawEscapePrints(g,cell);
   if(g.level.rootWheel){const [x,y]=g.level.rootWheel,angle=g.wheelAngle;push();translate((x+.5)*cell,(y+.5)*cell);rotate(angle);noFill();stroke(106,147,76,95);strokeWeight(cell*.11);ellipse(0,0,cell*2.7,cell*2.7);for(let a=0;a<TWO_PI;a+=PI/2)line(0,0,Math.cos(a)*cell*1.35,Math.sin(a)*cell*1.35);pop();}
@@ -759,9 +765,12 @@ function drawEscapeVault(){
   for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.grid[y][x]==='c'&&(!view.follow||g.visibleTile(x,y))&&!g.crumbling?.has(x+','+y)){stroke(60,45,35,140);strokeWeight(cell*.03);line((x+.3)*cell,(y+.25)*cell,(x+.45)*cell,(y+.5)*cell);line((x+.45)*cell,(y+.5)*cell,(x+.7)*cell,(y+.6)*cell);}
   for(const v of g.vines||[])if(!view.follow||g.visibleTile(v.x,v.y))drawEscapeVine(v,cell,g.elapsed,v.readyAt>g.elapsed&&!v.holding,v.holding?g.player:null);
   // Tide flats at low tide: wet sand with ripple marks, and a lapping edge as the tide turns.
-  if(g.tide){const {high,next}=g.tidePhase();for(const f of g.tideFlats){if(view.follow&&!g.visibleTile(f.x,f.y))continue;const x=f.x*cell,y=f.y*cell;
-    if(!high){noStroke();fill(150,136,104,140);rect(x+1,y+1,cell-2,cell-2,cell*.12);stroke(196,180,140,110);strokeWeight(cell*.03);noFill();arc(x+cell*.5,y+cell*.45,cell*.6,cell*.2,PI*1.1,PI*1.9);arc(x+cell*.5,y+cell*.75,cell*.5,cell*.18,PI*1.1,PI*1.9);}
-    if(next<1.5){noStroke();fill(170,220,235,90*(1-next/1.5)*(1+Math.sin(g.elapsed*10))/2);rect(x+1,y+1,cell-2,cell-2,cell*.12);}}}
+  if(g.tide){const {high,next}=g.tidePhase(),sheet=escapeLightingFull()&&typeof drawEscapeZone==='function',seenTile=(x,y)=>!view.follow||g.visibleTile(x,y);
+    // Full lighting lays the flats as one stretch of wet sand rather than a box per tile.
+    if(sheet){g.tideKeys??=new Set(g.tideFlats.map(f=>f.x+','+f.y));if(!high)drawEscapeZone(g.tideKeys,cell,seenTile,[150,136,104],120,70);if(next<1.5)drawEscapeZone(g.tideKeys,cell,seenTile,[170,220,235],Math.round(90*(1-next/1.5)*(1+Math.sin(g.elapsed*10))/2),0);}
+    for(const f of g.tideFlats){if(view.follow&&!g.visibleTile(f.x,f.y))continue;const x=f.x*cell,y=f.y*cell;
+    if(!high){noStroke();if(!sheet){fill(150,136,104,140);rect(x+1,y+1,cell-2,cell-2,cell*.12);}stroke(196,180,140,110);strokeWeight(cell*.03);noFill();arc(x+cell*.5,y+cell*.45,cell*.6,cell*.2,PI*1.1,PI*1.9);arc(x+cell*.5,y+cell*.75,cell*.5,cell*.18,PI*1.1,PI*1.9);}
+    if(next<1.5&&!sheet){noStroke();fill(170,220,235,90*(1-next/1.5)*(1+Math.sin(g.elapsed*10))/2);rect(x+1,y+1,cell-2,cell-2,cell*.12);}}}
   // Wind lanes: faint streaks always show the lane and its direction; they thicken and race just
   // before and during a gust.
   for(const w of g.wind||[]){const ph=g.gustPhase(w),hot=ph.active||ph.warning;for(const key of w.keys){const [x,y]=key.split(',').map(Number);if(view.follow&&!g.visibleTile(x,y))continue;
@@ -780,7 +789,8 @@ function drawEscapeVault(){
     if(log.pos){push();translate(log.pos.x*cell,log.pos.y*cell);const across=Math.abs(log.to.x-log.from.x)>Math.abs(log.to.y-log.from.y);if(across)rotate(HALF_PI);noStroke();fill(0,0,0,70);rect(-cell*.42,-cell*.3,cell*.9,cell*.66,cell*.25);fill(122,84,50);rect(-cell*.45,-cell*.34,cell*.9,cell*.62,cell*.25);fill(170,125,80);ellipse(-cell*.45,0,cell*.2,cell*.6);ellipse(cell*.45,0,cell*.2,cell*.6);stroke(90,60,35);strokeWeight(cell*.03);const roll=(g.elapsed*12)%1;for(const k of [0,.33,.66])line(-cell*.4,(-.3+((k+roll)%1)*.6)*cell,cell*.4,(-.3+((k+roll)%1)*.6)*cell);pop();}}
   for(const v of g.vents){const [vx,vy]=v.at;if(view.follow&&!g.visibleTile(vx,vy)&&!v.tiles.some(([x,y])=>g.visibleTile(x,y)))continue;noStroke();fill(120,96,80);rect((vx+.18)*cell,(vy+.18)*cell,cell*.64,cell*.64,cell*.1);stroke(60,44,36);strokeWeight(cell*.05);for(const o of [.35,.5,.65])line((vx+o)*cell,(vy+.25)*cell,(vx+o)*cell,(vy+.75)*cell);noStroke();
     for(const [i,[x,y]] of v.tiles.entries()){if(view.follow&&!g.visibleTile(x,y))continue;if(v.active){for(let k=0;k<3;k++){const wob=Math.sin(g.elapsed*9+i*1.7+k*2.1)*.15;fill(245,245,245,150-k*30);ellipse((x+.5+wob)*cell,(y+.5-wob)*cell,cell*(.9-k*.15),cell*(.9-k*.15));}}else if(v.warning){fill(235,235,235,60+40*Math.sin(g.elapsed*20));if(i<2)ellipse((x+.5)*cell,(y+.5)*cell,cell*.35,cell*.35);}else{stroke(200,120,80,60);strokeWeight(cell*.03);noFill();rect(x*cell+cell*.2,y*cell+cell*.2,cell*.6,cell*.6,cell*.1);noStroke();}}}
-  for(const key of g.cold){const [x,y]=key.split(',').map(Number);if(!g.floor(x,y)||view.follow&&!g.visibleTile(x,y))continue;noStroke();fill(170,215,255,55);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*.12);fill(235,248,255,120);for(const [dx,dy] of [[.25,.3],[.7,.55],[.4,.78]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.06,cell*.06);}
+  const coldSheet=escapeLightingFull()&&typeof drawEscapeZone==='function';if(coldSheet&&g.cold.size)drawEscapeZone(new Set([...g.cold].filter(k=>{const [x,y]=k.split(',').map(Number);return g.floor(x,y);})),cell,(x,y)=>!view.follow||g.visibleTile(x,y),[170,215,255],45,90);
+  for(const key of g.cold){const [x,y]=key.split(',').map(Number);if(!g.floor(x,y)||view.follow&&!g.visibleTile(x,y))continue;noStroke();if(!coldSheet){fill(170,215,255,55);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*.12);}fill(235,248,255,120);for(const [dx,dy] of [[.25,.3],[.7,.55],[.4,.78]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.06,cell*.06);}
   for(const key of g.warm){const [x,y]=key.split(',').map(Number);if(view.follow&&!g.visibleTile(x,y))continue;const glow=.5+.5*Math.sin(g.elapsed*3+x);noStroke();fill(255,150,60,50+50*glow);ellipse((x+.5)*cell,(y+.5)*cell,cell*.95,cell*.95);fill(196,92,44);ellipse((x+.5)*cell,(y+.55)*cell,cell*.6,cell*.42);fill(255,190,110);ellipse((x+.45)*cell,(y+.48)*cell,cell*.3,cell*.16);}
   for(const key of g.shade){const [x,y]=key.split(',').map(Number);if(view.follow&&!g.visibleTile(x,y))continue;noStroke();for(let i=0;i<4;i++){fill(...(i%2?[238,226,196,150]:[204,96,72,150]));rect((x+i/4)*cell,y*cell,cell/4+.5,cell*.82);}fill(120,52,40,170);for(let i=0;i<4;i++)arc((x+(i+.5)/4)*cell,(y+.82)*cell,cell/4,cell*.22,0,PI);}
   for(const h of g.hunters)if(h.kind==='gecko'&&h.home&&(!view.follow||g.visibleTile(Math.floor(h.home.x),Math.floor(h.home.y)))){noStroke();fill(30,20,14);ellipse(h.home.x*cell,h.home.y*cell,cell*.7,cell*.45);fill(70,50,30);ellipse(h.home.x*cell,(h.home.y-.08)*cell,cell*.5,cell*.18);}
@@ -826,7 +836,7 @@ function drawEscapeVault(){
   g.hunters.filter(h=>h.kind==='owl').forEach(h=>drawEscapeOwl(h,cell,g));
   drawEscapeTongue(g,cell);
   drawingContext.save();drawingContext.beginPath();
-  for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.floor(x,y))drawingContext.rect(x*cell+1,y*cell+1,cell-2,cell-2);
+  for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.floor(x,y))drawingContext.rect(x*cell,y*cell,cell,cell);
   drawingContext.clip();drawingContext.lineCap='round';drawingContext.lineJoin='round';
   // An angler's lure is a light, so it shows even in the dark; the angler itself only shows when it rises.
   g.hunters.filter(h=>h.kind==='angler').forEach(h=>drawEscapeAngler(h,cell,g.elapsed));

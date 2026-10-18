@@ -32,16 +32,8 @@ function drawEscapeAtmoGround(g,cell,palette,index){
   noStroke();
   for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){
     const tile=g.grid[y][x],floor=g.floor(x,y),r=ESCAPE_ATMO_HASH(x,y,1),px=x*cell,py=y*cell;
-    if(!floor){if(tile==='#'||tile==='Y'){
-      // A worn lip along the top and a couple of chips in the stone.
-      fill(255,255,255,10);rect(px+2,py+2,cell-4,cell*.16,cell*.06);
-      fill(0,0,0,22);rect(px+2,py+cell*.82,cell-4,cell*.12,cell*.05);
-      if(r<.5){fill(0,0,0,26);ellipse(px+cell*(.25+.5*ESCAPE_ATMO_HASH(x,y,2)),py+cell*(.35+.4*ESCAPE_ATMO_HASH(x,y,3)),cell*.1,cell*.06);}}
-      continue;}
-    if(!['.','L','N','M'].includes(tile))continue;
-    // Tone: a faint lighter or darker wash per tile.
-    const tone=(r-.5)*2;fill(tone>0?255:0,tone>0?255:0,tone>0?255:0,Math.abs(tone)*(wet?4:5));rect(px+1,py+1,cell-2,cell-2,cell*.12);
-    if(wet){fill(10,16,30,40);rect(px+1,py+1,cell-2,cell-2,cell*.12);}
+    if(!floor||!['.','L','N','M'].includes(tile))continue;
+    if(wet){fill(10,16,30,40);rect(px-.5,py-.5,cell+1,cell+1);}
     if(tile!=='.')continue;
     const d=ESCAPE_ATMO_HASH(x,y,4);
     if(d<.2){fill(0,0,0,30);for(let i=0;i<3;i++)ellipse(px+cell*(.2+.6*ESCAPE_ATMO_HASH(x,y,i+5)),py+cell*(.2+.6*ESCAPE_ATMO_HASH(x,y,i+8)),cell*.08,cell*.055);
