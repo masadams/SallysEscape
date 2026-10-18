@@ -414,6 +414,11 @@ function tickEscapeMusic(){
   const special=!lvl?null:lvl.secret?'secret:'+lvl.secret:lvl.id==='the-long-way-home'||lvl.id==='home'?'finale':lvl.bonus?'hollow':lvl.hidden?'gilded':null;
   escapeMusic.setStyle(special&&EscapeMusic.STYLES[special]?EscapeMusic.styleFor(special,special==='hollow'?1:Math.max(0,hiddenAt)):EscapeMusic.styleFor(chapter?.theme||'meadow',index>=0&&chapter?index-chapter.start:-1));
   escapeMusic.setFlavor?.(screen==='game'&&escapeGame?EscapeMusic.flavorFor(escapeGame):null);
+  // Under the water the music is muffled, and hidden still in leaves it softens a little. The
+  // nearest creature swells the tension strings as it comes close, before anything has noticed her.
+  const run=screen==='game'&&escapeGame?.status==='playing'?escapeGame:null,sally=run?.player;
+  escapeMusic.setMuffle?.(!run?null:sally.swimming?'water':!sally.moving&&run.grid[Math.floor(sally.y)]?.[Math.floor(sally.x)]==='L'?'hide':null);
+  if(run&&escapeMusic.setNearness){let d=Infinity;for(const h of run.hunters)if(!['rooted','buried','hidden','asleep'].includes(h.state))d=Math.min(d,Math.hypot(h.x-sally.x,h.y-sally.y));escapeMusic.setNearness((5.5-d)/3.5);}
   // The soundscape follows the same place, softer on the map and the menu, ducked in a chase;
   // the map has the weather, an escape only the place's own sounds.
   // Sound effects echo in caves and halls, never on the map.

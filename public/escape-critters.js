@@ -125,6 +125,11 @@ function tickEscapeCritters(g){
       if(water(Math.floor(nx),Math.floor(ny))&&water(Math.floor(nx+Math.cos(c.heading)*.2),Math.floor(ny+Math.sin(c.heading)*.2))){c.x=nx;c.y=ny;}else{c.heading+=Math.PI*(.5+Math.random()*.5);c.dart=0;}
     }
   }
+  // Places make their own small sounds close by: water laps at the nearest bank, and in a cave a
+  // drip falls from some wall near Sally.
+  if(t>(escapeCritters.spotAt||0)){escapeCritters.spotAt=t+2.5+Math.random()*3;
+    let best=null,bd=3.2;for(const s of spots.pool){const d=Math.hypot(s.x-p.x,s.y-p.y);if(d<bd){bd=d;best=s;}}if(best&&!p.swimming)escapeCritterSound(g,'lap',best.x,best.y,.8);
+    const theme=escapeCritterTheme(g);if(g.level.dark||['grotto','glow','vents','secret:mossy-well','secret:sunken-wreck','secret:ice-cave'].includes(theme)){const walls=spots.perch.filter(s=>Math.hypot(s.x-p.x,s.y-p.y)<6);if(walls.length&&Math.random()<.7){const w=walls[Math.floor(Math.random()*walls.length)];escapeCritterSound(g,'drip',w.x,w.y,.7);}}}
   // Now and then a bird somewhere sings.
   if(t>escapeCritters.chirpAt){escapeCritters.chirpAt=t+7+Math.random()*12;const birds=escapeCritters.list.filter(c=>c.kind==='bird'&&c.state==='perch');if(birds.length){const b=birds[Math.floor(Math.random()*birds.length)];escapeCritterSound(g,'tweet',b.x,b.y,.55);b.sing=t;}}
 }

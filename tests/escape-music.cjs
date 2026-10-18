@@ -85,3 +85,11 @@ test('every fourth bar of a chase ends in a tom fill, and spooky regions play sp
   const sparse=[...Array(16)].map((_,s)=>events('spooky',s,{groove:3}));assert.deepEqual(sparse.map((e,s)=>e.some(x=>x.voice==='bass')?s:-1).filter(s=>s>=0),[0,8]);
   const chord=events('spooky',0).find(e=>e.voice==='pad').notes,steps=chord.slice(1).map((n,i)=>n-chord[i]);assert.deepEqual(steps,[3,3],'a diminished chord');
 });
+
+test('long runs vary: an answering tune every other sixteen bars, and a breath without the lead every thirty-two',()=>{
+  const lead=bar=>[...Array(16)].flatMap((_,s)=>events('meadow',bar*16+s).filter(e=>e.layer==='melody'&&e.voice!=='arp').map(e=>e.notes[0]));
+  assert.notDeepEqual([0,1,2,3,4,5,6,7].map(lead),[16,17,18,19,20,21,22,23].map(lead),'the second section plays another tune');
+  assert.deepEqual([32,33,34,35,36,37,38,39].map(lead),[0,1,2,3,4,5,6,7].map(lead),'and the first comes back');
+  for(const bar of [28,29,30,31]){assert.equal(lead(bar).length,0,'bar '+bar+' rests the lead');assert.ok([...Array(16)].some((_,s)=>events('meadow',bar*16+s).some(e=>e.voice==='arp')),'the arpeggio carries the breath');}
+  assert.ok(lead(27).length>0);
+});

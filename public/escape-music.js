@@ -112,9 +112,12 @@
     if(s===0)add('pad','pad',chord,'1m',.32);
     const bassSteps=groove===3?[0,8]:groove===2?[0,6,8,14]:[0,4,8,12],bassNotes=groove===1?[root,root,fifth,root+12]:[root,fifth,root+12,fifth];
     if(bassSteps.includes(s))add('bass','bass',bassNotes[bassSteps.indexOf(s)],'8n',s===0?.8:.6);
-    if(s%2===0){const n=tuneFor(mood,style.seed||0)[bar%8][s/2];if(n!=null)add('melody',style.lead||'melody',n+t,'8n',s%8===0?.55:.42);}
-    // A soft arpeggio answers the tune on off-beats in the second half of each phrase.
-    if(bar%8>=4&&s%4===2)add('melody','arp',chord[(s/4|0)%chord.length]+12,'16n',.22);
+    // Long runs do not loop one tune: every other sixteen bars an answering tune takes over, and the
+    // last four bars of each thirty-two leave the lead out for a breath of pad and bass.
+    const section=Math.floor(bar/16)%2,breath=bar%32>=28;
+    if(s%2===0&&!breath){const n=tuneFor(mood,(style.seed||0)+section*7)[bar%8][s/2];if(n!=null)add('melody',style.lead||'melody',n+t,'8n',s%8===0?.55:.42);}
+    // A soft arpeggio answers the tune on off-beats in the second half of each phrase, and carries the breath.
+    if((bar%8>=4||breath)&&s%4===2)add('melody','arp',chord[(s/4|0)%chord.length]+12,'16n',breath?.18:.22);
     const shaker=groove===3?[0,10]:groove===2?[0,3,4,7,8,11,12,15]:[0,2,4,6,8,10,12,14];
     if(shaker.includes(s))add('perc','shaker',null,'32n',s%4===2||s%4===3?.5:.22);
     if(groove===1&&(s===4||s===12))add('perc','rim',null,'32n',.45);
@@ -185,7 +188,10 @@
         this.context=T.getContext(); // Remember it: callbacks may run while another context is current.
         // Notes are scheduled a quarter second ahead, so a slow frame (a busy phone) never makes the music stutter.
         try{this.context.lookAhead=.25;}catch(_){}
-        this.master=new T.Gain({gain:this.muted?0:this.volume}).connect(new T.Limiter(-6).toDestination());
+        // Everything passes a low-pass that stays wide open until Sally swims (muffled, as if heard
+        // underwater) or hides in leaves (a little softened).
+        this.muffleFilter=new T.Filter({frequency:18000,type:'lowpass',rolloff:-12}).connect(new T.Limiter(-6).toDestination());
+        this.master=new T.Gain({gain:this.muted?0:this.volume}).connect(this.muffleFilter);
         const reverb=new T.Reverb({decay:3.2,wet:.28}).connect(this.master);await reverb.ready;
         // Tone treats new Gain(0) as the default gain of 1, so silent gains are passed as options.
         for(const name of LAYERS){const gain=new T.Gain({gain:0}).connect(['pad','melody','tension'].includes(name)?reverb:this.master);this.layers.set(name,{gain,target:0,quietAt:0});}
@@ -269,6 +275,13 @@
       if(!this.ready)return;const mix=MIX[state]||{},t=this.context.currentTime;
       for(const [name,layer] of this.layers){const target=mix[name]||0;layer.target=target;layer.quietAt=t+seconds+.1;const g=layer.gain.gain;g.cancelAndHoldAtTime(t);g.linearRampToValueAtTime(target,t+Math.max(.02,seconds));/* Holding keeps the current level; a plain cancel would jump back to 1. */}
     }
+    // 'water' muffles the music as if heard from under the surface, 'hide' softens it a little, null clears it.
+    setMuffle(kind){if(kind===this.muffled||!this.muffleFilter)return false;this.muffled=kind;const f=kind==='water'?650:kind==='hide'?2400:18000;
+      try{this.muffleFilter.frequency.rampTo(f,kind?.35:.8);}catch(_){}return true;}
+    // How near the closest creature is (0 far, 1 close), while nothing has noticed Sally yet: the
+    // tension strings creep in underneath, so danger is felt before it is seen.
+    setNearness(k){if(!this.ready||this.state!=='explore')return false;const layer=this.layers.get('tension'),target=Math.round(Math.max(0,Math.min(1,k))*.3*20)/20;if(Math.abs(target-layer.target)<.04)return false;
+      const t=this.context.currentTime,g=layer.gain.gain;layer.target=target;layer.quietAt=t+1;g.cancelAndHoldAtTime(t);g.linearRampToValueAtTime(target,t+1.2);return true;}
     setVolume(volume,muted=this.muted){if(volume===this.volume&&muted===this.muted&&this.volumeSet)return;this.volume=volume;this.muted=muted;if(!this.master)return;this.volumeSet=true;this.master.gain.rampTo(muted?0:volume,.25);}
   }
   Object.assign(EscapeMusic,{flavorFor,cue,FLAVORS,stateFor,events,stinger,melody:tuneFor,styleFor,STYLES,MOODS,MIX,FADES,LAYERS,THEME_MOOD,BPM,midi});

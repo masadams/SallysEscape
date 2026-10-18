@@ -126,6 +126,9 @@
     wingbeat:(v)=>{for(let i=0;i<5;i++)noise(v,{dur:.05,delay:i*.055,gain:.14-i*.018,filter:'bandpass',freq:1100+i*60,q:1.2,attack:.006});},
     tweet:(v)=>{for(const [f,d,u] of [[3200,0,4100],[3600,.11,4400],[3000,.24,3800]])tone(v,{freq:f,to:u,dur:.07,delay:d,type:'sine',gain:.07});},
     plop:(v)=>{tone(v,{freq:520,to:180,dur:.12,type:'sine',gain:.12});noise(v,{dur:.18,delay:.03,gain:.08,freq:900,to:400,q:1});},
+    // Places: water lapping at a bank, a drip somewhere in a cave.
+    lap:(v)=>{noise(v,{dur:.5,gain:.07,filter:'lowpass',freq:500,to:900,q:1.2,attack:.15});noise(v,{dur:.3,delay:.25,gain:.04,filter:'bandpass',freq:1400,to:700,q:1,attack:.05});},
+    drip:(v)=>{tone(v,{freq:1400,to:2600,dur:.06,type:'sine',gain:.08});tone(v,{freq:900,to:1300,dur:.12,delay:.05,type:'sine',gain:.03});},
     squish:(v)=>{noise(v,{dur:.14,gain:.06,filter:'lowpass',freq:600,to:250,q:3,attack:.02});tone(v,{freq:260,to:150,dur:.1,type:'sine',gain:.04});},
     // A crawl: the faintest brush of leaves.
     crawl:(v)=>{noise(v,{dur:.12,gain:.05,filter:'bandpass',freq:2400,to:1600,q:.8,attack:.03});}
@@ -138,7 +141,7 @@
   // Each recipe is rendered once to a buffer offline and replayed from then on: one buffer
   // source instead of a fresh graph of oscillators, filters and LFOs per sound. Footsteps and
   // other noisy sounds keep three takes and a slight pitch drift so repeats never sound stamped.
-  const VARIED=new Set(['step','paddle','tail','rustle','skitter','scrape','splash','flutter','clash','wingbeat','tweet','plop']);
+  const VARIED=new Set(['step','paddle','tail','rustle','skitter','scrape','splash','flutter','clash','wingbeat','tweet','plop','lap','drip']);
   const cache=new Map(),rendering=new Set(),lastPlayed=new Map(),active=[];
   const MAX_VOICES=14,REPEAT_GAP=.045;
   const keyFor=(name,o)=>name+(o.sprint?':s':'')+(o.alt?':a':'')+(o.surface&&o.surface!=='floor'?':'+o.surface:'');
