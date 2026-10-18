@@ -57,3 +57,7 @@ Node 24. Run `npm ci`, `npm run prepare:static`, `npm test`, then `npm start`. T
 
 Design notes are in `docs/`: the story, roadmap, creatures, music, lighting, builder and player data.
 
+
+## License
+
+Copyright (c) 2026 masadams. All rights reserved. The code, levels, story, art and music may be viewed here but not copied, modified, hosted or redistributed without written permission; see `LICENSE`. The bundled p5.js (LGPL 2.1) and Tone.js (MIT) keep their own licenses, in `public/vendor/`.
