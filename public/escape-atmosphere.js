@@ -24,16 +24,15 @@ const escapeAtmo={motes:[],key:null,trampled:new Map(),breathAt:0,rippleAt:0,las
 function escapeAtmoTheme(g){const place=escapePlace?.(g.level);return place?place.key.replace(/^secret:.*/,s=>s):null;}
 
 // ---- In the cached tile layer -------------------------------------------------------------------
-// Floors vary a little in tone and carry scattered pebbles, cracks and the odd flower; walls get a
-// worn top edge and a few chips; storm floors are darker and wet. Seeded by tile, so a level always
-// looks the same.
+// Floors carry scattered pebbles, cracks and the odd flower, and grass tufts where they meet a wall
+// (the ground and walls themselves are escape-terrain.js). Seeded by tile, so a level always looks
+// the same.
 function drawEscapeAtmoGround(g,cell,palette,index){
   const theme=escapeAtmoTheme(g),wet=Boolean(g.level.storm)||theme==='storm',cold=theme==='frost',sand=g.level.biome==='desert'||theme==='desert'||theme==='rooftops';
   noStroke();
   for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){
     const tile=g.grid[y][x],floor=g.floor(x,y),r=ESCAPE_ATMO_HASH(x,y,1),px=x*cell,py=y*cell;
     if(!floor||!['.','L','N','M'].includes(tile))continue;
-    if(wet){fill(10,16,30,40);rect(px-.5,py-.5,cell+1,cell+1);}
     if(tile!=='.')continue;
     const d=ESCAPE_ATMO_HASH(x,y,4);
     if(d<.2){fill(0,0,0,30);for(let i=0;i<3;i++)ellipse(px+cell*(.2+.6*ESCAPE_ATMO_HASH(x,y,i+5)),py+cell*(.2+.6*ESCAPE_ATMO_HASH(x,y,i+8)),cell*.08,cell*.055);

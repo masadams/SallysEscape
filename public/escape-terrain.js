@@ -37,7 +37,8 @@ const escapeTerrainWater=t=>t==='U'||t==='P';
 // The floor colour fills every open tile edge to edge, then soft patches of lighter and darker
 // ground wander across tiles, then the material's own small marks.
 function drawEscapeTerrainGround(g,cell,palette){
-  const set=escapeTerrainSet(g),base=escapeTerrainTint(palette[0],set.ground),W=g.width,H=g.height,open=(x,y)=>!escapeTerrainSolid(g,x,y);
+  // Storm floors are rain-darkened all over.
+  const set=escapeTerrainSet(g),wet=Boolean(g.level.storm)||escapePlace?.(g.level)?.key==='storm',base=escapeTerrainMix(escapeTerrainTint(palette[0],set.ground),wet?-.22:0),W=g.width,H=g.height,open=(x,y)=>!escapeTerrainSolid(g,x,y);
   noStroke();fill(...base);
   for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(open(x,y))rect(x*cell-.5,y*cell-.5,cell+1,cell+1);
   const near=(px,py)=>open(Math.floor(px),Math.floor(py));
