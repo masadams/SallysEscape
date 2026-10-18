@@ -300,7 +300,7 @@ function escapeBuilderSettings(){
 // selected on the right. Level details, weather, quick build, sharing and My levels open as
 // dialogs; right-click on the map opens a menu for whatever is under the pointer; every change
 // can be undone (Ctrl+Z) and redone (Ctrl+Shift+Z).
-let escapeBuilderTab='tiles',escapeBuilderDialog=null,escapeBuilderMenu=null,escapeBuilderUndo=[],escapeBuilderRedo=[],escapeBuilderState=null,escapeBuilderStroke=null;
+let escapeBuilderDialog=null,escapeBuilderMenu=null,escapeBuilderUndo=[],escapeBuilderRedo=[],escapeBuilderState=null,escapeBuilderStroke=null;
 const ESCAPE_BUILDER_TABS=[['tiles','Ground'],['places','Places'],['creatures','Creatures'],['doors','Doors & switches'],['hazards','Hazards'],['extras','Extras']];
 const ESCAPE_BUILDER_MODES=[['select','☝','Select','V','Pick something to see and change its settings'],['link','🔗','Link','L','Click a trigger, the key or a chest, then the doors, bridges or enemies to link or unlink'],
   ['patrol','➜','Patrol','P','Click an enemy, then the tiles it should walk to, in order'],['turn','↻','Turn','T','Turn an enemy or a vent a quarter turn'],['remove','✕','Remove','X','Remove an enemy, trigger, hazard, door tile or mark']];
@@ -313,20 +313,37 @@ function escapeBuilderStep(back){
   const from=back?escapeBuilderUndo:escapeBuilderRedo,to=back?escapeBuilderRedo:escapeBuilderUndo;if(!from.length)return false;
   to.push(escapeBuilderState);escapeBuilderState=from.pop();escapeBuilderModel=JSON.parse(escapeBuilderState);escapeBuilderPick=null;escapeBuilderAnchor=null;escapeBuilderNote=back?'Undone.':'Redone.';renderEscapeBuilder();return true;
 }
-function escapeBuilderPalette(){
-  const B=EscapeBuilder,tool=(id,label,title)=>'<button class="builder-tool'+(escapeBuilderTool===id?' builder-tool-on':'')+'" data-tool="'+id+'" title="'+escapeHtml(title)+'">'+label+'</button>';
-  const tab=escapeBuilderTab;let tools='';
-  if(tab==='tiles')tools=Object.entries(B.TILES).map(([k,v])=>tool(k,'<b>'+(ESCAPE_BUILDER_LOOK[k][1]||'■')+'</b>'+escapeHtml(v.split(' (')[0]),v)).join('')+tool('cold','<b>❄</b>Cold ground','Cold ground chills Sally')+tool('warm','<b>◍</b>Warm stone','A warm stone thaws Sally');
-  else if(tab==='places')tools=Object.entries(B.MARKS).map(([k,v])=>tool(k,'<b>'+ESCAPE_BUILDER_LOOK[k][1]+'</b>'+escapeHtml(v.split(' (')[0]),v)).join('');
-  else if(tab==='creatures')tools=Object.entries(B.ENEMIES).map(([k,v])=>tool('enemy:'+k,'<b>'+ESCAPE_BUILDER_ENEMY[k]+'</b>'+escapeHtml(v.split(' (')[0]),v)).join('');
-  else if(tab==='doors')tools='<div class="builder-swatches">'+B.COLORS.map(([name,rgb],i)=>'<button class="builder-swatch'+(escapeBuilderColor===i?' builder-tool-on':'')+'" data-color="'+i+'" title="'+name+'" style="background:rgb('+rgb.join(',')+')"></button>').join('')+'</div>'+
-    tool('door','<b>▮</b>Door','Paint door tiles in the chosen colour')+tool('bridge','<b>═</b>Bridge','Paint bridge tiles in the chosen colour (over a gap or water)')+
-    Object.entries(B.TRIGGERS).map(([k,v])=>tool('trig:'+k,'<b>'+ESCAPE_BUILDER_TRIGGER[k]+'</b>'+escapeHtml(v.split(' (')[0]),v)).join('');
-  else if(tab==='hazards')tools=Object.entries(B.HAZARDS).map(([k,v])=>tool('haz:'+k,'<b>'+ESCAPE_BUILDER_HAZARD[k]+'</b>'+escapeHtml(v),v+(k==='vent'?' (place it in a wall)':k==='log'?' (click its start, then where it rolls to)':''))).join('');
-  else tools=Object.entries(ESCAPE_BUILDER_EXTRAS).map(([k,[icon,title]])=>tool(k,'<b>'+icon+'</b>'+escapeHtml(title.split(':')[0]),title)).join('');
-  return '<div class="builder-modes">'+ESCAPE_BUILDER_MODES.map(([id,icon,label,key,title])=>tool(id,'<b>'+icon+'</b>'+label,title+' ('+key+')')).join('')+'</div>'+
-    '<div class="builder-tabs" role="tablist">'+ESCAPE_BUILDER_TABS.map(([id,label])=>'<button role="tab" aria-selected="'+(tab===id)+'" data-tab="'+id+'">'+label+'</button>').join('')+'</div>'+
-    '<div class="builder-tools">'+tools+'</div>';
+// The tools: a slim strip of icons down the left (the five modes, then one icon per group).
+// A group opens a pop-out of compact tiles over the map; picking one closes it, and the brush in
+// hand shows in the menu bar.
+let escapeBuilderFlyout=null,escapeBuilderToastTimer=null;
+const ESCAPE_BUILDER_TAB_ICON={tiles:'▦',places:'⚑',creatures:'🐍',doors:'▮',hazards:'♨',extras:'✦'};
+function escapeBuilderToolsIn(tab){
+  const B=EscapeBuilder,short=v=>v.split(' (')[0];
+  if(tab==='tiles')return [...Object.entries(B.TILES).map(([k,v])=>[k,ESCAPE_BUILDER_LOOK[k][1]||'■',short(v),v]),['cold','❄','Cold ground','Cold ground chills Sally'],['warm','◍','Warm stone','A warm stone thaws Sally']];
+  if(tab==='places')return Object.entries(B.MARKS).map(([k,v])=>[k,ESCAPE_BUILDER_LOOK[k][1],short(v),v]);
+  if(tab==='creatures')return Object.entries(B.ENEMIES).map(([k,v])=>['enemy:'+k,ESCAPE_BUILDER_ENEMY[k],short(v),v]);
+  if(tab==='doors')return [['door','▮','Door','Paint door tiles in the chosen colour'],['bridge','═','Bridge','Paint bridge tiles in the chosen colour (over a gap or water)'],...Object.entries(B.TRIGGERS).map(([k,v])=>['trig:'+k,ESCAPE_BUILDER_TRIGGER[k],short(v),v])];
+  if(tab==='hazards')return Object.entries(B.HAZARDS).map(([k,v])=>['haz:'+k,ESCAPE_BUILDER_HAZARD[k],short(v),v+(k==='vent'?' (place it in a wall)':k==='log'?' (click its start, then where it rolls to)':'')]);
+  return Object.entries(ESCAPE_BUILDER_EXTRAS).map(([k,[icon,title]])=>[k,icon,title.split(':')[0],title]);
+}
+function escapeBuilderTabOf(tool){return ESCAPE_BUILDER_TABS.map(t=>t[0]).find(t=>escapeBuilderToolsIn(t).some(x=>x[0]===tool))||null;}
+// What is in hand, for the brush chip: [icon, name].
+function escapeBuilderBrush(){
+  const mode=ESCAPE_BUILDER_MODES.find(x=>x[0]===escapeBuilderTool);if(mode)return [mode[1],mode[2]];
+  const tab=escapeBuilderTabOf(escapeBuilderTool),t=tab&&escapeBuilderToolsIn(tab).find(x=>x[0]===escapeBuilderTool);return t?[t[1],t[2]]:['■',escapeBuilderTool];
+}
+function escapeBuilderRail(){
+  const on=escapeBuilderTabOf(escapeBuilderTool);
+  return '<nav class="builder-rail" aria-label="Tools">'+ESCAPE_BUILDER_MODES.map(([id,icon,label,key,title])=>'<button class="builder-railbtn'+(escapeBuilderTool===id?' builder-tool-on':'')+'" data-tool="'+id+'" title="'+escapeHtml(label+' ('+key+'): '+title)+'" aria-label="'+label+'">'+icon+'</button>').join('')+
+    '<hr>'+ESCAPE_BUILDER_TABS.map(([id,label],i)=>'<button class="builder-railbtn'+(on===id?' builder-rail-on':'')+(escapeBuilderFlyout===id?' builder-rail-open':'')+'" data-tab="'+id+'" title="'+escapeHtml(label+' ('+(i+1)+')')+'" aria-label="'+label+'" aria-expanded="'+(escapeBuilderFlyout===id)+'">'+ESCAPE_BUILDER_TAB_ICON[id]+'</button>').join('')+'</nav>';
+}
+function escapeBuilderFlyoutHtml(){
+  const tab=escapeBuilderFlyout;if(!tab)return '';const B=EscapeBuilder,label=ESCAPE_BUILDER_TABS.find(t=>t[0]===tab)[1];
+  const tiles=escapeBuilderToolsIn(tab).map(([id,icon,name,title])=>'<button class="builder-tile'+(escapeBuilderTool===id?' builder-tool-on':'')+'" data-tool="'+id+'" title="'+escapeHtml(title)+'"><b>'+icon+'</b><span>'+escapeHtml(name)+'</span></button>').join('');
+  return '<div class="builder-scrim" data-close-fly="1"></div><div class="builder-flyout" role="dialog" aria-label="'+escapeHtml(label)+'"><h4>'+escapeHtml(label)+'</h4>'+
+    (tab==='doors'?'<div class="builder-swatches" aria-label="Door colour">'+B.COLORS.map(([name,rgb],i)=>'<button class="builder-swatch'+(escapeBuilderColor===i?' builder-tool-on':'')+'" data-color="'+i+'" title="'+name+'" style="background:rgb('+rgb.join(',')+')"></button>').join('')+'</div>':'')+
+    '<div class="builder-tiles">'+tiles+'</div></div>';
 }
 function escapeBuilderMenuBar(problems){
   const ws=escapeBuilderWorkshop,open=escapeBuilderMenu?.kind==='menu'?escapeBuilderMenu.id:null,B=EscapeBuilder;
@@ -342,6 +359,7 @@ function escapeBuilderMenuBar(problems){
     '<span class="builder-title">'+(ws?'✎ '+escapeHtml(escapeWorkshopLabel(ws.key)):'Level builder')+'</span>'+
     menu('file','File')+menu('edit','Edit')+menu('level','Level')+menu('help','Help')+
     '<input id="builder-name" class="builder-name-inline" maxlength="40" aria-label="Level name" value="'+escapeHtml(escapeBuilderModel.name)+'">'+
+    (([icon,name])=>'<span class="builder-brush" title="The brush in hand">'+icon+' '+escapeHtml(name)+'</span>')(escapeBuilderBrush())+
     '<button id="builder-problems" class="builder-chip'+(problems.length?' bad':'')+'" title="'+escapeHtml(problems.join(' '))+'">'+(problems.length?'⚠ '+problems.length+' to fix':'✓ Ready')+'</button>'+
     '<button id="builder-play" class="escape-primary"'+(problems.length?' disabled':'')+'>▶ Playtest</button></div>';
 }
@@ -358,7 +376,7 @@ function escapeBuilderDialogHtml(){
   else if(d==='import'){title='Import from text';body='<textarea id="builder-text" class="builder-text" placeholder="Paste a shared level here: the whole line that starts with SALLY"></textarea><button id="builder-import-go" class="escape-primary">Import</button>';}
   else if(d==='levels'){title='My levels';body='<div class="builder-list">'+(B.loadAll(ESCAPE_BUILDER_STORE).map(l=>'<div class="builder-saved"><b>'+escapeHtml(l.name)+'</b> <span>'+l.map[0].length+'×'+l.map.length+' · '+l.guards.length+' enemies</span><button data-play="'+l.id+'">Play</button><button data-edit="'+l.id+'">Edit</button><button data-delete="'+l.id+'">Delete</button></div>').join('')||'<p>No saved levels yet. Saved levels stay in this browser; publish one to share it with every player.</p>')+'</div>';}
   else if(d==='problems'){title='Before it can be played';const p=B.validate(m);body=p.length?'<ul class="builder-problems">'+p.map(t=>'<li>'+escapeHtml(t)+'</li>').join('')+'</ul>':'<p>✓ Ready to play. Treasure in level: '+B.treasureTotal(m)+'.</p>';}
-  else if(d==='keys'){title='Keyboard shortcuts';body='<ul class="builder-keys">'+[['V','Select'],['L','Link'],['P','Patrol'],['T','Turn'],['X','Remove'],['W / F','Wall / floor'],['1 – 6','Switch tool tab'],['Right-click','Menu for that tile'],['Ctrl+Z','Undo'],['Ctrl+Shift+Z or Ctrl+Y','Redo'],['Ctrl+S','Save'],['Esc','Close, or deselect']].map(([k,t])=>'<li><kbd>'+k+'</kbd>'+t+'</li>').join('')+'</ul>';}
+  else if(d==='keys'){title='Keyboard shortcuts';body='<ul class="builder-keys">'+[['V','Select'],['L','Link'],['P','Patrol'],['T','Turn'],['X','Remove'],['W / F','Wall / floor'],['1 – 6','Open a tool group'],['Right-click','Menu for that tile'],['Ctrl+Z','Undo'],['Ctrl+Shift+Z or Ctrl+Y','Redo'],['Ctrl+S','Save'],['Esc','Close, or deselect']].map(([k,t])=>'<li><kbd>'+k+'</kbd>'+t+'</li>').join('')+'</ul>';}
   return '<div class="builder-dialog-wrap" data-close-dialog="1"><div class="builder-dialog" role="dialog" aria-modal="true" aria-label="'+escapeHtml(title)+'"><h3>'+escapeHtml(title)+'</h3>'+body+'<div class="builder-dialog-foot"><button class="escape-secondary" data-close-dialog="1">Done</button></div></div></div>';
 }
 // Right-click on the map: what can be done to what is under the pointer, and a few quick places.
@@ -372,14 +390,14 @@ function escapeBuilderContextHtml(){
 function renderEscapeBuilder(){
   escapeBuilderRemember();
   const m=escapeBuilderModel,B=EscapeBuilder,panel=document.getElementById('escape-builder'),w=m.map[0].length,problems=B.validate(m),linked=escapeBuilderLinked();
-  const mode=ESCAPE_BUILDER_MODES.find(x=>x[0]===escapeBuilderTool),toolTitle=mode?mode[4]:document.querySelector?.('[data-tool="'+escapeBuilderTool+'"]')?.title||'';
+  const side=escapeBuilderPick?'<aside class="builder-side-right">'+escapeBuilderInspector()+'</aside>':'';
   panel.innerHTML='<div class="builder-app">'+escapeBuilderMenuBar(problems)+(escapeBuilderMenu?.kind==='menu'?'<div class="builder-scrim" data-close-menu="1"></div>':'')+
-    '<div class="builder-body"><aside class="builder-side">'+escapeBuilderPalette()+'</aside>'+
-    '<main class="builder-canvas"><div id="builder-grid" class="builder-grid" style="grid-template-columns:repeat('+w+',1fr);--w:'+w+'">'+m.map.map((row,y)=>[...row].map((ch,x)=>escapeBuilderCell(x,y,ch,linked)).join('')).join('')+'</div></main>'+
-    '<aside class="builder-side builder-side-right">'+escapeBuilderInspector()+(escapeBuilderNote?'<p class="builder-note">'+escapeHtml(escapeBuilderNote)+'</p>':'')+
-    '<p class="builder-status'+(problems.length?' builder-bad':'')+'">'+(problems.length?'⚠ '+problems.map(escapeHtml).join(' '):'✓ Ready to play. Treasure in level: '+B.treasureTotal(m)+'.')+'</p>'+
-    (escapeBuilderWorkshop?'<p class="builder-hint">Workshop draft: saved only in this browser, never published. '+(EscapeEdits.active()?'Test drafts in game is on: reload after saving to play it from the map.':'Turn on “Test drafts in game” in the workshop to play it from the map.')+'</p>':'<p class="builder-hint">Right-click the map for quick actions. Ctrl+Z undoes.</p>')+
-    '</aside></div></div>'+escapeBuilderDialogHtml()+escapeBuilderContextHtml();
+    '<div class="builder-body'+(side?' builder-body-inspect':'')+'">'+escapeBuilderRail()+
+    '<main class="builder-canvas">'+escapeBuilderFlyoutHtml()+'<div id="builder-grid" class="builder-grid" style="grid-template-columns:repeat('+w+',1fr);--w:'+w+'">'+m.map.map((row,y)=>[...row].map((ch,x)=>escapeBuilderCell(x,y,ch,linked)).join('')).join('')+'</div>'+
+    (escapeBuilderNote?'<p class="builder-toast" role="status">'+escapeHtml(escapeBuilderNote)+'</p>':'')+
+    (escapeBuilderWorkshop?'<p class="builder-badge">Workshop draft · saved only in this browser</p>':'')+'</main>'+side+'</div></div>'+escapeBuilderDialogHtml()+escapeBuilderContextHtml();
+  // A message shows for a few seconds, then clears.
+  if(escapeBuilderNote&&typeof setTimeout==='function'){clearTimeout(escapeBuilderToastTimer);const note=escapeBuilderNote;escapeBuilderToastTimer=setTimeout(()=>{if(escapeBuilderNote===note){escapeBuilderNote='';document.querySelector?.('.builder-toast')?.remove();}},5000);}
   wireEscapeBuilder();
 }
 function escapeHtml(text){return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -457,13 +475,14 @@ function wireEscapeBuilder(){
   for(const b of document.querySelectorAll('[data-menu]'))b.onpointerenter=()=>{if(escapeBuilderMenu?.kind==='menu'&&escapeBuilderMenu.id!==b.dataset.menu){escapeBuilderMenu={kind:'menu',id:b.dataset.menu};rerender();}};
   for(const el of document.querySelectorAll('[data-close-menu]'))el.onpointerdown=e=>{e.preventDefault();escapeBuilderMenu=null;rerender();};
   for(const el of document.querySelectorAll('[data-close-dialog]'))el.onclick=e=>{if(e.target!==el)return;escapeBuilderDialog=null;rerender();};
-  for(const b of document.querySelectorAll('[data-tab]'))b.onclick=()=>{escapeBuilderTab=b.dataset.tab;rerender();};
+  for(const b of document.querySelectorAll('[data-tab]'))b.onclick=()=>{escapeBuilderFlyout=escapeBuilderFlyout===b.dataset.tab?null:b.dataset.tab;rerender();};
+  for(const el of document.querySelectorAll('[data-close-fly]'))el.onpointerdown=e=>{e.preventDefault();escapeBuilderFlyout=null;rerender();};
   on('builder-undo',act(()=>escapeBuilderStep(true)));on('builder-redo',act(()=>escapeBuilderStep(false)));on('builder-deselect',act(()=>{escapeBuilderPick=null;rerender();}));
   on('builder-details',()=>dialog('details'));on('builder-settings',()=>dialog('settings'));on('builder-keys',()=>dialog('keys'));on('builder-problems',()=>dialog('problems'));
   on('builder-quick',()=>dialog('quick'));on('builder-levels',()=>dialog('levels'));on('builder-share',()=>{dialog('share');const t=$('builder-text');if(t){t.select?.();try{navigator.clipboard?.writeText(t.value);}catch(_){}}});on('builder-import',()=>{dialog('import');$('builder-text')?.focus?.();});
   on('builder-import-go',()=>{const t=$('builder-text'),level=B.importText(t.value);if(!level){t.value='';t.placeholder='That text is not a Sally level. Paste the whole line that starts with SALLY';return;}escapeBuilderModel=level;escapeBuilderPick=null;escapeBuilderDialog=null;rerender();});
   for(const b of document.querySelectorAll('[data-ctx]'))b.onclick=()=>escapeBuilderContext(b.dataset.ctx);
-  for(const b of document.querySelectorAll('[data-tool]'))b.onclick=()=>{escapeBuilderTool=b.dataset.tool;escapeBuilderNote='';escapeBuilderAnchor=null;if(!['patrol','link','select','turn'].includes(escapeBuilderTool))escapeBuilderPick=null;rerender();};
+  for(const b of document.querySelectorAll('[data-tool]'))b.onclick=()=>{escapeBuilderTool=b.dataset.tool;escapeBuilderFlyout=null;escapeBuilderNote='';escapeBuilderAnchor=null;if(!['patrol','link','select','turn'].includes(escapeBuilderTool))escapeBuilderPick=null;rerender();};
   for(const b of document.querySelectorAll('[data-color]'))b.onclick=()=>{escapeBuilderColor=Number(b.dataset.color);if(!['door','bridge'].includes(escapeBuilderTool))escapeBuilderTool='door';rerender();};
   const p=escapeBuilderPick,insp=name=>document.querySelector('[data-insp="'+name+'"]');
   if(insp('clear-patrol'))insp('clear-patrol').onclick=()=>{B.clearPatrol(m,escapeBuilderGuardIndex(p.id));rerender();};
@@ -531,7 +550,7 @@ function escapeBuilderContext(action){
   else if(action==='patrol'){escapeBuilderPick=here;escapeBuilderTool='patrol';escapeBuilderNote='Click the tiles it should walk to, in order.';}
   else if(action==='link'){escapeBuilderPick=here;escapeBuilderTool='link';escapeBuilderNote='Now click the doors, bridges or enemies it should affect.';}
   else if(action==='remove'){if(B.removeAt(m,x,y)||B.removeExtraAt(m,x,y))escapeBuilderPick=null;}
-  else if(action==='pick'){escapeBuilderTool=m.map[y][x];escapeBuilderTab=EscapeBuilder.MARKS[escapeBuilderTool]?'places':'tiles';}
+  else if(action==='pick'){escapeBuilderTool=m.map[y][x];}
   else B.paint(m,x,y,{floor:'.',wall:'#',leaves:'L',sally:'@',key:'K',hatch:'X'}[action]);
   renderEscapeBuilder();
 }
@@ -542,11 +561,11 @@ if(typeof document!=='undefined'&&document.addEventListener)document.addEventLis
   if(mod&&k==='z'&&!typing){e.preventDefault();escapeBuilderStep(!e.shiftKey);return;}
   if(mod&&k==='y'&&!typing){e.preventDefault();escapeBuilderStep(false);return;}
   if(mod&&k==='s'){e.preventDefault();document.getElementById(escapeBuilderWorkshop?'workshop-save':'builder-save')?.click()||(escapeBuilderWorkshop?null:(EscapeBuilder.saveOne(ESCAPE_BUILDER_STORE,escapeBuilderModel),escapeBuilderNote='Saved in this browser ✓',renderEscapeBuilder()));return;}
-  if(k==='escape'){if(escapeBuilderMenu||escapeBuilderDialog){escapeBuilderMenu=null;escapeBuilderDialog=null;}else{escapeBuilderPick=null;escapeBuilderAnchor=null;}renderEscapeBuilder();return;}
+  if(k==='escape'){if(escapeBuilderMenu||escapeBuilderDialog||escapeBuilderFlyout){escapeBuilderMenu=null;escapeBuilderDialog=null;escapeBuilderFlyout=null;}else{escapeBuilderPick=null;escapeBuilderAnchor=null;}renderEscapeBuilder();return;}
   if(typing||mod||escapeBuilderDialog)return;
   const tools={v:'select',l:'link',p:'patrol',t:'turn',x:'remove',w:'#',f:'.'};
   if(tools[k]){escapeBuilderTool=tools[k];escapeBuilderAnchor=null;if(!['patrol','link','select','turn'].includes(escapeBuilderTool))escapeBuilderPick=null;renderEscapeBuilder();return;}
-  const tab=ESCAPE_BUILDER_TABS[Number(k)-1];if(tab){escapeBuilderTab=tab[0];renderEscapeBuilder();}
+  const tab=ESCAPE_BUILDER_TABS[Number(k)-1];if(tab){escapeBuilderFlyout=escapeBuilderFlyout===tab[0]?null:tab[0];renderEscapeBuilder();}
 });
 
 // The community shelf: every published level, open to every player. A signed-in admin can also
