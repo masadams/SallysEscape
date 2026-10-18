@@ -121,6 +121,12 @@
     tunnel:(v)=>{noise(v,{dur:.35,gain:.22,filter:'lowpass',freq:700,to:180,attack:.02});tone(v,{freq:140,to:70,dur:.3,type:'triangle',gain:.1});},
     // A sound bouncing round an echo hall.
     echo:(v)=>{for(let i=0;i<4;i++)noise(v,{dur:.06,delay:i*.14,gain:.12/(i+1),freq:1800-i*200,q:3});},
+    // Small lives: a bird bursting off a wall, a bird's song, a frog dropping into water, a watcher
+    // fungus pulling its eyes in.
+    wingbeat:(v)=>{for(let i=0;i<5;i++)noise(v,{dur:.05,delay:i*.055,gain:.14-i*.018,filter:'bandpass',freq:1100+i*60,q:1.2,attack:.006});},
+    tweet:(v)=>{for(const [f,d,u] of [[3200,0,4100],[3600,.11,4400],[3000,.24,3800]])tone(v,{freq:f,to:u,dur:.07,delay:d,type:'sine',gain:.07});},
+    plop:(v)=>{tone(v,{freq:520,to:180,dur:.12,type:'sine',gain:.12});noise(v,{dur:.18,delay:.03,gain:.08,freq:900,to:400,q:1});},
+    squish:(v)=>{noise(v,{dur:.14,gain:.06,filter:'lowpass',freq:600,to:250,q:3,attack:.02});tone(v,{freq:260,to:150,dur:.1,type:'sine',gain:.04});},
     // A crawl: the faintest brush of leaves.
     crawl:(v)=>{noise(v,{dur:.12,gain:.05,filter:'bandpass',freq:2400,to:1600,q:.8,attack:.03});}
   };
@@ -132,7 +138,7 @@
   // Each recipe is rendered once to a buffer offline and replayed from then on: one buffer
   // source instead of a fresh graph of oscillators, filters and LFOs per sound. Footsteps and
   // other noisy sounds keep three takes and a slight pitch drift so repeats never sound stamped.
-  const VARIED=new Set(['step','paddle','tail','rustle','skitter','scrape','splash','flutter','clash']);
+  const VARIED=new Set(['step','paddle','tail','rustle','skitter','scrape','splash','flutter','clash','wingbeat','tweet','plop']);
   const cache=new Map(),rendering=new Set(),lastPlayed=new Map(),active=[];
   const MAX_VOICES=14,REPEAT_GAP=.045;
   const keyFor=(name,o)=>name+(o.sprint?':s':'')+(o.alt?':a':'')+(o.surface&&o.surface!=='floor'?':'+o.surface:'');
