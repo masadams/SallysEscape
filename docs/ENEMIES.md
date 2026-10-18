@@ -24,6 +24,20 @@ a tap goes about 2.6 tiles, a full 0.75 s hold about 6. While held, the arrows o
 to twice, losing a quarter of their reach each time, and fly over gaps and water.
 
 - A **pebble** clacks where it hits a wall, so a hunter hears it there first, then where it lands.
+- A pebble that **hits a creature** on the way (a snake, beetle, toad, spider, fox, chameleon,
+  gecko, millipede or cricket) bonks it: it drops there, the creature sees stars for about a second,
+  then goes to look where the pebble came from. It makes no lure.
+- A pebble that **lands in water** splashes and sinks; hunters come to the bank it crossed, and an
+  eel lurking within a couple of tiles lunges at the ripples.
+- **The ground** decides how far a landing carries: gravel clatters (about 12 tiles), plain floor
+  about 9, tide flats 6, leaves and mud muffle it (5), moss swallows it (2.5).
+
+## The tongue
+**R** (Y on a controller) reaches 3 tiles straight ahead past gaps, never through walls or gates. It
+grabs the key, treasure, pink regrowth bugs and glow bugs, and reaches for an angler's lure (a trap).
+It also **eats insects** (a cricket chirps no more; a moth's light goes out) and **flicks gate
+switches and levers** from where Sally stands. With nothing in reach it still flicks out and back
+(a thwip) and costs no grab.
 - A **glow mushroom** lights the ground 2.5 tiles round where it lands for about 12 s, even round
   a corner from Sally. Standing in its light lights Sally up too: leaves stop hiding her.
 - Fogged mazes from escape 20 on carry one; the darkest and biggest carry two.
