@@ -49,9 +49,10 @@ slider), A presses and B goes back. Options → Frame rate shows frames a second
 Options → Test sound plays two beeps to check where sound is lost on a device. The tool buttons show pad labels once a pad is used, and
 big moments rumble where the pad supports it.
 
-**Little Explorers.** Ten gentle levels for young players (about 5 and up), from the title screen and
+**Little Explorers.** Twenty gentle levels for young players (about 5 and up), from the title screen and
 outside the campaign. Each teaches one thing (walking, keys, leaves, crouching, a button, a pebble,
-running, a maze, swimming, then all of it). They can't be lost: a catch is an "Oops!" that hops Sally back
+running, a maze, swimming; then digging in, the tongue, a Sally-only crack, bounce caps, spore puffs,
+camouflage, seeds, cracked walls, tunnels, and a grand tour of them all). They can't be lost: a catch is an "Oops!" that hops Sally back
 to the last checkpoint flag, the creatures are slow and simple, and glowing dots lead to the key and the
 door. Every level finished earns a sticker (each player's own). Levels are in `public/escape-kids.js`.
 

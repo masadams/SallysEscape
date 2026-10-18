@@ -9,7 +9,7 @@ function openLittleExplorers(focusId){
   const panel=escapeBuilderShow();gameState='kids';
   const done=escapeKidsDone(),levels=escapeKidsLevels(),next=levels.find(l=>!done.includes(l.id)),t=escapeText;
   panel.innerHTML='<div class="kids-picker"><div class="builder-head"><button id="kids-back" class="escape-secondary">← Main menu</button></div>'
-    +'<h2 class="kids-title">Little Explorers</h2><p class="kids-sub">Help Sally on ten little adventures. Every one you finish gives you a sticker!</p>'
+    +'<h2 class="kids-title">Little Explorers</h2><p class="kids-sub">Help Sally on '+levels.length+' little adventures. Every one you finish gives you a sticker!</p>'
     +'<ol class="kids-stones">'+levels.map((l,i)=>{const got=done.includes(l.id);
       return '<li><button class="kids-stone'+(got?' kids-done':'')+(l===next?' kids-next':'')+'" data-id="'+t(l.id)+'" aria-label="'+(i+1)+'. '+t(l.name)+(got?', finished':'')+'">'
         +'<span class="kids-num">'+(i+1)+'</span><span class="kids-sticker" aria-hidden="true">'+(got?t(l.sticker||'⭐'):'?')+'</span><span class="kids-name">'+t(l.name)+'</span></button></li>';}).join('')+'</ol>'
