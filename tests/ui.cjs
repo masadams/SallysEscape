@@ -124,3 +124,16 @@ test('hard mode hides the drawn hints, and a hard-mode win earns its mark',()=>{
   assert.match(h.el('escape-result-medals').textContent,/Hard mode/);assert.equal(h.run('escapeProgress.isHard("quiet-vault")'),true);
   h.run('escapeHardMode=false;startEscape({levelId:"quiet-vault",skipIntro:true});');assert.equal(h.run('escapeAidsHidden()'),false,'hints come back with hard mode off');
 });
+test('a controller moves Sally, sprints, charges and aims a pebble, labels the tools, and pauses',()=>{
+  const h=harness(),pad={index:0,connected:true,mapping:'standard',axes:[0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};h.c.navigator.getGamepads=()=>[pad];h.c.drawingContext.setLineDash=()=>{};
+  h.run('escapeProgress.unlocked=()=>true;startEscape({levelId:"fern-cloister",skipIntro:true});');
+  const frames=n=>{for(let i=0;i<n;i++){h.tick(60);h.run('draw()');}};frames(2);
+  pad.axes[1]=.1;frames(2);assert.equal(h.run('escapePad.y'),0,'a resting stick inside the dead zone does not drift');
+  const x0=h.run('escapeGame.player.x');pad.axes[0]=1;pad.axes[1]=0;frames(30);const walked=h.run('escapeGame.player.x')-x0;assert.ok(walked>.5,'the stick walks Sally');
+  assert.equal(h.run('escapePad.active'),true);assert.match(h.el('escape-decoy-action').innerHTML,/<kbd>X<\/kbd>/,'tool buttons show pad labels');
+  const x1=h.run('escapeGame.player.x');pad.buttons[7].pressed=true;frames(30);pad.buttons[7].pressed=false;assert.ok(h.run('escapeGame.player.x')-x1>walked*1.2,'RT sprints');
+  pad.axes[0]=0;const pebbles=h.run('escapeGame.decoys');h.setTime(h.run('escapeGame.decoyReadyAt')*1000+99999);h.run('escapeGame.elapsed=escapeGame.decoyReadyAt+1');
+  pad.buttons[2].pressed=true;pad.axes[0]=1;frames(10);assert.equal(h.run('escapeCharge?.source'),'pad','holding X charges a throw');
+  pad.buttons[2].pressed=false;frames(2);assert.equal(h.run('escapeCharge'),null);assert.equal(h.run('escapeGame.decoys'),pebbles-1,'releasing X throws');
+  pad.axes[0]=0;pad.buttons[9].pressed=true;frames(1);pad.buttons[9].pressed=false;frames(1);assert.equal(h.run('paused'),true,'Start pauses');
+});

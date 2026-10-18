@@ -4,12 +4,16 @@
 // player. Summaries wait in this browser and go to the server a few at a time (/api/playdata); the
 // admin area shows a table of them and exports them all.
 (function(root){
-  const KEY='sally-escape-playdata-v1',MAX=200,BATCH=40,SEND_AT=5;
+  const KEY='sally-escape-playdata-v1',OFF='sally-escape-playdata-off',MAX=200,BATCH=40,SEND_AT=5;
   const store=(()=>{try{return typeof localStorage==='undefined'?null:localStorage;}catch(_){return null;}})();
   const read=()=>{try{const q=JSON.parse(store?.getItem(KEY)||'[]');return Array.isArray(q)?q:[];}catch(_){return [];}};
   const write=q=>{try{store?.setItem(KEY,JSON.stringify(q.slice(-MAX)));}catch(_){}};
   const round=n=>Math.round((Number(n)||0)*10)/10;
   let sending=false;
+  // Sharing can be turned off in Options. It is one switch for the whole device, since the waiting
+  // summaries are kept for the device too; turning it off also throws away anything not yet sent.
+  const enabled=()=>{try{return store?.getItem(OFF)!=='1';}catch(_){return true;}};
+  function setEnabled(on){try{if(on)store?.removeItem(OFF);else{store?.setItem(OFF,'1');store?.removeItem(KEY);}}catch(_){}}
 
   // The summary of a run. outcome is the engine's status, or 'quit' when the player left mid-run.
   function summary(game,outcome,device){
@@ -25,19 +29,19 @@
   // Only the game's own escapes count: builder playtests, community levels and workshop drafts do not.
   const counts=game=>Boolean(game?.level&&!game.level.custom&&!game.level.draft&&game.level.id);
   function record(game,outcome,device){
-    if(!counts(game)||game.playDataSent)return false;game.playDataSent=true;
+    if(!enabled()||!counts(game)||game.playDataSent)return false;game.playDataSent=true;
     const q=read();q.push(summary(game,outcome,device));write(q);
     if(q.length>=SEND_AT)flush();return true;
   }
   // Send what is waiting. On the way out of the page a beacon carries it, since a request may not finish.
   function flush(leaving){
-    const q=read();if(!q.length||sending)return false;const batch=q.slice(0,BATCH),body=JSON.stringify({v:1,runs:batch});
+    if(!enabled())return false;const q=read();if(!q.length||sending)return false;const batch=q.slice(0,BATCH),body=JSON.stringify({v:1,runs:batch});
     if(leaving&&typeof navigator!=='undefined'&&navigator.sendBeacon){if(navigator.sendBeacon('/api/playdata',new Blob([body],{type:'application/json'})))write(read().slice(batch.length));return true;}
     if(typeof fetch!=='function')return false;sending=true;
     fetch('/api/playdata',{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:true}).then(r=>{if(r.ok||r.status===400)write(read().slice(batch.length));}).catch(()=>{}).finally(()=>{sending=false;});
     return true;
   }
-  const api={KEY,summary,record,flush,pending:()=>read().length};
+  const api={KEY,summary,record,flush,enabled,setEnabled,pending:()=>read().length};
   root.EscapePlayData=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

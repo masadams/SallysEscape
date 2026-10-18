@@ -19,4 +19,4 @@ caught, quit, failed, what catches Sally most and the tiles where it happens mos
 downloads everything as one `.ndjson` file; `node scripts/playdata-report.cjs export.ndjson --maps`
 prints the same per escape with catch heatmaps drawn on each map.
 
-Sharing is on for every player for now; an off switch in settings can come later.
+Sharing is on by default. **Options → Share play data** turns it off for everyone on that device, and throws away any summaries not yet sent.

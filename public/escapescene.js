@@ -241,13 +241,12 @@ function drawEscapeHawk(k,cell,clock){
 }
 function useEscapeLook(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.lookBack();renderEscapeHUD(true);}}
 function useEscapeSeed(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.plantSeed();renderEscapeHUD(true);}}
-function escapeKeyPressed(){
-  const k=String(key).toLowerCase();
+function escapeKeyPressed(k=String(key).toLowerCase(),code=keyCode){
   if(gameState==='escape'&&escapeMoment&&!escapeResultShown){skipEscapeMoment(k);return;}
   // A quick restart from the pause menu: R starts the escape again at once.
   if(gameState==='escape'&&paused&&k==='r'){escapeRestart();return;}
   if(gameState==='escapeSelect'&&!escapeLibraryOpen&&(k==='r'||k==='t')){if(escapeWorld?.tongue())escapeSound('tongue');return;}
-  if(gameState==='escapeSelect'){if(!escapeLibraryOpen&&(keyCode===13||k==='enter')&&document.activeElement?.tagName!=='BUTTON')enterEscapeWorld();return;}
+  if(gameState==='escapeSelect'){if(!escapeLibraryOpen&&(code===13||k==='enter')&&document.activeElement?.tagName!=='BUTTON')enterEscapeWorld();return;}
   if(gameState==='escapeResult'&&k==='r'){startEscape({...escapeOptions,skipIntro:true,quick:true});return;}
   if(gameState==='escape'&&k==='g'){toggleEscapeMap();return;}
   if(gameState!=='escape'||paused)return;
@@ -303,6 +302,7 @@ function playEscape(){
   if(!open)escapeHatchCued=false;
   if(gameState==='escape'&&!paused){if(escapeGame.status==='playing')escapeFootsteps(escapeGame.player);tickEscapeFx(escapeGame);escapeShakeFor(events);}
   if(mobile&&typeof EscapeFeel!=='undefined'&&events.length)EscapeFeel.buzz(events);
+  if(events.length&&typeof escapePadRumble==='function')escapePadRumble(events);
   drawEscapeVault();drawEscapeMoment();drawEscapeCurtain();renderEscapeHUD();
   // A creature met for the first time joins the bestiary, with a short note at the top.
   if(escapeGame.met&&escapeGame.met.size!==escapeMetCount&&!escapeGame.level.custom){escapeMetCount=escapeGame.met.size;const fresh=escapeProgress.meet([...escapeGame.met]);const first=fresh.map(k=>EscapeBestiary.byKind(k)).find(Boolean);if(first)escapeBestiaryNote={text:'📖 New in the bestiary: '+first.name,until:millis()+3500};}
@@ -342,7 +342,7 @@ function renderEscapeHUD(force=false){
   ];
   for(const [button,kind,label,key,left,total,ready,active]of abilities){
     button.style.display=total===null||total>0?'':'none';button.disabled=locked||!left||!ready;
-    renderEscapeAbility(button,kind,label,key,left,total,ready,active);
+    renderEscapeAbility(button,kind,label,typeof escapePadLabel==='function'?escapePadLabel(key):key,left,total,ready,active);
   }
   const nextGate=g.gates.find(gate=>!gate.open&&!gate.sealed&&gate.switch),mazeGoal=g.mazeObjectiveText();
   document.getElementById('escape-objective').textContent=mazeGoal|| (nextGate?(g.hasKey?'Key found. ':'Find the key. ')+nextGate.name+' switch opens the next room.':g.exitUnlocked()?'Hatch open. Head for the green hatch—or risk more treasure.':g.requiredTreasure?g.hasKey?'Bring '+(g.requiredTreasure-g.treasure)+' more treasure to the hatch.':'Find the key and '+(g.requiredTreasure===g.totalTreasure?'all ':'')+g.requiredTreasure+' treasure.':g.challenge?.keyByTongue?'Use a tongue grab for the key. Save one for it.':g.challenge?.steamTraps?'Daze '+Math.max(0,g.challenge.steamTraps-g.steamed)+' more hunters with steam, then escape.':g.challenge?.noChill?'Find the key. Never let Sally get chilled.':g.challenge?.noTheft?'Find the key. Do not let a gecko keep any treasure.':g.challenge?.noChase?'Find the key. Escape without a chase.':'Find the golden key. Treasure is optional.');

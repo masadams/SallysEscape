@@ -38,6 +38,13 @@ Z spore pouch, E burrow, R tongue, F seed, X camouflage, Space look back, G map,
 pause. On the world map R grabs golden flies and Enter enters an escape. Phones use landscape, a left
 thumbstick and right action buttons; rotating to portrait pauses a run.
 
+**Controllers.** Any standard pad (Xbox, PlayStation, Switch Pro, Steam Deck): left stick or d-pad
+moves, RT sprints, LT crawls, A looks back, B burrows, X pebble, Y tongue, LB glow mushroom, RB spore
+pouch, L3 camouflage, R3 seed; held throws aim with the stick. Start pauses, View/Select opens the map.
+On the world map A enters an escape and Y grabs golden flies. In menus the stick or d-pad moves
+between buttons, A presses and B goes back. The tool buttons show pad labels once a pad is used, and
+big moments rumble where the pad supports it.
+
 **Hard mode.** An option that hides every drawn hint (gaze cones, ? and ! marks, aim lines, rings and
 warnings), so only the creatures themselves give their plans away. Escapes won in hard mode earn a ◆ mark.
 The Blind Grove, a secret spot that opens once the first four areas are cleared, is always played this way.
