@@ -515,7 +515,7 @@ function escapeShakeFor(events){if(events.includes('thunder'))escapeShake(5,450)
 function escapeCameraMotion(view,g,w,h){
   const dt=Math.min(.05,(deltaTime||16)/1000),k=1-Math.exp(-dt*3),glide=1-Math.exp(-dt*9);if(escapeCam.g!==g){escapeCam.g=g;escapeCam.lx=escapeCam.ly=0;escapeCam.zoom=1;escapeCam.cx=null;}
   const p=g.player,chasing=g.status==='playing'&&g.hunters.some(q=>q.state==='chase'&&Math.hypot(q.x-p.x,q.y-p.y)<10);
-  if(!view.follow){escapeCam.cx=null;}else{
+  if(!view.follow){escapeCam.cx=null;escapeCam.applied=1;}else{
     const still=escapeReducedMotion(),lead=!still&&p.moving&&g.status==='playing'?(p.sprinting?1.6:.9):0;escapeCam.lx+=((p.facing?.x||0)*lead-escapeCam.lx)*k;escapeCam.ly+=((p.facing?.y||0)*lead-escapeCam.ly)*k;
     if(!still)escapeCam.zoom+=((escapeMoment&&escapeMoment.kind!=='won'?1.1:chasing?.86:1)-escapeCam.zoom)*k;else escapeCam.zoom=1;
     const clamp=(n,a,b)=>b<a?(a+b)/2:Math.max(a,Math.min(b,n)),cell=view.cell*escapeCam.zoom;
@@ -524,7 +524,7 @@ function escapeCameraMotion(view,g,w,h){
     const tx=(w/2-view.ox)/view.cell+escapeCam.lx+escapeCam.px,ty=(h/2-view.oy)/view.cell+escapeCam.ly+escapeCam.py;
     if(escapeCam.cx===null||Math.hypot(tx-escapeCam.cx,ty-escapeCam.cy)>8){escapeCam.cx=tx;escapeCam.cy=ty;}else{escapeCam.cx+=(tx-escapeCam.cx)*glide;escapeCam.cy+=(ty-escapeCam.cy)*glide;}
     const cx=clamp(escapeCam.cx,w/(2*cell),g.width-w/(2*cell)),cy=clamp(escapeCam.cy,h/(2*cell),g.height-h/(2*cell));
-    view.cell=cell;view.ox=w/2-cx*cell;view.oy=h/2-cy*cell;
+    view.cell=cell;view.ox=w/2-cx*cell;view.oy=h/2-cy*cell;escapeCam.applied=escapeCam.zoom;
   }
   if(millis()<escapeCam.shakeUntil){const a=escapeCam.shakeAmp*(escapeCam.shakeUntil-millis())/escapeCam.shakeFor;view.ox+=(Math.random()-.5)*2*a;view.oy+=(Math.random()-.5)*2*a;}
 }
@@ -620,10 +620,13 @@ function drawEscapeStillTiles(g,cell,palette,index){
     if(!g.floor(x,y-1))for(let i=0;i<3;i++){fill(0,0,0,[58,32,14][i]);rect(x*cell,y*cell+i*cell*.07,cell,cell*.07);}
     if(!g.floor(x-1,y))for(let i=0;i<3;i++){fill(0,0,0,[40,22,10][i]);rect(x*cell+i*cell*.06,y*cell,cell*.06,cell);}}
 }
-function drawEscapeTiles(g,cell,palette,index){
+function drawEscapeTiles(g,screenCell,palette,index){
+  // The cached layers are drawn at the camera's size before its chase pull-back or moment lean-in, and
+  // scaled to the screen: those zooms ease every frame and must not force the layers to be redrawn.
+  const cell=+(screenCell/(escapeCam.applied||1)).toFixed(3);
   const key=g.level.id+'|'+cell+'|'+index+'|'+escapeLightingFull()+'|'+g.grid.map(r=>r.join('')).join('/'),w=g.width*cell,h=g.height*cell;
   // Without a real p5 sketch (the test harness) the tiles are simply drawn every frame.
-  if(!p5.instance?._renderer||!drawingContext.drawImage)drawEscapeStillTiles(g,cell,palette,index);
+  if(!p5.instance?._renderer||!drawingContext.drawImage)drawEscapeStillTiles(g,screenCell,palette,index);
   else{
     // The terrain has a layer of its own that only changes when walls or water do, so a gate
     // opening redraws the light tile layer without redrawing the ground beneath it.
@@ -639,10 +642,10 @@ function drawEscapeTiles(g,cell,palette,index){
     host._renderer=layer._renderer;try{push();drawEscapeStillTiles(g,cell,palette,index);pop();}finally{host._renderer=renderer;}
     escapeTileCache.key=key;
   }
-  drawingContext.drawImage(escapeTileCache.layer.elt,0,0,w,h);}
-  if(!escapeLightingFull())for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.grid[y][x]==='U'){
+  drawingContext.drawImage(escapeTileCache.layer.elt,0,0,g.width*screenCell,g.height*screenCell);}
+  {const cell=screenCell;if(!escapeLightingFull())for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.grid[y][x]==='U'){
       noStroke();fill(22,99,121);rect(x*cell,y*cell,cell,cell);stroke(112,213,211,100);strokeWeight(cell*.035);const tide=Math.sin(g.elapsed*1.4+x*.5+y)*.05;for(const dy of [.3,.7])line((x+.15)*cell,(y+dy+tide)*cell,(x+.85)*cell,(y+dy-tide)*cell);
-    }
+    }}
 }
 // Lighting: Full (soft darkness, glowing light sources, each area's mood) or Simple (the plain,
 // flat look). Full drops to Simple by itself if the frame rate sags, until the player picks again.

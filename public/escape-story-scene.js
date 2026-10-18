@@ -30,21 +30,57 @@ function escapeStoryPage(){
   if(!page){page=document.createElement('div');page.id='story-card';page.className='story-overlay';page.setAttribute('role','dialog');page.setAttribute('aria-modal','true');document.getElementById('game-area')?.appendChild(page);}
   return page;
 }
+// A small living scene at the top of a card, from its area: a sky and a few things that drift or
+// bob there (CSS only, so it costs nothing to draw). Map pages get a trail drawing itself; a note
+// left behind gets a lantern's glow; the opening is the storm.
+const ESCAPE_STORY_SCENES={meadow:['#bfe3a0','#e9f6c9','🌼 🐍 🌾 🦋'],garden:['#c9d9b0','#eef0d6','🧱 🪲 🌿 🐌'],river:['#9fd3d6','#dff2e6','🐸 🌊 🪷 🐟'],ruins:['#c4c8b0','#ecead8','🏛️ 🕷️ 🍂 🦗'],quarry:['#d9c7a3','#f1e6cf','🪨 🦂 🌵 🪨'],desert:['#f0cf8f','#fbefcf','🌵 🦂 ☀️ 🐍'],marsh:['#a9c8a3','#e3eedb','🐸 🪷 🦟 🌾'],jungle:['#8fc48d','#d8efcf','🌴 🦎 🦜 🍃'],glow:['#1d2d44','#3c5878','✨ 🍄 🦋 ✨'],orchard:['#cfe2a6','#f4f2d2','🍎 🌳 🐝 🍐'],coast:['#a8d8ea','#f6ecd0','🦀 🐚 🌊 ☀️'],hollow:['#c9b3a0','#efe2d4','🦎 🪶 🍂 🕯️'],lantern:['#2b3a4a','#56708a','🏮 🦉 🌙 ✨'],rooftops:['#f0b98a','#fbe3c8','🏠 🦅 ☀️ 🪟'],ants:['#b98c62','#e9d3b8','🐜 🐜 🍯 🐜'],frost:['#cfe6f5','#f4fbff','❄️ 🦊 ❄️ 🧊'],vents:['#c9a58e','#efe0d4','♨️ 🪲 ⚙️ ♨️'],grotto:['#3b2f55','#6b5a8e','🍄 ✨ 🦇 🍄'],storm:['#55657a','#9fb0c4','⛈️ 🌧️ ⚡ 🍃'],tide:['#9fd0d8','#e9f3ec','🌊 🐙 🐚 🦀'],home:['#f3d9a0','#fff4dc','🏡 🌅 🦎 🌼']};
+function escapeStoryScene(c){
+  const reduced=Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
+  const theme=c.id==='opening'?'storm':c.id==='finale'||c.id==='after'?'home':c.kind==='note'?'lantern':EscapeWorld.chapters[c.area]?.theme||'meadow';
+  const [a,b,items]=ESCAPE_STORY_SCENES[theme]||ESCAPE_STORY_SCENES.meadow,glyphs=items.split(' ');
+  const things=glyphs.map((g,i)=>'<span class="story-thing" style="left:'+(10+i*24)+'%;animation-delay:'+(-i*1.3)+'s;font-size:'+(1.5+((i*7)%3)*.35)+'rem">'+g+'</span>').join('');
+  const trail=c.kind==='map'?'<svg class="story-trail" viewBox="0 0 200 60" aria-hidden="true"><path d="M8 48 C40 10, 70 56, 100 28 S160 8, 192 22"/></svg>':'';
+  return '<div class="story-scene'+(reduced?' story-still':'')+'" style="--sky1:'+a+';--sky2:'+b+'" aria-hidden="true">'+trail+things+'</div>';
+}
+// A page of a card, as markup: spoken lines in "quotes" stand out, a margin note or a jotted
+// "Note:" is a folded scrap to open, and a map page's label is set apart.
+function escapeStoryPageHtml(text){
+  const t=escapeText(text);
+  if(/^(In the margin|Note:)/.test(text))return '<button type="button" class="story-fold" aria-expanded="false"><span class="story-fold-label">✎ Something is scribbled here. Open it</span><span class="story-fold-text">'+t+'</span></button>';
+  return '<p class="story-line">'+t.replace(/^Map page:/,'<span class="story-tag">Map page</span>').replace(/(“[^”]+”|&quot;[^&]+?&quot;|"[^"]+")/g,'<q class="story-say">$1</q>')+'</p>';
+}
 // Show a part title or a card. fresh: it is being found now, so it is saved and the next queued one follows.
+// A card turns one page at a time: the words write themselves in (a press finishes them), the next
+// press turns the page, and dots show how far through it is.
 function showEscapeStory(entry,fresh){
   const page=escapeStoryPage();if(!page)return;const kindLabel={journal:'From Old Moss’s journal',map:'The Great Map',note:'A note, left behind'};
   escapeStoryOpen=entry;
-  if(entry.part){const p=entry.part;page.className='story-overlay story-part';
-    page.innerHTML='<div class="story-part-inner"><span class="story-eyebrow">'+escapeText(p.title)+'</span><h2>'+escapeText(p.name)+'</h2><p>'+escapeText(p.line)+'</p><button type="button" class="escape-primary" id="story-next">Begin</button></div>';}
-  else{const c=entry.card;page.className='story-overlay story-'+c.kind;
-    page.innerHTML='<article class="story-card"><span class="story-eyebrow">'+escapeText(kindLabel[c.kind]||'')+(c.area!==undefined?' · '+escapeText(EscapeWorld.chapters[c.area]?.name||''):'')+'</span><h2>'+escapeText(c.title)+'</h2>'+
-      c.body.map(t=>'<p>'+escapeText(t)+'</p>').join('')+'<button type="button" class="escape-primary" id="story-next">'+(fresh&&escapeStoryQueue.length?'Next':fresh?'Continue':'Close')+'</button></article>';}
-  page.style.display='flex';escapeSound(entry.part?'glimmer':'chest');
-  const next=document.getElementById('story-next');next.focus?.();
-  next.onclick=()=>{if(fresh)escapeProgress.markStory(entry.id);page.style.display='none';escapeStoryOpen=null;
+  const finish=()=>{if(fresh)escapeProgress.markStory(entry.id);page.style.display='none';escapeStoryOpen=null;
     if(fresh&&escapeStoryQueue.length)showEscapeStory(escapeStoryQueue.shift(),true);else if(!fresh)openEscapeStoryBook();else renderEscapeWorldTotals?.();};
+  if(entry.part){const p=entry.part;page.className='story-overlay story-part';
+    page.innerHTML='<div class="story-part-inner"><span class="story-eyebrow">'+escapeText(p.title)+'</span><h2>'+[...p.name].map((ch,i)=>'<span class="story-letter" style="animation-delay:'+(.3+i*.06)+'s">'+(ch===' '?'&nbsp;':escapeText(ch))+'</span>').join('')+'</h2><p>'+escapeText(p.line)+'</p><button type="button" class="escape-primary" id="story-next">Begin</button></div>';
+    page.style.display='flex';escapeSound('glimmer');const next=document.getElementById('story-next');next.focus?.();next.onclick=finish;return;}
+  const c=entry.card,last=c.body.length-1,doneLabel=fresh&&escapeStoryQueue.length?'Next':fresh?'Continue':'Close';
+  page.className='story-overlay story-'+c.kind;
+  page.innerHTML='<article class="story-card">'+escapeStoryScene(c)+'<span class="story-eyebrow">'+escapeText(kindLabel[c.kind]||'')+(c.area!==undefined?' · '+escapeText(EscapeWorld.chapters[c.area]?.name||''):'')+'</span><h2>'+escapeText(c.title)+'</h2>'
+    +'<div class="story-pages" aria-live="polite"></div><div class="story-foot"><span class="story-dots">'+c.body.map((_,i)=>'<i data-i="'+i+'"></i>').join('')+'</span><button type="button" class="escape-primary" id="story-next"></button></div></article>';
+  page.style.display='flex';escapeSound('chest');
+  const pages=page.querySelector('.story-pages'),next=document.getElementById('story-next'),reduced=Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
+  let at=-1,typing=null;
+  const stopTyping=()=>{if(typing){clearInterval(typing.timer);typing.el.textContent=typing.full;typing.el.closest('p')?.classList.remove('story-typing');const html=escapeStoryPageHtml(c.body[at]);typing.el.closest('p').outerHTML=html;typing=null;}};
+  const show=i=>{at=i;const html=escapeStoryPageHtml(c.body[i]);pages.insertAdjacentHTML('beforeend',html);const added=pages.lastElementChild;added.classList.add('story-arrive');
+    page.querySelectorAll('.story-dots i').forEach((d,k)=>d.classList.toggle('on',k<=i));
+    next.textContent=i<last?'Next ▸':doneLabel;
+    if(added.classList.contains('story-fold')){added.onclick=()=>{added.setAttribute('aria-expanded','true');added.classList.add('story-open');escapeSound('flutter');};}
+    else if(!reduced){const full=added.textContent;added.classList.add('story-typing');added.textContent='';const span=document.createElement('span');added.appendChild(span);let n=0;typing={el:span,full,timer:setInterval(()=>{n+=2;span.textContent=full.slice(0,n);if(n>=full.length)stopTyping();},16)};}
+    added.scrollIntoView?.({block:'nearest',behavior:'smooth'});};
+  next.onclick=()=>{if(typing){stopTyping();return;}if(at<last){show(at+1);escapeSound('ping');return;}finish();};
+  show(0);next.focus?.();
 }
-if(typeof document!=='undefined')document.addEventListener('keydown',e=>{if(!escapeStoryOpen||!['Enter',' ','Escape'].includes(e.key))return;e.preventDefault();e.stopPropagation();document.getElementById('story-next')?.click();},true);
+// Enter or Space turn the page (as A does); Escape (or B) skips to the end of the card and closes it.
+if(typeof document!=='undefined')document.addEventListener('keydown',e=>{if(!escapeStoryOpen||!['Enter',' ','Escape'].includes(e.key))return;e.preventDefault();e.stopPropagation();const next=document.getElementById('story-next');if(!next)return;
+  if(e.key==='Escape'){for(let i=0;i<40&&escapeStoryOpen&&document.getElementById('story-next')===next;i++)next.click();return;}
+  if(document.activeElement?.classList?.contains('story-fold')&&!document.activeElement.classList.contains('story-open')){document.activeElement.click();return;}next.click();},true);
 // The Journal's Story page: each part's cards (found ones can be read again), the lost Wayfinder's
 // notes, and the Great Map, an area lit for every map page found.
 function openEscapeStoryBook(){
