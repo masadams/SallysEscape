@@ -269,6 +269,17 @@ test('a chasing snake reads Sally: running rings round a pillar gets her caught,
   const c=new EscapeAdventure({level:escapeBuildCustom(B.toRoute(B.blank(24,16)))});c.sallyTrack={vx:0,vy:2.4,curve:0,loop:0};Object.assign(c.player,{x:12.5,y:5.5});
   const s={kind:'snake',state:'chase',x:12.5,y:10.5};c.hunterDt=1/120;const aim=c.chaseAim(copyOf(c.player),s,{lead:.85});assert.ok(aim.y>c.player.y+.8,'it leads her');
 });
+test('cunning scales the snake: simple early on, wise late; levels and the builder can set it',()=>{
+  const {EscapeCatalog:c,escapeBuildCustom}=require('../public/escape-levels.js'),B=require('../public/escape-builder.js');
+  assert.equal(c.levels[0].cunning,0,'the first area is simple');assert.equal(c.levels[c.levels.length-1].cunning,3,'the last stretch is wise');
+  assert.ok(c.levels.every((l,i)=>i===0||l.cunning>=c.levels[i-1].cunning),'it never drops along the trail');
+  const m=B.blank(24,16);B.paint(m,4,4,'@');const aimAt=cunning=>{const g=new EscapeAdventure({level:escapeBuildCustom({...B.toRoute(m),cunning})});
+    g.sallyTrack={vx:0,vy:2.4,curve:0,loop:0};Object.assign(g.player,{x:12.5,y:5.5});g.hunterDt=1/120;return g.chaseAim({x:12.5,y:5.5},{kind:'snake',state:'chase',x:12.5,y:10.5},{lead:.85}).y;};
+  assert.equal(aimAt(0),5.5,'a simple snake goes for where she is');assert.ok(aimAt(1)<aimAt(2)&&aimAt(2)<aimAt(3),'sharper snakes read further ahead');
+  B.setSettings(m,{cunning:3});assert.equal(B.toRoute(m).cunning,3);assert.equal(B.fromRoute(B.toRoute(m)).cunning,3);
+  B.setSettings(m,{cunning:9});assert.equal(m.cunning,3,'clamped');B.setSettings(m,{cunning:2});assert.equal(B.toRoute(m).cunning,undefined,'the default is left out');
+  assert.equal(B.fromRoute(c.levels[0]).cunning,0,'editing a game escape keeps its cunning');
+});
 test('a chasing snake cannot turn on a dime: doubled back on, it carries on and swings wide before it turns',()=>{
   const {escapeBuildCustom}=require('../public/escape-levels.js'),B=require('../public/escape-builder.js');
   const m=B.blank(30,12);B.paint(m,2,2,'@');B.addEnemy(m,'snake',5,6);const g=new EscapeAdventure({level:escapeBuildCustom(B.toRoute(m))});

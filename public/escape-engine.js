@@ -6,6 +6,10 @@
   const copy=p=>({x:p.x,y:p.y});
   // How heavy hunters handle in a chase (see glideHunter): turning speed in radians a second, the share of
   // speed kept through a sharp turn, how quickly they get back up to full speed, and lunges a second.
+  // How sharp hunters are, by the level's cunning (0 to 3; early areas 0, the last stretch 3): how far
+  // ahead a snake reads Sally, how much looping it takes before it reads the loop, how close it feels
+  // her when facing away, how quickly it turns and recovers from a skid, and its pace.
+  const CUNNING=[{lead:0,loop:Infinity,feel:0,turn:.85,snap:.35,pace:.92},{lead:.55,loop:8,feel:1.8,turn:.93,snap:.7,pace:.96},{lead:1,loop:5.5,feel:3,turn:1,snap:1,pace:1},{lead:1.2,loop:4.2,feel:3.6,turn:1.1,snap:1,pace:1.03}];
   // lead is how far ahead it reads Sally: 1 aims where she will be by the time it gets there, 0 where she is.
   const MOMENTUM={snake:{turn:2.4,grip:.55,accel:1.6,pulse:1.5,lead:.85},cobra:{turn:2,grip:.5,accel:1.3,pulse:1.1,lead:1},'sea-snake':{turn:2.4,grip:.55,accel:1.6,pulse:1.4,lead:.85},fish:{turn:4.5,grip:.6,accel:2.5,pulse:2.2,lead:.5},chameleon:{turn:3.5,grip:.55,accel:2,pulse:1,lead:.4}};
   // Hunters heavy enough to press a heavy plate.
@@ -25,6 +29,7 @@
       // Tests and tools may pass a level object directly; the game uses the catalog.
       this.level=options.level||(options.hiddenId?catalog.EscapeCatalog.hidden.find(l=>l.id===options.hiddenId):catalog.EscapeCatalog.levels.find(l=>l.id===(this.challenge?.levelId||options.levelId||'quiet-vault')));
       if(!this.level)throw new Error('Unknown Escape level');
+      this.cunning=CUNNING[Math.max(0,Math.min(3,Math.round(this.level.cunning??2)))];
       this.grid=catalog.escapeGridFor(this.level);this.height=this.grid.length;this.width=this.grid[0].length;
       this.player={...centre(...this.level.spawn),facing:{x:0,y:-1},tongueAim:null,stamina:100,exhausted:false,moving:false,sprinting:false,crawling:false,hidden:false,noisy:false};
       this.hunters=this.level.guards.map(guard=>this.makeHunter(guard));
@@ -1401,15 +1406,15 @@
     }
     // A heavy hunter mid-chase feels Sally close by whichever way it faces, so sliding past her does
     // not lose her; leaves, cover or a crawl still do.
-    feelsPlayer(h){const p=this.player;return h.state==='chase'&&Boolean(MOMENTUM[h.kind])&&!p.hidden&&!p.crawling&&!p.camo&&distance(h,p)<3&&this.clear(h,p);}
+    feelsPlayer(h){const p=this.player;return h.state==='chase'&&Boolean(MOMENTUM[h.kind])&&!p.hidden&&!p.crawling&&!p.camo&&distance(h,p)<this.cunning.feel&&this.clear(h,p);}
     // Where a chasing hunter aims: where Sally will be by the time it gets there, following her curve,
     // so a loop round it or a long arc gets cut across. It never aims through a wall. Run rings round
     // it and it reads the loop: it leads further, turns sharper and cuts inside.
     chaseAim(target,h,m){
-      const p=this.player,t=this.sallyTrack;if(!t||!m.lead||distance(target,p)>.3||p.hidden)return target;
-      if(Math.abs(t.loop)>5.5&&!(h.wiseUntil>this.elapsed)&&distance(h,p)<6){h.wiseUntil=this.elapsed+6;this.cue('warning',h);if(!h.wiseNoted){h.wiseNoted=true;this.notice('It has read your loop. Circling will not shake it now.','warning');}}
+      const p=this.player,t=this.sallyTrack,k=this.cunning;if(!t||!m.lead||!k.lead||distance(target,p)>.3||p.hidden)return target;
+      if(Math.abs(t.loop)>k.loop&&!(h.wiseUntil>this.elapsed)&&distance(h,p)<6){h.wiseUntil=this.elapsed+6;this.cue('warning',h);if(!h.wiseNoted){h.wiseNoted=true;this.notice('It has read your loop. Circling will not shake it now.','warning');}}
       const wise=h.wiseUntil>this.elapsed,d=distance(h,p);if(d<.5)return target;
-      let x=p.x,y=p.y,vx=t.vx,vy=t.vy;const lead=Math.max(.25,Math.min(wise?1.2:.85,d/2.75))*m.lead*(wise?1.4:1),steps=6,dt=lead/steps,curve=t.curve*(wise?1.2:1);
+      let x=p.x,y=p.y,vx=t.vx,vy=t.vy;const lead=Math.max(.25,Math.min(wise?1.2:.85,d/2.75))*m.lead*k.lead*(wise?1.4:1),steps=6,dt=lead/steps,curve=t.curve*(wise?1.2:1);
       for(let i=0;i<steps;i++){const c=Math.cos(curve*dt),s=Math.sin(curve*dt);[vx,vy]=[vx*c-vy*s,vx*s+vy*c];const next={x:x+vx*dt,y:y+vy*dt};if(!this.fits(next,.22,h))break;x=next.x;y=next.y;}
       return {x,y};
     }
@@ -1421,6 +1426,7 @@
       if(this.grid[Math.floor(h.y)]?.[Math.floor(h.x)]==='M')budget*=.72;
       if(h.kind==='sea-snake')budget*=this.water(h)?1.05:.65;
       if(this.cold.has(this.tileKey(h)))budget*=.6;
+      const k=this.cunning;budget*=k.pace;
       target=this.chaseAim(target,h,m);const wise=h.wiseUntil>this.elapsed;
       const id=Math.floor(target.x)+','+Math.floor(target.y);
       if(h.targetId!==id||!h.path.length||distance(h,h.path[0])>1.6){h.path=this.route(h,target,h);h.targetId=id;}
@@ -1431,9 +1437,9 @@
       if(Math.abs(diff)>1.5&&h.glide>.7&&!(h.skidUntil>this.elapsed)&&!(h.whipUntil+.35>this.elapsed)){h.skidUntil=this.elapsed+.4;h.skidAt=this.elapsed;h.skidFrom={x:h.x,y:h.y,heading:h.heading};}
       const skidding=h.skidUntil>this.elapsed;
       // ...then whips round in one snap and surges off the new way.
-      if(h.skidAt&&!skidding&&h.skidAt!==h.whippedAt){h.whippedAt=h.skidAt;h.heading=want;h.glide=Math.max(h.glide,.85);h.whipUntil=this.elapsed+.3;}
+      if(h.skidAt&&!skidding&&h.skidAt!==h.whippedAt){h.whippedAt=h.skidAt;h.heading+=diff*k.snap;h.glide=Math.max(h.glide,.85);h.whipUntil=this.elapsed+.3;}
       const whipping=h.whipUntil>this.elapsed;let turn=0;
-      if(!skidding){const rate=m.turn*(1+(1-h.glide)*2.4)*(wise?1.35:1);turn=Math.max(-rate*dt,Math.min(rate*dt,diff));h.heading+=turn;}
+      if(!skidding){const rate=m.turn*k.turn*(1+(1-h.glide)*2.4)*(wise?1.35:1);turn=Math.max(-rate*dt,Math.min(rate*dt,diff));h.heading+=turn;}
       const aim=skidding?.2:Math.abs(diff)>1.1?m.grip:1;h.glide+=(aim-h.glide)*Math.min(1,dt*(skidding?2.6:m.accel*(aim<h.glide?2.5:1)));
       // It moves in lunges, a surge and a check, rather than gliding at an even pace.
       const beat=(this.elapsed*m.pulse+h.gphase)%1,surge=whipping?1.4:beat<.3?1.22:.9;

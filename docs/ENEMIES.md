@@ -44,6 +44,13 @@ to twice, losing a quarter of their reach each time, and fly over gaps and water
 
 ## Hunters
 
+Each escape has a **cunning** from 0 to 3, which makes the same creature sharper further along the
+trail: 0 in the first two areas, 1 through the Venom Depths, 2 through the middle and 3 from the Steam
+Vents on. For now it shapes the snakes and other heavy chasers (king cobra, sea snake, fish,
+chameleon): how far ahead they read Sally, how soon they read a loop, how close they feel her, how
+sharply they turn and whip round, and a little of their pace.
+
+
 | Hunter | Job | What it does | How to beat it |
 | --- | --- | --- | --- |
 | Snake | Chaser | Patrols, spots Sally, then chases, searches and gives up. In a chase it aims where she is heading and cuts across loops; run rings round it and it reads the loop and leads further. Cut back sharply at speed and it slides on, then whips round and surges. Close behind her it feels her even facing away. Brushing the back half of a resting snake (paused, coiled or watching) wakes it; a moving tail slides away. | Break sight at a corner, use leaves, or throw a pebble. Never step on a still snake's tail. |

@@ -74,6 +74,12 @@ levels.
 it to set the direction and strength), **Echo hall** (two corners) and **Burrow pair** (click one
 mound, then its partner). Level settings set **Spore pouches** (0–5).
 
+**Cunning** (0–3, level settings) is how sharp the hunters are. At 0 a snake chases where Sally is, a
+little slower, and is slow to recover from a skid. At 2 (the default for new levels) it reads where
+she is going and feels her close by. At 3 it reads a loop within a turn or so. The game's own areas
+run from 0 in the first two areas to 3 from the Steam Vents on, and editing a game escape keeps its
+cunning.
+
 ## Quick build
 
 Open **⚡ Quick build** above the level settings, choose a size, theme (meadow, marsh, desert, frost,
