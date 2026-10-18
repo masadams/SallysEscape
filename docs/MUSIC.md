@@ -45,6 +45,11 @@ gives chase, a low boom and a clashing chord hit, and the tempo lifts by about
 a fifth; it settles back when the chase ends. A chase holds for 2.5 s,
 so a hunter flickering in and out of sight does not pump the mix. A capture,
 an escape or leaving the level always cuts through. Pausing ducks the music.
+While nothing has noticed Sally, the tension strings creep in underneath as the nearest creature
+comes within a few tiles. The music is muffled by a low-pass while Sally swims, as if heard from
+under the surface, and softens a little while she hides still in leaves. Long runs do not loop
+one tune: every other sixteen bars an answering tune takes over, and every thirty-two bars ends
+with four bars of breath, pad and bass with only the arpeggio.
 **Music: On/Off** in Options is saved per player, and **Sound: Off**
 silences both music and effects.
 
@@ -100,6 +105,11 @@ clanks, bubbles, thunder, a shrine chime). Beds crossfade over two seconds when 
 changes. The world map carries the weather (wind, rain, surf, breeze, at under half their full
 level); inside an escape only the place's own beds play, softer. It has its own volume slider,
 plays softer on the world map and the menu, and ducks during a chase and while paused.
+
+Inside an escape some sounds come from places: water laps at the nearest bank, drips fall from
+cave walls near Sally, birds sing from their perches, burst off with a wingbeat, frogs croak and
+plop in, a watcher fungus squelches as it hides. Each is quieter with distance and panned to its
+side of Sally.
 
 ## Volume
 
