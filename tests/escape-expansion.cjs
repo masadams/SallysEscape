@@ -55,7 +55,7 @@ test('walking on gravel is audible, stopping is quiet, and sprint hearing remain
 });
 test('Ghost Run allows a warning but ends when a guard gives chase',()=>{
  const g=new EscapeAdventure({challengeId:'ghost-run'});Object.assign(g.player,{x:8.5,y:7.5});Object.assign(g.hunter,{x:11.5,y:8.5,facing:Math.PI});g.hunters[1].x=11.5;g.hunters[1].y=1.5;
- advance(g,.3);assert.equal(g.status,'playing');assert.equal(g.hunter.state,'alert');advance(g,.6);
+ advance(g,.3);assert.equal(g.status,'playing');assert.equal(g.hunter.state,'alert');advance(g,.8); // an early escape: cunning 0 takes a little longer to be sure
  assert.equal(g.status,'failed');assert.equal(g.alarms,1);assert.equal(g.result.stars,0);
 });
 test('Treasure Sweep keeps the hatch locked until both the key and all treasure are present',()=>{

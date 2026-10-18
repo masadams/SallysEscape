@@ -276,6 +276,9 @@ test('cunning scales the snake: simple early on, wise late; levels and the build
   const m=B.blank(24,16);B.paint(m,4,4,'@');const aimAt=cunning=>{const g=new EscapeAdventure({level:escapeBuildCustom({...B.toRoute(m),cunning})});
     g.sallyTrack={vx:0,vy:2.4,curve:0,loop:0};Object.assign(g.player,{x:12.5,y:5.5});g.hunterDt=1/120;return g.chaseAim({x:12.5,y:5.5},{kind:'snake',state:'chase',x:12.5,y:10.5},{lead:.85}).y;};
   assert.equal(aimAt(0),5.5,'a simple snake goes for where she is');assert.ok(aimAt(1)<aimAt(2)&&aimAt(2)<aimAt(3),'sharper snakes read further ahead');
+  const searchFor=cunning=>{const g=new EscapeAdventure({level:escapeBuildCustom({...B.toRoute(m),cunning})});const h=g.makeHunter({kind:'snake',spawn:[20,8],facing:Math.PI,patrol:[[20,8]]});
+    Object.assign(h,{state:'chase',lastKnown:{x:12.5,y:8.5},lastObserved:-10});g.hunters=[h];g.updateHunter(1/120,h);return h.searchUntil-g.elapsed;};
+  assert.ok(searchFor(0)<searchFor(2)&&searchFor(2)<searchFor(3),'wiser hunters search longer');
   B.setSettings(m,{cunning:3});assert.equal(B.toRoute(m).cunning,3);assert.equal(B.fromRoute(B.toRoute(m)).cunning,3);
   B.setSettings(m,{cunning:9});assert.equal(m.cunning,3,'clamped');B.setSettings(m,{cunning:2});assert.equal(B.toRoute(m).cunning,undefined,'the default is left out');
   assert.equal(B.fromRoute(c.levels[0]).cunning,0,'editing a game escape keeps its cunning');
