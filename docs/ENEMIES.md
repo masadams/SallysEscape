@@ -53,6 +53,11 @@ sharply they turn and whip round, and a little of their pace. Every hunter on th
 out of sight, and searches the spot longer as cunning rises: at 0 it takes about a third longer to
 be sure, gives up after a second and searches for just over one; at 3 it is sure sooner, keeps on
 for almost two seconds and searches for over two and a half.
+The fox, owl, beetle and scorpion scale too: early on their warnings (the fox's crouch, the owl's glare,
+the beetle lowering its horn, the scorpion's wind-up) last about a third longer, they aim a little
+less far ahead of Sally, rest longer after a strike, and the fox hears footsteps from less far away;
+from the Steam Vents on the warnings are shorter, the aim sharper, the rests shorter and the fox's ears
+keener.
 
 
 | Hunter | Job | What it does | How to beat it |

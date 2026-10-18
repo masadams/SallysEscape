@@ -3,7 +3,8 @@ const {EscapeAdventure}=require('../public/escape-engine.js');
 function ticks(g,s,input={}){for(let n=0;n<Math.ceil(s*120);n++)g.advance(1/120,input);}
 // An open 15×11 arena with one hunter; the key and hatch are tucked away so they never interfere.
 function arena(kind,at,player,extra={}){
-  const g=new EscapeAdventure();for(let y=1;y<g.height-1;y++)for(let x=1;x<g.width-1;x++)g.grid[y][x]='.';
+  const g=new EscapeAdventure();g.cunning=EscapeAdventure.CUNNING[2]; // the standard hunter, as in the middle of the trail
+  for(let y=1;y<g.height-1;y++)for(let x=1;x<g.width-1;x++)g.grid[y][x]='.';
   g.key={x:15.5,y:11.5};g.exit={x:1.5,y:11.5};g.loot=[];
   const h=g.makeHunter({kind,spawn:at,facing:0,patrol:[at],...extra});g.hunters=[h];g.hunter=h;g.motion.resetHunter(h,0);h.pauseUntil=100;
   Object.assign(g.player,{x:player[0]+.5,y:player[1]+.5});return {g,h};
@@ -282,6 +283,11 @@ test('cunning scales the snake: simple early on, wise late; levels and the build
   B.setSettings(m,{cunning:3});assert.equal(B.toRoute(m).cunning,3);assert.equal(B.fromRoute(B.toRoute(m)).cunning,3);
   B.setSettings(m,{cunning:9});assert.equal(m.cunning,3,'clamped');B.setSettings(m,{cunning:2});assert.equal(B.toRoute(m).cunning,undefined,'the default is left out');
   assert.equal(B.fromRoute(c.levels[0]).cunning,0,'editing a game escape keeps its cunning');
+});
+test('cunning sharpens the fox, owl, beetle and scorpion: shorter warnings and quicker recovery later on',()=>{
+  const windup=c=>{const {g,h}=arena('beetle',[9,5],[13,5]);g.cunning=EscapeAdventure.CUNNING[c];for(let i=0;i<240&&h.state!=='windup';i++)g.advance(1/120,{});return h.state==='windup'?h.phaseUntil-g.elapsed:null;};
+  const early=windup(0),late=windup(3);assert.ok(early!==null&&late!==null,'the beetle lowers its horn');assert.ok(early>late,'early beetles give a longer warning');
+  const C=EscapeAdventure.CUNNING;assert.ok(C[0].warn>C[2].warn&&C[2].warn>C[3].warn&&C[0].rest>C[3].rest&&C[0].ear<C[3].ear&&C[2].warn===1&&C[2].aim===1&&C[2].rest===1&&C[2].ear===1,'cunning 2 is the standard hunter');
 });
 test('a chasing snake cannot turn on a dime: doubled back on, it carries on and swings wide before it turns',()=>{
   const {escapeBuildCustom}=require('../public/escape-levels.js'),B=require('../public/escape-builder.js');
