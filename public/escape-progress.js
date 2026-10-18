@@ -18,6 +18,7 @@
     'blind-grove':{name:'the Blind Grove',story:true,areas:4},
     'sallys-burrow':{name:'Sally\u2019s Burrow',story:true,cleared:'home',clue:'Home is just through here. Clear escape 100, Home, to reach it.'}
   };
+  const GLOW_GIFTS=[{at:40,skin:'firefly',text:'40 glow bugs freed! Sally can wear Firefly colours.'},{at:75,skin:'moonbeam',text:'75 glow bugs freed! Sally can wear Moonbeam colours.'},{at:100,companion:true,text:'100 glow bugs freed! One of them stays with Sally now, a little sea-green light of her own.'}];
   class EscapeProgress{
     constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],challengesSeen:[],attempts:{},masterySeen:[],skin:'classic',whisper:false,hidden:{},met:[],secrets:[],items:[],story:[],hard:[]};this.lastPerfect=false;this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
     read(){
@@ -71,7 +72,11 @@
     // gives Sally its colours to wear.
     mastered(chapter){return chapter.end>chapter.start&&catalog.levels.slice(chapter.start,chapter.end).every(l=>this.data.levels[l.id]?.stars===3);}
     areaStars(chapter){const levels=catalog.levels.slice(chapter.start,chapter.end);return {stars:levels.reduce((n,l)=>n+(this.data.levels[l.id]?.stars||0),0),max:levels.length*3};}
-    skins(chapters){return ['classic',...chapters.filter(c=>this.mastered(c)).map(c=>c.theme),...(this.data.secrets.includes('moss-den')?['moss']:[])];}
+    // Freed glow bugs (and golden flies) add up: new colours at 40 and 75, and at 100 one stays with Sally.
+    skins(chapters){return ['classic',...chapters.filter(c=>this.mastered(c)).map(c=>c.theme),...(this.data.secrets.includes('moss-den')?['moss']:[]),...GLOW_GIFTS.filter(g=>g.skin&&this.data.goldflies>=g.at).map(g=>g.skin)];}
+    companion(){return this.data.goldflies>=GLOW_GIFTS.find(g=>g.companion).at;}
+    // What the glow bug just caught earns, if it reached a milestone.
+    glowGift(n=this.data.goldflies){return GLOW_GIFTS.find(g=>g.at===n)||null;}
     skin(chapters){const owned=this.skins(chapters);return owned.includes(this.data.skin)?this.data.skin:'classic';}
     setSkin(theme,chapters){if(!this.skins(chapters).includes(theme))return false;this.read();this.data.skin=theme;this.write();return true;}
     // Mastered areas never announced before; announcing marks them seen.
@@ -173,7 +178,7 @@
       return true;
     }
   }
-  EscapeProgress.SECRET_RULES=SECRET_RULES;
+  EscapeProgress.SECRET_RULES=SECRET_RULES;EscapeProgress.GLOW_GIFTS=GLOW_GIFTS;
   root.EscapeProgress=EscapeProgress;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeProgress};
 })(typeof globalThis!=='undefined'?globalThis:this);

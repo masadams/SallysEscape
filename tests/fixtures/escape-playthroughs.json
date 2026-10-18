@@ -803006,6 +803006,9 @@
         "sprint": false
       },
       {
+        "kind": "pebble"
+      },
+      {
         "kind": "move",
         "frames": 14,
         "x": 0.325,
@@ -803480,9 +803483,6 @@
         "x": 0.9978,
         "y": 0.0662,
         "sprint": false
-      },
-      {
-        "kind": "pebble"
       },
       {
         "kind": "move",

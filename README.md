@@ -42,6 +42,9 @@ thumbstick and right action buttons; rotating to portrait pauses a run.
 warnings), so only the creatures themselves give their plans away. Escapes won in hard mode earn a ◆ mark.
 The Blind Grove, a secret spot that opens once the first four areas are cleared, is always played this way.
 
+**Glow bugs.** Every glow bug freed (and golden fly caught) counts: 25 open the Cloud Nest, 40 and 75 earn
+new colours for Sally (Firefly and Moonbeam), and at 100 a little sea-green glow bug of her own follows her.
+
 ## Self hosting
 
 Deploy `compose.yaml` from this repository in Portainer. Set `IMAGE_TAG=latest` and `NPM_NETWORK=nginx_default` (or your existing proxy network). In Nginx Proxy Manager, point your chosen hostname to `sallys-escape:8080`. No database volume, API hostname or Netlify project is required. The game serves its own code and libraries; progress is stored in each browser, per player.

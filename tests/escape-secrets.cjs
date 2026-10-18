@@ -64,3 +64,10 @@ test('the Blind Grove opens for everyone once the first four areas are cleared, 
   clear(4);assert.equal(p.secretOpen('blind-grove',chapters),true);
   assert.equal(EscapeCatalog.hidden.find(l=>l.secret==='blind-grove').noAids,true,'its escape always hides the drawn hints');
 });
+test('freed glow bugs earn new colours at 40 and 75, and a companion at 100',()=>{
+  const p=new EscapeProgress(null),chapters=EscapeWorld.chapters;
+  p.data.goldflies=39;assert.ok(!p.skins(chapters).includes('firefly'));assert.equal(p.glowGift(),null);
+  assert.equal(p.glowGift(p.catchGoldfly()).skin,'firefly');assert.ok(p.skins(chapters).includes('firefly'));assert.equal(p.setSkin('firefly',chapters),true);
+  p.data.goldflies=75;assert.ok(p.skins(chapters).includes('moonbeam'));assert.equal(p.companion(),false);
+  p.data.goldflies=99;assert.equal(p.glowGift(p.catchGoldfly()).companion,true);assert.equal(p.companion(),true);
+});

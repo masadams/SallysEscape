@@ -291,7 +291,7 @@ function playEscape(){
   escapeCharacter?.update(escapeGame,events);
   for(const cue of escapeCharacter?.drainCues()||[])escapeSound(cue);
   // Each glow bug caught counts like a golden fly: a little bonus treasure on the world totals.
-  for(const event of events)if(event==='glowbug')escapeProgress.catchGoldfly();
+  for(const event of events)if(event==='glowbug'){const gift=escapeProgress.glowGift(escapeProgress.catchGoldfly());if(gift)escapeGame.notice(gift.text);}
   // A creature's sound comes from where it is: panned left or right, and quieter further away.
   const at=escapeGame.lastEventAt||{},p=escapeGame.player;
   for(const event of new Set(events)){const q=at[event],d=q?Math.hypot(q.x-p.x,q.y-p.y):0;
@@ -831,6 +831,7 @@ function drawEscapeVault(){
   if(low){drawingContext.globalAlpha=1;pop();noStroke();fill(214,232,190,150);textSize(cell*.3);text('shh',g.player.x*cell,(g.player.y-.62)*cell);}
   if(flight)pop();
   drawingContext.restore();drawingContext.restore();
+  drawEscapeCompanion(g.player,cell,g.elapsed);
   for(const c of g.clouds||[]){const age=g.elapsed-c.born,fade=Math.min(1,age*4,(c.until-g.elapsed)/1.2);noStroke();for(let k=0;k<7;k++){const a=k*.9+age*.3,r=c.r*cell*(.45+(k%3)*.18);fill(214,232,190,70*fade);ellipse(c.x*cell+Math.cos(a)*r*.6,c.y*cell+Math.sin(a)*r*.5,r*1.3,r*1.1);}fill(240,250,220,45*fade);ellipse(c.x*cell,c.y*cell,c.r*cell*2,c.r*cell*1.8);}
   if(g.player.camo){noFill();stroke(214,190,140,90+60*Math.sin(g.elapsed*6));strokeWeight(cell*.03);ellipse(g.player.x*cell,g.player.y*cell,cell*1.1,cell*1.1);}
   if(g.hawk)drawEscapeHawk(g.hawk,cell,g.elapsed);
@@ -1312,8 +1313,23 @@ const ESCAPE_SKINS={
   home:{name:'Homecoming',body:[214,150,90],dark:[70,44,40],light:[255,226,170],spot:[120,90,150]},
   tide:{name:'Rockpool',body:[200,170,120],dark:[60,46,30],light:[150,230,230],spot:[240,110,90]},
   storm:{name:'Thundercloud',body:[96,108,124],dark:[30,34,44],light:[230,236,255],spot:[255,230,120]},
-  grotto:{name:'Spore',body:[110,90,140],dark:[34,24,48],light:[190,240,210],spot:[214,70,58]}
+  grotto:{name:'Spore',body:[110,90,140],dark:[34,24,48],light:[190,240,210],spot:[214,70,58]},
+  // Earned by freeing glow bugs (EscapeProgress GLOW_GIFTS).
+  firefly:{name:'Firefly',body:[58,66,52],dark:[18,22,16],light:[250,236,140],spot:[255,206,80]},
+  moonbeam:{name:'Moonbeam',body:[170,188,220],dark:[48,58,92],light:[240,248,255],spot:[140,228,214]}
 };
+// The companion: once 100 glow bugs are freed, one stays with Sally. It is small, dim and sea-green
+// (never the gold of a glow bug to free), trailing behind her and bobbing, on the map and in escapes.
+let escapeCompanion=null;
+function drawEscapeCompanion(p,cell,clock){
+  if(!escapeProgress.companion?.())return;
+  if(!escapeCompanion||Math.hypot(escapeCompanion.x-p.x,escapeCompanion.y-p.y)>6)escapeCompanion={x:p.x-.6,y:p.y-.6};
+  const c=escapeCompanion,tx=p.x+Math.cos(clock*.9)*.55,ty=p.y-.45+Math.sin(clock*1.3)*.2,k=Math.min(1,(deltaTime/1000)*2.5);c.x+=(tx-c.x)*k;c.y+=(ty-c.y)*k;
+  const pulse=.5+.5*Math.sin(clock*2.2);push();translate(c.x*cell,c.y*cell);noStroke();
+  for(const [r,a] of [[.7,26],[.38,60]]){fill(120,230,210,a*(.7+pulse*.3));ellipse(0,0,cell*r,cell*r);}
+  const flap=Math.sin(clock*26)*.5+.5;fill(220,255,248,120);for(const side of [-1,1])ellipse(side*cell*.07,-cell*.03,cell*.09,cell*(.04+flap*.05));
+  fill(190,255,236,230);ellipse(0,0,cell*.1,cell*.13);pop();
+}
 // Mix toward white (amount>0) or black (amount<0).
 const escapeShade=(c,amount)=>c.map(v=>Math.round(amount>0?v+(255-v)*amount:v*(1+amount)));
 let escapeSkinCache={id:null,palette:null};
