@@ -571,7 +571,8 @@ body:not(.mobile-game) #game-toolbar.toolbar-open #menu-button { order:-1; }
   .builder-side,.builder-side-right { border:0; max-height:none; }
   .builder-bar { flex-wrap:wrap; }
 }
-body:has(.builder-app) #game-toolbar { display:none; }
+/* The builder hides the game's menu bar only while it is on screen: a playtest still gets its pause menu. */
+body:has(#escape-builder:not([style*="none"]) .builder-app) #game-toolbar { display:none; }
 .builder-canvas { justify-content:safe center; }
 .builder-canvas .builder-grid { flex:0 1 auto; min-width:0; }
 .builder-app .builder-cell { min-width:0; overflow:hidden; }

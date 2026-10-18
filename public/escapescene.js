@@ -189,6 +189,14 @@ function startEscape(options={}){
   if(!options.skipIntro)showEscapeIntro();else escapeHintOpen(escapeGame);
   window.scrollTo?.(0,0);
 }
+// Leaving a run mid-way: a playtest goes back to the editor, a community level to the community
+// list, and anything else to the world map. A playtest never leads out into the world.
+function escapeLeaveRun(){
+  if(paused)togglePause();const from=escapeOptions?.from;
+  if(from==='builder'&&typeof openEscapeBuilder==='function'){escapeRecordQuit?.();openEscapeBuilder();return;}
+  if(from==='community'&&typeof openEscapeCommunity==='function'){escapeRecordQuit?.();openEscapeCommunity();return;}
+  showEscapeSelect();
+}
 function leaveEscape(){
   document.getElementById('escape-result').style.display='none';
   document.getElementById('escape-select').style.display='none';
@@ -390,7 +398,8 @@ function showEscapeResult(){
   document.getElementById('escape-result').style.display='block';
   document.getElementById('escape-retry-btn').onclick=()=>startEscape({...escapeOptions,skipIntro:true,quick:true});
   document.getElementById('escape-retry-btn').className=won&&!r.challengeId?'escape-secondary':'escape-primary';
-  document.getElementById('escape-menu-btn').onclick=showEscapeSelect;document.getElementById('escape-menu-btn').textContent='World map';document.getElementById('escape-menu-btn').className=won?'escape-primary':'escape-secondary';
+  // A playtest or a community level has no way out to the world map from its results: only back to where it came from.
+  {const menu=document.getElementById('escape-menu-btn');menu.onclick=showEscapeSelect;menu.textContent='World map';menu.className=won?'escape-primary':'escape-secondary';menu.style.display=escapeGame.level.custom?'none':'';}
   (won&&!r.challengeId?nextButton:document.getElementById('escape-retry-btn')).focus();renderEscapeHUD(true);
 }
 // Adaptive music boots after the first user gesture and then follows the game every frame.
