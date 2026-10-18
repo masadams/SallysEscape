@@ -10,7 +10,7 @@ const ESCAPE_PAD_ACTIONS={A:'look',B:'burrow',X:'pebble',Y:'tongue',LB:'glow',RB
 // The labels shown on the tool buttons while a pad is in use, in place of the keyboard keys.
 const ESCAPE_PAD_LABELS={Space:'A',E:'B',Q:'X',R:'Y',L:'LB',Z:'RB',X:'L3',F:'R3'};
 const ESCAPE_PAD_DEAD=.22;
-const escapePad={index:null,active:false,x:0,y:0,sprint:false,crawl:false,prev:[],nav:{dir:null,at:0,repeat:false}};
+const escapePad={exitAt:0,index:null,active:false,x:0,y:0,sprint:false,crawl:false,prev:[],nav:{dir:null,at:0,repeat:false}};
 const escapePadActive=()=>escapePad.active;
 function escapePadLabel(key){return escapePad.active?ESCAPE_PAD_LABELS[key]||key:key;}
 
@@ -37,6 +37,7 @@ function pollEscapePad(){
   if(pressed(ESCAPE_PAD.START)){if(gameState==='escape')togglePause();else document.getElementById('menu-button')?.click();return;}
   if(gameState==='escapeSelect'){
     if(pressed(ESCAPE_PAD.A))escapeKeyPressed('enter',13);
+    if(pressed(ESCAPE_PAD.B)&&typeof escapeGoBack==='function'){escapeGoBack();return;}
     if(pressed(ESCAPE_PAD.Y))escapeKeyPressed('t',84);
     return;
   }
@@ -64,6 +65,7 @@ function escapePadMenu(){
   if(gameState==='escapeResult')return $('escape-result');
   if(gameState==='escapeSelect'&&escapeLibraryOpen)return $('escape-select');
   if(gameState==='start')return $('start-menu-container');
+  if(gameState==='kids')return $('escape-builder');
   return null;
 }
 function escapePadFocusables(root){
@@ -93,11 +95,16 @@ function escapePadStep(items,from,dir){
   if(!best){const i=items.indexOf(from),n=items.length;best=items[(i+(dir==='down'||dir==='right'?1:-1)+n)%n];}
   best?.focus();best?.scrollIntoView?.({block:'nearest'});
 }
+// B goes back one step, exactly as Escape does (escapeGoBack in game.js); story and bestiary pages
+// read their own Escape.
 function escapePadBack(menu){
-  if(menu.id==='game-toolbar'){if(gameState==='escape'&&paused)togglePause();else closeToolbarMenu();return;}
-  if(menu.id==='escape-map'){toggleEscapeMap();return;}
-  if(menu.classList.contains('game-dialog')){menu.style.display='none';return;}
-  (document.activeElement||document).dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+  if(menu.id==='story-card'||menu.id==='world-bestiary'){(document.activeElement||document).dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));return;}
+  if(typeof escapeGoBack!=='function')return;
+  // At the main menu in the Android app, B twice quits.
+  if(escapeGoBack()==='exit'&&typeof escapeInApp!=='undefined'&&escapeInApp){
+    if(Date.now()-escapePad.exitAt<2500){location.href='/app-exit';return;}
+    escapePad.exitAt=Date.now();escapeTitleToast('Press B again to quit');
+  }
 }
 // A rumble for the moments worth feeling, where the pad can.
 const ESCAPE_PAD_RUMBLE={caught:[.9,.8,320],tailDrop:[.7,.6,220],spotted:[.15,.45,120],key:[.25,.25,80],won:[.4,.6,260]};

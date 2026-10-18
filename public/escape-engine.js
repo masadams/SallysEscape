@@ -692,7 +692,8 @@
     // A moth's glow lights Sally up: leaves no longer hide her and hunters see further.
     lit(){const p=this.player;return this.hunters.some(m=>m.kind==='moth'&&distance(m,p)<=2.6&&this.clear(m,p,true));}
     seesPlayer(h=this.hunter){
-      if(this.player.underground)return false;
+      // Just after a gentle level's "Oops!" nothing notices her for a moment.
+      if(this.player.underground||this.gentle&&this.elapsed<this.invulnerableUntil)return false;
       const p=this.player,d=distance(p,h),lit=this.hunters.length>1&&this.lit()||this.lights.length>0&&this.inLight(p);
       if(this.clouds.length&&this.inCloud(h))return false;
       if(this.elapsed<this.flashUntil&&d<=9&&this.clear(h,p,true)&&!(this.clouds.length&&this.inCloud(p)))return true;

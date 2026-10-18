@@ -630,3 +630,30 @@ body.ui-xl #escape-stage-ui>*,body.ui-xl #escape-world-ui,body.ui-xl .game-dialo
 /* A controller is in use: the on-screen touch buttons would only get in the way (the tools show their
    controller buttons in the panel instead). */
 body.pad-nav #touch-controls{display:none!important}
+/* Little Explorers: a bright, chunky button on the title, and a picker of big stepping stones. */
+.title-kids { min-height:46px; border:2px solid #f6d77a; border-radius:16px; background:linear-gradient(180deg,#fff2b8,#f6cf62); color:#4a3410; font-size:clamp(.98rem,1.6vw,1.12rem); font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+.title-kids small { font-weight:600; font-size:.72em; opacity:.75; }
+.title-kids:hover, .title-kids:focus-visible { filter:brightness(1.06); transform:translateY(-1px); }
+.kids-picker { max-width:980px; margin:0 auto; padding:8px 4px 24px; text-align:center; }
+.kids-picker .builder-head { justify-content:flex-start; }
+.kids-title { font-size:clamp(1.8rem,4vw,2.8rem); margin:.2em 0 .1em; color:#ffe58a; text-shadow:0 3px 0 #6b4a12; }
+.kids-sub { font-size:clamp(1rem,2vw,1.25rem); margin:0 0 18px; opacity:.9; }
+.kids-stones { list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; }
+.kids-stone { width:100%; min-height:150px; border-radius:50% 50% 44% 44% / 44% 44% 56% 56%; border:3px solid #8fb08a; background:radial-gradient(circle at 40% 30%,#c8d9b6,#7f9a76 70%); color:#20301c; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font:inherit; box-shadow:0 6px 0 #4d6447; transition:transform .12s; }
+.kids-stone:hover, .kids-stone:focus-visible { transform:translateY(-3px) scale(1.03); }
+.kids-num { font-size:1rem; font-weight:800; opacity:.7; }
+.kids-sticker { font-size:2.6rem; line-height:1; }
+.kids-name { font-weight:800; font-size:1rem; padding:0 8px; }
+.kids-done { background:radial-gradient(circle at 40% 30%,#fff6c8,#e9c35b 70%); border-color:#f6d77a; box-shadow:0 6px 0 #8a6a1e; }
+.kids-next { animation:kids-bob 1.4s ease-in-out infinite; border-color:#fff; }
+@keyframes kids-bob { 50% { transform:translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .kids-next { animation:none; } }
+.kids-count { margin-top:18px; font-size:1.15rem; font-weight:700; }
+.kids-reward { display:flex; flex-direction:column; align-items:center; gap:6px; font-size:1.2rem; font-weight:800; }
+.kids-reward-sticker { font-size:4rem; line-height:1; animation:star-pop .6s ease-out both; }
+/* The world map's own way back to the main menu (also Esc, or B on a controller). */
+.world-home { position:absolute; left:22px; bottom:20px; pointer-events:auto; background:#f8f2dbeb; color:#294c3b; border:1px solid #d4d9b1; border-radius:12px; padding:8px 14px; font:inherit; font-weight:700; cursor:pointer; box-shadow:0 5px 20px #456b4930; }
+.world-home:hover, .world-home:focus-visible { background:#fffbe8; }
+@media (max-width:760px), (max-height:500px) { .world-home { left:12px; bottom:12px; padding:6px 10px; font-size:.85rem; } }
+.title-toast { position:fixed; left:50%; bottom:32px; transform:translate(-50%,20px); background:#163b32f2; color:#fff7d6; border:1px solid #f1ce7a; border-radius:14px; padding:10px 18px; font-weight:700; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:50; }
+.title-toast-show { opacity:1; transform:translate(-50%,0); }

@@ -18,8 +18,6 @@ function openLittleExplorers(focusId){
   for(const b of panel.querySelectorAll('.kids-stone'))b.onclick=()=>startEscape({kidsId:b.dataset.id});
   const focus=panel.querySelector('.kids-stone[data-id="'+(focusId||next?.id||levels[0]?.id)+'"]');focus?.focus();
 }
-// Escape (or B on a controller, or Back on a TV remote) leaves the picker for the main menu.
-if(typeof document!=='undefined')document.addEventListener('keydown',e=>{if(e.key==='Escape'&&typeof gameState!=='undefined'&&gameState==='kids'){e.preventDefault();closeEscapeBuilder();}});
 // The results of a Little Explorers level: a sticker, always a way on, and never a world map.
 function escapeKidsResult(r){
   const level=escapeGame.level,levels=escapeKidsLevels(),next=levels[levels.indexOf(level)+1],fresh=escapeKidsMark(level.id),t=escapeText;
@@ -29,4 +27,25 @@ function escapeKidsResult(r){
   nextButton.style.display='inline-block';nextButton.textContent=next?'Next adventure →':'See your stickers';
   nextButton.onclick=next?()=>startEscape({kidsId:next.id}):()=>openLittleExplorers(level.id);
   menu.style.display='';menu.textContent='Little Explorers';menu.className='escape-secondary';menu.onclick=()=>openLittleExplorers(level.id);
+}
+// The guide trail: glowing dots from Sally along the shortest way to the key, then to the door (or
+// to a gate's button first when a shut gate is in the way), plus a flag on each checkpoint.
+let escapeKidsTrail={key:'',path:[]};
+function escapeKidsPath(g,from,to){
+  const w=g.width,id=(x,y)=>y*w+x,start=id(from[0],from[1]),goal=id(to[0],to[1]),prev=new Map([[start,-1]]),queue=[start];
+  while(queue.length){const at=queue.shift();if(at===goal)break;const x=at%w,y=Math.floor(at/w);
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy,n=id(nx,ny);if(prev.has(n)||!g.floor(nx,ny))continue;prev.set(n,at);queue.push(n);}}
+  if(!prev.has(goal))return null;const path=[];for(let at=goal;at!==-1;at=prev.get(at))path.push([at%w,Math.floor(at/w)]);return path.reverse();
+}
+function drawEscapeKidsGuide(g,cell){
+  if(g.status!=='playing')return;
+  const tile=p=>[Math.floor(p.x),Math.floor(p.y)],here=tile(g.player),goal=tile(g.hasKey?g.exit:g.key);
+  const key=here+'|'+goal+'|'+g.gates.map(gate=>gate.open?1:0).join('');
+  if(escapeKidsTrail.key!==key){let path=escapeKidsPath(g,here,goal);
+    if(!path){const shut=g.gates.find(gate=>!gate.open&&gate.switch);if(shut)path=escapeKidsPath(g,here,tile(shut.switch));}
+    escapeKidsTrail={key,path:path||[]};}
+  const t=g.elapsed;noStroke();
+  escapeKidsTrail.path.slice(1,16).forEach(([x,y],i)=>{const pulse=.5+.5*Math.sin(t*5-i*.7);fill(255,236,140,90+120*pulse);ellipse((x+.5)*cell,(y+.5)*cell,cell*(.22+.08*pulse));});
+  for(const c of g.checkpoints){const x=c.x*cell,y=c.y*cell;stroke(90,70,40);strokeWeight(cell*.05);line(x-cell*.15,y+cell*.3,x-cell*.15,y-cell*.32);noStroke();
+    fill(...(c.reached?[110,220,120]:[245,245,235]));triangle(x-cell*.13,y-cell*.32,x+cell*.28,y-cell*.2,x-cell*.13,y-cell*.08);}
 }

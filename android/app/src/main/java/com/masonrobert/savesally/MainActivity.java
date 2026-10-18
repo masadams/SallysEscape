@@ -53,6 +53,8 @@ public class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri url = request.getUrl();
+                // The title's Quit button opens this address; nothing is loaded, the app just closes.
+                if ("https".equals(url.getScheme()) && HOST.equals(url.getHost()) && "/app-exit".equals(url.getPath())) { finish(); return true; }
                 if ("https".equals(url.getScheme()) && HOST.equals(url.getHost())) return false;
                 try { startActivity(new Intent(Intent.ACTION_VIEW, url)); } catch (Exception ignored) { }
                 return true;
@@ -111,19 +113,34 @@ public class MainActivity extends Activity {
         return super.dispatchKeyEvent(event);
     }
 
-    // Back on a TV remote or phone acts like Escape in the game (pause, close a menu, go back) rather
-    // than closing the app. A controller's B button already reaches the game as a gamepad button.
+    // Back on a TV remote or phone goes back one step in the game (close a menu, pause, back a
+    // screen); at the main menu it offers to leave, and a second Back within a moment closes the app.
+    // The page answers through its return value only ("exit" at the main menu); it has no way in.
+    // A controller's Back usually arrives as its B button, which the game already reads as a gamepad
+    // (and asks "press B again to quit" itself), so for that the app only checks the press was seen.
+    private long exitAskedAt;
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (event.getRepeatCount() != 0) return true;
             boolean pad = (event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD;
-            if (!pad && event.getRepeatCount() == 0) {
-                web.evaluateJavascript("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',code:'Escape',keyCode:27,bubbles:true}));"
-                    + "document.dispatchEvent(new KeyboardEvent('keyup',{key:'Escape',code:'Escape',keyCode:27,bubbles:true}));", null);
-            }
+            // If the game saw no press (a Back button the gamepad does not report), treat it like a remote's.
+            if (pad) web.postDelayed(() -> web.evaluateJavascript("window.sallyLastBack?window.sallyLastBack():''", seen -> {
+                if ("\"\"".equals(seen) || "null".equals(seen)) web.evaluateJavascript("window.sallyBack?window.sallyBack():'exit'", this::afterBack);
+            }), 150);
+            else web.evaluateJavascript("window.sallyBack?window.sallyBack():'exit'", this::afterBack);
             return true;
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    private void afterBack(String result) {
+        if (!"\"exit\"".equals(result)) return;
+        long now = android.os.SystemClock.uptimeMillis();
+        if (now - exitAskedAt < 2500) { finish(); return; }
+        exitAskedAt = now;
+        Toast.makeText(this, "Press Back again to leave Sally's Escape", Toast.LENGTH_SHORT).show();
     }
 
     @SuppressWarnings("deprecation")
