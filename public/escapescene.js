@@ -519,7 +519,9 @@ function escapeCameraMotion(view,g,w,h){
     const still=escapeReducedMotion(),lead=!still&&p.moving&&g.status==='playing'?(p.sprinting?1.6:.9):0;escapeCam.lx+=((p.facing?.x||0)*lead-escapeCam.lx)*k;escapeCam.ly+=((p.facing?.y||0)*lead-escapeCam.ly)*k;
     if(!still)escapeCam.zoom+=((escapeMoment&&escapeMoment.kind!=='won'?1.1:chasing?.86:1)-escapeCam.zoom)*k;else escapeCam.zoom=1;
     const clamp=(n,a,b)=>b<a?(a+b)/2:Math.max(a,Math.min(b,n)),cell=view.cell*escapeCam.zoom;
-    const tx=(w/2-view.ox)/view.cell+escapeCam.lx,ty=(h/2-view.oy)/view.cell+escapeCam.ly;
+    // The right stick peeks up to four tiles ahead (a little more across, where the screen is wider).
+    const pk=1-Math.exp(-dt*8),pad=typeof escapePad!=='undefined'?escapePad:{};escapeCam.px=(escapeCam.px||0)+((pad.peekX||0)*4.5-(escapeCam.px||0))*pk;escapeCam.py=(escapeCam.py||0)+((pad.peekY||0)*3.5-(escapeCam.py||0))*pk;
+    const tx=(w/2-view.ox)/view.cell+escapeCam.lx+escapeCam.px,ty=(h/2-view.oy)/view.cell+escapeCam.ly+escapeCam.py;
     if(escapeCam.cx===null||Math.hypot(tx-escapeCam.cx,ty-escapeCam.cy)>8){escapeCam.cx=tx;escapeCam.cy=ty;}else{escapeCam.cx+=(tx-escapeCam.cx)*glide;escapeCam.cy+=(ty-escapeCam.cy)*glide;}
     const cx=clamp(escapeCam.cx,w/(2*cell),g.width-w/(2*cell)),cy=clamp(escapeCam.cy,h/(2*cell),g.height-h/(2*cell));
     view.cell=cell;view.ox=w/2-cx*cell;view.oy=h/2-cy*cell;
@@ -762,6 +764,8 @@ function escapeHudArea(){
 // Zoom steps: 1 fits the whole map; the rest draw it bigger and follow Sally. Saved per player.
 const ESCAPE_ZOOMS=[1,1.3,1.7,2.2];
 function escapeZoomStep(){const z=escapeProgress.data.zoom;return Number.isInteger(z)&&z>=0&&z<ESCAPE_ZOOMS.length?z:0;}
+// A controller's View button steps through the zooms and wraps back to the whole map.
+function escapeZoomCycle(){if(!escapeZoom(1)){escapeProgress.setZoom?.(0);escapeGame?.notice?.('Zoom: Fit the whole map');}}
 function escapeZoom(dir){
   const next=Math.max(0,Math.min(ESCAPE_ZOOMS.length-1,escapeZoomStep()+dir));if(next===escapeZoomStep())return false;escapeProgress.setZoom?.(next);
   escapeGame?.notice?.('Zoom: '+['Fit the whole map','Close','Closer','Closest'][next]);return true;

@@ -30,7 +30,7 @@ function pollEscapePad(){
   // A pad press does not unlock sound everywhere, so each new press tries again until it plays.
   if(now.some((b,i)=>b&&!was[i])&&typeof unlockAudio==='function'&&typeof escapeAudio!=='undefined'&&escapeAudio?.state!=='running')unlockAudio();
   const menu=escapePadMenu();
-  if(menu){escapePad.x=0;escapePad.y=0;escapePad.sprint=false;escapePad.crawl=false;escapePad.dig=false;if(escapePad.active)escapePadNavigate(menu,ax,ay,pressed,was.length>0);return;}
+  if(menu){escapePad.x=0;escapePad.y=0;escapePad.sprint=false;escapePad.crawl=false;escapePad.dig=false;escapePad.peekX=0;escapePad.peekY=0;if(escapePad.active)escapePadNavigate(menu,ax,ay,pressed,was.length>0);return;}
   escapePad.nav.dir=null;
   escapePad.x=Math.max(-1,Math.min(1,ax));escapePad.y=Math.max(-1,Math.min(1,ay));escapePad.sprint=down(ESCAPE_PAD.RT);escapePad.crawl=down(ESCAPE_PAD.LT);escapePad.dig=down(ESCAPE_PAD.B);
   if(!was.length)return;
@@ -39,12 +39,18 @@ function pollEscapePad(){
     if(pressed(ESCAPE_PAD.A))escapeKeyPressed('enter',13);
     if(pressed(ESCAPE_PAD.B)&&typeof escapeGoBack==='function'){escapeGoBack();return;}
     if(pressed(ESCAPE_PAD.Y))escapeKeyPressed('t',84);
+    // X opens the panel (travel, Journal, the escape card, Main menu) for the stick; LB and RB step
+    // between the areas that are open.
+    if(pressed(ESCAPE_PAD.X)&&typeof openEscapeWorldPanel==='function')openEscapeWorldPanel();
+    if((pressed(ESCAPE_PAD.LB)||pressed(ESCAPE_PAD.RB))&&escapeWorld){const n=escapeWorld.chapters.length,dir=pressed(ESCAPE_PAD.RB)?1:-1;let i=escapeWorld.chapterAt();for(let k=0;k<n;k++){i=(i+dir+n)%n;if(escapeWorld.regionOpen(i))break;}if(escapeWorld.travel(i)){renderEscapeWorldHUD();escapeSound?.('hop');}}
     return;
   }
   if(gameState!=='escape')return;
-  if(pressed(ESCAPE_PAD.VIEW)){escapeKeyPressed('g',71);return;}
-  // The right stick zooms: push up to come in closer, down to see more; it steps, held or not.
-  const zy=pad.axes[3]||0;if(Math.abs(zy)>.6){if(!escapePad.zoomHeld||millis()-escapePad.zoomAt>450){escapePad.zoomHeld=true;escapePad.zoomAt=millis();if(typeof escapeZoom==='function')escapeZoom(zy<0?1:-1);}}else escapePad.zoomHeld=false;
+  // View opens the map on a level that has one; elsewhere it steps the zoom (closer, then back out).
+  if(pressed(ESCAPE_PAD.VIEW)){if(escapeGame?.level.explore)escapeKeyPressed('g',71);else if(typeof escapeZoomCycle==='function')escapeZoomCycle();return;}
+  // The right stick looks around: push it to peek ahead in that direction; let go and the view
+  // springs back to Sally.
+  {let rx=pad.axes[2]||0,ry=pad.axes[3]||0;const m=Math.hypot(rx,ry);if(m<ESCAPE_PAD_DEAD){rx=0;ry=0;}else{const k=Math.min(1,(m-ESCAPE_PAD_DEAD)/(1-ESCAPE_PAD_DEAD))/m;rx*=k;ry*=k;}escapePad.peekX=rx;escapePad.peekY=ry;}
   // A start card or a big moment: any button moves on, as any key does.
   if(escapeIntroOpen||escapeMoment){if(now.some((b,i)=>b&&!was[i]))escapeKeyPressed(' ',32);return;}
   for(const [name,action] of Object.entries(ESCAPE_PAD_ACTIONS)){const i=ESCAPE_PAD[name];
@@ -66,6 +72,7 @@ function escapePadMenu(){
   if(gameState==='escapeSelect'&&escapeLibraryOpen)return $('escape-select');
   if(gameState==='start')return $('start-menu-container');
   if(gameState==='kids')return $('escape-builder');
+  if(gameState==='escapeSelect'&&!escapeLibraryOpen&&typeof escapeWorldPanelOpen!=='undefined'&&escapeWorldPanelOpen)return $('escape-world-ui');
   return null;
 }
 function escapePadFocusables(root){
@@ -85,6 +92,8 @@ function escapePadNavigate(menu,ax,ay,pressed,ready){
   if(pressed(ESCAPE_PAD.B)||pressed(ESCAPE_PAD.START)&&menu.id==='game-toolbar')escapePadBack(menu);
 }
 function escapePadStep(items,from,dir){
+  // A drop-down (the world map's area travel) changes its choice with left and right.
+  if(from?.tagName==='SELECT'&&(dir==='left'||dir==='right')){const opts=[...from.options];let i=from.selectedIndex;do{i+=dir==='right'?1:-1;}while(opts[i]?.disabled);if(opts[i]){from.selectedIndex=i;from.dispatchEvent(new Event('change',{bubbles:true}));}return;}
   if(from?.type==='range'&&(dir==='left'||dir==='right')){const step=Number(from.step)||1;from.value=String(Number(from.value)+(dir==='right'?step:-step));from.dispatchEvent(new Event('input',{bubbles:true}));return;}
   if(!from||!items.includes(from)){items[0]?.focus();return;}
   const r=from.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,v={left:[-1,0],right:[1,0],up:[0,-1],down:[0,1]}[dir];
