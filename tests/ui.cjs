@@ -48,8 +48,8 @@ function harness() {
     createCanvas:()=>({parent:noop}),pixelDensity:()=>1,displayDensity:()=>1,
     random:(a,b)=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;const n=seed/4294967296;return Array.isArray(a)?a[Math.floor(n*a.length)]:a===undefined?n:b===undefined?n*a:a+n*(b-a)},
     keyIsDown:()=>false,fetch:async()=>({ok:true,json:async()=>[]})};
-  for(const n of ['push','pop','background','fill','noFill','stroke','noStroke','strokeWeight','rect','triangle','ellipse','line','bezier','beginShape','endShape','curveVertex','vertex','translate','scale','image','imageMode','text','textSize','textFont','textAlign','textStyle','colorMode','arc','setShakeThreshold','resizeCanvas','rotate','blendMode']) c[n]=noop;c.BOLD='bold';c.NORMAL='normal';
-  for(const n of ['CORNER','CENTER','LEFT','RIGHT','TOP','BOTTOM','CLOSE','RGB','HSB','PIE','ADD','BLEND']) c[n]=n;
+  for(const n of ['push','pop','background','fill','noFill','stroke','noStroke','strokeWeight','rect','triangle','ellipse','line','bezier','beginShape','endShape','curveVertex','vertex','translate','scale','image','imageMode','text','textSize','textFont','textAlign','textStyle','colorMode','arc','setShakeThreshold','resizeCanvas','rotate','blendMode','strokeCap','quad','point','circle','square','curve','ellipseMode','rectMode','strokeJoin','erase','noErase','tint','noTint','shearX','shearY']) c[n]=noop;c.ROUND='round';c.BOLD='bold';c.NORMAL='normal';
+  for(const n of ['CORNER','CENTER','LEFT','RIGHT','TOP','BOTTOM','CLOSE','RGB','HSB','PIE','CHORD','OPEN','ADD','BLEND','MULTIPLY','SCREEN']) c[n]=n;
   c.UP_ARROW=38;c.DOWN_ARROW=40;c.LEFT_ARROW=37;c.RIGHT_ARROW=39;
   c.createGraphics=()=>({...c,clear:noop,remove:noop});
   const context=vm.createContext(c);
@@ -136,4 +136,22 @@ test('a controller moves Sally, sprints, charges and aims a pebble, labels the t
   pad.buttons[2].pressed=true;pad.axes[0]=1;frames(10);assert.equal(h.run('escapeCharge?.source'),'pad','holding X charges a throw');
   pad.buttons[2].pressed=false;frames(2);assert.equal(h.run('escapeCharge'),null);assert.equal(h.run('escapeGame.decoys'),pebbles-1,'releasing X throws');
   pad.axes[0]=0;pad.buttons[9].pressed=true;frames(1);pad.buttons[9].pressed=false;frames(1);assert.equal(h.run('paused'),true,'Start pauses');
+});
+test('Full lighting draws every area with terrain, water and small lives, and the creatures keep clear and react without touching the game',()=>{
+  const h=harness();h.run('escapeLightingFull=()=>true;escapeProgress.unlocked=()=>true;drawEscapeFog=()=>{};');// The fog needs a real canvas; everything else draws through the stubs.
+  Object.assign(h.c.drawingContext,{createRadialGradient:()=>({addColorStop(){}}),translate(){},scale(){},drawImage(){},setLineDash(){},arc(){},closePath(){}});
+  const frames=n=>{for(let i=0;i<n;i++){h.tick(30);h.run('draw()');}};
+  const chapters=h.run('EscapeWorld.chapters.map(c=>c.start)');
+  for(const start of chapters){h.run('startEscape({levelId:EscapeCatalog.levels['+start+'].id,skipIntro:true});hideEscapeIntro?.();');frames(3);}
+  for(const id of h.run('EscapeCatalog.hidden.map(l=>l.id)'))h.run('startEscape({hiddenId:"'+id+'",skipIntro:true});hideEscapeIntro?.();'),frames(2);
+  h.run('startEscape({levelId:"quiet-vault",skipIntro:true});hideEscapeIntro?.();');frames(3);
+  const kinds=h.run('escapeCritters.list.map(c=>c.kind)');assert.ok(kinds.includes('bird')&&kinds.includes('butterfly')&&kinds.includes('flower'),'the meadow has its birds, butterflies and flowers');
+  assert.equal(h.run('escapeCritters.list.filter(c=>escapeCritterBusy(escapeGame).has(Math.floor(c.x)+","+Math.floor(c.y))).length'),0,'nothing sits on a key, treasure or switch');
+  h.run('const b=escapeCritters.list.find(c=>c.kind==="bird");escapeGame.player.x=b.x;escapeGame.player.y=b.y+1;escapeGame.player.sprinting=true;tickEscapeCritters(escapeGame);');
+  const state=()=>h.run('JSON.stringify([escapeGame.player,escapeGame.hunters,escapeGame.grid,escapeGame.status])'),before=state();
+  h.run('escapeGame.elapsed+=.05;tickEscapeCritters(escapeGame);');
+  assert.equal(h.run('escapeCritters.list.find(c=>c.kind==="bird").state'),'fly','a bird bursts off its perch when Sally runs up');
+  assert.equal(state(),before,'the creatures never change the game');
+  h.run('escapeGame.elapsed+=5;for(let i=0;i<80;i++){escapeGame.elapsed+=.05;tickEscapeCritters(escapeGame);}');
+  assert.ok(['perch','gone','fly'].includes(h.run('escapeCritters.list.find(c=>c.kind==="bird").state')));
 });

@@ -43,8 +43,41 @@ brighter). Grades stay subtle (alpha under 0.4) so the play area always reads cl
   cached tile layer, so they cost nothing per frame.
 - **Light shafts** slant down through the canopy and cave roofs (`shafts` in a mood: the jungle,
   the grotto, Luminous Depths, the Bestiary Grove and the Sunken Wreck), swaying slowly.
-- **Water** catches rippling sunlight.
+- **Water** is drawn as one body (see Terrain below), with highlights and foam moving each frame.
 - **Lightning** throws long shadows from every wall for the length of the flash, and the white
   flash itself is gentler.
 - **Danger:** during a chase the screen's edges warm and darken, pulsing slowly; it fades in
   quickly and out slowly. While Sally is hidden, a faint hush settles over the view.
+
+## Terrain
+
+In Full lighting `public/escape-terrain.js` replaces the plain tiles, so escapes read as places
+rather than grids. It changes only the look; where Sally can walk is untouched.
+
+- **Ground** fills every open tile edge to edge, with big faint patches that wander across tile
+  edges and a material per area, scattered in world space: grass, earth with roots, staggered
+  flagstones, cave stone with seams, wind-rippled sand, snow drifts, clay roof tiles.
+- **Walls** are solid masses: tiles join without gaps, corners that stick out are rounded, a wall
+  with open ground below shows a darker front face, and each area has its own material with an
+  edge of its own (leafy hedges, cut stone courses, faceted rock, layered sandstone, ice). Each
+  material leans the area's palette toward its colour but keeps its brightness, so dark places stay
+  dark.
+- **Water:** shallows and deep channels are one body. Depth darkens in soft pools away from the
+  bank, shallows fall off softly into deep water, banks and islets are rounded, the land side is
+  damp with a pale wet lip, and foam breathes along the banks and round the curves.
+- **Zones** that matter to play (cold floor, moss, tide flats, ice) are one sheet with an edge
+  only where the zone ends.
+- **Cost:** the terrain is drawn into its own cached layer, rebuilt only when walls or water
+  change (about 50 ms on the largest map, at load). Gates do not count, so a gate opening redraws
+  only the light tile layer above it (about 5 ms).
+
+## Small lives
+
+`public/escape-critters.js` adds creatures that share each escape but play no part in it; the
+engine never reads them, and they keep clear of keys, treasure, switches and hatches. Each area
+has its own set. Birds perch on walls and burst into the air when Sally comes close, runs nearby,
+makes noise or a hunter passes, flying to a perch away from her with a shadow below. Butterflies
+drift round flowers and scatter. Fish shadows glide in the water and dart off. Frogs croak on
+the banks and plop in. Skinks flick away along the walls. Watchers only watch: cave fungus
+follows Sally with eyes on stalks, blinks, and pulls them in when she comes near; flowers turn
+their heads after her; anemones close as she passes. Full lighting only.

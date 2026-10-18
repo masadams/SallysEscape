@@ -24,24 +24,15 @@ const escapeAtmo={motes:[],key:null,trampled:new Map(),breathAt:0,rippleAt:0,las
 function escapeAtmoTheme(g){const place=escapePlace?.(g.level);return place?place.key.replace(/^secret:.*/,s=>s):null;}
 
 // ---- In the cached tile layer -------------------------------------------------------------------
-// Floors vary a little in tone and carry scattered pebbles, cracks and the odd flower; walls get a
-// worn top edge and a few chips; storm floors are darker and wet. Seeded by tile, so a level always
-// looks the same.
+// Floors carry scattered pebbles, cracks and the odd flower, and grass tufts where they meet a wall
+// (the ground and walls themselves are escape-terrain.js). Seeded by tile, so a level always looks
+// the same.
 function drawEscapeAtmoGround(g,cell,palette,index){
   const theme=escapeAtmoTheme(g),wet=Boolean(g.level.storm)||theme==='storm',cold=theme==='frost',sand=g.level.biome==='desert'||theme==='desert'||theme==='rooftops';
   noStroke();
   for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){
     const tile=g.grid[y][x],floor=g.floor(x,y),r=ESCAPE_ATMO_HASH(x,y,1),px=x*cell,py=y*cell;
-    if(!floor){if(tile==='#'||tile==='Y'){
-      // A worn lip along the top and a couple of chips in the stone.
-      fill(255,255,255,10);rect(px+2,py+2,cell-4,cell*.16,cell*.06);
-      fill(0,0,0,22);rect(px+2,py+cell*.82,cell-4,cell*.12,cell*.05);
-      if(r<.5){fill(0,0,0,26);ellipse(px+cell*(.25+.5*ESCAPE_ATMO_HASH(x,y,2)),py+cell*(.35+.4*ESCAPE_ATMO_HASH(x,y,3)),cell*.1,cell*.06);}}
-      continue;}
-    if(!['.','L','N','M'].includes(tile))continue;
-    // Tone: a faint lighter or darker wash per tile.
-    const tone=(r-.5)*2;fill(tone>0?255:0,tone>0?255:0,tone>0?255:0,Math.abs(tone)*(wet?4:5));rect(px+1,py+1,cell-2,cell-2,cell*.12);
-    if(wet){fill(10,16,30,40);rect(px+1,py+1,cell-2,cell-2,cell*.12);}
+    if(!floor||!['.','L','N','M'].includes(tile))continue;
     if(tile!=='.')continue;
     const d=ESCAPE_ATMO_HASH(x,y,4);
     if(d<.2){fill(0,0,0,30);for(let i=0;i<3;i++)ellipse(px+cell*(.2+.6*ESCAPE_ATMO_HASH(x,y,i+5)),py+cell*(.2+.6*ESCAPE_ATMO_HASH(x,y,i+8)),cell*.08,cell*.055);
@@ -78,6 +69,8 @@ function drawEscapeMotes(g,cell){
   const t=g.elapsed,dt=Math.min(.05,deltaTime/1000);noStroke();
   for(const m of escapeAtmo.motes){
     m.x+=(spec.drift[0]+Math.sin(t*.5+m.ph)*.08)*dt*(spec.kind==='snow'?.5:1);m.y+=(spec.drift[1]+Math.cos(t*.7+m.ph)*.05)*dt;
+    // Sally stirs the air as she passes: motes near her swirl away.
+    {const dx=m.x-g.player.x,dy=m.y-g.player.y,d=Math.hypot(dx,dy);if(d<1.3&&d>.01){const push=(1.3-d)*(g.player.moving?3.2:1)*dt;m.x+=dx/d*push-dy/d*push*.6;m.y+=dy/d*push+dx/d*push*.6;}}
     if(m.x>g.width)m.x=0;if(m.x<0)m.x=g.width;if(m.y>g.height)m.y=0;if(m.y<0)m.y=g.height;
     if(!g.visibleTile(Math.floor(m.x),Math.floor(m.y)))continue;
     const tw=.5+.5*Math.sin(t*(spec.kind==='fly'?2.2:1.4)+m.ph*3),a=(spec.kind==='fly'?Math.max(0,tw)**3*150:spec.kind==='ember'?70+60*tw:40+30*tw);
@@ -104,6 +97,11 @@ function drawEscapeWet(g,cell,view){
 // cold, from Sally and from snow foxes. Both use the run's particle pool.
 function tickEscapeAtmo(g){
   if(typeof EscapeFeel==='undefined'||!escapeLightingFull())return;const p=g.player,t=escapeFxClock,a=Math.atan2(p.facing?.y??-1,p.facing?.x??0);
+  // Brushing past a hedge shakes a leaf or two loose, with the faintest rustle.
+  if(p.moving&&t-(escapeAtmo.brushAt||0)>.3&&typeof escapeTerrainSet==='function'&&escapeTerrainSet(g).wall==='hedge'){const x=Math.floor(p.x),y=Math.floor(p.y);
+    const side=[[1,0],[-1,0],[0,-1],[0,1]].find(([dx,dy])=>['#','B'].includes(g.grid[y+dy]?.[x+dx])&&Math.abs((dx?p.x-(x+.5):p.y-(y+.5))*2-(dx||dy))<.9);
+    if(side){escapeAtmo.brushAt=t;const lx=p.x+side[0]*.45,ly=p.y+side[1]*.45;escapeFx.add('leaf',lx,ly,{t,life:.9,size:.09,vx:-side[0]*.5+(Math.random()-.5)*.6,vy:.35+Math.random()*.3,angle:Math.random()*6,spin:(Math.random()-.5)*8,color:[86,140,72]});
+      if(Math.random()<.35&&typeof escapeSound==='function')escapeSound('rustle',{gain:.22});}}
   if(p.swimming&&p.moving&&t-escapeAtmo.rippleAt>.32){escapeAtmo.rippleAt=t;escapeFx.add('ripple',p.x,p.y,{t,life:1.3,size:.25});}
   const cold=g.cold?.has?.(Math.floor(p.x)+','+Math.floor(p.y))||escapeAtmoTheme(g)==='frost';
   if(cold&&t-escapeAtmo.breathAt>(p.sprinting?.7:1.6)){escapeAtmo.breathAt=t;escapeFx.add('breath',p.x+Math.cos(a)*.32,p.y+Math.sin(a)*.32,{t,life:1.1,size:p.sprinting?.24:.16,vx:Math.cos(a)*.3,vy:Math.sin(a)*.3-.12});
@@ -120,4 +118,32 @@ function escapeBreathe(g,h,i,cell){
   if(!ESCAPE_ATMO_BREATHERS.has(h.kind))return false;const last=escapeAtmo.lastMoved.get(h),still=last!==undefined&&Math.abs(h.distanceMoved-last)<1e-4;escapeAtmo.lastMoved.set(h,h.distanceMoved);
   if(!still||!escapeLightingFull())return false;const s=1+.03*Math.sin(g.elapsed*2+i*1.7);
   push();translate(h.x*cell,h.y*cell);scale(s,1+(s-1)*.5);translate(-h.x*cell,-h.y*cell);return true;
+}
+
+// Reeds along the banks in the wet places: clumps of stalks with seed heads that sway, and part
+// round Sally (and anything else) as she pushes through.
+const ESCAPE_ATMO_REEDS=new Set(['river','marsh','lantern','tide','coast','secret:mossy-well','secret:bestiary-grove']);
+function drawEscapeReeds(g,cell,view){
+  if(!escapeLightingFull())return;const theme=escapeAtmoTheme(g);if(!ESCAPE_ATMO_REEDS.has(theme))return;
+  const key=g.level.id+'|reeds';if(escapeAtmo.reedKey!==key){escapeAtmo.reedKey=key;const busy=typeof escapeCritterBusy==='function'?escapeCritterBusy(g):new Set(),list=[];
+    for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){if(!['.','L'].includes(g.grid[y][x])||busy.has(x+','+y)||ESCAPE_ATMO_HASH(x,y,70)>.55)continue;
+      const wet=[[1,0],[-1,0],[0,1],[0,-1]].find(([dx,dy])=>g.grid[y+dy]?.[x+dx]==='U');if(wet)list.push({x:x+.5+wet[0]*.34,y:y+.5+wet[1]*.34,n:4+Math.floor(ESCAPE_ATMO_HASH(x,y,71)*3),seed:x*31+y});}
+    escapeAtmo.reeds=list;}
+  const t=g.elapsed,movers=[g.player,...g.hunters];strokeCap?.(ROUND);
+  for(const r of escapeAtmo.reeds){if(view.follow&&!g.visibleTile(Math.floor(r.x),Math.floor(r.y)))continue;
+    for(let i=0;i<r.n;i++){const bx=r.x+(ESCAPE_ATMO_HASH(r.seed,i,72)-.5)*.5,by=r.y+(ESCAPE_ATMO_HASH(r.seed,i,73)-.5)*.3,len=.5+ESCAPE_ATMO_HASH(r.seed,i,74)*.3;
+      let lean=Math.sin(t*1.1+bx*.8+i)*.1;for(const m of movers){const dx=bx-m.x,d=Math.hypot(dx,by-m.y);if(d<.8)lean+=(.8-d)/.8*1.1*Math.sign(dx||1);}
+      const tx=(bx+Math.sin(lean)*len)*cell,ty=(by-Math.cos(lean)*len)*cell;stroke(96,138,70,200);strokeWeight(Math.max(1,cell*.035));line(bx*cell,by*cell,tx,ty);
+      if(i%2===0){stroke(116,82,48,220);strokeWeight(Math.max(1.5,cell*.07));line(tx,ty,(bx+Math.sin(lean)*(len-.12))*cell,(by-Math.cos(lean)*(len-.12))*cell);}}}
+  noStroke();
+}
+// Cloud shadows drifting slowly over the open-sky places in daylight.
+const ESCAPE_ATMO_SKY=new Set(['meadow','garden','orchard','river','desert','coast','tide','rooftops','home','finale','ruins','quarry','frost','secret:star-garden','secret:cloud-nest']);
+function drawEscapeCloudShadows(g,cell,mood){
+  if(!escapeLightingFull()||!drawingContext.createRadialGradient||g.level.dark||g.level.explore||mood?.night||!ESCAPE_ATMO_SKY.has(escapeAtmoTheme(g)))return;
+  const ctx=drawingContext,t=g.elapsed,W=g.width,H=g.height;ctx.save();
+  for(let i=0;i<3;i++){const span=W+8,x=((ESCAPE_ATMO_HASH(i,5)*span+t*(.18+ESCAPE_ATMO_HASH(i,6)*.12))%span-4)*cell,y=(ESCAPE_ATMO_HASH(i,7)*H+Math.sin(t*.05+i)*1.5)*cell,r=cell*(3+ESCAPE_ATMO_HASH(i,8)*2.5);
+    const grad=ctx.createRadialGradient(x,y,0,x,y,r);grad.addColorStop(0,'rgba(6,10,24,.16)');grad.addColorStop(.6,'rgba(6,10,24,.08)');grad.addColorStop(1,'rgba(6,10,24,0)');ctx.fillStyle=grad;
+    ctx.save();ctx.translate(x,y);ctx.scale(1.6,1);ctx.translate(-x,-y);ctx.fillRect(x-r,y-r,r*2,r*2);ctx.restore();}
+  ctx.restore();
 }
