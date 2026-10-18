@@ -13,7 +13,7 @@ test('every secret spot has a door off the trail that stays shut until its rule 
 });
 test('secret escapes stand inside their clearings and can be entered once the spot is open',()=>{
   let open=false;const w=new EscapeWorld(()=>true,null,()=>false,()=>false,()=>open),secret=EscapeCatalog.hidden.filter(l=>l.secret);
-  assert.equal(secret.length,9);assert.equal(w.secretNodes.length,9);
+  assert.equal(secret.length,10);assert.equal(w.secretNodes.length,10);
   for(const n of w.secretNodes){const s=w.secrets.find(s=>s.id===n.secret);assert.ok(Math.abs(n.x-s.x)<=s.rx&&Math.abs(n.y-s.y)<=s.ry,n.id+' inside '+s.id);assert.equal(w.grid[n.y][n.x],'.');}
   const n=w.secretNodes.find(n=>n.id==='frozen-run');Object.assign(w.player,{x:n.x,y:n.y});assert.equal(w.enter(),null);open=true;assert.equal(w.enter(),'hidden:frozen-run');
   const b=w.secrets.find(s=>s.id==='sallys-burrow');Object.assign(w.player,{x:b.x+.5,y:b.y+.5});assert.equal(w.enter(),'room:sallys-burrow');
@@ -55,4 +55,12 @@ test('a cracked hedge opens when Sally pushes into it, and stays open',()=>{
   Object.assign(w.player,{x:d.x+dx+.5,y:d.y+dy+.5});for(let i=0;i<30;i++)w.step(1/120,{x:-dx,y:-dy});
   assert.equal(bumped,'mossy-well');assert.equal(p.secretOpen('mossy-well'),true);assert.equal(w.floor(d.x+.5,d.y+.5),true);
   assert.equal(p.openSecret('star-garden'),false,'only cracked hedges give way to a push');
+});
+test('the Blind Grove opens for everyone once the first four areas are cleared, before the secret world shows',()=>{
+  const p=new EscapeProgress(null),chapters=EscapeWorld.chapters;
+  const clear=n=>{p.data.levels={};for(const l of EscapeCatalog.levels.slice(0,chapters[n-1].end))p.data.levels[l.id]={cleared:true,stars:1,bestTime:10,treasure:0};};
+  assert.equal(p.secretsRevealed(chapters),false,'no Gilded Burrow yet');
+  clear(3);assert.equal(p.secretOpen('blind-grove',chapters),false);assert.match(p.secret('blind-grove',chapters).hint,/first 4 areas/);
+  clear(4);assert.equal(p.secretOpen('blind-grove',chapters),true);
+  assert.equal(EscapeCatalog.hidden.find(l=>l.secret==='blind-grove').noAids,true,'its escape always hides the drawn hints');
 });

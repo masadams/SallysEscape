@@ -14,10 +14,12 @@
     'bestiary-grove':{name:'the Bestiary Grove',bestiary:true},
     'ice-cave':{name:'the Ice Cave',caches:['frost-north','frost-south'],clue:'Cold air seeps through the rock. Find both treasure caches in Frost Hollow to open the Ice Cave.'},
     'sunken-wreck':{name:'the Sunken Wreck',mastered:'tide',clue:'A mast pokes through the reeds off Sun and Sea. Earn every star in the Tide Pools to reach the Sunken Wreck.'},
+    // Open to every player once the early trail is behind them: an escape with no drawn hints at all.
+    'blind-grove':{name:'the Blind Grove',story:true,areas:4},
     'sallys-burrow':{name:'Sally\u2019s Burrow',story:true,cleared:'home',clue:'Home is just through here. Clear escape 100, Home, to reach it.'}
   };
   class EscapeProgress{
-    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],challengesSeen:[],attempts:{},masterySeen:[],skin:'classic',whisper:false,hidden:{},met:[],secrets:[],items:[],story:[]};this.lastPerfect=false;this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
+    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],challengesSeen:[],attempts:{},masterySeen:[],skin:'classic',whisper:false,hidden:{},met:[],secrets:[],items:[],story:[],hard:[]};this.lastPerfect=false;this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
     read(){
       let raw,value;
       try{raw=this.storage?.getItem(KEY);this.persistent=Boolean(this.storage);}catch(_){this.persistent=false;return;}
@@ -30,6 +32,7 @@
       if(Number.isInteger(value.goldflies)&&value.goldflies>this.data.goldflies)this.data.goldflies=Math.min(value.goldflies,100000);
       if(Array.isArray(value.regionsSeen))for(const i of value.regionsSeen)if(Number.isInteger(i)&&i>=0&&i<64&&!this.data.regionsSeen.includes(i))this.data.regionsSeen.push(i);
       if(Array.isArray(value.challengesSeen))for(const id of value.challengesSeen)if(catalog.challenges.some(c=>c.id===id)&&!this.data.challengesSeen.includes(id))this.data.challengesSeen.push(id);
+      if(Array.isArray(value.hard))for(const id of value.hard)if(typeof id==='string'&&/^[a-z0-9-]{1,60}$/.test(id)&&!this.data.hard.includes(id)&&this.data.hard.length<400)this.data.hard.push(id);
       if(Array.isArray(value.masterySeen))for(const t of value.masterySeen)if(typeof t==='string'&&/^[a-z]+$/.test(t)&&!this.data.masterySeen.includes(t))this.data.masterySeen.push(t);
       if(typeof value.skin==='string'&&/^[a-z]+$/.test(value.skin))this.data.skin=value.skin;
       if(value.whisper===true)this.data.whisper=true;
@@ -97,6 +100,7 @@
       if(rule.bestiary){const kinds=this.creatureKinds(),n=kinds.filter(k=>this.data.met.includes(k)).length;return {open:all||n>=kinds.length,have:n,need:kinds.length,hint:'Meet every creature on the trail to open '+rule.name+'.'};}
       if(rule.caches){const n=rule.caches.filter(c=>this.data.caches.includes(c)).length;return {open:all||n>=rule.caches.length,have:n,need:rule.caches.length,hint:rule.clue};}
       if(rule.mastered){const c=chapters.find(c=>c.theme===rule.mastered),open=all||Boolean(c&&this.mastered(c));return {open,have:open?1:0,need:1,hint:rule.clue};}
+      if(rule.areas){const n=chapters.slice(0,rule.areas).filter(c=>catalog.levels.slice(c.start,c.end).every(l=>this.data.levels[l.id]?.cleared)).length;return {open:all||n>=rule.areas,have:n,need:rule.areas,hint:'Clear every escape in the first '+rule.areas+' areas to open '+rule.name+'.'};}
       if(rule.cleared){const open=all||Boolean(this.data.levels[rule.cleared]?.cleared);return {open,have:open?1:0,need:1,hint:rule.clue};}
       if(rule.bump){const open=all||this.data.secrets.includes(id);return {open,have:open?1:0,need:1,hint:rule.clue,bump:true};}
       return {open:all,have:0,need:1,hint:rule.clue};
@@ -134,6 +138,9 @@
     write(){try{this.storage?.setItem(KEY,JSON.stringify(this.data));this.persistent=Boolean(this.storage);}catch(_){this.persistent=false;}}
     // A run that ends without escaping, or is abandoned part-way, uses up the first try.
     attempt(levelId){if(!catalog.levels.some(l=>l.id===levelId))return false;this.read();this.data.attempts[levelId]=(this.data.attempts[levelId]||0)+1;this.write();return true;}
+    // Escapes won in hard mode (no drawn hints) earn a mark of their own; stars count as usual.
+    markHard(id){this.read();if(typeof id!=='string'||this.data.hard.includes(id))return false;this.data.hard.push(id);this.write();return true;}
+    isHard(id){return this.data.hard.includes(id);}
     record(result){
       this.lastFirstTry=false;this.lastPerfect=false;
       // Workshop drafts are for testing: they never count.

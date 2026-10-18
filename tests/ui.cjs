@@ -111,3 +111,16 @@ test('walking the world map before any escape has run never touches a missing es
   const h=harness();h.run('showEscapeSelect();escapeGame=null;gameState="escapeSelect";const p={x:1,y:1,moving:true,sprinting:true,crawling:false,swimming:false};escapeFootsteps(p);p.x=3;escapeFootsteps(p);p.x=5;escapeFootsteps(p);');
   assert.equal(h.run('escapeFx.items.length'),0,'no step particles on the map');
 });
+test('a held throw swings out to full reach, rests, then eases back in, so a late release still has a choice',()=>{
+  const h=harness();const at=s=>h.run('escapeCharge={kind:"pebble",source:"key",start:millis()-'+s*1000+'};escapeChargePower()');
+  assert.equal(at(0),0);assert.ok(Math.abs(at(.375)-.5)<1e-9,'halfway out');assert.equal(at(.8),1,'rests at full reach');
+  assert.ok(Math.abs(at(.95+.375)-.5)<1e-9,'halfway back');assert.ok(at(1.69)<.02,'nearly back to a short toss');assert.ok(at(1.7+.3)>.3,'and out again');
+});
+test('hard mode hides the drawn hints, and a hard-mode win earns its mark',()=>{
+  const h=harness();h.run('escapeHardMode=true;startEscape({levelId:"quiet-vault",skipIntro:true});');
+  assert.equal(h.run('escapeAidsHidden()'),true);
+  h.run('escapeGame.hunters[0].state="chase";draw();');assert.equal(h.el('escape-warning').textContent,'','no creature warnings');
+  h.run('escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.finish("won","escaped");draw();escapeMoment.hold=0;draw();');
+  assert.match(h.el('escape-result-medals').textContent,/Hard mode/);assert.equal(h.run('escapeProgress.isHard("quiet-vault")'),true);
+  h.run('escapeHardMode=false;startEscape({levelId:"quiet-vault",skipIntro:true});');assert.equal(h.run('escapeAidsHidden()'),false,'hints come back with hard mode off');
+});

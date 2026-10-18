@@ -8737,7 +8737,7 @@
   //   _ gap   c crumbling floor  @ start  K key  X exit  1-5 treasure of that value
   //   o spore puffball  t tide flat (dry at low tide, water at high tide)  m moss (silent)  I ice wall (reflects a sentinel's gaze)
   // What an edited escape keeps from the game's own copy: its place on the trail and its ties.
-  const EDIT_KEEP=['unlockAfter','unlockChallenges','unlockAny','hidden','bonus','secret','stars','revision'];
+  const EDIT_KEEP=['unlockAfter','unlockChallenges','unlockAny','hidden','bonus','secret','stars','noAids','revision'];
   function fromMap(level){
     const rows=level.map,tiles=(chars)=>{const out=[];rows.forEach((row,y)=>[...row].forEach((ch,x)=>{if(chars.includes(ch))out.push([x,y]);}));return out;};
     const one=ch=>{const found=tiles(ch);if(found.length!==1)throw new Error(level.id+' needs exactly one '+ch);return found[0];};

@@ -230,6 +230,23 @@
  "#~~.....~~~.......~~.......~~2#",
  "#X~.....~~~~~~~~~~~~~~~~~~~~~~#",
  "###############################"]}
+  ,
+  // The Blind Grove: always played with no drawn hints. Every snake here shows what it will do in
+  // its own body (it lifts its head and turns before it looks), and Sally has to read it.
+  {explore:false,tailDrop:true,noAids:true,id:"blind-grove",name:"The Blind Grove",secret:"blind-grove",brief:"A hushed grove where nothing shows you where the snakes are looking. Watch them, not the ground.",hint:"Snakes turn their heads before they look your way, and freeze for a breath when they hear something. Keep to the leaves, skirt the gravel and move while they face away.",pebbles:2,tongues:1,guards:[{spawn:[17,2],facing:PI,patrol:[[13,1],[22,3]]},{spawn:[12,5],facing:0,patrol:[[3,5],[22,5]]},{spawn:[12,8],facing:PI,patrol:[[10,8],[14,8]]},{spawn:[14,9],facing:0,patrol:[[9,9],[21,9]]},{spawn:[15,11],facing:PI,patrol:[[10,11],[22,11]]}],map:[
+ "#########################",
+ "#@..L......#......L....2#",
+ "#.....N....#.##.........#",
+ "#..L.......L..#....L....#",
+ "#######..######..########",
+ "#....L.....1.....L......#",
+ "#.#####..L.....#####..#.#",
+ "#...L....#L.K.L#....L.#.#",
+ "#.#####..#.....#.N....#.#",
+ "#......L....3......L..#.#",
+ "#####..##########..####.#",
+ "#X.....L..........L....1#",
+ "#########################"]}
   ];
   root.EscapeHidden=routes;
   if(typeof module!=='undefined'&&module.exports)module.exports=routes;

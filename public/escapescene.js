@@ -5,7 +5,7 @@ function escapeUnlockBase(level){if(level.unlockAny)return 'Clear '+level.unlock
 function escapeChallengeLock(challenge){const gate=escapeProgress.challengeGate(challenge.id),level=EscapeCatalog.levels.find(l=>l.id===challenge.levelId);if(!gate||gate.open)return '';if(!gate.cleared)return 'Clear '+level.name+' to unlock.';const area=EscapeWorld.chapters.find(c=>c.start===challenge.starGate.from)?.name||'this area';return 'Earn '+gate.need+'★ in '+area+' to unlock ('+gate.stars+' so far).';}
 function escapeRecordSummary(level,saved,challenge=false){
   if(!saved)return '';
-  return challenge?'✓ Complete · Best '+saved.bestTime.toFixed(1)+'s':'★'.repeat(saved.stars)+'☆'.repeat(3-saved.stars)+' · Best '+saved.bestTime.toFixed(1)+'s'+(saved.perfect?' · ✦ Perfect':saved.firstTry?' · ✓ First try':'');
+  return challenge?'✓ Complete · Best '+saved.bestTime.toFixed(1)+'s':'★'.repeat(saved.stars)+'☆'.repeat(3-saved.stars)+' · Best '+saved.bestTime.toFixed(1)+'s'+(saved.perfect?' · ✦ Perfect':saved.firstTry?' · ✓ First try':'')+(escapeProgress.isHard(level.id)?' · ◆ Hard mode':'');
 }
 function escapeToolkit(level){return [[level.camos||0,'camouflage'],[level.seeds||0,'seed pod'],[level.tongues||0,'tongue grab'],[level.burrows,'burrow'],[level.pebbles,'pebble']].filter(([n])=>n>0).map(([n,label])=>n+' '+label+(n>1&&label!=='camouflage'?'s':'')).concat(level.requiredTreasure?[level.requiredTreasure+' treasure to escape']:[],level.timeLimit?[level.timeLimit+' second escape']:[],level.tailDrop?['spare tail']:[],level.regrowth?.length?[level.regrowth.length+' pink regrowth bug'+(level.regrowth.length>1?'s':'')]:[],level.hawk?['hawk overhead']:[],level.antTrails?[level.antTrails.length+' ant column'+(level.antTrails.length>1?'s':'')]:[],level.guards.some(h=>h.kind==='gecko')?['gecko thief']:[],level.cold?['cold rooms']:[],level.vents?[level.vents.length+' steam vents']:[]);}
 let escapeGame=null,escapeIntroOpen=false,escapeCharacter=null;
@@ -154,8 +154,10 @@ function tickEscapeCrawlTip(g){
   const tip=escapeTipQueue.shift();escapeTipsPending=escapeTipsPending.filter(t=>t!==tip);g.notice(tip.text());g.messageUntil=g.elapsed+5;
   try{escapeStore.setItem(tip.key,'1');}catch(_){}
 }
+// A run counts as hard only when hard mode was on from its start to its end.
+let escapeHardRun=false;
 function startEscape(options={}){
-  escapeAbandonRun();
+  escapeAbandonRun();escapeHardRun=escapeHardMode;
   escapeFx.clear();escapeFxDecoy=null;escapeMoment=null;escapeCurtain={at:millis(),ms:options.quick?260:620,seed:Math.random()*10};
   if(options.custom?false:options.hiddenId?!escapeProgress.hiddenLevelOpen(options.hiddenId,EscapeWorld.chapters):options.challengeId?!escapeProgress.challengeUnlocked(options.challengeId):!escapeProgress.unlocked(options.levelId||'quiet-vault')){showEscapeSelect();return;}
   // Now and then (about one escape in four, never in a challenge) glow bugs drift about as a bonus.
@@ -200,7 +202,10 @@ function useEscapeBurrow(){if(gameState==='escape'&&!paused&&escapeGame){escapeG
 // While held, the stick or arrows aim instead of walking, and a dotted line shows the flight.
 let escapeCharge=null;
 const ESCAPE_CHARGE_TIME=.75;
-function escapeChargePower(){return escapeCharge?Math.min(1,(millis()-escapeCharge.start)/1000/ESCAPE_CHARGE_TIME):0;}
+// Held, the throw swings out to full reach, rests there a moment, then eases back in and out again,
+// so a missed release can be caught on the next swing instead of only ever throwing at full reach.
+const ESCAPE_CHARGE_REST=.2;
+function escapeChargePower(){if(!escapeCharge)return 0;const T=ESCAPE_CHARGE_TIME,R=ESCAPE_CHARGE_REST,t=((millis()-escapeCharge.start)/1000)%(2*T+R);return t<T?t/T:t<T+R?1:1-(t-T-R)/T;}
 function startEscapeCharge(kind,source='key'){
   if(gameState!=='escape'||paused||!escapeGame||escapeCharge)return;if(escapeIntroOpen){hideEscapeIntro();return;}
   const g=escapeGame;if(!g.active())return;
@@ -344,11 +349,11 @@ function renderEscapeHUD(force=false){
   const priority={patrol:0,recover:0,decoy:1,search:2,alert:3,chase:4,windup:5,charge:6,sting:7,leap:6,emerge:0,still:0,follow:0,dig:1,buried:1,rise:5,glimmer:5,swoop:6,rooted:0,reveal:5,lunge:6,retract:1,clash:2,glare:5,return:1},hunter=g.hunters.length?g.hunters.reduce((a,b)=>priority[a.state]>=priority[b.state]?a:b):{kind:'none',state:'patrol'};
   const moods={patrol:'',alert:hunter.reason==='heard'?'It heard you. Find quiet floor or cover!':'It is looking your way. Find cover!',chase:'Spotted! Break sight or distract it.',decoy:'Following the pebble. Slip past!',search:'Searching. Keep quiet.'};
   const beetleWarning=hunter.kind==='owl'&&['glare','swoop'].includes(hunter.state)?'An owl has seen you! Leave the marked spot before it swoops.':hunter.kind==='mimic'&&['reveal','lunge'].includes(hunter.state)?'That chest is a mimic! Change direction!':hunter.kind==='moth'&&['glimmer','swoop'].includes(hunter.state)?'Pale wings gathering! Step away from the glowing mark.':hunter.kind==='cricket'&&hunter.state==='rise'?'The ground is heaving! Step away.':['toad','spider'].includes(hunter.kind)&&['windup','leap'].includes(hunter.state)?(hunter.kind==='toad'?'Toad tongue! Break its line of sight.':'Spider aiming silk! Leave the marked ground.'):(g.logs||[]).some(l=>l.warning)?'A log is about to roll! Get out of its lane.':hunter.kind==='toad'&&['windup','tongue'].includes(hunter.state)?'Toad tongue! Break its line of sight.':hunter.kind==='spider'&&hunter.state==='rush'?'A plucked web brings the spider!':hunter.kind==='cricket'&&hunter.state==='chirp'?'A cricket is about to chirp!':hunter.kind==='scorpion'&&['windup','sting','raise'].includes(hunter.state)?(hunter.state==='raise'?'Scorpion tail rising! Get out of its ring.':'Scorpion striking! Change direction!'):['windup','charge'].includes(hunter.state)?'Beetle '+(hunter.state==='windup'?'aiming':'charging')+' from '+(Math.abs(hunter.x-g.player.x)>Math.abs(hunter.y-g.player.y)?hunter.x<g.player.x?'the left':'the right':hunter.y<g.player.y?'above':'below')+'! Dodge sideways.':null;
-  document.getElementById('escape-warning').textContent=paused?'Paused':g.vents.some(v=>v.warning&&v.tiles.some(([x,y])=>Math.hypot(x+.5-g.player.x,y+.5-g.player.y)<2.2))?'A vent is hissing! Clear its lane.':g.player.chilled?(g.player.warmth<=0?'Sally is frozen stiff! Crawl to a warm stone.':'Sally is freezing! Get to a warm stone or warm ground.'):g.hunters.some(h=>h.kind==='gecko'&&h.state==='flee')?'Catch the gecko before it reaches its burrow!':g.hunters.some(h=>h.kind==='gecko'&&h.state==='dash')?'A gecko is after your treasure! Outrun it or hide.':g.antTrails.length&&g.antAt(g.player,2)?'Ants marching! Cross in the gaps between groups.':g.hawk&&['stalk','dive'].includes(g.hawk.state)?(g.shaded()||g.player.hidden?'The hawk is circling. Stay put—you are hidden.':'A hawk is circling! Get under an awning, into leaves, or press X to blend in.'):g.droppedTail?'Your tail is wriggling. The hunters want it—run!':beetleWarning||(priority[hunter.state]<3?(growing&&growing.expires-g.elapsed<=1.2?'The seed growth is fading. Clear the vines or find fresh cover.':crossing&&crossing.expiresAt-g.elapsed<=1.2?'The crossing is folding! Clear the planks or doorway.':hunter.state==='clash'?'The hunters clash! Slip past.':g.player.swimming?'Swimming slows Sally. Aim for the next island.':g.player.webbed?'Silk slows your feet. Move off the web.':g.pendingSpawns.length?'A den is opening. Keep clear of the shaking ground.':null):null)|| (g.player.hidden?(hunter.state==='chase'?'Hidden, but it remembers where you were.':(g.player.underground?'Underground. Nothing can reach Sally here.':g.inCloud?.(g.player)&&g.clouds?.length?'Hidden in the spores, even on the move.':g.moss?.has(g.tileKey(g.player))&&!g.player.moving?'Hidden. Wait for an opening.':'Hidden in the leaves. Wait for an opening.')):['alert','chase'].includes(hunter.state)?moods[hunter.state]:g.player.noisy&&!g.player.sprinting?'Noisy ground! Step onto dark floor to stay quiet.':g.messageUntil>g.elapsed?g.message:moods[hunter.state]??(hunter.state==='rooted'?'The garden stirs.':['still','follow'].includes(hunter.state)?'Something rustles nearby.':hunter.kind==='scorpion'?'Scorpion recovering. Slip past.':hunter.kind==='beetle'?'The beetle is catching its breath.':'The hunter is recovering. Slip past.'));
+  document.getElementById('escape-warning').textContent=paused?'Paused':escapeAidsHidden(g)?'':g.vents.some(v=>v.warning&&v.tiles.some(([x,y])=>Math.hypot(x+.5-g.player.x,y+.5-g.player.y)<2.2))?'A vent is hissing! Clear its lane.':g.player.chilled?(g.player.warmth<=0?'Sally is frozen stiff! Crawl to a warm stone.':'Sally is freezing! Get to a warm stone or warm ground.'):g.hunters.some(h=>h.kind==='gecko'&&h.state==='flee')?'Catch the gecko before it reaches its burrow!':g.hunters.some(h=>h.kind==='gecko'&&h.state==='dash')?'A gecko is after your treasure! Outrun it or hide.':g.antTrails.length&&g.antAt(g.player,2)?'Ants marching! Cross in the gaps between groups.':g.hawk&&['stalk','dive'].includes(g.hawk.state)?(g.shaded()||g.player.hidden?'The hawk is circling. Stay put—you are hidden.':'A hawk is circling! Get under an awning, into leaves, or press X to blend in.'):g.droppedTail?'Your tail is wriggling. The hunters want it—run!':beetleWarning||(priority[hunter.state]<3?(growing&&growing.expires-g.elapsed<=1.2?'The seed growth is fading. Clear the vines or find fresh cover.':crossing&&crossing.expiresAt-g.elapsed<=1.2?'The crossing is folding! Clear the planks or doorway.':hunter.state==='clash'?'The hunters clash! Slip past.':g.player.swimming?'Swimming slows Sally. Aim for the next island.':g.player.webbed?'Silk slows your feet. Move off the web.':g.pendingSpawns.length?'A den is opening. Keep clear of the shaking ground.':null):null)|| (g.player.hidden?(hunter.state==='chase'?'Hidden, but it remembers where you were.':(g.player.underground?'Underground. Nothing can reach Sally here.':g.inCloud?.(g.player)&&g.clouds?.length?'Hidden in the spores, even on the move.':g.moss?.has(g.tileKey(g.player))&&!g.player.moving?'Hidden. Wait for an opening.':'Hidden in the leaves. Wait for an opening.')):['alert','chase'].includes(hunter.state)?moods[hunter.state]:g.player.noisy&&!g.player.sprinting?'Noisy ground! Step onto dark floor to stay quiet.':g.messageUntil>g.elapsed?g.message:moods[hunter.state]??(hunter.state==='rooted'?'The garden stirs.':['still','follow'].includes(hunter.state)?'Something rustles nearby.':hunter.kind==='scorpion'?'Scorpion recovering. Slip past.':hunter.kind==='beetle'?'The beetle is catching its breath.':'The hunter is recovering. Slip past.'));
 }
 function showEscapeResult(){
   escapeResultShown=true;gameState='escapeResult';clearTouchInput();suppressHeldKeys();
-  const r=escapeGame.result,won=r.status==='won';
+  const r=escapeGame.result,won=r.status==='won',hardWin=won&&!r.challengeId&&!escapeGame.level.custom&&!r.draft&&(escapeHardRun||escapeGame.level.noAids);if(hardWin)escapeProgress.markHard(r.levelId);
   escapeProgress.record(r);if(typeof escapeStoryForResult==='function')escapeStoryForResult(escapeGame.level,won);if(typeof EscapePlayData!=='undefined')EscapePlayData.record(escapeGame,r.status,escapeDevice());const firstTry=won&&!r.challengeId&&escapeProgress.lastFirstTry,perfect=won&&!r.challengeId&&escapeProgress.lastPerfect;document.getElementById('escape-result').classList.toggle('escape-first-try',firstTry&&!perfect);document.getElementById('escape-result').classList.toggle('escape-perfect',perfect);
   document.getElementById('game-area').classList.add('escape-results-open');
   document.getElementById('escape-result-location').textContent=r.levelName;
@@ -362,7 +367,7 @@ function showEscapeResult(){
   const best=!r.challengeId&&escapeProgress.data.levels[r.levelId];
   document.getElementById('escape-result-summary').textContent=won?rating+tailNote+' Treasure '+r.treasure+' / '+r.totalTreasure+' · '+r.time.toFixed(1)+'s':r.message+tailNote;
   if(r.glowbugs)document.getElementById('escape-result-summary').textContent+=' · ✦ '+r.glowbugs+' glow bug'+(r.glowbugs>1?'s':'')+' freed';
-  document.getElementById('escape-result-medals').textContent=won?(r.challengeId?'✓ '+escapeGame.challenge.name:' · ✓ Escape · '+(r.treasure>=Math.ceil(r.totalTreasure*.6)?'✓':'○')+' Collect '+Math.ceil(r.totalTreasure*.6)+'+ treasure · '+(r.alarms===0&&r.hasTail!==false?'✓':'○')+' No alarm'+(r.hasTail===false?' · tail lost':'')+(firstTry?' · ✓ First try bonus':'')):(best?'Your best here: '+escapeRecordSummary(escapeGame.level,best)+'.':'Every attempt teaches something new.');
+  document.getElementById('escape-result-medals').textContent=won?(r.challengeId?'✓ '+escapeGame.challenge.name:' · ✓ Escape · '+(r.treasure>=Math.ceil(r.totalTreasure*.6)?'✓':'○')+' Collect '+Math.ceil(r.totalTreasure*.6)+'+ treasure · '+(r.alarms===0&&r.hasTail!==false?'✓':'○')+' No alarm'+(r.hasTail===false?' · tail lost':'')+(firstTry?' · ✓ First try bonus':'')+(hardWin?' · ◆ Hard mode':'')):(best?'Your best here: '+escapeRecordSummary(escapeGame.level,best)+'.':'Every attempt teaches something new.');
   // The stars pop in one at a time, each with a chime that climbs.
   if(won&&!r.challengeId){const medals=document.getElementById('escape-result-medals'),row=document.createElement('span');row.className='escape-stars';
     for(let i=0;i<3;i++){const star=document.createElement('span');star.className=i<r.stars?'star-pop':'star-pop star-empty';star.style.animationDelay=(.25+i*.3)+'s';star.textContent=i<r.stars?'★':'☆';row.appendChild(star);
@@ -495,8 +500,13 @@ function drawEscapeCurtain(){
 }
 // The mark over a hunter: "?" while it is unsure, with a ring filling as it grows surer, then a
 // "!" that pops when it gives chase; a note while it chases a pebble; dots while it searches.
+// Hard mode (an option) and the Blind Grove hide every drawn aid: gaze cones, ?/! marks, aim lines
+// and charge lanes, strike and hearing rings, noise rings, off-screen markers, the danger edge and
+// creature warnings. The creatures' own body tells, their sounds and the music still give them away.
+function escapeAidsHidden(g=escapeGame){return Boolean((typeof escapeHardMode!=='undefined'&&escapeHardMode)||g?.level?.noAids);}
 const escapeMarkPops=new WeakMap();
 function escapeHunterMark(h,cell,g){
+  if(escapeAidsHidden(g))return;
   const mark=h.state==='alert'?'?':['chase','windup','charge','sting','leap','glimmer','swoop','reveal','lunge','snap','peek','scuttle','aim','raise','stir','surface','ripple'].includes(h.state)?'!':h.state==='decoy'?'♪':'…';
   let seen=escapeMarkPops.get(h);if(!seen||seen.mark!==mark){seen={mark,at:escapeFxClock};escapeMarkPops.set(h,seen);}
   const age=escapeFxClock-seen.at,scale=mark==='!'&&age<.3?1+.6*Math.sin(Math.min(1,age/.3)*Math.PI):1,y=(h.y-.65)*cell;
@@ -514,7 +524,7 @@ function drawEscapeFx(g,cell){
     // A noise ring: a soft shimmer through the tips of its rays, like a vibration in the air rather
     // than a line, easing out and fading, with a fainter echo just behind it. Where rays part (a wall
     // between them, or a bounce) it breaks instead of bridging the gap.
-    if(p.kind==='ring'){const n=p.rays?.length;if(!n)continue;const life=age/p.life;noFill();
+    if(p.kind==='ring'){const n=p.rays?.length;if(!n||escapeAidsHidden())continue;const life=age/p.life;noFill();
       for(const [lag,wide,thin] of [[0,30,60],[.14,16,24]]){const f=Math.min(1,Math.max(0,life-lag)),e=1-(1-f)*(1-f),fade=(1-f)*(1-f)*Math.min(1,f*8);if(!fade)continue;
         const at=(ray,i)=>{const q=ray[Math.min(ray.length-1,Math.round(e*(ray.length-1)))],w=.05*Math.sin(i*1.7+age*40)*(1-f);return [q[0]+w,q[1]+w,q[2]];},gap=.8+e*p.r*.25;
         for(const [weight,alpha] of [[cell*.16,wide],[Math.max(1,cell*.018),thin]]){if(!alpha)continue;strokeWeight(weight);let prev=at(p.rays[n-1],n-1);
@@ -631,7 +641,7 @@ function drawEscapeFog(g,cell){
 let escapeDanger=0,escapeHush=0;
 function drawEscapeGrade(mood,g){
   if(!escapeLightingFull())return;const ctx=drawingContext,W=width,H=height,clock=g?.elapsed||0;
-  if(g){const chase=EscapeMusic.stateFor({screen:'game',game:g})==='chase';escapeDanger+=((chase?1:0)-escapeDanger)*(chase?.12:.03);escapeHush+=((g.player.hidden?1:0)-escapeHush)*.08;}
+  if(g){const chase=EscapeMusic.stateFor({screen:'game',game:g})==='chase';escapeDanger+=((chase&&!escapeAidsHidden(g)?1:0)-escapeDanger)*(chase?.12:.03);escapeHush+=((g.player.hidden?1:0)-escapeHush)*.08;}
   if(mood)drawEscapeMood(ctx,mood,W,H,clock);
   if(escapeHush>.01){ctx.save();ctx.fillStyle='rgba(6,12,22,'+(.14*escapeHush)+')';ctx.fillRect(0,0,W,H);ctx.restore();}
   if(escapeDanger>.01){ctx.save();const pulse=.85+.15*Math.sin(clock*4),grad=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.32,W/2,H/2,Math.hypot(W,H)*.55);
@@ -776,7 +786,8 @@ function drawEscapeVault(){
   for(const den of g.pendingSpawns){if(view.follow&&!g.visibleTile(Math.floor(den.x),Math.floor(den.y)))continue;noFill();stroke(231,161,121);strokeWeight(cell*.05);ellipse(den.x*cell,den.y*cell,cell*(.7+Math.sin(g.elapsed*8)*.12),cell*.5);fill(237,177,142);noStroke();textSize(cell*.5);text('!',den.x*cell,(den.y-.5)*cell);}
   for(const h of g.hunters){const ang=h.facing,cone=h.kind==='beetle'?PI/5:PI/3;
   if(view.follow&&!g.visibleTile(Math.floor(h.x),Math.floor(h.y)))continue;
-  if(!g.level.dark&&!['millipede','cricket','moth','mimic','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','crab','fox','echofrog','chameleon','sentinel','cloudray'].includes(h.kind)&&['patrol','alert'].includes(h.state)){
+  const aids=!escapeAidsHidden(g);
+  if(aids&&!g.level.dark&&!['millipede','cricket','moth','mimic','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','crab','fox','echofrog','chameleon','sentinel','cloudray'].includes(h.kind)&&['patrol','alert'].includes(h.state)){
     // Many fine rays, so the gaze hugs walls and corners instead of cutting across them, reaching as
     // far as the guard really sees (further when Sally stands in light), and fading with distance.
     const p=g.player,range=(g.hunters.length>1&&g.lit()||g.lights.length>0&&g.inLight(p))?6.5:4.5,step=.15;
@@ -784,15 +795,15 @@ function drawEscapeVault(){
     beginShape();vertex(h.x*cell,h.y*cell);
     for(let a=-cone;a<=cone+.001;a+=cone/24){let reach=0,from=h;for(let d=step;d<=range;d+=step){const to={x:h.x+Math.cos(ang+a)*d,y:h.y+Math.sin(ang+a)*d};if(!g.clear(from,to,true))break;reach=d;from=to;}vertex((h.x+Math.cos(ang+a)*reach)*cell,(h.y+Math.sin(ang+a)*reach)*cell);}endShape(CLOSE);
   }
-  if(h.kind==='toad'&&h.state==='windup'){let d=0;const dx=Math.cos(h.facing),dy=Math.sin(h.facing);while(d<5.5&&g.sightFloor(Math.floor(h.x+dx*(d+.1)),Math.floor(h.y+dy*(d+.1))))d+=.1;stroke(240,120,140,90+70*Math.sin(g.elapsed*22));strokeWeight(cell*.06);drawingContext.setLineDash([cell*.12,cell*.12]);line(h.x*cell,h.y*cell,(h.x+dx*d)*cell,(h.y+dy*d)*cell);drawingContext.setLineDash([]);}
+  if(aids&&h.kind==='toad'&&h.state==='windup'){let d=0;const dx=Math.cos(h.facing),dy=Math.sin(h.facing);while(d<5.5&&g.sightFloor(Math.floor(h.x+dx*(d+.1)),Math.floor(h.y+dy*(d+.1))))d+=.1;stroke(240,120,140,90+70*Math.sin(g.elapsed*22));strokeWeight(cell*.06);drawingContext.setLineDash([cell*.12,cell*.12]);line(h.x*cell,h.y*cell,(h.x+dx*d)*cell,(h.y+dy*d)*cell);drawingContext.setLineDash([]);}
   if(h.kind==='toad'&&h.state==='tongue'&&h.tongueLength>0){stroke(232,110,140);strokeWeight(cell*.12);line(h.x*cell,h.y*cell,(h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell);noStroke();fill(250,150,170);ellipse((h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell,cell*.22,cell*.22);}
-  if(h.kind==='cricket'&&h.state==='chirp'){noFill();for(let k=0;k<3;k++){const r=((g.elapsed*3+k/3)%1);stroke(255,230,140,200*(1-r));strokeWeight(cell*.04);ellipse(h.x*cell,h.y*cell,cell*(.5+r*2.5),cell*(.5+r*2.5));}}
+  if(aids&&h.kind==='cricket'&&h.state==='chirp'){noFill();for(let k=0;k<3;k++){const r=((g.elapsed*3+k/3)%1);stroke(255,230,140,200*(1-r));strokeWeight(cell*.04);ellipse(h.x*cell,h.y*cell,cell*(.5+r*2.5),cell*(.5+r*2.5));}}
   // A scorpion's strike ring is always shown: bright while the tail is up, faint while it rests.
-  if(h.kind==='scorpion'&&h.state!=='buried'){const up=h.tailUp||['raise','windup','sting'].includes(h.state),r=(h.reach||1.8)*2*cell;noStroke();fill(255,140,70,up?34:12);ellipse(h.x*cell,h.y*cell,r,r);noFill();stroke(255,up?150:200,up?70:150,up?200:70);strokeWeight(cell*(up?.06:.035));drawingContext.setLineDash(up?[]:[cell*.18,cell*.14]);ellipse(h.x*cell,h.y*cell,r,r);drawingContext.setLineDash([]);}
+  if(aids&&h.kind==='scorpion'&&h.state!=='buried'){const up=h.tailUp||['raise','windup','sting'].includes(h.state),r=(h.reach||1.8)*2*cell;noStroke();fill(255,140,70,up?34:12);ellipse(h.x*cell,h.y*cell,r,r);noFill();stroke(255,up?150:200,up?70:150,up?200:70);strokeWeight(cell*(up?.06:.035));drawingContext.setLineDash(up?[]:[cell*.18,cell*.14]);ellipse(h.x*cell,h.y*cell,r,r);drawingContext.setLineDash([]);}
   // A charging beetle's lane runs until the first wall, so Sally can see where not to stand.
-  if(h.kind==='beetle'&&['windup','charge'].includes(h.state)){let d=0;const dx=Math.cos(h.facing),dy=Math.sin(h.facing),from=h.state==='charge'&&h.chargeFrom?h.chargeFrom:h,limit=h.aim?Math.hypot(h.aim.x-from.x,h.aim.y-from.y)+3-Math.hypot(h.x-from.x,h.y-from.y):18;while(d<limit&&g.fits({x:h.x+dx*(d+.25),y:h.y+dy*(d+.25)},.22))d+=.25;const pulse=h.state==='windup'?.5+.5*Math.sin(g.elapsed*18):1;push();translate(h.x*cell,h.y*cell);rotate(h.facing);noStroke();fill(255,110,60,50+50*pulse);rect(0,-cell*.42,d*cell,cell*.84);fill(255,200,120,40+40*pulse);for(let s=.3;s<d;s+=.6)quad(s*cell,-cell*.42,(s+.25)*cell,-cell*.42,(s+.05)*cell,cell*.42,(s-.2)*cell,cell*.42);stroke(255,150,80,160+80*pulse);strokeWeight(cell*.05);line(0,-cell*.42,d*cell,-cell*.42);line(0,cell*.42,d*cell,cell*.42);pop();}
+  if(aids&&h.kind==='beetle'&&['windup','charge'].includes(h.state)){let d=0;const dx=Math.cos(h.facing),dy=Math.sin(h.facing),from=h.state==='charge'&&h.chargeFrom?h.chargeFrom:h,limit=h.aim?Math.hypot(h.aim.x-from.x,h.aim.y-from.y)+3-Math.hypot(h.x-from.x,h.y-from.y):18;while(d<limit&&g.fits({x:h.x+dx*(d+.25),y:h.y+dy*(d+.25)},.22))d+=.25;const pulse=h.state==='windup'?.5+.5*Math.sin(g.elapsed*18):1;push();translate(h.x*cell,h.y*cell);rotate(h.facing);noStroke();fill(255,110,60,50+50*pulse);rect(0,-cell*.42,d*cell,cell*.84);fill(255,200,120,40+40*pulse);for(let s=.3;s<d;s+=.6)quad(s*cell,-cell*.42,(s+.25)*cell,-cell*.42,(s+.05)*cell,cell*.42,(s-.2)*cell,cell*.42);stroke(255,150,80,160+80*pulse);strokeWeight(cell*.05);line(0,-cell*.42,d*cell,-cell*.42);line(0,cell*.42,d*cell,cell*.42);pop();}
   if(h.kind==='beetle'&&h.state==='stunned'){noStroke();fill(255,236,150);textSize(cell*.32);for(let i=0;i<3;i++){const a=g.elapsed*5+i*TWO_PI/3;text('✦',(h.x+Math.cos(a)*.38)*cell,(h.y-.55+Math.sin(a)*.12)*cell);}}
-  if(['windup','sting','glimmer','swoop','reveal','lunge','glare','rear'].includes(h.state)&&h.aim&&h.kind!=='beetle'){stroke(255,191,80,180);strokeWeight(cell*.07);line(h.x*cell,h.y*cell,h.aim.x*cell,h.aim.y*cell);noFill();ellipse(h.aim.x*cell,h.aim.y*cell,cell*(h.kind==='scorpion'?1.8:h.kind==='spider'?1.3:.7),cell*(h.kind==='scorpion'?1.8:h.kind==='spider'?1.3:.7));}
+  if(aids&&['windup','sting','glimmer','swoop','reveal','lunge','glare','rear'].includes(h.state)&&h.aim&&h.kind!=='beetle'){stroke(255,191,80,180);strokeWeight(cell*.07);line(h.x*cell,h.y*cell,h.aim.x*cell,h.aim.y*cell);noFill();ellipse(h.aim.x*cell,h.aim.y*cell,cell*(h.kind==='scorpion'?1.8:h.kind==='spider'?1.3:.7),cell*(h.kind==='scorpion'?1.8:h.kind==='spider'?1.3:.7));}
   }
   // Clip the artwork to floor tiles, so toes and a turning tail are occluded by
   // masonry. The rig also keeps its centreline and planted feet on open floor.
@@ -837,7 +848,7 @@ function drawEscapeVault(){
     if(g.elapsed<g.flashUntil){noStroke();fill(235,240,255,(escapeLightingFull()?110:170)*(g.flashUntil-g.elapsed)/.4);rect(0,0,width,height);}}
   // Hunters off the edge of a following view: an alerted one shows a bright '!', and in a phone's
   // close view a nearby one on patrol shows a dim marker, so zooming in never hides danger.
-  if(view.follow)for(const h of g.hunters){
+  if(view.follow&&!escapeAidsHidden(g))for(const h of g.hunters){
     const alert=['alert','chase','windup','charge','sting','leap','rush','pounce','crouch'].includes(h.state),near=close&&!g.level.explore&&!['buried','rooted','shell','lurking','emerge'].includes(h.state)&&Math.hypot(h.x-g.player.x,h.y-g.player.y)<11;
     if(!alert&&!near)continue;const x=h.x*cell+ox,y=h.y*cell+oy;
     if(x<12||y<12||x>width-12||y>height-12){const px=Math.max(16,Math.min(width-16,x)),py=Math.max(16,Math.min(height-16,y));noStroke();
@@ -890,7 +901,7 @@ function drawEscapeHeron(h,cell,clock){
 function drawEscapeMantis(h,cell,clock,shown){
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);const sway=h.state==='still'?Math.sin(clock*1.1+h.y)*.03:0;rotate(sway);
   if(!shown){scale(1.45);stroke(120,104,70,70);strokeWeight(Math.max(1,cell*.05));line(-cell*.32,0,cell*.1,0);line(cell*.1,0,cell*.26,-cell*.08);strokeWeight(Math.max(1,cell*.025));line(-cell*.1,0,-cell*.18,cell*.14);pop();return;}
-  noStroke();fill(220,150,60,h.state==='raise'?105:h.state==='strike'?30:42);const r=h.reach;beginShape();vertex(cell*.15,-cell*.42);vertex(cell*r,-cell*(.42+r*.3));vertex(cell*r,cell*(.42+r*.3));vertex(cell*.15,cell*.42);endShape(CLOSE);
+  if(!escapeAidsHidden()){noStroke();fill(220,150,60,h.state==='raise'?105:h.state==='strike'?30:42);const r=h.reach;beginShape();vertex(cell*.15,-cell*.42);vertex(cell*r,-cell*(.42+r*.3));vertex(cell*r,cell*(.42+r*.3));vertex(cell*.15,cell*.42);endShape(CLOSE);}
   scale(1.45);
   stroke(96,150,70);strokeWeight(Math.max(1,cell*.03));for(const side of [-1,1])for(const o of [-.18,.02]){line(cell*o,0,cell*(o-.12),side*cell*.26);}
   noStroke();fill(118,176,84);ellipse(-cell*.14,0,cell*.5,cell*.16);fill(140,196,96);ellipse(cell*.12,0,cell*.24,cell*.1);
@@ -908,7 +919,7 @@ function drawEscapeWasp(x,y,cell,clock,seed){
 function drawEscapeWaspNest(h,cell,clock){
   const shake=h.state==='stir'?Math.sin(clock*60)*cell*.04:0,nx=h.nest.x*cell+shake,ny=h.nest.y*cell;
   // Its hearing range is marked: running inside the dashed ring stirs it.
-  if(h.state==='nest'){noFill();stroke(245,196,40,32);strokeWeight(Math.max(1,cell*.02));drawingContext.setLineDash?.([cell*.1,cell*.12]);ellipse(h.nest.x*cell,ny,cell*7,cell*7);drawingContext.setLineDash?.([]);}
+  if(h.state==='nest'&&!escapeAidsHidden()){noFill();stroke(245,196,40,32);strokeWeight(Math.max(1,cell*.02));drawingContext.setLineDash?.([cell*.1,cell*.12]);ellipse(h.nest.x*cell,ny,cell*7,cell*7);drawingContext.setLineDash?.([]);}
   push();translate(nx,ny);scale(1.35);translate(-nx,-ny);
   noStroke();fill(0,0,0,50);ellipse(nx,ny+cell*.3,cell*.6,cell*.2);fill(186,174,150);ellipse(nx,ny,cell*.62,cell*.78);
   stroke(150,138,116);strokeWeight(Math.max(1,cell*.025));noFill();for(let k=-1;k<=1;k++)arc(nx,ny+k*cell*.18,cell*.6,cell*.22,0,PI);noStroke();fill(60,48,32);ellipse(nx,ny+cell*.28,cell*.16,cell*.12);
@@ -1078,7 +1089,7 @@ function drawEscapeGecko(h,cell,clock){
 }
 function drawEscapeOwl(h,cell,g){
   const perch=h.perch||h;
-  if(h.state==='patrol'){noStroke();fill(255,214,120,26);beginShape();vertex(h.x*cell,h.y*cell);
+  if(h.state==='patrol'&&!escapeAidsHidden(g)){noStroke();fill(255,214,120,26);beginShape();vertex(h.x*cell,h.y*cell);
     for(let a=-PI/9;a<=PI/9+.001;a+=PI/36){let reach=0;for(let d=.2;d<=7;d+=.2){if(!g.clear(h,{x:h.x+Math.cos(h.facing+a)*d,y:h.y+Math.sin(h.facing+a)*d},true))break;reach=d;}vertex((h.x+Math.cos(h.facing+a)*reach)*cell,(h.y+Math.sin(h.facing+a)*reach)*cell);}endShape(CLOSE);}
   noStroke();fill(60,42,30);ellipse(perch.x*cell,(perch.y+.32)*cell,cell*.6,cell*.14);
   push();translate(h.x*cell,h.y*cell);scale(1.4);const flying=['swoop','return'].includes(h.state);

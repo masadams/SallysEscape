@@ -25,6 +25,7 @@
     {id:'challenge-shrine',name:'Challenge Shrine',x:68,y:56,rx:3,ry:3},{id:'bestiary-grove',name:'Bestiary Grove',x:90,y:81,rx:3,ry:3},
     {id:'ice-cave',name:'Ice Cave',x:14,y:111,rx:3,ry:3},{id:'sunken-wreck',name:'Sunken Wreck',x:3,y:80,rx:2,ry:2},
     {id:'fairy-ring',name:'Fairy Ring',x:84,y:89,rx:0,ry:0},{id:'struck-oak',name:'Struck Oak',x:95,y:89,rx:0,ry:0},
+    {id:'blind-grove',name:'Blind Grove',x:89,y:31,rx:3,ry:3},
     {id:'sallys-burrow',name:'Sally\'s Burrow',x:31,y:118,rx:4,ry:3,via:'home'}
   ];
   class EscapeWorld{

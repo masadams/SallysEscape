@@ -41,7 +41,9 @@
     // Story cards: a slow music box for Old Moss's journal, a warmer theme once Sally is a Wayfinder.
     tale:{chords:[['C3','E3','G3','B3'],['A2','C3','E3','G3'],['F2','A2','C3','E3'],['G2','B2','D3','F3']],bass:['C2','A1','F1','G1'],fifth:['G2','E2','C2','D2'],scale:['C5','D5','E5','G5','A5','C6'],seed:109},
     wayfinder:{chords:[['D3','F#3','A3','C#4'],['B2','D3','F#3','A3'],['G2','B2','D3','F#3'],['A2','C#3','E3','G3']],bass:['D2','B1','G1','A1'],fifth:['A2','F#2','D2','E2'],scale:['D5','E5','F#5','A5','B5','D6'],seed:113},
-    wreck:{chords:[['B2','D3','F#3'],['G3','B3','D4'],['A3','C#4','E4'],['F#3','A#3','C#4']],bass:['B1','G2','A2','F#2'],fifth:['F#2','D3','E3','C#3'],scale:['B4','C#5','D5','E5','F#5','A5'],seed:107}
+    wreck:{chords:[['B2','D3','F#3'],['G3','B3','D4'],['A3','C#4','E4'],['F#3','A#3','C#4']],bass:['B1','G2','A2','F#2'],fifth:['F#2','D3','E3','C#3'],scale:['B4','C#5','D5','E5','F#5','A5'],seed:107},
+    // The Blind Grove: hushed and watchful, a minor key lifted by a dreamy major seventh, ending on an unresolved sus chord.
+    blind:{chords:[['E3','B3','F#4'],['C3','G3','B3','E4'],['A2','E3','B3','C4'],['B2','E3','F#3','A3']],bass:['E2','C2','A1','B1'],fifth:['B2','G2','E2','F#2'],scale:['E4','F#4','G4','B4','C5','D5'],seed:109}
   };
   // Each region has its own style: a mood, a lead instrument, a tempo and a groove.
   const STYLES={
@@ -68,7 +70,8 @@
     'secret:challenge-shrine':{mood:'shrine',lead:'pluck',bpm:84,groove:3},
     'secret:bestiary-grove':{mood:'jungle',lead:'flute',bpm:90,groove:2,transpose:-2},
     'secret:ice-cave':{mood:'frost',lead:'ghost',bpm:72,groove:3,transpose:-2},
-    'secret:sunken-wreck':{mood:'wreck',lead:'ghost',bpm:78,groove:2}
+    'secret:sunken-wreck':{mood:'wreck',lead:'ghost',bpm:78,groove:2},
+    'secret:blind-grove':{mood:'blind',lead:'bell',bpm:70,groove:3}
   };
   const THEME_MOOD=Object.fromEntries(Object.entries(STYLES).map(([theme,style])=>[theme,style.mood]));
   // Every escape in a region gets its own tune and key: the region's style, a new melody seed,

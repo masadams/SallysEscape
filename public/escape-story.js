@@ -50,6 +50,7 @@
     {spot:'bestiary-grove',title:'A Note in the Grove',body:['I made friends with a chameleon here. He never once let me see him, but he left a beetle on my pillow every morning.','— F.']},
     {spot:'ice-cave',title:'A Note in the Ice Cave',body:['The sentinels will wait for us. I told them we would come back. I hope that was not a lie.','— F.']},
     {spot:'sunken-wreck',title:'A Note in the Wreck',body:['This boat did not sink by accident. We are building a better one. When it is ready, we sail. If you find this and we are gone, look for us past the edge of the map.','— Fennel, Wayfinder']},
+    {spot:'blind-grove',title:'A Note in the Blind Grove',body:['The old Wayfinders practised here with their eyes on the creatures, never on the ground. A snake tells you everything if you watch it: the lift of its head, the turn before it looks.','— F.']},
     {spot:'gilded',title:'A Note in the Gilded Burrow',body:['All this gold, and not one lantern’s worth of light in it. The ones who hoarded it never understood the difference.','— F.']},
     {spot:'bramble',title:'A Note in the Bramble Maze',body:['I got lost in here for three days. A Wayfinder, lost! Do not tell anyone.','— F.']}
   ];
