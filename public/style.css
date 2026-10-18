@@ -627,3 +627,6 @@ body.ui-xl #escape-stage-ui>*,body.ui-xl #escape-world-ui,body.ui-xl .game-dialo
 .credits-thanks { font-style:italic; color:#e8dfbf; }
 .credits-legal { font-size:.78rem; color:#a9c2ad; line-height:1.4; }
 .credits-version { min-height:1em; font-size:.72rem; color:#88a291; margin:0 0 12px; }
+/* A controller is in use: the on-screen touch buttons would only get in the way (the tools show their
+   controller buttons in the panel instead). */
+body.pad-nav #touch-controls{display:none!important}
