@@ -70,6 +70,14 @@ test('a cricket is harmless but its chirp draws a nearby snake to the spot',()=>
   Object.assign(g.player,{x:h.x+.2,y:h.y});ticks(g,.1);assert.equal(g.status,'playing','touching a cricket is safe');
   Object.assign(g.player,{x:7.5,y:5.5});ticks(g,.6);assert.ok(g.decoy?.chirp,'the chirp works like a pebble');Object.assign(g.player,{x:2.5,y:10.5});g.grid[10][2]='L';ticks(g,2);assert.ok(Math.hypot(snake.x-7.5,snake.y-5.5)<Math.hypot(11.5-7.5,7.5-5.5)-1,'the snake heads for the chirp');
 });
+test('a chirp is a call, not a pebble: a hunter that sees Sally ignores it, it fades fast and never replaces her pebble',()=>{
+  const {g,h}=arena('cricket',[5,5],[7,5]);Object.assign(g.player,{x:7.5,y:5.5});ticks(g,.6);
+  assert.ok(g.decoy?.chirp,'it chirps');assert.ok(g.decoy.expires-g.elapsed<=2,'the call fades within two seconds');assert.equal(h.state,'recover');
+  const snake=g.makeHunter({kind:'snake',spawn:[9,5],facing:Math.PI,patrol:[[9,5]]});g.hunters.push(snake);g.motion.resetHunter(snake,1);
+  g.decoy={x:2.5,y:9.5,expires:g.elapsed+2,chirp:true};ticks(g,.05);assert.notEqual(snake.state,'decoy','a snake that sees Sally stays on her');
+  const own=arena('cricket',[5,5],[7,5]);own.g.decoy={x:2.5,y:2.5,expires:4};Object.assign(own.g.player,{x:7.5,y:5.5});ticks(own.g,.6);
+  assert.equal(own.g.decoy.chirp,undefined,'Sally\'s pebble stays the pebble');
+});
 test('a moth lights Sally up: leaves stop hiding her and hunters see further',()=>{
   const {g,h}=arena('snake',[2,5],[8,5]);h.facing=0;g.grid[5][8]='L';ticks(g,.1);assert.equal(g.player.hidden,true);assert.equal(g.seesPlayer(h),false);
   const moth=g.makeHunter({kind:'moth',spawn:[9,5],facing:0,patrol:[[9,5]]});g.hunters.push(moth);g.motion.resetHunter(moth,1);assert.equal(g.lit(),true);assert.equal(g.seesPlayer(h),true);
@@ -248,6 +256,18 @@ test('a dragonfly darts its loop over any ground, hovering at corners; leaves do
   const timed=arena('dragonfly',[11,5],[8,8],{patrol:[[11,5],[3,5]]});
   for(let i=0;i<120*.6;i++)timed.g.advance(1/120,{});for(let i=0;i<120*1.5&&timed.g.status==='playing';i++)timed.g.advance(1/120,{y:-1});
   assert.equal(timed.g.status,'playing','crossed right behind it');assert.ok(timed.g.player.y<5,'and is across its lane');
+});
+test('a chasing snake reads Sally: running rings round a pillar gets her caught, and it cuts across where she is heading',()=>{
+  const {escapeBuildCustom}=require('../public/escape-levels.js'),B=require('../public/escape-builder.js');
+  const m=B.blank(24,16);B.paint(m,4,4,'@');for(let y=7;y<9;y++)for(let x=11;x<13;x++)B.paint(m,x,y,'#');B.addEnemy(m,'snake',18,8);
+  const g=new EscapeAdventure({level:escapeBuildCustom(B.toRoute(m))}),h=g.hunters[0];
+  Object.assign(g.player,{x:8.5,y:8});Object.assign(h,{state:'chase',awareness:1,x:16.5,y:8,facing:Math.PI,lastKnown:{x:8.5,y:8},lastObserved:0});
+  let t=0,read=false;while(g.status==='playing'&&t<15){const p=g.player,a=Math.atan2(p.y-8,p.x-12),r=Math.hypot(p.y-8,p.x-12);
+    g.advance(1/120,{x:-Math.sin(a)+(3-r)*.8*Math.cos(a),y:Math.cos(a)+(3-r)*.8*Math.sin(a)});t+=1/120;read||=h.wiseUntil>g.elapsed;}
+  assert.equal(g.status,'caught','circling the pillar does not shake it');assert.ok(t<12,'and not for long');
+  // Sally running across its path: it aims ahead of her, not at her.
+  const c=new EscapeAdventure({level:escapeBuildCustom(B.toRoute(B.blank(24,16)))});c.sallyTrack={vx:0,vy:2.4,curve:0,loop:0};Object.assign(c.player,{x:12.5,y:5.5});
+  const s={kind:'snake',state:'chase',x:12.5,y:10.5};c.hunterDt=1/120;const aim=c.chaseAim(copyOf(c.player),s,{lead:.85});assert.ok(aim.y>c.player.y+.8,'it leads her');
 });
 test('a chasing snake cannot turn on a dime: doubled back on, it carries on and swings wide before it turns',()=>{
   const {escapeBuildCustom}=require('../public/escape-levels.js'),B=require('../public/escape-builder.js');
