@@ -27,6 +27,8 @@ function pollEscapePad(){
   ax+=Number(down(ESCAPE_PAD.RIGHT))-Number(down(ESCAPE_PAD.LEFT));ay+=Number(down(ESCAPE_PAD.DOWN))-Number(down(ESCAPE_PAD.UP));
   const any=now.some(Boolean)||ax||ay;
   if(any&&!escapePad.active){escapePad.active=true;document.body?.classList?.add('pad-nav');if(typeof unlockAudio==='function')unlockAudio();if(typeof renderEscapeHUD==='function'&&escapeGame)renderEscapeHUD(true);}
+  // A pad press does not unlock sound everywhere, so each new press tries again until it plays.
+  if(now.some((b,i)=>b&&!was[i])&&typeof unlockAudio==='function'&&typeof escapeAudio!=='undefined'&&escapeAudio?.state!=='running')unlockAudio();
   const menu=escapePadMenu();
   if(menu){escapePad.x=0;escapePad.y=0;escapePad.sprint=false;escapePad.crawl=false;if(escapePad.active)escapePadNavigate(menu,ax,ay,pressed,was.length>0);return;}
   escapePad.nav.dir=null;

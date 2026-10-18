@@ -501,17 +501,23 @@ function drawEscapeMoment(){
 }
 // The camera leans a little ahead of Sally as she moves, pulls back when a hunter gives chase,
 // leans in on a catch, and shakes for a beetle's crash, thunder or a catch (never with reduced motion).
-let escapeCam={g:null,lx:0,ly:0,zoom:1,shakeUntil:0,shakeFor:1,shakeAmp:0};
+let escapeCam={g:null,lx:0,ly:0,zoom:1,cx:null,cy:null,shakeUntil:0,shakeFor:1,shakeAmp:0};
 function escapeShake(amp,ms){if(escapeReducedMotion())return;if(millis()+ms>escapeCam.shakeUntil||amp>escapeCam.shakeAmp){escapeCam.shakeAmp=amp;escapeCam.shakeFor=ms;escapeCam.shakeUntil=millis()+ms;}}
 function escapeShakeFor(events){if(events.includes('thunder'))escapeShake(5,450);else if(events.some(e=>e==='clash'||e==='smash'||e==='rumble'))escapeShake(3.5,250);}
+// The follow camera glides after Sally rather than being pinned to her. The game moves her in fixed
+// 1/120 s steps, so a frame can carry two steps or three; a camera locked to her made the whole map
+// judder whenever the frame rate wavered (a TV, a busy scene). The glide smooths that out, and a jump
+// (a new area, a respawn) cuts straight to her.
 function escapeCameraMotion(view,g,w,h){
-  const dt=Math.min(.05,(deltaTime||16)/1000),k=1-Math.exp(-dt*3);if(escapeCam.g!==g){escapeCam.g=g;escapeCam.lx=escapeCam.ly=0;escapeCam.zoom=1;}
+  const dt=Math.min(.05,(deltaTime||16)/1000),k=1-Math.exp(-dt*3),glide=1-Math.exp(-dt*9);if(escapeCam.g!==g){escapeCam.g=g;escapeCam.lx=escapeCam.ly=0;escapeCam.zoom=1;escapeCam.cx=null;}
   const p=g.player,chasing=g.status==='playing'&&g.hunters.some(q=>q.state==='chase'&&Math.hypot(q.x-p.x,q.y-p.y)<10);
-  if(view.follow&&!escapeReducedMotion()){
-    const lead=p.moving&&g.status==='playing'?(p.sprinting?1.6:.9):0;escapeCam.lx+=((p.facing?.x||0)*lead-escapeCam.lx)*k;escapeCam.ly+=((p.facing?.y||0)*lead-escapeCam.ly)*k;
-    escapeCam.zoom+=((escapeMoment&&escapeMoment.kind!=='won'?1.1:chasing?.86:1)-escapeCam.zoom)*k;
+  if(!view.follow){escapeCam.cx=null;}else{
+    const still=escapeReducedMotion(),lead=!still&&p.moving&&g.status==='playing'?(p.sprinting?1.6:.9):0;escapeCam.lx+=((p.facing?.x||0)*lead-escapeCam.lx)*k;escapeCam.ly+=((p.facing?.y||0)*lead-escapeCam.ly)*k;
+    if(!still)escapeCam.zoom+=((escapeMoment&&escapeMoment.kind!=='won'?1.1:chasing?.86:1)-escapeCam.zoom)*k;else escapeCam.zoom=1;
     const clamp=(n,a,b)=>b<a?(a+b)/2:Math.max(a,Math.min(b,n)),cell=view.cell*escapeCam.zoom;
-    const cx=clamp((w/2-view.ox)/view.cell+escapeCam.lx,w/(2*cell),g.width-w/(2*cell)),cy=clamp((h/2-view.oy)/view.cell+escapeCam.ly,h/(2*cell),g.height-h/(2*cell));
+    const tx=(w/2-view.ox)/view.cell+escapeCam.lx,ty=(h/2-view.oy)/view.cell+escapeCam.ly;
+    if(escapeCam.cx===null||Math.hypot(tx-escapeCam.cx,ty-escapeCam.cy)>8){escapeCam.cx=tx;escapeCam.cy=ty;}else{escapeCam.cx+=(tx-escapeCam.cx)*glide;escapeCam.cy+=(ty-escapeCam.cy)*glide;}
+    const cx=clamp(escapeCam.cx,w/(2*cell),g.width-w/(2*cell)),cy=clamp(escapeCam.cy,h/(2*cell),g.height-h/(2*cell));
     view.cell=cell;view.ox=w/2-cx*cell;view.oy=h/2-cy*cell;
   }
   if(millis()<escapeCam.shakeUntil){const a=escapeCam.shakeAmp*(escapeCam.shakeUntil-millis())/escapeCam.shakeFor;view.ox+=(Math.random()-.5)*2*a;view.oy+=(Math.random()-.5)*2*a;}
@@ -637,10 +643,12 @@ function drawEscapeTiles(g,cell,palette,index){
 let escapeLightingMode='full',escapeLightingAuto=false,escapeFrameAvg=16,escapeSlowFrames=0,escapeFogCanvas=null;
 function escapeLightingFull(){return escapeLightingMode==='full'&&!escapeLightingAuto&&typeof document!=='undefined'&&Boolean(drawingContext?.createRadialGradient&&drawingContext.drawImage);}
 function escapeWatchFrameRate(dt){
-  if(escapeLightingMode!=='full'||escapeLightingAuto||!dt)return;escapeFrameAvg=escapeFrameAvg*.95+Math.min(100,dt)*.05;
-  // Three seconds of slow frames steps quality down: sharpness first (2× to 1.5× to 1×), then Simple lighting.
-  escapeSlowFrames=escapeFrameAvg>30?escapeSlowFrames+Math.min(100,dt):0;if(escapeSlowFrames<3000)return;escapeSlowFrames=0;escapeFrameAvg=16;
-  const density=pixelDensity();if(density>1){pixelDensity(density>1.5?1.5:1);return;}escapeLightingAuto=true;updateToolbar();
+  const density=pixelDensity(),full=escapeLightingMode==='full'&&!escapeLightingAuto;
+  if((!full&&density<=1)||!dt)return;escapeFrameAvg=escapeFrameAvg*.95+Math.min(100,dt)*.05;
+  // Three seconds of frames under about 45 a second steps quality down: sharpness first (2× to 1.5×
+  // to 1×), then Simple lighting. Sharpness steps down with Simple lighting picked too.
+  escapeSlowFrames=escapeFrameAvg>22?escapeSlowFrames+Math.min(100,dt):0;if(escapeSlowFrames<3000)return;escapeSlowFrames=0;escapeFrameAvg=16;
+  if(density>1){pixelDensity(density>1.5?1.5:1);return;}escapeLightingAuto=true;updateToolbar();
 }
 // Where a level sits, for its mood: its region (and how far into it), or a place of its own.
 function escapePlace(level){
