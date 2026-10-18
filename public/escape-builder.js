@@ -6,9 +6,9 @@
   const KEY='sally-escape-custom-v1',VERSION=3;
   const TILES={'#':'Wall','.':'Floor','L':'Leaves','N':'Gravel','B':'Cracked wall','M':'Mud','~':'Water','_':'Gap','c':'Crumbling floor','T':'Tangle vine','S':'Crack (Sally only)','o':'Spore puffball','t':'Tide flat','m':'Moss (silent)','I':'Ice wall (a sentinel’s gaze glances off it)'};
   const MARKS={'@':'Sally','K':'Key','X':'Hatch','1':'Treasure 1','2':'Treasure 2','3':'Chest 3'};
-  const ENEMIES={snake:'Snake',beetle:'Beetle',scorpion:'Scorpion',toad:'Toad',spider:'Spider',cricket:'Cricket',moth:'Moth',mimic:'Mimic',millipede:'Millipede',cobra:'King cobra',flytrap:'Flytrap',crab:'Hermit crab',fox:'Snow fox',heron:'Bog heron',mantis:'Praying mantis',wasp:'Wasp nest',dragonfly:'Dragonfly',mole:'Mole',bat:'Echo bat',eel:'Eel',angler:'Angler',fish:'Reef fish','sea-snake':'Sea snake',owl:'Owl',gecko:'Gecko',echofrog:'Echo frog',chameleon:'Chameleon',sentinel:'Frost sentinel',cloudray:'Cloud ray'};
+  const ENEMIES={snake:'Snake',beetle:'Beetle',scorpion:'Scorpion',toad:'Toad',spider:'Spider',cricket:'Cricket',moth:'Moth',mimic:'Mimic',millipede:'Millipede',cobra:'King cobra',flytrap:'Flytrap',crab:'Hermit crab',fox:'Snow fox',heron:'Bog heron',mantis:'Praying mantis',wasp:'Wasp nest',dragonfly:'Dragonfly',mole:'Mole',bat:'Echo bat',eel:'Eel',angler:'Angler',fish:'Reef fish','sea-snake':'Sea snake',owl:'Owl',gecko:'Gecko',echofrog:'Echo frog',chameleon:'Chameleon',sentinel:'Frost sentinel',cloudray:'Cloud ray',magpie:'Magpie'};
   // Enemies that stay on their post; the rest walk their patrol.
-  const POSTED=new Set(['scorpion','toad','mimic','millipede','cobra','flytrap','crab','heron','mantis','wasp','eel','angler','gecko','echofrog','sentinel']);
+  const POSTED=new Set(['scorpion','toad','mimic','millipede','cobra','flytrap','crab','heron','mantis','wasp','eel','angler','gecko','echofrog','sentinel','magpie']);
   const LIMITS={minW:11,maxW:45,minH:9,maxH:29,doors:6,triggers:24,hazards:40,guards:30};
   // Doors and bridges come in six colours; each colour is one door and one bridge.
   const COLORS=[['Red',[226,96,96]],['Blue',[96,150,236]],['Gold',[240,196,80]],['Green',[110,200,120]],['Violet',[178,120,230]],['Teal',[80,200,196]]];
@@ -28,7 +28,7 @@
   const clampNum=(n,a,b,d=a)=>Number.isFinite(Number(n))?Math.max(a,Math.min(b,Number(n))):d;
   // Whole-level extras the game supports beyond the map: the sky, the weather, and what lives there.
   const LAYERS={shade:'Awning (shade from the hawk)',glowPlants:'Glow plant (light in the dark)',regrowth:'Pink regrowth bug (grows back a lost tail)'};
-  const EXTRAS=()=>({hint:'',tailDrop:false,timeLimit:0,camos:0,seeds:0,glows:0,spores:0,cunning:2,gaze:false,sightRadius:0,dark:false,living:false,abyss:false,biome:'',
+  const EXTRAS=()=>({hint:'',tailDrop:false,timeLimit:0,camos:0,seeds:0,glows:0,spores:0,cunning:2,unlimited:false,gaze:false,sightRadius:0,dark:false,living:false,abyss:false,biome:'',
     hawk:null,storm:null,tide:null,caps:[],wind:[],echoes:[],currents:[],tunnels:[],antTrails:[],seedCrossings:[],rootWheel:null,rivalries:[],shade:[],glowPlants:[],regrowth:[],regions:[],messages:{}});
 
   function blank(width=21,height=13){
@@ -236,7 +236,7 @@
   }
   // Whole-level settings, the sky and the weather.
   function setSettings(model,changes){
-    for(const k of ['tailDrop','gaze','dark','living','abyss'])if(changes[k]!==undefined)model[k]=Boolean(changes[k]);
+    for(const k of ['tailDrop','gaze','dark','living','abyss','unlimited'])if(changes[k]!==undefined)model[k]=Boolean(changes[k]);
     for(const [k,lo,hi] of [['timeLimit',0,600],['camos',0,5],['seeds',0,5],['glows',0,5],['spores',0,5],['sightRadius',0,12]])if(changes[k]!==undefined)model[k]=clampNum(changes[k],lo,hi,0);
     if(changes.cunning!==undefined)model.cunning=Math.round(clampNum(changes.cunning,0,3,2));
     if(changes.hint!==undefined)model.hint=String(changes.hint).slice(0,400);if(changes.biome!==undefined)model.biome=changes.biome==='desert'?'desert':'';
@@ -322,7 +322,7 @@
       ...(model.cold.length?{cold:model.cold.map(([x,y])=>[x,y,x,y])}:{}),...(model.warm.length?{warm:model.warm.map(p=>p.slice())}:{}),
       burrows:clampInt(model.burrows,0,5),pebbles:clampInt(model.pebbles,0,5),tongues:clampInt(model.tongues,0,5),explore:Boolean(model.explore),requiredTreasure:clampInt(model.requiredTreasure,0,99),
       ...(model.sightRadius?{sightRadius:model.sightRadius}:model.explore?{sightRadius:5}:{}),
-      ...(model.tailDrop?{tailDrop:true}:{}),...(model.timeLimit?{timeLimit:model.timeLimit}:{}),...(model.camos?{camos:model.camos}:{}),...(model.seeds?{seeds:model.seeds}:{}),...(model.glows?{glows:model.glows}:{}),...(model.spores?{spores:model.spores}:{}),...(model.cunning!==undefined&&model.cunning!==2?{cunning:model.cunning}:{}),
+      ...(model.tailDrop?{tailDrop:true}:{}),...(model.unlimited?{unlimited:true}:{}),...(model.timeLimit?{timeLimit:model.timeLimit}:{}),...(model.camos?{camos:model.camos}:{}),...(model.seeds?{seeds:model.seeds}:{}),...(model.glows?{glows:model.glows}:{}),...(model.spores?{spores:model.spores}:{}),...(model.cunning!==undefined&&model.cunning!==2?{cunning:model.cunning}:{}),
       ...(model.gaze?{gaze:true}:{}),...(model.dark?{dark:true}:{}),...(model.living?{living:true}:{}),...(model.abyss?{abyss:true}:{}),...(model.biome?{biome:model.biome}:{}),
       ...some('hawk',model.hawk),...some('storm',model.storm),...some('tide',model.tide),...some('caps',(model.caps||[]).filter(c=>c.to)),...some('wind',model.wind),...some('echoes',model.echoes),...some('currents',model.currents),...some('tunnels',model.tunnels),
       ...some('antTrails',(model.antTrails||[]).filter(t=>t.path.length>1)),...some('seedCrossings',model.seedCrossings),...some('rootWheel',model.rootWheel),...some('rivalries',model.rivalries),
@@ -333,7 +333,7 @@
   function fromRoute(route){
     const m=blank(route.map[0].length,route.map.length);m.map=route.map.slice();m.id='custom-'+String(route.id||'escape').toLowerCase().replace(/[^a-z0-9-]/g,'-').slice(0,40);
     Object.assign(m,{name:String(route.name||'').slice(0,40),brief:String(route.brief||'').slice(0,140),hint:String(route.hint||'').slice(0,400),burrows:route.burrows||0,pebbles:route.pebbles||0,tongues:route.tongues||0,
-      explore:Boolean(route.explore),requiredTreasure:route.requiredTreasure||0,tailDrop:Boolean(route.tailDrop),timeLimit:route.timeLimit||0,camos:route.camos||0,seeds:route.seeds||0,glows:route.glows||0,spores:route.spores||0,cunning:route.cunning??2,gaze:Boolean(route.gaze),
+      explore:Boolean(route.explore),requiredTreasure:route.requiredTreasure||0,tailDrop:Boolean(route.tailDrop),unlimited:Boolean(route.unlimited),timeLimit:route.timeLimit||0,camos:route.camos||0,seeds:route.seeds||0,glows:route.glows||0,spores:route.spores||0,cunning:route.cunning??2,gaze:Boolean(route.gaze),
       sightRadius:route.sightRadius||0,dark:Boolean(route.dark),living:Boolean(route.living),abyss:Boolean(route.abyss),biome:route.biome||'',source:route.id});
     const copy=v=>v==null?null:JSON.parse(JSON.stringify(v));
     for(const k of ['hawk','storm','tide','rootWheel'])m[k]=copy(route[k]);
@@ -402,7 +402,7 @@
     model.links=list(r.links,200).filter(l=>Array.isArray(l)&&typeof l[0]==='string'&&typeof l[1]==='string'&&l[0].length<20&&l[1].length<20).map(l=>l[2]==='close'?[l[0],l[1],'close']:[l[0],l[1]]);
     // The extras: settings, sky and weather, and the things placed on top of the map.
     const pts=(v,n)=>list(v,n).map(p=>point(p,w,h)).filter(Boolean),area=a=>{const p=point(a,w,h),q=point(Array.isArray(a)?a.slice(2):null,w,h);return p&&q?[Math.min(p[0],q[0]),Math.min(p[1],q[1]),Math.max(p[0],q[0]),Math.max(p[1],q[1])]:null;};
-    Object.assign(model,EXTRAS());setSettings(model,{hint:r.hint||'',tailDrop:r.tailDrop,gaze:r.gaze,dark:r.dark,living:r.living,abyss:r.abyss,timeLimit:r.timeLimit||0,camos:r.camos||0,seeds:r.seeds||0,glows:r.glows||0,spores:r.spores||0,cunning:r.cunning??2,sightRadius:r.sightRadius||0,biome:r.biome||'',
+    Object.assign(model,EXTRAS());setSettings(model,{hint:r.hint||'',tailDrop:r.tailDrop,unlimited:r.unlimited,gaze:r.gaze,dark:r.dark,living:r.living,abyss:r.abyss,timeLimit:r.timeLimit||0,camos:r.camos||0,seeds:r.seeds||0,glows:r.glows||0,spores:r.spores||0,cunning:r.cunning??2,sightRadius:r.sightRadius||0,biome:r.biome||'',
       hawk:r.hawk||null,storm:r.storm||null,tide:r.tide||null});
     for(const k of Object.keys(LAYERS))model[k]=pts(r[k],120);
     model.caps=list(r.caps,12).map(c=>({at:point(c?.at,w,h),to:point(c?.to,w,h)})).filter(c=>c.at);

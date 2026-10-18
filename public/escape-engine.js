@@ -12,6 +12,8 @@
   // For every hunter on the common chase: react (how long it takes to be sure it saw her), memory (how long
   // it keeps after her once she is out of sight) and search (how long it hunts the spot before giving up).
   const CUNNING=[{lead:0,loop:Infinity,feel:0,turn:.85,snap:.35,pace:.92,react:1.35,memory:1,search:1.2},{lead:.55,loop:8,feel:1.8,turn:.93,snap:.7,pace:.96,react:1.15,memory:1.25,search:1.6},{lead:1,loop:5.5,feel:3,turn:1,snap:1,pace:1,react:1,memory:1.5,search:2},{lead:1.2,loop:4.2,feel:3.6,turn:1.1,snap:1,pace:1.03,react:.85,memory:1.8,search:2.6}];
+  // Hunters that keep their own counsel and do not answer a magpie's caw.
+  const MAGPIE_DEAF=new Set(['magpie','owl','moth','cricket','angler','mimic','flytrap','sentinel','cloudray','echofrog','toad','scorpion','millipede','heron','mantis','wasp','eel','crab','gecko']);
   // lead is how far ahead it reads Sally: 1 aims where she will be by the time it gets there, 0 where she is.
   const MOMENTUM={snake:{turn:2.4,grip:.55,accel:1.6,pulse:1.5,lead:.85},cobra:{turn:2,grip:.5,accel:1.3,pulse:1.1,lead:1},'sea-snake':{turn:2.4,grip:.55,accel:1.6,pulse:1.4,lead:.85},fish:{turn:4.5,grip:.6,accel:2.5,pulse:2.2,lead:.5},chameleon:{turn:3.5,grip:.55,accel:2,pulse:1,lead:.4}};
   // Hunters heavy enough to press a heavy plate.
@@ -146,7 +148,7 @@
         if(!['.','M','N'].includes(old)){this.notice('Plant on bare ground, face an open doorway, or stand at a marked vine bank.');return false;}
         this.grid[y][x]='L';this.seedGrowth.push({kind:'cover',tiles:[{x,y,old}],expires:this.elapsed+12,warned:false});message='Leaves grow around Sally. Stand still to hide; they last twelve seconds.';
       }
-      this.seeds--;this.seedsUsed++;this.seedReadyAt=this.elapsed+.5;for(const h of this.hunters){h.path=[];h.targetId=null;}this.updateVisibility(true);this.notice(message,'grow');return true;
+      this.spend('seeds');this.seedsUsed++;this.seedReadyAt=this.elapsed+.5;for(const h of this.hunters){h.path=[];h.targetId=null;}this.updateVisibility(true);this.notice(message,'grow');return true;
     }
     updateSeedGrowth(){
       if(!this.active())return;
@@ -325,7 +327,7 @@
       this.motion.resetPlayer(p);
       this.tongue=null;
       this.updateVisibility(true);
-      this.burrows--;this.dug.push({x:wx,y:wy});this.invulnerableUntil=this.elapsed+0.35;
+      this.spend('burrows');this.dug.push({x:wx,y:wy});this.invulnerableUntil=this.elapsed+0.35;
       this.notice('Under the wall. Keep moving!','burrow');return true;
     }
     // A burrow pair: standing on a mound, Sally digs in and comes up out of its partner a moment
@@ -370,14 +372,14 @@
       if(!this.spores){this.notice(this.level.spores?'No spore pouches left.':'No spore pouches here.');return false;}
       if(this.elapsed<this.decoyReadyAt)return false;
       if(!this.launch('spore',power))return false;
-      this.spores--;this.sporesUsed++;this.decoyReadyAt=this.elapsed+.8;this.notice('Spore pouch thrown.');return true;
+      this.spend('spores');this.sporesUsed++;this.decoyReadyAt=this.elapsed+.8;this.notice('Spore pouch thrown.');return true;
     }
     throwGlow(power=0){
       if(!this.active())return false;
       if(!this.glows){this.notice(this.level.glows?'No glow mushrooms left.':'No glow mushrooms here.');return false;}
       if(this.elapsed<this.decoyReadyAt)return false;
       if(!this.launch('glow',power))return false;
-      this.glows--;this.glowsUsed++;this.decoyReadyAt=this.elapsed+.8;this.notice('Glow mushroom thrown.');return true;
+      this.spend('glows');this.glowsUsed++;this.decoyReadyAt=this.elapsed+.8;this.notice('Glow mushroom thrown.');return true;
     }
     updateFlights(){
       for(const f of this.flights){
@@ -395,12 +397,15 @@
     }
     // Sally standing in a glow mushroom's light is lit up like a moth's: leaves stop hiding her.
     inLight(q=this.player){return this.lights.some(l=>distance(q,l)<=l.r&&this.lineVisible(l,q));}
+    // In an unlimited level (the Magpie Roost, where pebbles and shiny things lie everywhere) Sally's
+    // pouches never run out; each tool still has its own wait between uses.
+    spend(tool){if(!this.level.unlimited)this[tool]--;}
     throwDecoy(power){
       if(!this.active())return false;
       if(typeof power==='number'){
         if(this.decoys===0){this.notice('No pebbles left. Use cover.');return false;}
         if(this.elapsed<this.decoyReadyAt||!this.launch('pebble',power))return false;
-        this.decoys--;this.decoyReadyAt=this.elapsed+0.8;this.notice('Pebble tossed. Watch for the hunter\'s reaction.');return true;
+        this.spend('decoys');this.decoyReadyAt=this.elapsed+0.8;this.notice('Pebble tossed. Watch for the hunter\'s reaction.');return true;
       }
       if(this.decoys===0){this.notice('No pebbles left. Use cover.');return false;}
       if(this.elapsed<this.decoyReadyAt)return false;
@@ -409,7 +414,7 @@
         const next={x:start.x+d.x*i,y:start.y+d.y*i};if(!this.clear(start,next))break;target=next;
       }
       if(distance(start,target)<0.5){this.notice('Face an open corridor to toss a pebble.');return false;}
-      this.decoys--;this.decoyReadyAt=this.elapsed+0.8;
+      this.spend('decoys');this.decoyReadyAt=this.elapsed+0.8;
       this.decoy={...target,expires:this.elapsed+4,noticed:false};
       this.notice('Pebble tossed. Watch for the hunter\'s reaction.','decoy');return true;
     }
@@ -428,7 +433,7 @@
       if(!this.tongues){this.notice(this.level.tongues?'No tongue grabs left. Take a walking route.':'No tongue grabs on this route.');return false;}
       if(this.tongue||this.elapsed<this.tongueReadyAt)return false;
       const target=this.tongueTarget();if(!target){this.notice('Face a key or treasure within three tiles. Walls and gates block your tongue.');return false;}
-      this.tongues--;this.tonguesUsed++;this.tongueReadyAt=this.elapsed+.55;
+      this.spend('tongues');this.tonguesUsed++;this.tongueReadyAt=this.elapsed+.55;
       this.tongue={...target,point:copy(target.point),startedAt:this.elapsed,hit:false};this.events.push('tongue');return true;
     }
     collectKey(byTongue=false){
@@ -452,7 +457,7 @@
         if(h!==captor&&(distance(h,p)>=6||!this.clear(h,p,true)))continue;
         h.graceUntil=Math.max(h.graceUntil||0,this.elapsed+2.8);
         // Rooted plants, fish and burrowing hunters cannot chase a tail across the floor.
-        if(['mimic','fish','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','crab','owl','gecko','echofrog','sentinel','cloudray'].includes(h.kind)||['emerge','dig','buried','rise','clash'].includes(h.state))continue;
+        if(['mimic','fish','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','crab','owl','magpie','gecko','echofrog','sentinel','cloudray'].includes(h.kind)||['emerge','dig','buried','rise','clash'].includes(h.state))continue;
         h.tailLureUntil=this.elapsed+2.4;h.path=[];h.targetId=null;
       }
       this.notice(this.regrowthBugs.some(b=>!b.eaten)?'Tail dropped! It wriggles as a decoy. Run—then eat a pink regrowth bug to grow it back.':'Tail dropped! It wriggles as a decoy. Run! The next catch is final.','tailDrop');
@@ -462,7 +467,7 @@
       if(!this.active())return false;
       if(!this.camos){this.notice(this.level.camos?'No camouflage left. Find shade or leaves.':'Nothing here to blend into.');return false;}
       if(this.camoUntil>this.elapsed)return false;
-      this.camos--;this.camosUsed++;this.camoUntil=this.elapsed+6;this.notice('Sally blends into the ground. Keep still to stay hidden.','camo');return true;
+      this.spend('camos');this.camosUsed++;this.camoUntil=this.elapsed+6;this.notice('Sally blends into the ground. Keep still to stay hidden.','camo');return true;
     }
     // Every ant in every column, as positions along its looping trail.
     ants(trail){
@@ -505,7 +510,7 @@
       const p=this.player;
       for(const v of this.vents){const {active,warning}=this.ventPhase(v);if(warning&&!v.warning&&distance(p,centre(...v.at))<9)this.events.push('hiss');if(active&&!v.active&&distance(p,centre(...v.at))<9)this.events.push('steam');v.active=active;v.warning=warning;if(!active)continue;
         if(v.keys.has(this.tileKey(p))&&this.blowClear(v,p)){this.blasts++;p.stamina=Math.max(0,p.stamina-35);this.motion.resetPlayer(p);this.notice('Scalding steam! Sally is blown clear.','steam');}
-        this.hunters.forEach((h,i)=>{if(!v.keys.has(this.tileKey(h))||h.state==='steamed'||['owl','moth','fish','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','echofrog','sentinel','cloudray'].includes(h.kind))return;this.blowClear(v,h,h);this.motion.resetHunter?.(h,i);h.state='steamed';h.phaseUntil=this.elapsed+2.5;h.path=[];h.targetId=null;h.aim=null;h.awareness=0;h.lastKnown=null;this.steamed++;this.notice('The steam blasts a hunter aside. It is dazed!','steam');});
+        this.hunters.forEach((h,i)=>{if(!v.keys.has(this.tileKey(h))||h.state==='steamed'||['owl','magpie','moth','fish','angler','flytrap','heron','mantis','wasp','dragonfly','mole','bat','eel','echofrog','sentinel','cloudray'].includes(h.kind))return;this.blowClear(v,h,h);this.motion.resetHunter?.(h,i);h.state='steamed';h.phaseUntil=this.elapsed+2.5;h.path=[];h.targetId=null;h.aim=null;h.awareness=0;h.lastKnown=null;this.steamed++;this.notice('The steam blasts a hunter aside. It is dazed!','steam');});
       }
     }
     tileKey(p){return Math.floor(p.x)+','+Math.floor(p.y);}
@@ -634,7 +639,7 @@
       if(this.elapsed>=this.invulnerableUntil&&stinger&&this.shedTail(stinger))return;
       if(this.elapsed>=this.invulnerableUntil&&stinger){this.finish('caught','The scorpion struck. Cross its ring while the tail is down, or change direction when it strikes.');return;}
       // Capture wins over picking up the key or escaping in the same simulation step.
-      const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='sentinel'&&h.kind!=='cloudray'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(h.kind==='beetle'&&h.state==='charge'?.62:.48)&&this.clear(p,h));
+      const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='magpie'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='sentinel'&&h.kind!=='cloudray'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(h.kind==='beetle'&&h.state==='charge'?.62:.48)&&this.clear(p,h));
       if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
       if(this.elapsed>=this.invulnerableUntil && captor){
         this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. It crept up while Sally looked away. Keep it in view as you back off.':captor.kind==='mimic'?'That chest was a mimic! Watch for its tell, or throw a pebble to make it snap first.':captor.kind==='fox'?'A snow fox heard Sally and pounced. Stand still, keep to quiet ground, or toss a pebble to send it pouncing elsewhere.':captor.kind==='crab'?'A hermit crab scuttled out and pinched Sally. Pass its lane while it is tucked in, or send it back into its shell with a pebble.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'A hunter spotted you. Break sight at a corner or use a pebble.');return;
@@ -687,6 +692,7 @@
       if(h.kind==='cricket'){this.updateCricket(dt,h);return;}
       if(h.kind==='moth'){this.updateMoth(dt,h);return;}
       if(h.kind==='owl'){this.updateOwl(dt,h);return;}
+      if(h.kind==='magpie'){this.updateMagpie(dt,h);return;}
       if(h.kind==='gecko'){this.updateGecko(dt,h);return;}
       if(h.kind==='mimic'){this.updateMimic(dt,h);return;}
       if(h.kind==='toad'||h.kind==='spider'){this.updateNestHunter(dt,h);return;}
@@ -917,7 +923,7 @@
       if(h.state==='strike'){if(this.elapsed>=h.phaseUntil)h.state='still';return;}
       if(h.looks&&this.elapsed>=h.turnAt){h.look=(h.look+1)%h.looks.length;h.facing=h.looks[h.look];h.turnAt=this.elapsed+h.every;}
       const lure=this.decoy&&this.decoy.expires!==h.lastLure&&this.inMantisReach(h,this.decoy),near=!p.swimming&&this.inMantisReach(h,p);
-      const prey=!lure&&!near&&this.hunters.find(o=>o!==h&&!['mantis','heron','flytrap','angler','mimic','owl','moth','fish','crab','cricket','wasp','dragonfly','mole','bat','eel','echofrog','sentinel','cloudray'].includes(o.kind)&&!['steamed','stunned','emerge','dig','buried','rise','clash'].includes(o.state)&&!o.buried&&this.elapsed>=(o.mantisSafeUntil||0)&&this.inMantisReach(h,o));
+      const prey=!lure&&!near&&this.hunters.find(o=>o!==h&&!['mantis','heron','flytrap','angler','mimic','owl','magpie','moth','fish','crab','cricket','wasp','dragonfly','mole','bat','eel','echofrog','sentinel','cloudray'].includes(o.kind)&&!['steamed','stunned','emerge','dig','buried','rise','clash'].includes(o.state)&&!o.buried&&this.elapsed>=(o.mantisSafeUntil||0)&&this.inMantisReach(h,o));
       if(lure||near||prey){h.aim=lure?copy(this.decoy):near?copy(p):copy(prey);h.prey=prey||null;if(lure)h.lastLure=this.decoy.expires;h.state='raise';h.phaseUntil=this.elapsed+.25;this.cue('rustle',h);}
     }
     // Wasp nest: a papery nest on the wall. Noise close by, a pebble landing near it, or a touch
@@ -928,7 +934,7 @@
     waspTargets(h){
       const p=this.player,list=[];
       if(!p.hidden&&!p.swimming&&distance(p,h.nest)<=h.leash)list.push(p);
-      for(const o of this.hunters)if(o!==h&&!['wasp','mantis','heron','flytrap','angler','mimic','owl','moth','fish','crab','dragonfly','mole','bat','eel','echofrog','sentinel','cloudray'].includes(o.kind)&&!['steamed','stunned','emerge','dig','buried','rise'].includes(o.state)&&!o.buried&&distance(o,h.nest)<=h.leash)list.push(o);
+      for(const o of this.hunters)if(o!==h&&!['wasp','mantis','heron','flytrap','angler','mimic','owl','magpie','moth','fish','crab','dragonfly','mole','bat','eel','echofrog','sentinel','cloudray'].includes(o.kind)&&!['steamed','stunned','emerge','dig','buried','rise'].includes(o.state)&&!o.buried&&distance(o,h.nest)<=h.leash)list.push(o);
       return list;
     }
     flyToward(s,target,step){
@@ -1022,7 +1028,7 @@
     updatePuffs(){
       this.clouds=this.clouds.filter(c=>c.until>this.elapsed);
       for(const puff of this.puffs){if(this.elapsed<puff.readyAt)continue;
-        const stepped=this.tileKey(this.player)===puff.key&&!this.player.flight,trod=this.hunters.some(h=>!['dragonfly','wasp','owl','moth','mole','bat','eel'].includes(h.kind)&&this.tileKey(h)===puff.key),pebble=this.decoy&&distance(this.decoy,centre(puff.x,puff.y))<1.2;
+        const stepped=this.tileKey(this.player)===puff.key&&!this.player.flight,trod=this.hunters.some(h=>!['dragonfly','wasp','owl','magpie','moth','mole','bat','eel'].includes(h.kind)&&this.tileKey(h)===puff.key),pebble=this.decoy&&distance(this.decoy,centre(puff.x,puff.y))<1.2;
         if(stepped||trod||pebble){puff.readyAt=this.elapsed+10;this.clouds.push({x:puff.x+.5,y:puff.y+.5,r:1.8,born:this.elapsed,until:this.elapsed+4.5});this.events.push('puff');if(stepped)this.notice('Puff! The spore cloud hides Sally, even on the move.');}}
     }
     // Mole: blind, it hunts by the tremble of footsteps. Walking within a few tiles (further on
@@ -1039,7 +1045,7 @@
       if(h.state==='surface'){
         if(this.elapsed<h.phaseUntil)return;
         h.state='up';h.phaseUntil=this.elapsed+1.8;this.cue('emerge',h);
-        for(const o of this.hunters)if(o!==h&&!['mole','wasp','dragonfly','owl','moth','bat','eel'].includes(o.kind)&&!['steamed','stunned'].includes(o.state)&&distance(o,h)<.7){o.state='steamed';o.phaseUntil=this.elapsed+2;o.path=[];}
+        for(const o of this.hunters)if(o!==h&&!['mole','wasp','dragonfly','owl','magpie','moth','bat','eel'].includes(o.kind)&&!['steamed','stunned'].includes(o.state)&&distance(o,h)<.7){o.state='steamed';o.phaseUntil=this.elapsed+2;o.path=[];}
         if(distance(p,h)<.85&&!p.flight&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(h))this.finish('caught','The mole felt Sally\'s footsteps and burst up beneath her. Stop when the ground ripples toward you, or keep to leaves.');
         return;
       }
@@ -1164,6 +1170,53 @@
       const look=h.patrol[h.routeIndex],want=Math.atan2(look.y-h.y,look.x-h.x),turn=Math.atan2(Math.sin(want-h.facing),Math.cos(want-h.facing));
       if(Math.abs(turn)>.02){h.facing+=Math.sign(turn)*Math.min(Math.abs(turn),1.1*dt);h.lookUntil=this.elapsed+1.8;}
       else if(this.elapsed>=(h.lookUntil||0))h.routeIndex=(h.routeIndex+1)%h.patrol.length;
+    }
+    // The magpie keeps watch from its perch, turning between look-outs. It never catches Sally:
+    // if it sees her it caws, and every hunter in earshot comes straight for her. And it cannot
+    // leave anything shiny alone: a pebble landing or a glow mushroom lighting up within its reach
+    // sends it flapping off to steal it, which ends the distraction, and while it is away (or flying
+    // home with its prize) it watches nothing.
+    updateMagpie(dt,h){
+      const p=this.player,perch=h.perch||(h.perch={x:h.x,y:h.y});if(!Number.isFinite(h.facing))h.facing=h.patrol[0]?Math.atan2(h.patrol[0].y-h.y,h.patrol[0].x-h.x):Math.PI/2;
+      if(h.state==='caw'){if(this.elapsed>=h.phaseUntil){this.magpieCall(h);this.alarms++;this.cue('caw',h);this.notice('A magpie caws! Every hunter nearby knows where you are.','warning');h.state='recover';h.phaseUntil=this.elapsed+4;}return;}
+      if(h.state==='recover'){if(this.elapsed>=h.phaseUntil)h.state='patrol';return;}
+      if(h.state==='grab'){if(this.elapsed>=h.phaseUntil){this.magpieTake(h);h.state='return';}return;}
+      if(h.state==='fly'||h.state==='return'){
+        if(h.state==='fly'&&!this.magpiePrizeLive(h.prize)){h.state='return';h.prize=null;}
+        const target=h.state==='fly'?h.prize:perch,d=distance(h,target),step=Math.min(d,(h.state==='fly'?4.5:3.2)*dt);
+        if(d>1e-6){h.facing=Math.atan2(target.y-h.y,target.x-h.x);h.x+=Math.cos(h.facing)*step;h.y+=Math.sin(h.facing)*step;h.distanceMoved+=step;}
+        if(d-step<.05){if(h.state==='fly'){h.state='grab';h.phaseUntil=this.elapsed+.5;}else{h.x=perch.x;h.y=perch.y;h.state='patrol';h.carrying=false;h.lookUntil=this.elapsed+1;}}
+        return;
+      }
+      h.state='patrol';
+      const prize=this.magpiePrize(h);
+      if(prize){h.prize=prize;h.state='fly';this.cue('flutter',h);return;}
+      if(this.magpieSees(h)){h.state='caw';h.aim=copy(p);h.reason='seen';h.facing=Math.atan2(p.y-h.y,p.x-h.x);h.phaseUntil=this.elapsed+.45;return;}
+      if(!h.patrol.length)return;
+      const look=h.patrol[h.routeIndex%h.patrol.length],want=Math.atan2(look.y-h.y,look.x-h.x),turn=Math.atan2(Math.sin(want-h.facing),Math.cos(want-h.facing));
+      if(Math.abs(turn)>.02){h.facing+=Math.sign(turn)*Math.min(Math.abs(turn),1.3*dt);h.lookUntil=this.elapsed+1.5;}
+      else if(this.elapsed>=(h.lookUntil||0))h.routeIndex=(h.routeIndex+1)%h.patrol.length;
+    }
+    // A caw is an alarm, not a lure: every chasing hunter in earshot learns where Sally is right now
+    // and comes for her as if it had just seen her; it searches there when it loses her again.
+    magpieCall(h){const p=this.player;for(const o of this.hunters){if(o===h||MAGPIE_DEAF.has(o.kind)||['steamed','stunned','clash','emerge','dig','buried','rise'].includes(o.state)||!this.audible(o,h,9))continue;
+      o.lastKnown=copy(p);o.lastObserved=this.elapsed;o.awareness=1;o.reason='heard';if(['patrol','alert','search','decoy'].includes(o.state))o.state='chase';o.path=[];o.targetId=null;}}
+    // Something shiny within reach that no other magpie is already after.
+    magpiePrize(h){
+      const taken=new Set(this.hunters.filter(o=>o!==h&&o.kind==='magpie'&&o.prize).map(o=>o.prize)),ok=t=>t&&!taken.has(t)&&distance(h,t)<=10;
+      if(this.decoy&&!this.decoy.chirp&&this.elapsed<this.decoy.expires&&ok(this.decoy))return this.decoy;
+      return this.lights.find(ok)||null;
+    }
+    magpiePrizeLive(prize){return Boolean(prize)&&(prize===this.decoy&&this.elapsed<prize.expires||this.lights.includes(prize));}
+    magpieTake(h){
+      const prize=h.prize;h.prize=null;if(!this.magpiePrizeLive(prize))return;h.carrying=true;
+      if(prize===this.decoy){this.decoy=null;this.notice('A magpie snatched the pebble! The hunters lose interest.','decoy');}
+      else{this.lights=this.lights.filter(l=>l!==prize);this.updateVisibility(true);this.notice('A magpie made off with the glow mushroom.','decoy');}
+      this.cue('steal',h);
+    }
+    magpieSees(h){
+      const p=this.player,d=distance(h,p);if(p.hidden||d>6.5||!this.clear(h,p,true))return false;
+      const diff=Math.atan2(Math.sin(Math.atan2(p.y-h.y,p.x-h.x)-h.facing),Math.cos(Math.atan2(p.y-h.y,p.x-h.x)-h.facing));return d<.9||Math.abs(diff)<Math.PI/6;
     }
     owlSees(h){
       const p=this.player,d=distance(h,p);if(p.hidden||d>7||!this.clear(h,p,true))return false;
@@ -1355,7 +1408,7 @@
         log.warning=phase>=startAt-log.warn&&phase<startAt;if(log.warning&&!log.warned){log.warned=true;this.events.push('rumble');}
         log.rolling=phase>=startAt;if(!log.rolling){log.pos=null;if(!log.warning)log.warned=false;continue;}
         const f=(phase-startAt)/travel;log.pos={x:log.from.x+(log.to.x-log.from.x)*f,y:log.from.y+(log.to.y-log.from.y)*f};
-        for(const h of this.hunters)if(distance(h,log.pos)<.6&&!['owl','moth'].includes(h.kind)&&h.state!=='steamed'){h.state='steamed';h.phaseUntil=t+2;h.path=[];this.events.push('clash');}
+        for(const h of this.hunters)if(distance(h,log.pos)<.6&&!['owl','magpie','moth'].includes(h.kind)&&h.state!=='steamed'){h.state='steamed';h.phaseUntil=t+2;h.path=[];this.events.push('clash');}
         if(distance(p,log.pos)<.6&&t>=this.invulnerableUntil){this.alarms++;if(this.shedTail(null))continue;this.finish('caught','A rolling log flattened Sally. Wait in a side pocket until it passes.');return;}
       }
       for(const th of this.thorns){
@@ -1384,7 +1437,7 @@
       if(this.grid[Math.floor(h.y)]?.[Math.floor(h.x)]==='M')budget*=.72;
       if(h.kind==='sea-snake')budget*=this.water(h)?1.05:.65;
       // Cold-blooded hunters crawl in the frozen rooms; owls and moths do not mind.
-      if(this.cold.has(this.tileKey(h))&&!['owl','moth','fox'].includes(h.kind))budget*=.6;
+      if(this.cold.has(this.tileKey(h))&&!['owl','magpie','moth','fox'].includes(h.kind))budget*=.6;
       const id=Math.floor(target.x)+','+Math.floor(target.y);
       if(h.targetId!==id || !h.path.length){h.path=this.route(h,target,h);h.targetId=id;}
       while(h.path.length&&budget>0){

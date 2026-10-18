@@ -71,7 +71,9 @@
     'secret:bestiary-grove':{mood:'jungle',lead:'flute',bpm:90,groove:2,transpose:-2},
     'secret:ice-cave':{mood:'frost',lead:'ghost',bpm:72,groove:3,transpose:-2},
     'secret:sunken-wreck':{mood:'wreck',lead:'ghost',bpm:78,groove:2},
-    'secret:blind-grove':{mood:'blind',lead:'bell',bpm:70,groove:3}
+    'secret:blind-grove':{mood:'blind',lead:'bell',bpm:70,groove:3},
+    // The Magpie Roost: a bright, bouncy bonus tune, like the shrine's but quicker and higher.
+    'secret:magpie-roost':{mood:'shrine',lead:'pluck',bpm:100,groove:2,transpose:2}
   };
   const THEME_MOOD=Object.fromEntries(Object.entries(STYLES).map(([theme,style])=>[theme,style.mood]));
   // Every escape in a region gets its own tune and key: the region's style, a new melody seed,
@@ -147,7 +149,7 @@
   function stinger(mood,kind){const m=MOODS[mood]||MOODS.meadow,tonic=m.chords[0].map(midi);
     return kind==='victory'?[...tonic,tonic[0]+12,tonic[1]+12,tonic[0]+24].map((n,i)=>({note:n,at:i*.09,dur:i===5?1.2:.3,vel:.5})):[tonic[2],tonic[1],tonic[0]-1,tonic[0]-12].map((n,i)=>({note:n,at:i*.16,dur:i===3?1:.25,vel:.45}));}
   // The flavour of a chase, from whatever is chasing. Pure, so it is easy to test.
-  const FLAVORS={heavy:['beetle','cobra','fox','crab','mole','eel','toad'],skitter:['spider','gecko','cricket','millipede','scorpion','mantis','wasp'],swoop:['owl','bat','dragonfly','moth','heron']};
+  const FLAVORS={heavy:['beetle','cobra','fox','crab','mole','eel','toad'],skitter:['spider','gecko','cricket','millipede','scorpion','mantis','wasp'],swoop:['owl','magpie','bat','dragonfly','moth','heron']};
   function flavorFor(game){
     const chasing=['chase','charge','sting','leap','swoop','lunge','dash','flee','rush','tongue','pounce','dive','scuttle'];
     if(game?.hawk?.state==='dive')return 'swoop';
@@ -172,7 +174,7 @@
     if(!game)return 'world';
     if(game.status==='won')return 'victory';
     if(game.status&&game.status!=='playing')return 'caught';
-    const chasing=['chase','charge','sting','leap','swoop','lunge','dash','flee','rush','tongue'],wary=['alert','search','windup','glimmer','glare','reveal','decoy','raise'];
+    const chasing=['chase','charge','sting','leap','swoop','lunge','dash','flee','rush','tongue'],wary=['alert','search','windup','glimmer','glare','reveal','decoy','raise','caw'];
     const hunters=game.hunters||[];
     if(hunters.some(h=>chasing.includes(h.state))||game.hawk&&game.hawk.state==='dive'||game.droppedTail)return 'chase';
     if(hunters.some(h=>wary.includes(h.state))||game.hawk&&game.hawk.state==='stalk'||game.player?.chilled)return 'tension';

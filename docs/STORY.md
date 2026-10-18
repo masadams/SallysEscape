@@ -18,7 +18,7 @@ off the page.
 ## Fennel's notes
 
 Fennel, a Wayfinder who went ahead and was never seen again, left a note in every secret spot (Star
-Garden, Mossy Well, Cloud Nest, Shrine, Bestiary Grove, Ice Cave, Sunken Wreck, Blind Grove), in the Gilded
+Garden, Mossy Well, Cloud Nest, Shrine, Bestiary Grove, Ice Cave, Sunken Wreck, Blind Grove, Magpie Roost), in the Gilded
 Burrow and in the Bramble Maze. A note is found by clearing an escape there.
 
 ## On screen

@@ -18,7 +18,7 @@ const ROOTED={scorpion:1.8,cobra:2.4,crab:1.6,eel:1.5,mantis:1.5,flytrap:1.4,her
 // (a scorpion's tail, a toad's line, a heron's gaze, a pebble for the flytrap, an eel buried at low
 // tide) leave a window.
 const ALWAYS=new Set(['eel','crab','cobra','mantis']);
-const FLYING=new Set(['owl','moth','dragonfly','bat','hawk','cloudray']);
+const FLYING=new Set(['owl','magpie','moth','dragonfly','bat','hawk','cloudray']);
 const centre=([x,y])=>({x:x+.5,y:y+.5});
 
 // Walkable tiles for Sally with every gate open, as a set of "x,y".

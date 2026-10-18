@@ -49,6 +49,10 @@ big moments rumble where the pad supports it.
 warnings), so only the creatures themselves give their plans away. Escapes won in hard mode earn a ◆ mark.
 The Blind Grove, a secret spot that opens once the first four areas are cleared, is always played this way.
 
+**The Magpie Roost.** A bonus area of five escapes that opens once the first six areas are cleared. Sally's
+pouches never run out there, but magpies keep watch: one that sees her caws and every hunter nearby comes
+straight for her, and any pebble or glow mushroom thrown near a magpie gets snatched away.
+
 **Glow bugs.** Every glow bug freed (and golden fly caught) counts: 25 open the Cloud Nest, 40 and 75 earn
 new colours for Sally (Firefly and Moonbeam), and at 100 a little sea-green glow bug of her own follows her.
 
