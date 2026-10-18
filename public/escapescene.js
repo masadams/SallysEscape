@@ -440,10 +440,14 @@ function escapeFootsteps(p){
 // Feel: footprints, dust, leaves, sparks and noise rings, kept in one small pool per run. Rings
 // show how far a noise carries, so they stay on in Simple lighting; the rest is Full only.
 const escapeFx=typeof EscapeFeel!=='undefined'?new EscapeFeel.Particles():{items:[],add(){},update(){},clear(){}};
-let escapeFxDecoy=null,escapeFxClock=0,escapeSkid={at:0,puff:0,v:null};
+let escapeFxDecoy=null,escapeFxClock=0,escapeSkid={at:0,puff:0,v:null};const escapeSkidSeen=new WeakMap();
 function tickEscapeFx(g){
   escapeFxClock+=Math.min(.1,deltaTime/1000);escapeFx.update(escapeFxClock,deltaTime/1000);
   if(g.decoy&&g.decoy!==escapeFxDecoy&&typeof EscapeFeel!=='undefined')EscapeFeel.land(escapeFx,g.decoy,escapeFxClock,Math.random,g);escapeFxDecoy=g.decoy;
+  // A hunter thrown into a skid sprays dust out to the side it is sliding from, with a scrape.
+  for(const h of g.hunters)if(h.skidAt&&h.skidAt!==escapeSkidSeen.get(h)&&typeof EscapeFeel!=='undefined'){escapeSkidSeen.set(h,h.skidAt);const a=h.skidFrom?.heading??h.facing;
+    for(let i=0;i<9;i++){const side=(i%2?1:-1)*(1.2+Math.random()*.6);escapeFx.add('dust',h.x,h.y+.15,{t:escapeFxClock,life:.55+Math.random()*.25,size:.15+Math.random()*.12,vx:Math.cos(a)*(1.8+Math.random()*1.4)+Math.cos(a+side)*1.1,vy:Math.sin(a)*(1.8+Math.random()*1.4)+Math.sin(a+side)*1.1-.25,color:[186,170,138]});}
+    if(g.visibleTile(Math.floor(h.x),Math.floor(h.y)))escapeSound('scrape',{gain:.6});}
   // Sally skids a little when she doubles back at a sprint: a puff of dust thrown the way she was
   // going and a soft scuff. It is only for the look; she still turns on the spot.
   const v=g.playerVelocity,sk=escapeSkid;if(v&&escapeFxClock-sk.at>.12){const pv=sk.v,sp=Math.hypot(v.x,v.y),pp=pv?Math.hypot(pv.x,pv.y):0;
