@@ -1,0 +1,83 @@
+name: Android app
+
+# Builds the Android app (phones, tablets and Android TV). A signed release APK is built only when a
+# version tag is pushed (v1.0, v1.1, ...) and is attached to a GitHub release. Work branches and pull
+# requests that touch the app get an unsigned test build, so it is known to compile before it merges.
+# (GitHub does not apply path filters to tag pushes, so every version tag builds.)
+on:
+  push:
+    tags: ['v*']
+    branches-ignore: [main]
+    paths: ['android/**', 'scripts/prepare-static.cjs', '.github/workflows/android.yml']
+  pull_request:
+    branches: [main]
+    paths: ['android/**', 'scripts/prepare-static.cjs', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Version
+        id: v
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then name="${GITHUB_REF_NAME#v}"; else name="0.0.${GITHUB_RUN_NUMBER}-test"; fi
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+      - name: Bundle the game into the app
+        run: |
+          npm ci
+          VERSION="${GITHUB_SHA}" npm run prepare:static
+          rm -rf android/app/src/main/assets/www && mkdir -p android/app/src/main/assets
+          cp -R public android/app/src/main/assets/www
+      - name: Signing key
+        id: key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "file=$RUNNER_TEMP/release.jks" >> "$GITHUB_OUTPUT"
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "::error::A release needs the ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD secrets (see android/README.md)."
+            exit 1
+          fi
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          gradle-version: '8.9'
+      - name: Build
+        env:
+          VERSION_NAME: ${{ steps.v.outputs.name }}
+          VERSION_CODE: ${{ github.run_number }}
+          KEYSTORE_FILE: ${{ steps.key.outputs.file }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_FILE" ]; then task=assembleRelease; out=release/app-release.apk; else task=assembleDebug; out=debug/app-debug.apk; fi
+          gradle -p android "$task" --no-daemon --stacktrace
+          mkdir -p dist && cp "android/app/build/outputs/apk/$out" "dist/SallysEscape-${VERSION_NAME}.apk"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: SallysEscape-${{ steps.v.outputs.name }}
+          path: dist/*.apk
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.apk --title "Sally's Escape $GITHUB_REF_NAME" --generate-notes

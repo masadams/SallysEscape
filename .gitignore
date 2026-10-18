@@ -3,3 +3,12 @@ public/vendor/
 public/version.json
 .git/
 data/
+
+# Android build output and the game copied in at build time
+android/.gradle/
+android/build/
+android/app/build/
+android/app/src/main/assets/www/
+android/local.properties
+*.jks
+*.keystore
