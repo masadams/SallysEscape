@@ -130,7 +130,7 @@ function mountEscapeChrome(active){
   area.classList.toggle('escape-playing',active);document.body?.classList?.toggle('escape-shell',active);
 }
 function openEscapeWorld(focusId){
-  escapeLibraryOpen=false;escapeWorldPanelOpen=false;escapeWorldHudSignature='';
+  escapeLibraryOpen=false;escapeWorldPanelOpen=false;escapeWorldZoom.cell=null;escapeWorldHudSignature='';
   if(!escapeWorld)escapeWorld=new EscapeWorld(id=>escapeProgress.unlocked(id),focusId,()=>escapeProgress.hiddenOpen(EscapeWorld.chapters),id=>escapeProgress.bonusOpen(id,EscapeWorld.chapters),id=>escapeProgress.secretOpen(id,EscapeWorld.chapters));
   else if(focusId){const node=escapeWorld.spotFor(focusId);if(node){escapeWorld.player.x=node.x;escapeWorld.player.y=node.y+1;escapeWorld.target=null;escapeWorld.motion.resetPlayer(escapeWorld.player);}}
   escapeWorld.found=new Set(escapeProgress.data.caches);escapeWorld.onCache=escapeWorldFoundCache;escapeWorld.onSecretBump=escapeWorldBumpSecret;escapeWorld.itemsFound=new Set(escapeProgress.data.items);escapeWorld.onItem=escapeWorldFoundItem;escapeWorld.onSecretCache=escapeWorldFoundSecretCache;escapeWorld.onFly=escapeWorldCaughtFly;
@@ -315,8 +315,18 @@ let escapeWorldUnlockCache={at:-1e9,map:new Map()};
 function escapeWorldUnlocked(id){if(millis()-escapeWorldUnlockCache.at>500)escapeWorldUnlockCache={at:millis(),map:new Map()};const m=escapeWorldUnlockCache.map;if(!m.has(id))m.set(id,escapeProgress.unlocked(id));return m.get(id);}
 // Writes to an element only what changed since the last frame.
 function escapeWorldSet(el,key,value,apply){if(el['_w'+key]===value)return;el['_w'+key]=value;apply(value);}
+// The world map's zoom: it opens zoomed out to show the area, eases in while Sally walks (fewer tiles
+// on screen, so less to draw), and drifts back out after she has stood still a couple of seconds.
+let escapeWorldZoom={cell:null,still:0};
+function escapeWorldCell(w){
+  const dt=Math.min(.1,(deltaTime||16)/1000),far=Math.max(24,Math.min(60,height/15)),near=Math.max(30,Math.min(84,height/11));
+  if(escapeWorldZoom.cell===null||escapeWorldZoom.w!==w){escapeWorldZoom={cell:far,still:3,w};}
+  escapeWorldZoom.still=w.player.moving||w.target?0:escapeWorldZoom.still+dt;
+  const goal=escapeWorldZoom.still>2?far:near,rate=goal>escapeWorldZoom.cell?2.2:.9;
+  escapeWorldZoom.cell+=(goal-escapeWorldZoom.cell)*(1-Math.exp(-dt*rate));return escapeWorldZoom.cell;
+}
 function drawEscapeWorld(){
-  const w=escapeWorld,cell=width<600?23:30,clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),cx=clamp(w.player.x,width/(2*cell),w.width-width/(2*cell)),cy=clamp(w.player.y,(height-90)/(2*cell),w.height-(height-90)/(2*cell)),ox=width/2-cx*cell,oy=(width<600?height*.42:(height+30)/2)-cy*cell;
+  const w=escapeWorld,cell=escapeWorldCell(w),clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),cx=clamp(w.player.x,width/(2*cell),w.width-width/(2*cell)),cy=clamp(w.player.y,(height-90)/(2*cell),w.height-(height-90)/(2*cell)),ox=width/2-cx*cell,oy=(width<600?height*.42:(height+30)/2)-cy*cell;
   const bounds=document.getElementById('game-container').getBoundingClientRect?.()||{left:0,top:0,width,height},panels=escapeWorldPanels();
   // Flag number buttons are DOM elements above the canvas; hide any the villager's speech bubble covers.
   const talking=w.nearbyNpc();if(talking){const b=escapeSpeechRect(talking,cell),sx=v=>bounds.left+(v+ox)/width*bounds.width,sy=v=>bounds.top+(v+oy)/height*bounds.height;panels.push({left:sx(b.x),right:sx(b.x+b.w),top:sy(b.y),bottom:sy(b.y+b.h+cell*.3)});}
