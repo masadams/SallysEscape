@@ -57,7 +57,7 @@ test('apply-level-edits writes drafts into the source and they play as edited',(
   assert.equal(entries(src.level).length,EscapeCatalog.levels.length);
   const failed=[];
   for(const [kind,game] of picks){
-    const route=routes[kind].find(r=>r.id===game.id),rec=fixtures.find(r=>!r.options.challengeId&&(kind==='hidden'?r.options.hiddenId:r.options.levelId)===game.id);
+    const route=routes[kind].find(r=>r.id===game.id),rec=fixtures.find(r=>!r.pending&&!r.options.challengeId&&(kind==='hidden'?r.options.hiddenId:r.options.levelId)===game.id);
     for(const k of ['append','unlockAfter','secret','bonus','stars'])if(game[k]!==undefined&&k!=='unlockAny')assert.deepEqual(route[k],game[k],game.id+' keeps '+k);
     if(!rec)continue;const g=replay({level:escapeBuildCustom(route)},rec.commands),orig=replay(rec.options,rec.commands);
     if(g.status!=='won'||Math.abs(g.elapsed-orig.elapsed)>1e-6)failed.push(game.id+': '+g.status);

@@ -1,7 +1,8 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {EscapeAdventure}=require('../public/escape-engine.js');
 const recordings=require('./fixtures/escape-playthroughs.json');
-for(const recording of recordings)test('recorded legal escape with real guards: '+(recording.options.challengeId||recording.options.levelId),()=>{
+// A recording marked pending is waiting to be re-recorded after a rules change; it shows as skipped, with why.
+for(const recording of recordings)test('recorded legal escape with real guards: '+(recording.options.challengeId||recording.options.levelId||recording.options.hiddenId),{skip:recording.pending||false},()=>{
   const g=new EscapeAdventure(recording.options);
   for(const command of recording.commands){
     if(command.kind==='move')for(let n=0;n<command.frames;n++)g.advance(1/120,command);

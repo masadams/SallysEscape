@@ -4,6 +4,9 @@
   const catalog=typeof module!=='undefined'&&module.exports?require('./escape-levels.js'):{EscapeCatalog:root.EscapeCatalog,escapeGridFor:root.escapeGridFor};
   const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   const copy=p=>({x:p.x,y:p.y});
+  // How heavy hunters handle in a chase (see glideHunter): turning speed in radians a second, the share of
+  // speed kept through a sharp turn, and how quickly they get back up to full speed.
+  const MOMENTUM={snake:{turn:2.4,grip:.55,accel:1.6},cobra:{turn:2,grip:.5,accel:1.3},'sea-snake':{turn:2.4,grip:.55,accel:1.6},fish:{turn:4.5,grip:.6,accel:2.5},chameleon:{turn:3.5,grip:.55,accel:2}};
   // Hunters heavy enough to press a heavy plate.
   const HEAVY=new Set(['beetle']);
   const centre=(x,y)=>({x:x+0.5,y:y+0.5});
@@ -663,6 +666,7 @@
       return d<1 || Math.abs(difference)<(h.kind==='beetle'?Math.PI/5:Math.PI/3);
     }
     updateHunter(dt,h=this.hunter){
+      this.hunterDt=dt;
       if(h.state==='steamed'){if(this.elapsed>=h.phaseUntil){h.state=h.kind==='mimic'?'rooted':'patrol';h.graceUntil=this.elapsed+.5;}return;}
       if(h.tailLureUntil){
         if(this.elapsed<h.tailLureUntil&&this.droppedTail){h.state='decoy';h.awareness=0;h.lastKnown=null;h.aim=null;if(distance(h,this.droppedTail)>.3)this.moveHunter(this.droppedTail,1.3*dt,h);return;}
@@ -1365,6 +1369,9 @@
       const p=this.player;return this.hunters.find(h=>h.kind==='toad'&&h.state==='tongue'&&h.tongueLength>0&&(()=>{const dx=Math.cos(h.facing),dy=Math.sin(h.facing),t=(p.x-h.x)*dx+(p.y-h.y)*dy;if(t<0||t>h.tongueLength+.2)return false;return Math.abs((p.x-h.x)*dy-(p.y-h.y)*dx)<.4;})());
     }
     moveHunter(target,budget,h=this.hunter){
+      const m=MOMENTUM[h.kind];
+      if(m&&h.state==='chase'&&this.hunterDt>0)return this.glideHunter(target,budget,h,m);
+      h.heading=undefined;
       if(this.grid[Math.floor(h.y)]?.[Math.floor(h.x)]==='M')budget*=.72;
       if(h.kind==='sea-snake')budget*=this.water(h)?1.05:.65;
       // Cold-blooded hunters crawl in the frozen rooms; owls and moths do not mind.
@@ -1379,6 +1386,26 @@
         h.facing=Math.atan2(next.y-h.y,next.x-h.x);h.x=next.x;h.y=next.y;h.distanceMoved+=step;budget-=step;
         if(step>=d-0.00001)h.path.shift();
       }
+    }
+    // A heavy hunter in a chase cannot turn on a dime or stop dead: it steers toward its route with a
+    // limited turning speed, loses speed in a sharp turn and builds it back on a straight run. Cut back
+    // hard and it swings wide past you; in a narrow corridor it coils round on the spot.
+    glideHunter(target,budget,h,m){
+      const dt=this.hunterDt;if(h.heading===undefined){h.heading=Math.atan2(target.y-h.y,target.x-h.x);h.glide=.7;} // It whips round on first sight; the momentum is in what follows.
+      if(this.grid[Math.floor(h.y)]?.[Math.floor(h.x)]==='M')budget*=.72;
+      if(h.kind==='sea-snake')budget*=this.water(h)?1.05:.65;
+      if(this.cold.has(this.tileKey(h)))budget*=.6;
+      const id=Math.floor(target.x)+','+Math.floor(target.y);
+      if(h.targetId!==id||!h.path.length||distance(h,h.path[0])>1.6){h.path=this.route(h,target,h);h.targetId=id;}
+      while(h.path.length>1&&distance(h,h.path[0])<.5)h.path.shift();
+      const point=h.path[0]||target;if(distance(h,point)<.03){h.path.shift();return;}
+      const want=Math.atan2(point.y-h.y,point.x-h.x),diff=Math.atan2(Math.sin(want-h.heading),Math.cos(want-h.heading));
+      const turn=Math.max(-m.turn*dt,Math.min(m.turn*dt,diff));h.heading+=turn;
+      const aim=Math.abs(diff)>1.1?m.grip:1;h.glide+=(aim-h.glide)*Math.min(1,dt*m.accel*(aim<h.glide?2.5:1));
+      const step=Math.min(budget*h.glide,Math.max(distance(h,point),.02)+.4),dx=Math.cos(h.heading)*step,dy=Math.sin(h.heading)*step;
+      const go=(x,y)=>{const next={x,y};if(!this.clear(h,next,false,h)||!this.fits(next,.22,h))return false;h.distanceMoved+=Math.hypot(x-h.x,y-h.y);h.x=x;h.y=y;return true;};
+      if(!go(h.x+dx,h.y+dy)&&!go(h.x+dx,h.y)&&!go(h.x,h.y+dy)){h.heading+=turn;h.glide=Math.min(h.glide,m.grip);}
+      h.facing=h.heading;
     }
     // How many of each tool Sally used this run.
     toolsUsed(){const out={pebble:(this.level.pebbles||0)-this.decoys,burrow:(this.level.burrows||0)-this.burrows,tongue:this.tonguesUsed,camo:this.camosUsed,seed:this.seedsUsed,glow:this.glowsUsed,spore:this.sporesUsed};
