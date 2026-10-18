@@ -33,10 +33,17 @@ to. The server keeps passkeys, published levels and player data in `DATA_DIR` (`
 `compose.yaml` mounts a volume there). For testing, signed-in admins can turn on a test mode in
 the Admin panel that opens every escape without changing saved records.
 
-**Controls.** WASD or arrows, Shift run, C crawl, Q pebble (hold to throw further), L glow mushroom,
+**Controls.** WASD or arrows, Shift run, C crawl, Q pebble (hold to set the distance: the throw swings out and back while held), L glow mushroom,
 Z spore pouch, E burrow, R tongue, F seed, X camouflage, Space look back, G map, H hint, M mute, Esc
 pause. On the world map R grabs golden flies and Enter enters an escape. Phones use landscape, a left
 thumbstick and right action buttons; rotating to portrait pauses a run.
+
+**Hard mode.** An option that hides every drawn hint (gaze cones, ? and ! marks, aim lines, rings and
+warnings), so only the creatures themselves give their plans away. Escapes won in hard mode earn a ◆ mark.
+The Blind Grove, a secret spot that opens once the first four areas are cleared, is always played this way.
+
+**Glow bugs.** Every glow bug freed (and golden fly caught) counts: 25 open the Cloud Nest, 40 and 75 earn
+new colours for Sally (Firefly and Moonbeam), and at 100 a little sea-green glow bug of her own follows her.
 
 ## Self hosting
 

@@ -32,8 +32,8 @@ function openEscapeTrophies(){
     card('💰','Treasure found',String(t.treasure),p.data.caches.length+' of '+escapeWorld.caches.length+' hidden caches found')+
     card('⚑','Challenges',p.challengesCleared()+' / '+EscapeCatalog.challenges.length)+
     card('📖','Creatures met',EscapeBestiary.entries.filter(e=>p.data.met.includes(e.kind)).length+' / '+EscapeBestiary.entries.length)+
-    card('✨','Golden flies & glow bugs',String(t.goldflies))+
-    card('🎨','Colours',skins.length+' / '+(chapters.length+2),skins.map(k=>ESCAPE_SKINS[k]?.name).filter(Boolean).join(', '))+
+    card('✨','Golden flies & glow bugs',String(t.goldflies),(next=>next?'Next at '+next.at+': '+(next.skin?ESCAPE_SKINS[next.skin].name+' colours':'a glow bug of her own'):'A glow bug of her own follows Sally.')(EscapeProgress.GLOW_GIFTS.find(g=>t.goldflies<g.at)))+
+    card('🎨','Colours',skins.length+' / '+(chapters.length+2+EscapeProgress.GLOW_GIFTS.filter(g=>g.skin).length),skins.map(k=>ESCAPE_SKINS[k]?.name).filter(Boolean).join(', '))+
     card('🗝','Secret spots',opened+' / '+spots.length,bonusDone+' of '+hidden.length+' hidden escapes cleared')+
     '</div>';
   escapeBestiaryOpen=true;page.style.display='block';escapeSound('cache');
@@ -78,9 +78,9 @@ function escapeNpcLine(npc){
 }
 // Mastered areas lend Sally their colours; the button steps through the ones she owns.
 function cycleEscapeSkin(){const chapters=EscapeWorld.chapters,owned=escapeProgress.skins(chapters),next=owned[(owned.indexOf(escapeProgress.skin(chapters))+1)%owned.length];
-  escapeProgress.setSkin(next,chapters);renderEscapeWorldTotals();escapeWorldToast(owned.length>1?'Sally is wearing '+ESCAPE_SKINS[next].name+'.':'Master an area by earning every star there, and Sally can wear its colours.');escapeSound('camo');document.activeElement?.blur?.();}
+  escapeProgress.setSkin(next,chapters);renderEscapeWorldTotals();escapeWorldToast(owned.length>1?'Sally is wearing '+ESCAPE_SKINS[next].name+'.':'Master an area by earning every star there, or free 40 glow bugs, and Sally can wear new colours.');escapeSound('camo');document.activeElement?.blur?.();}
 function escapeWorldToast(text){escapeWorldToastUntil=millis()+3500;const toast=document.getElementById('world-toast');if(toast)toast.textContent=text;}
-function escapeWorldCaughtFly(){const n=escapeProgress.catchGoldfly();escapeWorldToast('Golden fly caught! +2 treasure ('+n+' caught so far).');escapeSound('treasure');renderEscapeWorldTotals();}
+function escapeWorldCaughtFly(){const n=escapeProgress.catchGoldfly(),gift=escapeProgress.glowGift(n);escapeWorldToast(gift?gift.text:'Golden fly caught! +2 treasure ('+n+' caught so far).');escapeSound('treasure');renderEscapeWorldTotals();}
 function escapeWorldAnnounceRegions(){
   const before=escapeProgress.data.regionsSeen.length,open=escapeWorld.chapters.map((_,i)=>i).filter(i=>escapeWorld.regionOpen(i)),fresh=escapeProgress.announceRegions(open);
   // A brand new save or an older save meeting this feature learns its regions silently.
@@ -131,7 +131,7 @@ function openEscapeWorld(focusId){
   escapeWorld.refreshRegions();document.getElementById('escape-select').style.display='none';document.getElementById('game-container').style.display='block';
   document.getElementById('game-area').classList.add('escape-world-open');
   mountEscapeChrome(true);document.getElementById('escape-world-ui').style.display='block';document.getElementById('escape-world-portals').style.display='block';
-  document.getElementById('escape-world-ui').innerHTML=`<div class="world-heading"><span>SALLY’S ESCAPE TRAIL</span><h2 id="world-region-name">Sunny Meadow</h2><label class="world-travel">Travel <select id="world-travel">${escapeWorld.chapters.map((c,i)=>'<option '+(escapeWorld.regionOpen(i)?'':'disabled')+' value="'+i+'">'+(i+1)+' · '+c.name+'</option>').join('')}</select></label><div id="world-totals" class="world-totals"></div></div><div class="world-guide"><span>WASD / arrows · Shift to run · R grabs golden flies</span><p>Explore the areas. '+(mobile?'Tap':'Click')+' an entrance to guide Sally there.</p><button id="world-library">Escapes & challenges</button><button id="world-skin" title="Master an area (every star) to earn its colours">Sally\u2019s colours</button><button id="world-home">Main menu</button><p id="world-toast" class="world-toast" role="status" aria-live="polite"></p></div><article id="world-route" class="world-route"><span id="world-route-number">THE TRAIL</span><h3 id="world-route-name">A new escape awaits</h3><p id="world-route-brief"></p><p id="world-route-best"></p><p id="world-route-challenge" class="world-route-challenge"></p><button id="world-enter" class="escape-primary">Enter escape <span class="key-hint">[Enter]</span></button><button id="world-challenge" class="escape-secondary" style="display:none"></button></article>`;
+  document.getElementById('escape-world-ui').innerHTML=`<div class="world-heading"><span>SALLY’S ESCAPE TRAIL</span><h2 id="world-region-name">Sunny Meadow</h2><label class="world-travel">Travel <select id="world-travel">${escapeWorld.chapters.map((c,i)=>'<option '+(escapeWorld.regionOpen(i)?'':'disabled')+' value="'+i+'">'+(i+1)+' · '+c.name+'</option>').join('')}</select></label><div id="world-totals" class="world-totals"></div></div><div class="world-guide"><span>WASD / arrows · Shift to run · R grabs golden flies</span><p>Explore the areas. ${typeof mobile!=='undefined'&&mobile?'Tap':'Click'} an entrance to guide Sally there.</p><button id="world-library">Escapes & challenges</button><button id="world-skin" title="Master an area (every star) to earn its colours">Sally\u2019s colours</button><button id="world-home">Main menu</button><p id="world-toast" class="world-toast" role="status" aria-live="polite"></p></div><article id="world-route" class="world-route"><span id="world-route-number">THE TRAIL</span><h3 id="world-route-name">A new escape awaits</h3><p id="world-route-brief"></p><p id="world-route-best"></p><p id="world-route-challenge" class="world-route-challenge"></p><button id="world-enter" class="escape-primary">Enter escape <span class="key-hint">[Enter]</span></button><button id="world-challenge" class="escape-secondary" style="display:none"></button></article>`;
   document.getElementById('world-travel').onchange=e=>{if(!escapeWorld.travel(Number(e.target.value)))renderEscapeWorldHUD();clearTouchInput();suppressHeldKeys();document.activeElement?.blur?.();};
   document.getElementById('world-library').onclick=openEscapeLibrary;document.getElementById('world-skin').onclick=cycleEscapeSkin;document.getElementById('world-home').onclick=leaveEscape;
   // On a phone these live in the ☰ menu instead of a panel over the map.
@@ -155,7 +155,7 @@ function renderEscapeHiddenHUD(node){
   else if(level.bonus){document.getElementById('world-region-name').textContent='Bonus escape';document.getElementById('world-route-number').textContent='BONUS · EVERY STAR IN THE FIRST '+level.bonus.areas+' AREAS';}
   else{document.getElementById('world-region-name').textContent='The Gilded Burrow';document.getElementById('world-route-number').textContent='THE GILDED BURROW · '+(node.index+1)+' OF 3';}
   document.getElementById('world-route-name').textContent=level.name;document.getElementById('world-route-brief').textContent=level.brief;
-  document.getElementById('world-route-best').textContent=saved?'★'.repeat(saved.stars)+'☆'.repeat(3-saved.stars)+' · Best '+saved.bestTime.toFixed(1)+'s':level.secret&&!escapeProgress.hiddenLevelOpen(level.id,EscapeWorld.chapters)?'This bed blooms at '+level.stars+' stars. You have '+escapeProgress.stars()+'.':level.secret?'A secret escape. Its record is kept on its own.':level.bonus?'Your reward for every star. Its record is kept on its own.':'Few have come this far.';
+  document.getElementById('world-route-best').textContent=saved?'★'.repeat(saved.stars)+'☆'.repeat(3-saved.stars)+' · Best '+saved.bestTime.toFixed(1)+'s'+(escapeProgress.isHard(level.id)?' · ◆ Hard mode':''):level.secret&&!escapeProgress.hiddenLevelOpen(level.id,EscapeWorld.chapters)?'This bed blooms at '+level.stars+' stars. You have '+escapeProgress.stars()+'.':level.secret?'A secret escape. Its record is kept on its own.':level.bonus?'Your reward for every star. Its record is kept on its own.':'Few have come this far.';
   document.getElementById('world-route-challenge').textContent='';document.getElementById('world-challenge').style.display='none';
 }
 function renderEscapeWorldHUD(){
@@ -345,7 +345,7 @@ function drawEscapeWorld(){
   // Regions not yet opened sit under drifting cloud that clears when they open.
   for(const [i,c] of w.chapters.entries())if(!w.regionOpen(i)&&Math.abs(c.x-w.player.x)<width/cell+10&&Math.abs(c.y-w.player.y)<height/cell+10)drawEscapeRegionCloud(c,i,cell,w.elapsed);
   if(w.lick){const head=w.motion.lizard.joints[0];stroke(232,110,140);strokeWeight(cell*.08);line(head.x*cell,head.y*cell,w.lick.x*cell,w.lick.y*cell);}
-  drawEscapeLizard(w.motion.lizard,cell,w.motion.clock);
+  drawEscapeLizard(w.motion.lizard,cell,w.motion.clock);drawEscapeCompanion(w.player,cell,w.elapsed);
   for(const [i,c] of w.chapters.entries())if(w.regionOpen(i))drawEscapeWorldCritters(c,i,w,cell);
   if(w.fly)drawEscapeGoldfly(w.fly,cell,w.elapsed);
   // Cloud shadows drift across the whole trail.

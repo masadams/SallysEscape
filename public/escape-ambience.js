@@ -36,7 +36,8 @@
     'secret:challenge-shrine':{beds:[['wind',.3]],calls:[['chime',[5,9],.4]]},
     'secret:bestiary-grove':{beds:[['insects',.3],['breeze',.3]],calls:[['bird',[2,5],.45],['frog',[6,10],.3]]},
     'secret:ice-cave':{beds:[['icewind',.4]],calls:[['tinkle',[2,5],.4],['creak',[7,12],.3]]},
-    'secret:sunken-wreck':{beds:[['surf',.35],['cave',.3]],calls:[['creak',[4,8],.4],['bubble',[3,6],.35]]}
+    'secret:sunken-wreck':{beds:[['surf',.35],['cave',.3]],calls:[['creak',[4,8],.4],['bubble',[3,6],.35]]},
+    'secret:blind-grove':{beds:[['breeze',.2],['insects',.15]],calls:[['cricket',[5,9],.2],['shimmer',[6,11],.3]]}
   };
   // How each bed is shaped: a noise filter, and a slow swell (rate in Hz, depth 0–1).
   const BEDS={
