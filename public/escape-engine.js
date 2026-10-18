@@ -6,7 +6,12 @@
   const copy=p=>({x:p.x,y:p.y});
   // How heavy hunters handle in a chase (see glideHunter): turning speed in radians a second, the share of
   // speed kept through a sharp turn, how quickly they get back up to full speed, and lunges a second.
-  const MOMENTUM={snake:{turn:2.4,grip:.55,accel:1.6,pulse:1.5},cobra:{turn:2,grip:.5,accel:1.3,pulse:1.1},'sea-snake':{turn:2.4,grip:.55,accel:1.6,pulse:1.4},fish:{turn:4.5,grip:.6,accel:2.5,pulse:2.2},chameleon:{turn:3.5,grip:.55,accel:2,pulse:1}};
+  // How sharp hunters are, by the level's cunning (0 to 3; early areas 0, the last stretch 3): how far
+  // ahead a snake reads Sally, how much looping it takes before it reads the loop, how close it feels
+  // her when facing away, how quickly it turns and recovers from a skid, and its pace.
+  const CUNNING=[{lead:0,loop:Infinity,feel:0,turn:.85,snap:.35,pace:.92},{lead:.55,loop:8,feel:1.8,turn:.93,snap:.7,pace:.96},{lead:1,loop:5.5,feel:3,turn:1,snap:1,pace:1},{lead:1.2,loop:4.2,feel:3.6,turn:1.1,snap:1,pace:1.03}];
+  // lead is how far ahead it reads Sally: 1 aims where she will be by the time it gets there, 0 where she is.
+  const MOMENTUM={snake:{turn:2.4,grip:.55,accel:1.6,pulse:1.5,lead:.85},cobra:{turn:2,grip:.5,accel:1.3,pulse:1.1,lead:1},'sea-snake':{turn:2.4,grip:.55,accel:1.6,pulse:1.4,lead:.85},fish:{turn:4.5,grip:.6,accel:2.5,pulse:2.2,lead:.5},chameleon:{turn:3.5,grip:.55,accel:2,pulse:1,lead:.4}};
   // Hunters heavy enough to press a heavy plate.
   const HEAVY=new Set(['beetle']);
   const centre=(x,y)=>({x:x+0.5,y:y+0.5});
@@ -24,6 +29,7 @@
       // Tests and tools may pass a level object directly; the game uses the catalog.
       this.level=options.level||(options.hiddenId?catalog.EscapeCatalog.hidden.find(l=>l.id===options.hiddenId):catalog.EscapeCatalog.levels.find(l=>l.id===(this.challenge?.levelId||options.levelId||'quiet-vault')));
       if(!this.level)throw new Error('Unknown Escape level');
+      this.cunning=CUNNING[Math.max(0,Math.min(3,Math.round(this.level.cunning??2)))];
       this.grid=catalog.escapeGridFor(this.level);this.height=this.grid.length;this.width=this.grid[0].length;
       this.player={...centre(...this.level.spawn),facing:{x:0,y:-1},tongueAim:null,stamina:100,exhausted:false,moving:false,sprinting:false,crawling:false,hidden:false,noisy:false};
       this.hunters=this.level.guards.map(guard=>this.makeHunter(guard));
@@ -592,7 +598,7 @@
         else if(this.grid[Math.floor(next.y+d*(axis==='y'?.3:0))]?.[Math.floor(next.x+d*(axis==='x'?.3:0))]==='P'&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(null)){this.finish('caught','A gust blew Sally off the ledge. Watch the streaks: when they thicken, get out of the lane or brace against a wall.');return;}}}
       if(this.currents.length&&this.water(p)&&!p.underground){const c=this.currents.find(c=>p.x>=c.x1&&p.x<c.x2+1&&p.y>=c.y1&&p.y<c.y2+1);
         if(c)for(const [axis,d] of [['x',c.dir[0]],['y',c.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*c.speed*dt};if(this.fits(next))p[axis]=next[axis];}}
-      p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);if(p.swimming&&!this.water(old))this.events.push('splash');p.moving=distance(old,p)>0.0001;p.sprinting=sprint&&p.moving;p.crawling=crawl&&p.moving&&!p.swimming;this.playerVelocity={x:(p.x-old.x)/dt,y:(p.y-old.y)/dt};
+      p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);if(p.swimming&&!this.water(old))this.events.push('splash');p.moving=distance(old,p)>0.0001;p.sprinting=sprint&&p.moving;p.crawling=crawl&&p.moving&&!p.swimming;this.playerVelocity={x:(p.x-old.x)/dt,y:(p.y-old.y)/dt};this.trackSally(dt);
       p.stamina=Math.max(0,Math.min(100,p.stamina+(p.sprinting?-24:18)*dt));
       if(this.camoUntil>this.elapsed&&p.moving){this.camoUntil=0;this.notice('Moving broke the camouflage.');}
       p.camo=this.camoUntil>this.elapsed;
@@ -701,8 +707,8 @@
       if(h.kind==='cloudray'){this.updateCloudRay(dt,h);return;}
       const p=this.player,previousState=h.state;
       // Nearby visible danger overrides a lure; a pebble cannot make it ignore a bite.
-      const seen=this.seesPlayer(h)&&!(p.crawling&&distance(h,p)>(this.hunters.length>1&&this.lit()?5.5:3.5)&&this.elapsed>=this.flashUntil),heard=(p.noisy||p.loud)&&!p.hidden&&this.audible(h,p,p.loud?6:3.5);
-      const lure=this.decoy&&this.audible(h,this.decoy,9)&&!(seen&&distance(h,p)<1.2);
+      const seen=(this.seesPlayer(h)||this.feelsPlayer(h))&&!(p.crawling&&distance(h,p)>(this.hunters.length>1&&this.lit()?5.5:3.5)&&this.elapsed>=this.flashUntil),heard=(p.noisy||p.loud)&&!p.hidden&&this.audible(h,p,p.loud?6:3.5);
+      const lure=this.decoy&&this.audible(h,this.decoy,9)&&!(seen&&(this.decoy.chirp||distance(h,p)<1.2));
       let target,speed=1.25;
       if(lure){
         if(!this.decoy.noticed){this.decoy.noticed=true;this.notice(this.decoy.croak?'It heard the frog. Now is your chance!':'It heard the pebble. Now is your chance!','distracted');}
@@ -1161,12 +1167,13 @@
       const p=this.player,d=distance(h,p);if(p.hidden||d>7||!this.clear(h,p,true))return false;
       const diff=Math.atan2(Math.sin(Math.atan2(p.y-h.y,p.x-h.x)-h.facing),Math.cos(Math.atan2(p.y-h.y,p.x-h.x)-h.facing));return d<.9||Math.abs(diff)<Math.PI/9;
     }
-    // The cricket is an alarm: harmless itself, but when it notices Sally it chirps,
-    // and every hunter in earshot heads for the spot as if a pebble had landed there.
+    // The cricket is an alarm: harmless itself, but when it notices Sally it chirps, and hunters in
+    // earshot that cannot see her come to the spot for a moment. It is a call, not a pebble: one that
+    // sees Sally keeps after her, the call soon fades, and it never drowns out a pebble she threw.
     updateCricket(dt,h){
       const p=this.player;
       if(h.state==='chirp'){
-        if(this.elapsed>=h.phaseUntil){this.decoy={x:h.aim.x,y:h.aim.y,expires:this.elapsed+4,chirp:true};this.alarms++;this.cue('chirp',h);this.notice('A cricket chirps! Every hunter nearby is coming.','warning');h.state='recover';h.phaseUntil=this.elapsed+5;}
+        if(this.elapsed>=h.phaseUntil){if(!this.decoy||this.decoy.chirp)this.decoy={x:h.aim.x,y:h.aim.y,expires:this.elapsed+2,chirp:true};this.alarms++;this.cue('chirp',h);this.notice('A cricket chirps! Hunters nearby come to look.','warning');h.state='recover';h.phaseUntil=this.elapsed+8;}
         return;
       }
       if(h.state==='recover'){if(this.elapsed>=h.phaseUntil)h.state='patrol';return;}
@@ -1322,7 +1329,7 @@
         this.moveHunter(this.seesPlayer(h)?p:h.aim,2.6*dt,h);return;
       }
       if(h.state==='recover'){if(this.elapsed>=h.phaseUntil){h.state='patrol';h.aim=null;h.awareness=0;}return;}
-      const seen=this.seesPlayer(h),lure=this.decoy&&this.audible(h,this.decoy,9)&&!(seen&&distance(h,p)<1.2);
+      const seen=this.seesPlayer(h),lure=this.decoy&&this.audible(h,this.decoy,9)&&!(seen&&(this.decoy.chirp||distance(h,p)<1.2));
       if(lure){h.state='decoy';h.awareness=0;this.moveHunter(this.decoy,1.4*dt,h);return;}
       if(seen){
         h.state='alert';h.reason='seen';h.facing=Math.atan2(p.y-h.y,p.x-h.x);h.awareness=Math.min(1,h.awareness+dt/.45);
@@ -1387,30 +1394,58 @@
         if(step>=d-0.00001)h.path.shift();
       }
     }
+    // Sally's running line, smoothed, for hunters that read where she is going: her velocity, and how
+    // fast she is curving (radians a second, + for clockwise on screen).
+    trackSally(dt){if(!(dt>0))return;
+      const v=this.playerVelocity,t=this.sallyTrack||(this.sallyTrack={vx:0,vy:0,curve:0,loop:0}),k=Math.min(1,dt/.2);
+      const before=Math.atan2(t.vy,t.vx),moving=Math.hypot(t.vx,t.vy)>.5;t.vx+=(v.x-t.vx)*k;t.vy+=(v.y-t.vy)*k;
+      const bend=moving&&Math.hypot(t.vx,t.vy)>.5?Math.atan2(Math.sin(Math.atan2(t.vy,t.vx)-before),Math.cos(Math.atan2(t.vy,t.vx)-before))/dt:0;
+      t.curve+=(Math.max(-6,Math.min(6,bend))-t.curve)*Math.min(1,dt/.35);
+      // How far round she has turned lately, one way: a full loop or more means she is circling.
+      t.loop=t.loop*Math.exp(-dt/5)+Math.max(-6,Math.min(6,bend))*dt;
+    }
+    // A heavy hunter mid-chase feels Sally close by whichever way it faces, so sliding past her does
+    // not lose her; leaves, cover or a crawl still do.
+    feelsPlayer(h){const p=this.player;return h.state==='chase'&&Boolean(MOMENTUM[h.kind])&&!p.hidden&&!p.crawling&&!p.camo&&distance(h,p)<this.cunning.feel&&this.clear(h,p);}
+    // Where a chasing hunter aims: where Sally will be by the time it gets there, following her curve,
+    // so a loop round it or a long arc gets cut across. It never aims through a wall. Run rings round
+    // it and it reads the loop: it leads further, turns sharper and cuts inside.
+    chaseAim(target,h,m){
+      const p=this.player,t=this.sallyTrack,k=this.cunning;if(!t||!m.lead||!k.lead||distance(target,p)>.3||p.hidden)return target;
+      if(Math.abs(t.loop)>k.loop&&!(h.wiseUntil>this.elapsed)&&distance(h,p)<6){h.wiseUntil=this.elapsed+6;this.cue('warning',h);if(!h.wiseNoted){h.wiseNoted=true;this.notice('It has read your loop. Circling will not shake it now.','warning');}}
+      const wise=h.wiseUntil>this.elapsed,d=distance(h,p);if(d<.5)return target;
+      let x=p.x,y=p.y,vx=t.vx,vy=t.vy;const lead=Math.max(.25,Math.min(wise?1.2:.85,d/2.75))*m.lead*k.lead*(wise?1.4:1),steps=6,dt=lead/steps,curve=t.curve*(wise?1.2:1);
+      for(let i=0;i<steps;i++){const c=Math.cos(curve*dt),s=Math.sin(curve*dt);[vx,vy]=[vx*c-vy*s,vx*s+vy*c];const next={x:x+vx*dt,y:y+vy*dt};if(!this.fits(next,.22,h))break;x=next.x;y=next.y;}
+      return {x,y};
+    }
     // A heavy hunter in a chase cannot turn on a dime or stop dead: it steers toward its route with a
     // limited turning speed, loses speed in a sharp turn and builds it back on a straight run. Cut back
-    // hard and it swings wide past you; in a narrow corridor it coils round on the spot.
+    // hard at speed and it slides straight on, braking, then whips round and surges after you.
     glideHunter(target,budget,h,m){
       const dt=this.hunterDt;if(h.heading===undefined){h.heading=Math.atan2(target.y-h.y,target.x-h.x);h.glide=.7;h.gphase=(h.x*.37+h.y*.61)%1;} // It whips round on first sight; the momentum is in what follows.
       if(this.grid[Math.floor(h.y)]?.[Math.floor(h.x)]==='M')budget*=.72;
       if(h.kind==='sea-snake')budget*=this.water(h)?1.05:.65;
       if(this.cold.has(this.tileKey(h)))budget*=.6;
+      const k=this.cunning;budget*=k.pace;
+      target=this.chaseAim(target,h,m);const wise=h.wiseUntil>this.elapsed;
       const id=Math.floor(target.x)+','+Math.floor(target.y);
       if(h.targetId!==id||!h.path.length||distance(h,h.path[0])>1.6){h.path=this.route(h,target,h);h.targetId=id;}
       while(h.path.length>1&&distance(h,h.path[0])<.5)h.path.shift();
       const point=h.path[0]||target;if(distance(h,point)<.03){h.path.shift();return;}
       const want=Math.atan2(point.y-h.y,point.x-h.x),diff=Math.atan2(Math.sin(want-h.heading),Math.cos(want-h.heading));
-      // A sharp turn at speed throws it into a skid: it slides on, braking hard, then whips round.
-      if(Math.abs(diff)>1.5&&h.glide>.75&&!(h.skidUntil>this.elapsed)){h.skidUntil=this.elapsed+.38;h.skidAt=this.elapsed;h.skidFrom={x:h.x,y:h.y,heading:h.heading};}
+      // A sharp turn at speed throws it into a skid: it slides straight on, braking hard...
+      if(Math.abs(diff)>1.5&&h.glide>.7&&!(h.skidUntil>this.elapsed)&&!(h.whipUntil+.35>this.elapsed)){h.skidUntil=this.elapsed+.4;h.skidAt=this.elapsed;h.skidFrom={x:h.x,y:h.y,heading:h.heading};}
       const skidding=h.skidUntil>this.elapsed;
-      // Slow, it snaps round; fast, it cannot.
-      const rate=m.turn*(1+(1-h.glide)*2.4)*(skidding?.3:1),turn=Math.max(-rate*dt,Math.min(rate*dt,diff));h.heading+=turn;
-      const aim=skidding?m.grip*.55:Math.abs(diff)>1.1?m.grip:1;h.glide+=(aim-h.glide)*Math.min(1,dt*m.accel*(aim<h.glide?(skidding?1.4:2.5):1));
+      // ...then whips round in one snap and surges off the new way.
+      if(h.skidAt&&!skidding&&h.skidAt!==h.whippedAt){h.whippedAt=h.skidAt;h.heading+=diff*k.snap;h.glide=Math.max(h.glide,.85);h.whipUntil=this.elapsed+.3;}
+      const whipping=h.whipUntil>this.elapsed;let turn=0;
+      if(!skidding){const rate=m.turn*k.turn*(1+(1-h.glide)*2.4)*(wise?1.35:1);turn=Math.max(-rate*dt,Math.min(rate*dt,diff));h.heading+=turn;}
+      const aim=skidding?.2:Math.abs(diff)>1.1?m.grip:1;h.glide+=(aim-h.glide)*Math.min(1,dt*(skidding?2.6:m.accel*(aim<h.glide?2.5:1)));
       // It moves in lunges, a surge and a check, rather than gliding at an even pace.
-      const beat=(this.elapsed*m.pulse+h.gphase)%1,surge=beat<.3?1.22:.9;
+      const beat=(this.elapsed*m.pulse+h.gphase)%1,surge=whipping?1.4:beat<.3?1.22:.9;
       const step=Math.min(budget*h.glide*surge,Math.max(distance(h,point),.02)+.4),dx=Math.cos(h.heading)*step,dy=Math.sin(h.heading)*step;
       const go=(x,y)=>{const next={x,y};if(!this.clear(h,next,false,h)||!this.fits(next,.22,h))return false;h.distanceMoved+=Math.hypot(x-h.x,y-h.y);h.x=x;h.y=y;return true;};
-      if(!go(h.x+dx,h.y+dy)&&!go(h.x+dx,h.y)&&!go(h.x,h.y+dy)){h.heading+=turn;h.glide=Math.min(h.glide,m.grip);}
+      if(!go(h.x+dx,h.y+dy)&&!go(h.x+dx,h.y)&&!go(h.x,h.y+dy)){if(skidding)h.skidUntil=this.elapsed;h.heading+=turn||Math.sign(diff)*m.turn*dt;h.glide=Math.min(h.glide,m.grip);}
       h.facing=h.heading;
     }
     // How many of each tool Sally used this run.

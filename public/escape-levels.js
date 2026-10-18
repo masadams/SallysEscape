@@ -8769,6 +8769,9 @@
   // ones, two in the darkest and the biggest. A route that sets its own count keeps it.
   const glowsFor=(level,i)=>level.glows!==undefined||!level.explore||i<19?level.glows:level.dark||level.width>=33?2:1;
   levels.forEach((level,i)=>{const n=glowsFor(level,i);if(n!==undefined)level.glows=n;});
+  // How sharp the hunters are (see CUNNING in the engine): slow and simple in the first two areas,
+  // sharper through the middle of the trail, at their wisest from the Steam Vents on.
+  levels.forEach((level,i)=>{if(level.cunning===undefined)level.cunning=i<9?0:i<27?1:i<73?2:3;});
   // Each challenge also waits for stars in its area: two per route on the
   // shortest way from the area's first escape to the challenge's escape.
   // Stars from any route in the area count, so an alternative route helps too.

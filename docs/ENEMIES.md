@@ -44,15 +44,22 @@ to twice, losing a quarter of their reach each time, and fly over gaps and water
 
 ## Hunters
 
+Each escape has a **cunning** from 0 to 3, which makes the same creature sharper further along the
+trail: 0 in the first two areas, 1 through the Venom Depths, 2 through the middle and 3 from the Steam
+Vents on. For now it shapes the snakes and other heavy chasers (king cobra, sea snake, fish,
+chameleon): how far ahead they read Sally, how soon they read a loop, how close they feel her, how
+sharply they turn and whip round, and a little of their pace.
+
+
 | Hunter | Job | What it does | How to beat it |
 | --- | --- | --- | --- |
-| Snake | Chaser | Patrols, spots Sally, then chases, searches and gives up. Brushing the back half of a resting snake (paused, coiled or watching) wakes it; a moving tail slides away. | Break sight at a corner, use leaves, or throw a pebble. Never step on a still snake's tail. |
+| Snake | Chaser | Patrols, spots Sally, then chases, searches and gives up. In a chase it aims where she is heading and cuts across loops; run rings round it and it reads the loop and leads further. Cut back sharply at speed and it slides on, then whips round and surges. Close behind her it feels her even facing away. Brushing the back half of a resting snake (paused, coiled or watching) wakes it; a moving tail slides away. | Break sight at a corner, use leaves, or throw a pebble. Never step on a still snake's tail. |
 | King cobra | Striker and hunter | Waits coiled on its post, swaying to watch. On sight it rears (a short warning line), strikes along where Sally is heading, then chases faster than any snake. When it loses her it glides home and coils again. | Sidestep the moment it rears, then break its sight at once. Never pass in front of its post. |
 | Beetle | Battering ram | Locks a lane toward where Sally is heading (shown as a striped lane), then charges up to three tiles past its aim. A charge flattens leaf cover and smashes cracked walls open for everyone. It is dazed for a moment after hitting a wall. | Step out of the lane; never stand at the end of a long corridor. Lure it into a cracked wall to open a shortcut. |
 | Scorpion | Living trap | Guards a ring around itself (always shown). Its tail rises and falls on a rhythm; with the tail up, anything entering the ring is stung where it is heading. Noise keeps the tail up. A buried scorpion shows only a sand mound until Sally is close. | Cross the ring while the tail is down and change direction if it strikes. Leaves inside the ring still hide Sally. |
 | Toad | Sniper | Fires its tongue down any clear straight line toward Sally, up to five tiles. | Break its line of sight behind pillars, walls or leaves. |
 | Spider | Builder | Leaves lasting tripwire webs on its rounds (up to five). Touching one slows Sally and sends the spider rushing. Up close it spits a sticky shot. | Watch the floor, step around webs, or move through them only when the spider is far away. |
-| Cricket | Alarm | Harmless itself. When it sees or hears Sally it chirps, and every hunter in earshot heads for the spot. | Stay quiet and out of its sight, or let it chirp somewhere useless. |
+| Cricket | Alarm | Harmless itself. When it sees or hears Sally it chirps, and hunters in earshot that cannot see her come to the spot for two seconds. A hunter that can see her ignores the call, it chirps at most every eight seconds, and it never drowns out a pebble Sally threw. | Stay quiet and out of its sight, or let it chirp somewhere useless. |
 | Moth | Lantern | Its glow lights Sally up: leaves stop hiding her and every hunter sees further. It swoops on glowing footprints. | Keep out of its light; time crossings while it drifts away. |
 | Echo frog | Mimic of sounds | Harmless itself. Noise near it (steps on gravel, a sprint, a pebble's clack) fills its throat; two seconds later it croaks the sound back loudly from where it sits, and hunters in earshot go to look there. Then it rests about six seconds. Lives in the Mossy Well. | Keep quiet near it, or make a noise on purpose and send the hunters to the frog. |
 | Chameleon | Unseen stalker | All but invisible while it keeps still; a shimmer and a rustle give it away when it moves. It patrols with long pauses and chases like a snake, a little slower. Lives in the Menagerie. | Watch for the shimmer, listen for the rustle, and remember where it stopped. |

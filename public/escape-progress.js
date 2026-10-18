@@ -27,6 +27,7 @@
       try{value=JSON.parse(raw||'null');}catch(_){return;}
       if(!value||value.version!==1)return;
       if(['follow','overview'].includes(value.view))this.data.view=value.view;
+      if(Number.isInteger(value.zoom)&&value.zoom>=0&&value.zoom<=3)this.data.zoom=value.zoom;
       // World caches are only ever added; a stale tab cannot forget one.
       // Failed or abandoned attempts per route; any earlier attempt rules out a first-try bonus.
       for(const level of catalog.levels){const n=value.attempts?.[level.id];if(Number.isInteger(n)&&n>0&&n>(this.data.attempts[level.id]||0))this.data.attempts[level.id]=Math.min(n,100000);}
@@ -120,6 +121,7 @@
     // An escape inside a secret spot opens with the spot, unless it asks for more stars of its own.
     secretLevelOpen(level,chapters){return this.secretOpen(level.secret,chapters)&&(Boolean(this.unlockAll)||!level.stars||this.stars()>=level.stars);}
     whisper(){this.read();if(this.data.whisper||!catalog.levels.some(l=>this.data.levels[l.id]?.perfect))return false;this.data.whisper=true;this.write();return true;}
+    setZoom(step){if(!Number.isInteger(step)||step<0||step>3)return false;this.read();this.data.zoom=step;this.write();return true;}
     setView(view){if(!['follow','overview'].includes(view))return false;this.read();this.data.view=view;this.write();return true;}
     // Creatures met for the bestiary; returns the ones met for the first time.
     meet(kinds){this.read();const fresh=[...new Set(kinds)].filter(k=>typeof k==='string'&&/^[a-z-]{2,20}$/.test(k)&&!this.data.met.includes(k));if(fresh.length){this.data.met.push(...fresh.slice(0,64-this.data.met.length));this.write();}return fresh;}
