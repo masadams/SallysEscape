@@ -87,6 +87,11 @@ function openOptions(){const panel=document.getElementById('options-panel');if(!
   const fs=document.getElementById('options-fullscreen');if(fs){fs.style.display=fullscreenAvailable()?'':'none';fs.textContent=isFullscreen()?'Exit full screen':'Full screen';}
   panel.style.display='flex';document.getElementById('options-close')?.focus();}
 function closeOptions(){const panel=document.getElementById('options-panel');if(panel)panel.style.display='none';}
+// Credits and copyright, from the title screen's Extras or from Options; shows the build it is.
+function openCredits(){const panel=document.getElementById('credits-panel');if(!panel)return;closeOptions();closeToolbarMenu();if(gameState==='escape'&&!paused)togglePause();
+  panel.style.display='flex';document.getElementById('credits-close')?.focus();const v=document.getElementById('credits-version');
+  if(v&&!v.textContent)fetch('version.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j?.version&&j.version!=='dev')v.textContent='Version '+String(j.version).slice(0,7);}).catch(()=>{});}
+function closeCredits(){const panel=document.getElementById('credits-panel');if(panel)panel.style.display='none';}
 // Players: who is playing, with their stars; pick one (the game reloads as them), rename, remove or add.
 function playerChip(){const chip=document.getElementById('player-chip');if(!chip||typeof EscapePlayers==='undefined')return;const p=EscapePlayers.current(),sum=EscapePlayers.summary(p.id),c=EscapePlayers.COLORS[p.color]?.[1]||'#7cc46a';
   const esc=t=>String(t).replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';');chip.innerHTML='<span class="player-dot" style="background:'+c+'"></span>Playing as <b>'+esc(p.name)+'</b> · ★ '+sum.stars;
@@ -123,6 +128,7 @@ function openPlayers(){if(typeof EscapePlayers==='undefined')return;renderPlayer
 function setupMenus(){
   const $=id=>document.getElementById(id);
   $('options-button')&&($('options-button').onclick=openOptions);$('title-options')&&($('title-options').onclick=openOptions);
+  for(const id of ['credits-button','options-credits'])$(id)&&($(id).onclick=openCredits);$('credits-close')&&($('credits-close').onclick=closeCredits);
   $('options-close')&&($('options-close').onclick=closeOptions);$('options-fullscreen')&&($('options-fullscreen').onclick=()=>{toggleFullscreen();setTimeout(()=>{const b=$('options-fullscreen');if(b)b.textContent=isFullscreen()?'Exit full screen':'Full screen';},300);});
   $('players-button')&&($('players-button').onclick=openPlayers);$('players-close')&&($('players-close').onclick=()=>{$('players-panel').style.display='none';});
   $('players-new')&&($('players-new').onsubmit=e=>{e.preventDefault();const name=$('players-name').value;const p=EscapePlayers.create(name,playersNewColor);if(p){EscapePlayers.select(p.id);location.reload();}});

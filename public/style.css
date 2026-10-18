@@ -613,3 +613,17 @@ body.ui-xl #escape-stage-ui>*,body.ui-xl #escape-world-ui,body.ui-xl .game-dialo
 /* The title screen fills the window too, its art and card growing with it. */
 @media (min-width:1500px){#start-menu-container{width:100%;min-height:calc(100vh - 24px);grid-template-columns:minmax(0,1fr) minmax(300px,34%)}}
 .escape-endless{font-size:1.05em;line-height:1;color:#f1ce7a}
+
+/* Credits and copyright. */
+.title-copyright { margin:2px 0 0; text-align:center; font-size:.72rem; color:#a9c2ad; opacity:.85; }
+.options-foot { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.credits-card { max-width:520px; text-align:center; }
+.credits-card h2 { margin:.1em 0 .2em; font-family:Georgia,'Times New Roman',serif; font-size:2rem; color:#f6edc8; }
+.credits-lead { margin:0 0 14px; font-size:1.05rem; }
+.credits-list { margin:0 0 14px; display:grid; gap:4px; }
+.credits-list dt { margin-top:8px; font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; color:#b9d79a; }
+.credits-list dd { margin:0; }
+.credits-list a { color:#f1d987; }
+.credits-thanks { font-style:italic; color:#e8dfbf; }
+.credits-legal { font-size:.78rem; color:#a9c2ad; line-height:1.4; }
+.credits-version { min-height:1em; font-size:.72rem; color:#88a291; margin:0 0 12px; }
