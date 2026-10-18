@@ -249,3 +249,12 @@ test('a dragonfly darts its loop over any ground, hovering at corners; leaves do
   for(let i=0;i<120*.6;i++)timed.g.advance(1/120,{});for(let i=0;i<120*1.5&&timed.g.status==='playing';i++)timed.g.advance(1/120,{y:-1});
   assert.equal(timed.g.status,'playing','crossed right behind it');assert.ok(timed.g.player.y<5,'and is across its lane');
 });
+test('a chasing snake cannot turn on a dime: doubled back on, it carries on and swings wide before it turns',()=>{
+  const {escapeBuildCustom}=require('../public/escape-levels.js'),B=require('../public/escape-builder.js');
+  const m=B.blank(30,12);B.paint(m,2,2,'@');B.addEnemy(m,'snake',5,6);const g=new EscapeAdventure({level:escapeBuildCustom(B.toRoute(m))});
+  const h=g.hunters[0];h.state='chase';g.hunterDt=1/120;
+  for(let f=0;f<120;f++)g.moveHunter({x:20,y:6.5},2.75/120,h);
+  const turnedAt=h.x;let furthest=h.x;for(let f=0;f<240;f++){g.moveHunter({x:2,y:6.5},2.75/120,h);furthest=Math.max(furthest,h.x);}
+  assert.ok(furthest-turnedAt>.5,'it overshoots by more than half a tile');assert.ok(h.x<furthest-1,'and then comes back');
+  h.state='patrol';h.path=[];h.targetId=null;g.moveHunter({x:2,y:6.5},2.75/120,h);assert.equal(h.heading,undefined,'on patrol it moves as before, with no momentum');
+});

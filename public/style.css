@@ -72,7 +72,7 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .escape-world-open #escape-stage-ui .game-toolbar { top:16px; right:18px; }
 .escape-world-open #pause-button, .escape-world-open #escape-map-button, .escape-world-open #end-run-button { display:none !important; }
 .escape-world-open #scoreboard-box { display:none !important; }
-.escape-world-open #escape-stage-ui .game-toolbar button { background:#edf0d5dd; color:#31584a; border-color:#c6d3ae; }
+.escape-world-open #escape-stage-ui .game-toolbar button { background:#143032ed; color:#e4edd6; border-color:#668575; }
 .escape-world-open #game-container canvas { border-color:#b5cca0; }
 #escape-world-ui { position:absolute; inset:0; z-index:4; pointer-events:none; color:#294c3b; font-family:system-ui,sans-serif; }
 #escape-world-ui button, #escape-world-ui select { pointer-events:auto; }
@@ -81,10 +81,6 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .world-heading h2 { margin:4px 0 10px; font-size:1.3rem; font-weight:700; }
 .world-travel { display:flex; align-items:center; gap:9px; font-size:.72rem; color:#53725b; }
 .world-travel select { max-width:230px; padding:5px 8px; color:#345841; background:#fff9e9; border:1px solid #b4c69b; border-radius:7px; font:inherit; }
-.world-guide { position:absolute; bottom:22px; left:22px; padding:12px 14px; background:#f5efd8e8; border-radius:14px; max-width:42%; font-size:.72rem; color:#49684d; }
-.world-guide>span { font-weight:650; }
-.world-guide p { margin:5px 0 10px; line-height:1.5; }
-.world-guide button { border:1px solid #b1c196; border-radius:8px; padding:8px 9px; margin:0 5px 0 0; background:#eff0d5; color:#426349; font:inherit; }
 .world-route { position:absolute; bottom:22px; right:22px; width:38%; max-width:350px; padding:16px 18px; border:1px solid #d6dcb9; border-radius:16px; background:#faf4dfef; box-shadow:0 8px 25px #46614b30; }
 .world-route>span { font-size:.65rem; letter-spacing:.09em; color:#668063; }
 .world-route h3 { margin:5px 0; font-size:1.15rem; }
@@ -120,9 +116,6 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
   .world-route h3 { font-size:.95rem; }
   .world-route p { font-size:.66rem; }
   .world-route button { min-height:38px; padding:7px 10px; }
-  .world-guide { left:170px; bottom:15px; max-width:calc(100% - 182px); padding:9px; font-size:.68rem; }
-  .world-guide p { display:none; }
-  .world-guide button { display:block; padding:6px; font-size:.7rem; margin:4px 0 0; }
   .escape-world-open #escape-stage-ui .game-toolbar { top:12px; right:12px; }
   .escape-world-open #escape-stage-ui .game-toolbar button { font-size:.65rem; padding:6px; }
   .escape-world-open #touch-controls .ability-pad { display:none; }
@@ -139,9 +132,8 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 #movement-stick { display:none; position:relative; width:116px; height:116px; flex:none; border:2px solid #d6ead27d; border-radius:50%; background:radial-gradient(circle,#254f4d99,#122f3999); box-shadow:inset 0 0 20px #0003; touch-action:none; user-select:none; }
 #movement-stick-knob { position:absolute; left:50%; top:50%; width:49px; height:49px; border-radius:50%; transform:translate(-50%,-50%); background:#b3d8afbb; border:2px solid #edffe7cc; box-shadow:0 3px 12px #0005; pointer-events:none; }
 .escape-playing .escape-inventory { display:flex; gap:9px; }
-.world-heading,.world-guide,.world-route { background:#143032ed; color:#e4edd6; border-color:#668575; box-shadow:0 5px 20px #0004; }
-.world-heading>span,.world-travel,.world-guide,.world-route>span,.world-route p { color:#b3c7ae; }
-.world-travel select,.world-guide button { background:#21443f; color:#e4edd6; border-color:#789575; }
+.world-heading,.world-route,.world-toast { background:#143032ed; color:#e4edd6; border-color:#668575; box-shadow:0 5px 20px #0004; }
+.world-heading>span,.world-travel,.world-route>span,.world-route p { color:#b3c7ae; }
 .world-route #world-route-best { color:#dec987; }
 .world-route button { background:#557b4b; }
 #landscape-gate { display:none; position:fixed; inset:0; z-index:100; background:#112e30; color:#e9f2d5; font:16px system-ui,sans-serif; align-items:center; justify-content:center; flex-direction:column; text-align:center; padding:24px; }
@@ -164,9 +156,6 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
  .escape-playing #escape-warning { bottom:45px; left:155px; max-width:calc(100% - 380px); font-size:.67rem; }
  .world-heading { top:10px; left:12px; padding:8px 11px; }
  .world-heading h2 { font-size:1rem; margin:3px 0 5px; }
- .world-heading>span,.world-guide>span,.world-guide p { display:none; }
- .world-guide { bottom:12px; left:150px; padding:6px; }
- .world-guide button { padding:7px; font-size:.65rem; }
  .world-route { left:auto; width:210px; bottom:12px; right:14px; padding:10px; }
  .world-route h3 { font-size:.92rem; }
  .world-route p { font-size:.65rem; margin:4px 0; }
@@ -348,9 +337,6 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
    the area panel folds to its name and stars until tapped. */
 .toolbar-world { display:none; }
 .mobile-game .escape-world-open #game-toolbar.toolbar-open > button.toolbar-world { display:block !important; }
-.mobile-game .escape-world-open .world-guide { background:none; box-shadow:none; border:0; padding:0; left:50%; transform:translateX(-50%); bottom:12px; max-width:60%; pointer-events:none; }
-.mobile-game .escape-world-open .world-guide>span,.mobile-game .escape-world-open .world-guide p:not(.world-toast),.mobile-game .escape-world-open .world-guide button { display:none !important; }
-.mobile-game .escape-world-open .world-toast:not(:empty) { display:block; margin:0; padding:6px 10px; border-radius:10px; background:#143032ed; text-align:center; }
 .mobile-game .escape-world-open .world-heading { top:8px; left:10px; padding:5px 10px; border-radius:12px; max-width:45%; }
 .mobile-game .escape-world-open .world-heading>span { display:none; }
 .mobile-game .escape-world-open .world-heading h2 { font-size:.85rem; margin:0; cursor:pointer; pointer-events:auto; }
@@ -521,3 +507,71 @@ body:not(.mobile-game) #game-toolbar.toolbar-open #menu-button { order:-1; }
   #start-menu-container { grid-template-columns:1fr; min-height:calc(100vh - 24px); }
   .title-art { min-height:180px; } .title-sally { width:min(60%,240px); }
 }
+
+/* World map: one small area panel, the escape card, and a passing toast. Everything else is in ☰ Menu. */
+.world-heading { padding:10px 14px; }
+.world-heading h2 { margin:0 0 6px; font-size:1.15rem; }
+.world-toast { position:absolute; left:50%; bottom:22px; transform:translateX(-50%); max-width:min(520px,46%); margin:0; padding:8px 14px; border:1px solid #668575; border-radius:12px; font-size:.75rem; line-height:1.45; text-align:center; pointer-events:none; }
+.world-toast:empty { display:none; }
+.mobile-game .escape-world-open .world-toast { bottom:12px; max-width:60%; font-size:.68rem; padding:6px 10px; }
+.world-travel select { background:#21443f; color:#e4edd6; border-color:#789575; }
+
+/* Level builder as an app: a menu bar, tools on the left, the map in the middle, the selection on
+   the right, with dialogs and a right-click menu, all in the game's dark-green panels. */
+.escape-builder:has(.builder-app) { max-width:none; padding:0; }
+.builder-app { display:grid; grid-template-rows:auto minmax(0,1fr); height:calc(100vh - 24px); min-height:560px; background:#0f2526; border:1px solid #3f6a55; border-radius:16px; overflow:hidden; color:#e4edd6; }
+.builder-bar { position:relative; z-index:20; display:flex; align-items:center; gap:6px; padding:8px 12px; background:#143032; border-bottom:1px solid #2f5248; }
+.builder-back { border:1px solid #4f7a66; background:#1c3d36; color:#e4edd6; border-radius:8px; padding:5px 10px; font:inherit; }
+.builder-title { font-weight:700; color:#f6edc8; margin:0 8px 0 4px; white-space:nowrap; }
+.builder-menu { position:relative; }
+.builder-menubtn { background:none; border:0; color:#e4edd6; padding:6px 10px; border-radius:8px; font:inherit; font-size:.9rem; }
+.builder-menubtn:hover,.builder-menubtn[aria-expanded=true] { background:#21443f; }
+.builder-dropdown,.builder-context { display:flex; flex-direction:column; min-width:230px; padding:5px; background:#173836; border:1px solid #4f7a66; border-radius:10px; box-shadow:0 12px 32px #0009; z-index:30; }
+.builder-dropdown { position:absolute; top:calc(100% + 4px); left:0; }
+.builder-context { position:fixed; min-width:200px; }
+.builder-dropdown button,.builder-context button { display:flex; justify-content:space-between; gap:18px; background:none; border:0; color:#e4edd6; text-align:left; padding:7px 10px; border-radius:7px; font:inherit; font-size:.85rem; cursor:pointer; }
+.builder-dropdown button:hover:not([disabled]),.builder-context button:hover { background:#2a5149; }
+.builder-dropdown button[disabled] { opacity:.4; cursor:default; }
+.builder-dropdown kbd,.builder-context kbd,.builder-keys kbd { font:inherit; font-size:.72rem; opacity:.65; }
+.builder-dropdown hr,.builder-context hr { border:0; border-top:1px solid #2f5248; margin:4px 2px; }
+.builder-context-title { padding:4px 10px 6px; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:#cfe0a0; }
+.builder-scrim { position:fixed; inset:0; z-index:15; }
+.builder-name-inline { flex:1; min-width:120px; max-width:300px; margin-left:auto; background:#0f2526; border:1px solid #3f6a55; border-radius:8px; color:#f6edc8; padding:6px 10px; font:inherit; font-weight:600; }
+.builder-chip { border-radius:999px; padding:6px 12px; border:1px solid #4f7a66; background:#1c3d36; color:#bfe3a8; font:inherit; font-size:.8rem; white-space:nowrap; }
+.builder-chip.bad { color:#f4c27a; border-color:#a27a3a; }
+.builder-bar .escape-primary { margin:0; min-height:36px; padding:6px 14px; }
+.builder-body { display:grid; grid-template-columns:260px minmax(0,1fr) 280px; min-height:0; }
+.builder-side { overflow:auto; padding:10px; background:#122b2b; border-right:1px solid #2f5248; }
+.builder-side-right { border-right:0; border-left:1px solid #2f5248; font-size:.85rem; }
+.builder-modes { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; margin-bottom:10px; }
+.builder-tabs { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px; }
+.builder-tabs button { flex:1 1 auto; border:1px solid #3f6a55; background:#173836; color:#cfdcc4; border-radius:8px; padding:5px 8px; font:inherit; font-size:.75rem; cursor:pointer; }
+.builder-tabs button[aria-selected=true] { background:#2f5a4c; color:#fff6d5; border-color:#7fae8a; }
+.builder-tools { display:grid; grid-template-columns:repeat(2,1fr); gap:4px; }
+.builder-app .builder-tool { display:flex; align-items:center; gap:8px; width:100%; margin:0; padding:6px 8px; border:1px solid #2f5248; border-radius:8px; background:#173836; color:#e4edd6; font:inherit; font-size:.76rem; text-align:left; cursor:pointer; line-height:1.15; }
+.builder-app .builder-tool b { flex:none; width:20px; text-align:center; font-size:1rem; font-weight:400; }
+.builder-app .builder-tool:hover { background:#21443f; }
+.builder-app .builder-tool-on { background:#e7c96a; color:#2b2a14; border-color:#fff3b0; }
+.builder-modes .builder-tool { flex-direction:column; gap:2px; padding:6px 2px; font-size:.66rem; text-align:center; }
+.builder-swatches { grid-column:1 / -1; display:flex; gap:6px; flex-wrap:wrap; margin:2px 0 6px; }
+.builder-canvas { overflow:auto; padding:16px; display:flex; align-items:flex-start; justify-content:center; background:#0b1c1d; }
+.builder-canvas .builder-grid { width:min(100%,calc(var(--w) * 36px)); }
+.builder-app .builder-inspector { margin:0 0 10px; }
+.builder-dialog-wrap { position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; background:#000a; }
+.builder-dialog { width:min(680px,94vw); max-height:86vh; overflow:auto; padding:18px 20px; background:#143032; border:1px solid #4f7a66; border-radius:16px; box-shadow:0 20px 60px #000b; color:#e4edd6; }
+.builder-dialog h3 { margin:0 0 12px; color:#f6edc8; }
+.builder-dialog .builder-settings { display:flex; flex-wrap:wrap; gap:10px 14px; margin-bottom:12px; }
+.builder-dialog-foot { display:flex; justify-content:flex-end; margin-top:14px; }
+.builder-keys { list-style:none; padding:0; margin:0; display:grid; grid-template-columns:1fr 1fr; gap:6px 18px; }
+.builder-keys li { display:flex; gap:10px; align-items:baseline; } .builder-keys kbd { min-width:120px; opacity:.9; color:#e7c96a; font-size:.8rem; }
+.builder-problems { margin:0; padding-left:18px; line-height:1.7; color:#f4c27a; }
+@media (max-width:980px) {
+  .builder-app { height:auto; }
+  .builder-body { grid-template-columns:1fr; }
+  .builder-side,.builder-side-right { border:0; max-height:none; }
+  .builder-bar { flex-wrap:wrap; }
+}
+body:has(.builder-app) #game-toolbar { display:none; }
+.builder-canvas { justify-content:safe center; }
+.builder-canvas .builder-grid { flex:0 1 auto; min-width:0; }
+.builder-app .builder-cell { min-width:0; overflow:hidden; }

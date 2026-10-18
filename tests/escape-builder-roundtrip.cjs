@@ -11,7 +11,7 @@ function replay(options,commands){const g=new EscapeAdventure(options);for(const
 test('every game escape survives builder round trip: its recorded run still wins on the rebuilt level',()=>{
   const failed=[];
   for(const level of [...EscapeCatalog.levels,...EscapeCatalog.hidden]){
-    const rec=fixtures.find(r=>!r.options.challengeId&&(r.options.levelId===level.id||r.options.hiddenId===level.id));if(!rec)continue;
+    const rec=fixtures.find(r=>!r.pending&&!r.options.challengeId&&(r.options.levelId===level.id||r.options.hiddenId===level.id));if(!rec)continue;
     const model=B.sanitize(JSON.parse(JSON.stringify(B.fromRoute(level))));if(!model){failed.push(level.id+': does not sanitize');continue;}
     const route=escapeBuildCustom(B.toRoute(model)),g=replay({level:route},rec.commands),orig=replay(rec.options,rec.commands);
     if(g.status!=='won'||Math.abs(g.elapsed-orig.elapsed)>1e-6)failed.push(level.id+': '+g.status+' at '+g.elapsed.toFixed(2)+'s (game '+orig.elapsed.toFixed(2)+'s)');

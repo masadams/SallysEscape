@@ -440,10 +440,16 @@ function escapeFootsteps(p){
 // Feel: footprints, dust, leaves, sparks and noise rings, kept in one small pool per run. Rings
 // show how far a noise carries, so they stay on in Simple lighting; the rest is Full only.
 const escapeFx=typeof EscapeFeel!=='undefined'?new EscapeFeel.Particles():{items:[],add(){},update(){},clear(){}};
-let escapeFxDecoy=null,escapeFxClock=0;
+let escapeFxDecoy=null,escapeFxClock=0,escapeSkid={at:0,puff:0,v:null};
 function tickEscapeFx(g){
   escapeFxClock+=Math.min(.1,deltaTime/1000);escapeFx.update(escapeFxClock,deltaTime/1000);
   if(g.decoy&&g.decoy!==escapeFxDecoy&&typeof EscapeFeel!=='undefined')EscapeFeel.land(escapeFx,g.decoy,escapeFxClock,Math.random,g);escapeFxDecoy=g.decoy;
+  // Sally skids a little when she doubles back at a sprint: a puff of dust thrown the way she was
+  // going and a soft scuff. It is only for the look; she still turns on the spot.
+  const v=g.playerVelocity,sk=escapeSkid;if(v&&escapeFxClock-sk.at>.12){const pv=sk.v,sp=Math.hypot(v.x,v.y),pp=pv?Math.hypot(pv.x,pv.y):0;
+    if(pv&&g.player.sprinting&&pp>2.5&&sp>1&&(v.x*pv.x+v.y*pv.y)<-.4*sp*pp&&escapeFxClock-sk.puff>.5&&typeof EscapeFeel!=='undefined'){sk.puff=escapeFxClock;const p=g.player;
+      for(let i=0;i<5;i++)escapeFx.add('dust',p.x,p.y+.2,{t:escapeFxClock,life:.5,size:.14+Math.random()*.1,vx:pv.x/pp*(1.6+Math.random())+(Math.random()-.5),vy:pv.y/pp*(1.6+Math.random())+(Math.random()-.5)-.3,color:[176,164,138]});escapeSound('step',{sprint:true});}
+    sk.v={x:v.x,y:v.y};sk.at=escapeFxClock;}
 }
 // Big moments. A catch freezes the scene for a beat (the hunters stop where they struck), the
 // camera leans in and "Caught!" pops up; an escape bursts with sparks and leaves before the results.

@@ -127,14 +127,14 @@ let escapeQuickOptions={size:'medium',theme:'meadow',difficulty:2,feature:'',see
 function escapeQuickPanel(){
   if(typeof EscapeQuickBuild==='undefined')return '';
   const Q=EscapeQuickBuild,o=escapeQuickOptions,sel=(k,entries)=>'<select data-quick="'+k+'">'+entries.map(([v,l])=>'<option value="'+v+'"'+(String(o[k])===String(v)?' selected':'')+'>'+escapeHtml(l)+'</option>').join('')+'</select>';
-  return '<details class="builder-more" id="quick-panel"'+(escapeQuickOpen?' open':'')+'><summary>⚡ Quick build: a playable first draft to edit</summary><div class="builder-settings">'+
+  return '<div class="builder-settings" id="quick-panel">'+
     '<label>Size '+sel('size',Object.entries(Q.SIZES).map(([k,v])=>[k,v.name+' ('+v.w+'×'+v.h+')']))+'</label>'+
     '<label>Theme '+sel('theme',Object.entries(Q.THEMES).map(([k,v])=>[k,v.name]))+'</label>'+
     '<label>Difficulty '+sel('difficulty',Object.entries(Q.DIFFICULTY).map(([k,v])=>[k,v.name]))+'</label>'+
     '<label>Featured creature '+sel('feature',[['','Any'],...Q.FEATURES.map(k=>[k,EscapeBuilder.ENEMIES[k]])])+'</label>'+
     '<label>Seed <input type="number" min="1" max="999999" data-quick="seed" style="width:84px" value="'+(o.seed||'')+'" placeholder="any"></label>'+
     '<button id="quick-build" class="escape-primary">Build</button><button id="quick-reroll" class="escape-secondary" title="Same settings, a new seed">🎲 Another one</button></div>'+
-    '<p class="builder-hint">Rooms, corridors with more than one way round, the key and hatch far from the start, ten treasure, leaves never far away and hunters to match. The same seed always builds the same level. It replaces what is in the builder; then move, add or remove anything.</p></details>';
+    '<p class="builder-hint">Rooms, corridors with more than one way round, the key and hatch far from the start, ten treasure, leaves never far away and hunters to match. The same seed always builds the same level. It replaces what is in the builder; then move, add or remove anything.</p>';
 }
 function escapeQuickBuild(fresh){
   const o=escapeQuickOptions,m=escapeBuilderModel,blank=EscapeBuilder.blank(m.map[0].length,m.map.length);
@@ -286,48 +286,100 @@ function escapeBuilderSettings(){
   const m=escapeBuilderModel,num=(k,label,max=600,step=1)=>'<label>'+label+' <input type="number" min="0" max="'+max+'" step="'+step+'" data-set="'+k+'" value="'+(m[k]||0)+'"></label>',
     check=(k,label)=>'<label class="builder-check"><input type="checkbox" data-set="'+k+'"'+(m[k]?' checked':'')+'> '+label+'</label>',
     sky=(k,label,fields)=>'<div class="builder-sky"><label class="builder-check"><input type="checkbox" data-sky="'+k+'"'+(m[k]?' checked':'')+'> '+label+'</label>'+(m[k]?fields.map(([f,l])=>'<label>'+l+' <input type="number" step="0.1" min="0" max="120" data-skyf="'+k+'.'+f+'" value="'+m[k][f]+'"></label>').join(''):'')+'</div>';
-  return '<details class="builder-more"'+(escapeBuilderSettings.open?' open':'')+'><summary>Level settings and weather</summary><div class="builder-settings">'+
+  return '<div class="builder-settings">'+
     num('camos','Camouflage',5)+num('seeds','Seeds',5)+num('glows','Glow mushrooms',5)+num('spores','Spore pouches',5)+num('timeLimit','Time limit (s, 0 = none)')+num('sightRadius','Sight (tiles, 0 = default)',12)+
     check('tailDrop','Spare tail (one catch forgiven)')+check('dark','Dark (glow plants light it)')+check('gaze','Sally sees only ahead')+check('living','Living garden')+check('abyss','Bottomless gaps')+
     '<label class="builder-check"><input type="checkbox" data-set="biome"'+(m.biome==='desert'?' checked':'')+'> Desert sand</label></div>'+
     sky('hawk','Hawk overhead',[['every','dives every s'],['warn','warning s'],['first','first dive at s']])+
     sky('storm','Lightning storm',[['every','flash every s'],['warn','rumble warning s'],['first','first flash at s']])+
     sky('tide','Tide on the flats',[['period','cycle s'],['high','high tide lasts s'],['offset','delay s']])+
-    '<label class="builder-hint">Hint <textarea data-set="hint" maxlength="400" rows="2">'+escapeHtml(m.hint||'')+'</textarea></label></details>';
+    '<label class="builder-hint">Hint <textarea data-set="hint" maxlength="400" rows="2">'+escapeHtml(m.hint||'')+'</textarea></label>';
 }
-function renderEscapeBuilder(){
-  const m=escapeBuilderModel,B=EscapeBuilder,panel=document.getElementById('escape-builder'),w=m.map[0].length,h=m.map.length;
-  const tool=(id,label,title)=>'<button class="builder-tool'+(escapeBuilderTool===id?' builder-tool-on':'')+'" data-tool="'+id+'" title="'+escapeHtml(title)+'">'+label+'</button>';
-  const problems=B.validate(m),linked=escapeBuilderLinked();
-  const ws=escapeBuilderWorkshop;
-  panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">'+(ws?'← Workshop':'← Main menu')+'</button><h2>'+(ws?'✎ '+escapeHtml(escapeWorkshopLabel(ws.key)):'Level builder')+'</h2>'+
-    '<label>Name <input id="builder-name" maxlength="40" value="'+escapeHtml(m.name)+'"></label><label>Brief <input id="builder-brief" maxlength="140" value="'+escapeHtml(m.brief)+'"></label><label>Made by <input id="builder-author" maxlength="30" value="'+escapeHtml(m.author||'')+'"></label></div>'+
+// The builder is laid out like an app: a menu bar (File, Edit, Level, Help) with the level's name,
+// its problems and Playtest; the tools on the left, in tabs; the map in the middle; what is
+// selected on the right. Level details, weather, quick build, sharing and My levels open as
+// dialogs; right-click on the map opens a menu for whatever is under the pointer; every change
+// can be undone (Ctrl+Z) and redone (Ctrl+Shift+Z).
+let escapeBuilderTab='tiles',escapeBuilderDialog=null,escapeBuilderMenu=null,escapeBuilderUndo=[],escapeBuilderRedo=[],escapeBuilderState=null,escapeBuilderStroke=null;
+const ESCAPE_BUILDER_TABS=[['tiles','Ground'],['places','Places'],['creatures','Creatures'],['doors','Doors & switches'],['hazards','Hazards'],['extras','Extras']];
+const ESCAPE_BUILDER_MODES=[['select','☝','Select','V','Pick something to see and change its settings'],['link','🔗','Link','L','Click a trigger, the key or a chest, then the doors, bridges or enemies to link or unlink'],
+  ['patrol','➜','Patrol','P','Click an enemy, then the tiles it should walk to, in order'],['turn','↻','Turn','T','Turn an enemy or a vent a quarter turn'],['remove','✕','Remove','X','Remove an enemy, trigger, hazard, door tile or mark']];
+// Keep a copy of the level before each change, so it can be undone. A drag of paint is one change.
+function escapeBuilderRemember(){
+  const snap=JSON.stringify(escapeBuilderModel);if(escapeBuilderState!==null&&snap!==escapeBuilderState&&!escapeBuilderStroke?.pushed){escapeBuilderUndo.push(escapeBuilderState);if(escapeBuilderUndo.length>100)escapeBuilderUndo.shift();escapeBuilderRedo=[];if(escapeBuilderStroke)escapeBuilderStroke.pushed=true;}
+  escapeBuilderState=snap;
+}
+function escapeBuilderStep(back){
+  const from=back?escapeBuilderUndo:escapeBuilderRedo,to=back?escapeBuilderRedo:escapeBuilderUndo;if(!from.length)return false;
+  to.push(escapeBuilderState);escapeBuilderState=from.pop();escapeBuilderModel=JSON.parse(escapeBuilderState);escapeBuilderPick=null;escapeBuilderAnchor=null;escapeBuilderNote=back?'Undone.':'Redone.';renderEscapeBuilder();return true;
+}
+function escapeBuilderPalette(){
+  const B=EscapeBuilder,tool=(id,label,title)=>'<button class="builder-tool'+(escapeBuilderTool===id?' builder-tool-on':'')+'" data-tool="'+id+'" title="'+escapeHtml(title)+'">'+label+'</button>';
+  const tab=escapeBuilderTab;let tools='';
+  if(tab==='tiles')tools=Object.entries(B.TILES).map(([k,v])=>tool(k,'<b>'+(ESCAPE_BUILDER_LOOK[k][1]||'■')+'</b>'+escapeHtml(v.split(' (')[0]),v)).join('')+tool('cold','<b>❄</b>Cold ground','Cold ground chills Sally')+tool('warm','<b>◍</b>Warm stone','A warm stone thaws Sally');
+  else if(tab==='places')tools=Object.entries(B.MARKS).map(([k,v])=>tool(k,'<b>'+ESCAPE_BUILDER_LOOK[k][1]+'</b>'+escapeHtml(v.split(' (')[0]),v)).join('');
+  else if(tab==='creatures')tools=Object.entries(B.ENEMIES).map(([k,v])=>tool('enemy:'+k,'<b>'+ESCAPE_BUILDER_ENEMY[k]+'</b>'+escapeHtml(v.split(' (')[0]),v)).join('');
+  else if(tab==='doors')tools='<div class="builder-swatches">'+B.COLORS.map(([name,rgb],i)=>'<button class="builder-swatch'+(escapeBuilderColor===i?' builder-tool-on':'')+'" data-color="'+i+'" title="'+name+'" style="background:rgb('+rgb.join(',')+')"></button>').join('')+'</div>'+
+    tool('door','<b>▮</b>Door','Paint door tiles in the chosen colour')+tool('bridge','<b>═</b>Bridge','Paint bridge tiles in the chosen colour (over a gap or water)')+
+    Object.entries(B.TRIGGERS).map(([k,v])=>tool('trig:'+k,'<b>'+ESCAPE_BUILDER_TRIGGER[k]+'</b>'+escapeHtml(v.split(' (')[0]),v)).join('');
+  else if(tab==='hazards')tools=Object.entries(B.HAZARDS).map(([k,v])=>tool('haz:'+k,'<b>'+ESCAPE_BUILDER_HAZARD[k]+'</b>'+escapeHtml(v),v+(k==='vent'?' (place it in a wall)':k==='log'?' (click its start, then where it rolls to)':''))).join('');
+  else tools=Object.entries(ESCAPE_BUILDER_EXTRAS).map(([k,[icon,title]])=>tool(k,'<b>'+icon+'</b>'+escapeHtml(title.split(':')[0]),title)).join('');
+  return '<div class="builder-modes">'+ESCAPE_BUILDER_MODES.map(([id,icon,label,key,title])=>tool(id,'<b>'+icon+'</b>'+label,title+' ('+key+')')).join('')+'</div>'+
+    '<div class="builder-tabs" role="tablist">'+ESCAPE_BUILDER_TABS.map(([id,label])=>'<button role="tab" aria-selected="'+(tab===id)+'" data-tab="'+id+'">'+label+'</button>').join('')+'</div>'+
+    '<div class="builder-tools">'+tools+'</div>';
+}
+function escapeBuilderMenuBar(problems){
+  const ws=escapeBuilderWorkshop,open=escapeBuilderMenu?.kind==='menu'?escapeBuilderMenu.id:null,B=EscapeBuilder;
+  const item=(id,label,key='',disabled=false)=>'<button id="'+id+'"'+(disabled?' disabled':'')+'>'+label+(key?'<kbd>'+key+'</kbd>':'')+'</button>';
+  const menus={file:ws?item('workshop-save','Save draft','Ctrl+S')+item('workshop-export1','Export draft','',!EscapeEdits.get(ws.key))+'<hr>'+item('workshop-revert','Back to the game’s version')+(EscapeEdits.get(ws.key)?item('workshop-discard','Discard draft'):''):
+      item('builder-new','New level')+item('builder-quick','⚡ Quick build…')+item('builder-levels','My levels…')+'<hr>'+item('builder-save','Save','Ctrl+S')+item('builder-share','Share as text…')+item('builder-import','Import from text…')+'<hr>'+
+      item('builder-publish','⇪ Publish to community','',problems.length>0)+item('builder-community','Community levels')+item('builder-admin','Admin'),
+    edit:item('builder-undo','Undo','Ctrl+Z',!escapeBuilderUndo.length)+item('builder-redo','Redo','Ctrl+Shift+Z',!escapeBuilderRedo.length)+'<hr>'+item('builder-deselect','Deselect','Esc',!escapeBuilderPick),
+    level:item('builder-details','Size, tools and details…')+item('builder-settings','Settings and weather…'),
+    help:item('builder-keys','Keyboard shortcuts…')};
+  const menu=(id,label)=>'<div class="builder-menu"><button class="builder-menubtn" data-menu="'+id+'" aria-expanded="'+(open===id)+'">'+label+'</button>'+(open===id?'<div class="builder-dropdown" role="menu">'+menus[id]+'</div>':'')+'</div>';
+  return '<div class="builder-bar"><button id="builder-back" class="builder-back" title="'+(ws?'Back to the workshop':'Back to the main menu')+'">←</button>'+
+    '<span class="builder-title">'+(ws?'✎ '+escapeHtml(escapeWorkshopLabel(ws.key)):'Level builder')+'</span>'+
+    menu('file','File')+menu('edit','Edit')+menu('level','Level')+menu('help','Help')+
+    '<input id="builder-name" class="builder-name-inline" maxlength="40" aria-label="Level name" value="'+escapeHtml(escapeBuilderModel.name)+'">'+
+    '<button id="builder-problems" class="builder-chip'+(problems.length?' bad':'')+'" title="'+escapeHtml(problems.join(' '))+'">'+(problems.length?'⚠ '+problems.length+' to fix':'✓ Ready')+'</button>'+
+    '<button id="builder-play" class="escape-primary"'+(problems.length?' disabled':'')+'>▶ Playtest</button></div>';
+}
+function escapeBuilderDialogHtml(){
+  const m=escapeBuilderModel,B=EscapeBuilder,d=escapeBuilderDialog,w=m.map[0].length,h=m.map.length;if(!d)return '';
+  let title='',body='';
+  if(d==='details'){title='Size, tools and details';body='<div class="builder-settings"><label>Brief <input id="builder-brief" maxlength="140" value="'+escapeHtml(m.brief)+'"></label><label>Made by <input id="builder-author" maxlength="30" value="'+escapeHtml(m.author||'')+'"></label></div>'+
     '<div class="builder-settings"><label>Width <input id="builder-w" type="number" min="'+B.LIMITS.minW+'" max="'+B.LIMITS.maxW+'" value="'+w+'"></label><label>Height <input id="builder-h" type="number" min="'+B.LIMITS.minH+'" max="'+B.LIMITS.maxH+'" value="'+h+'"></label>'+
     ['burrows','pebbles','tongues'].map(k=>'<label>'+k[0].toUpperCase()+k.slice(1)+' <input data-count="'+k+'" type="number" min="0" max="5" value="'+m[k]+'"></label>').join('')+
-    '<label>Hatch toll <input id="builder-toll" type="number" min="0" max="99" value="'+m.requiredTreasure+'"></label><label class="builder-check"><input id="builder-dark" type="checkbox"'+(m.explore?' checked':'')+'> Dark (explore)</label></div>'+
-    '<div class="builder-palette"><span>Tiles</span>'+Object.entries(B.TILES).map(([k,v])=>tool(k,ESCAPE_BUILDER_LOOK[k][1]||v[0],v)).join('')+
-    '<span>Places</span>'+Object.entries(B.MARKS).map(([k,v])=>tool(k,ESCAPE_BUILDER_LOOK[k][1],v)).join('')+'</div>'+
-    '<div class="builder-palette"><span>Enemies</span>'+Object.entries(B.ENEMIES).map(([k,v])=>tool('enemy:'+k,ESCAPE_BUILDER_ENEMY[k],v)).join('')+'</div>'+
-    '<div class="builder-palette"><span>Doors</span>'+B.COLORS.map(([name,rgb],i)=>'<button class="builder-swatch'+(escapeBuilderColor===i?' builder-tool-on':'')+'" data-color="'+i+'" title="'+name+'" style="background:rgb('+rgb.join(',')+')"></button>').join('')+
-    tool('door','▮ Door','Paint door tiles in the chosen colour')+tool('bridge','═ Bridge','Paint bridge tiles in the chosen colour (over a gap or water)')+
-    '<span>Triggers</span>'+Object.entries(B.TRIGGERS).map(([k,v])=>tool('trig:'+k,ESCAPE_BUILDER_TRIGGER[k]+' '+v.split(' ')[0],v)).join('')+
-    '<span>Hazards</span>'+Object.entries(B.HAZARDS).map(([k,v])=>tool('haz:'+k,ESCAPE_BUILDER_HAZARD[k]+' '+v.split(' ').at(-1),v+(k==='vent'?' (place it in a wall)':k==='log'?' (click its start, then where it rolls to)':''))).join('')+
-    '<span>Ground</span>'+tool('cold','❄ Cold','Cold ground chills Sally')+tool('warm','◍ Warm stone','A warm stone thaws Sally')+'</div>'+
-    '<div class="builder-palette"><span>Extras</span>'+Object.entries(ESCAPE_BUILDER_EXTRAS).map(([k,[icon,title]])=>tool(k,icon+' '+title.split(':')[0],title)).join('')+'</div>'+
-    (ws?'':escapeQuickPanel())+escapeBuilderSettings()+
-    '<div class="builder-palette"><span>Tools</span>'+tool('select','☝ Select','Pick something to see and change its settings')+tool('link','🔗 Link','Click a trigger, the key or a chest, then click doors, bridges or enemies to link or unlink them')+
-    tool('patrol','➜ Patrol','Click an enemy, then click the tiles it should walk to, in order')+tool('turn','↻ Turn','Turn an enemy or a vent a quarter turn')+tool('remove','✕ Remove','Remove an enemy, trigger, hazard, door tile or ground mark')+'</div>'+
-    escapeBuilderInspector()+
-    '<div id="builder-grid" class="builder-grid" style="grid-template-columns:repeat('+w+',1fr)">'+m.map.map((row,y)=>[...row].map((ch,x)=>escapeBuilderCell(x,y,ch,linked)).join('')).join('')+'</div>'+
-    (escapeBuilderNote?'<p class="builder-note">'+escapeHtml(escapeBuilderNote)+'</p>':'')+
+    '<label>Hatch toll <input id="builder-toll" type="number" min="0" max="99" value="'+m.requiredTreasure+'"></label><label class="builder-check"><input id="builder-dark" type="checkbox"'+(m.explore?' checked':'')+'> Dark (explore)</label></div>';}
+  else if(d==='settings'){title='Settings and weather';body=escapeBuilderSettings();}
+  else if(d==='quick'){title='⚡ Quick build';body=escapeQuickPanel();}
+  else if(d==='share'){title='Share as text';body='<p class="builder-hint">Copy this line and send it. Anyone can paste it into Import to play or edit your level.</p><textarea id="builder-text" class="builder-text" readonly>'+escapeHtml(B.exportText(m))+'</textarea>';}
+  else if(d==='import'){title='Import from text';body='<textarea id="builder-text" class="builder-text" placeholder="Paste a shared level here: the whole line that starts with SALLY"></textarea><button id="builder-import-go" class="escape-primary">Import</button>';}
+  else if(d==='levels'){title='My levels';body='<div class="builder-list">'+(B.loadAll(ESCAPE_BUILDER_STORE).map(l=>'<div class="builder-saved"><b>'+escapeHtml(l.name)+'</b> <span>'+l.map[0].length+'×'+l.map.length+' · '+l.guards.length+' enemies</span><button data-play="'+l.id+'">Play</button><button data-edit="'+l.id+'">Edit</button><button data-delete="'+l.id+'">Delete</button></div>').join('')||'<p>No saved levels yet. Saved levels stay in this browser; publish one to share it with every player.</p>')+'</div>';}
+  else if(d==='problems'){title='Before it can be played';const p=B.validate(m);body=p.length?'<ul class="builder-problems">'+p.map(t=>'<li>'+escapeHtml(t)+'</li>').join('')+'</ul>':'<p>✓ Ready to play. Treasure in level: '+B.treasureTotal(m)+'.</p>';}
+  else if(d==='keys'){title='Keyboard shortcuts';body='<ul class="builder-keys">'+[['V','Select'],['L','Link'],['P','Patrol'],['T','Turn'],['X','Remove'],['W / F','Wall / floor'],['1 – 6','Switch tool tab'],['Right-click','Menu for that tile'],['Ctrl+Z','Undo'],['Ctrl+Shift+Z or Ctrl+Y','Redo'],['Ctrl+S','Save'],['Esc','Close, or deselect']].map(([k,t])=>'<li><kbd>'+k+'</kbd>'+t+'</li>').join('')+'</ul>';}
+  return '<div class="builder-dialog-wrap" data-close-dialog="1"><div class="builder-dialog" role="dialog" aria-modal="true" aria-label="'+escapeHtml(title)+'"><h3>'+escapeHtml(title)+'</h3>'+body+'<div class="builder-dialog-foot"><button class="escape-secondary" data-close-dialog="1">Done</button></div></div></div>';
+}
+// Right-click on the map: what can be done to what is under the pointer, and a few quick places.
+function escapeBuilderContextHtml(){
+  const c=escapeBuilderMenu;if(c?.kind!=='context')return '';const [x,y]=c.cell,here=escapeBuilderPickAt(x,y),m=escapeBuilderModel,B=EscapeBuilder,g=B.guardAt(m,x,y),vent=B.hazardAt(m,x,y)?.type==='vent';
+  const item=(act,label)=>'<button data-ctx="'+act+'">'+label+'</button>';
+  let html=here?'<span class="builder-context-title">'+escapeHtml(escapeBuilderLabel(here.id||here.kind))+'</span>'+item('select','☝ Select')+(g||vent?item('turn','↻ Turn'):'')+(g?item('patrol','➜ Set its patrol'):'')+(['source','trigger'].includes(here.kind)?item('link','🔗 Link to…'):'')+item('remove','✕ Remove')+'<hr>':'';
+  html+=item('floor','Floor here')+item('wall','Wall here')+item('leaves','Leaves here')+'<hr>'+item('sally','Put Sally here')+item('key','Put the key here')+item('hatch','Put the hatch here')+'<hr>'+item('pick','Use this tile’s brush');
+  return '<div class="builder-scrim" data-close-menu="1"></div><div class="builder-context" role="menu" style="left:'+c.left+'px;top:'+c.top+'px">'+html+'</div>';
+}
+function renderEscapeBuilder(){
+  escapeBuilderRemember();
+  const m=escapeBuilderModel,B=EscapeBuilder,panel=document.getElementById('escape-builder'),w=m.map[0].length,problems=B.validate(m),linked=escapeBuilderLinked();
+  const mode=ESCAPE_BUILDER_MODES.find(x=>x[0]===escapeBuilderTool),toolTitle=mode?mode[4]:document.querySelector?.('[data-tool="'+escapeBuilderTool+'"]')?.title||'';
+  panel.innerHTML='<div class="builder-app">'+escapeBuilderMenuBar(problems)+(escapeBuilderMenu?.kind==='menu'?'<div class="builder-scrim" data-close-menu="1"></div>':'')+
+    '<div class="builder-body"><aside class="builder-side">'+escapeBuilderPalette()+'</aside>'+
+    '<main class="builder-canvas"><div id="builder-grid" class="builder-grid" style="grid-template-columns:repeat('+w+',1fr);--w:'+w+'">'+m.map.map((row,y)=>[...row].map((ch,x)=>escapeBuilderCell(x,y,ch,linked)).join('')).join('')+'</div></main>'+
+    '<aside class="builder-side builder-side-right">'+escapeBuilderInspector()+(escapeBuilderNote?'<p class="builder-note">'+escapeHtml(escapeBuilderNote)+'</p>':'')+
     '<p class="builder-status'+(problems.length?' builder-bad':'')+'">'+(problems.length?'⚠ '+problems.map(escapeHtml).join(' '):'✓ Ready to play. Treasure in level: '+B.treasureTotal(m)+'.')+'</p>'+
-    (ws?'<div class="builder-actions"><button id="builder-play" class="escape-primary"'+(problems.length?' disabled':'')+'>▶ Playtest</button><button id="workshop-save" class="escape-secondary">Save draft</button><button id="workshop-export1" class="escape-secondary"'+(EscapeEdits.get(ws.key)?'':' disabled')+'>Export draft</button>'+
-      '<button id="workshop-revert" class="escape-secondary">Back to the game’s version</button>'+(EscapeEdits.get(ws.key)?'<button id="workshop-discard" class="escape-secondary">Discard draft</button>':'')+'</div><textarea id="builder-text" class="builder-text" style="display:none" readonly></textarea>'+
-      '<p class="builder-hint">Workshop draft: saved only in this browser, never published. '+(EscapeEdits.active()?'Test drafts in game is on: reload after saving to play it from the map.':'Turn on “Test drafts in game” in the workshop to play it from the map.')+'</p>':
-    '<div class="builder-actions"><button id="builder-play" class="escape-primary"'+(problems.length?' disabled':'')+'>▶ Playtest</button><button id="builder-save" class="escape-secondary">Save</button><button id="builder-publish" class="escape-secondary"'+(problems.length?' disabled':'')+'>⇪ Publish to community</button>'+
-    '<button id="builder-new" class="escape-secondary">New</button><button id="builder-share" class="escape-secondary">Share</button><button id="builder-import" class="escape-secondary">Import</button><button id="builder-community" class="escape-secondary">Community levels</button><button id="builder-admin" class="escape-secondary">Admin</button></div>'+
-    '<textarea id="builder-text" class="builder-text" style="display:none" placeholder="Paste a shared level here, then press Import again."></textarea>'+
-    (ws?'':'<h3>My levels</h3><div class="builder-list">'+(B.loadAll(ESCAPE_BUILDER_STORE).map(l=>'<div class="builder-saved"><b>'+escapeHtml(l.name)+'</b> <span>'+l.map[0].length+'×'+l.map.length+' · '+l.guards.length+' enemies</span><button data-play="'+l.id+'">Play</button><button data-edit="'+l.id+'">Edit</button><button data-delete="'+l.id+'">Delete</button></div>').join('')||'<p>No saved levels yet. Saved levels stay in this browser; publish one to share it with every player.</p>')+'</div>'));
+    (escapeBuilderWorkshop?'<p class="builder-hint">Workshop draft: saved only in this browser, never published. '+(EscapeEdits.active()?'Test drafts in game is on: reload after saving to play it from the map.':'Turn on “Test drafts in game” in the workshop to play it from the map.')+'</p>':'<p class="builder-hint">Right-click the map for quick actions. Ctrl+Z undoes.</p>')+
+    '</aside></div></div>'+escapeBuilderDialogHtml()+escapeBuilderContextHtml();
   wireEscapeBuilder();
 }
 function escapeHtml(text){return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -391,13 +443,26 @@ function escapeBuilderApply(x,y){
 }
 const escapeBuilderDrags=t=>Object.keys(EscapeBuilder.TILES).includes(t)||['1','2','3','door','bridge','cold','warm'].includes(t)||t.startsWith('layer:');
 function wireEscapeBuilder(){
-  const m=escapeBuilderModel,B=EscapeBuilder,$=id=>document.getElementById(id),rerender=()=>renderEscapeBuilder(),ws=escapeBuilderWorkshop;
-  $('builder-back').onclick=ws?()=>openEscapeWorkshop():closeEscapeBuilder;
-  $('builder-name').onchange=e=>{m.name=e.target.value;};$('builder-brief').onchange=e=>{m.brief=e.target.value;};$('builder-author').onchange=e=>{m.author=e.target.value;};
-  $('builder-w').onchange=$('builder-h').onchange=()=>{escapeBuilderModel=B.resize(m,Number($('builder-w').value),Number($('builder-h').value));escapeBuilderPick=null;rerender();};
+  const m=escapeBuilderModel,B=EscapeBuilder,$=id=>document.getElementById(id),rerender=()=>renderEscapeBuilder(),ws=escapeBuilderWorkshop,on=(id,fn)=>{const el=$(id);if(el)el.onclick=fn;};
+  const dialog=d=>{escapeBuilderDialog=d;escapeBuilderMenu=null;rerender();},act=fn=>()=>{escapeBuilderMenu=null;fn();};
+  on('builder-back',ws?()=>openEscapeWorkshop():closeEscapeBuilder);
+  if($('builder-name'))$('builder-name').onchange=e=>{m.name=e.target.value;rerender();};
+  if($('builder-brief'))$('builder-brief').onchange=e=>{m.brief=e.target.value;};if($('builder-author'))$('builder-author').onchange=e=>{m.author=e.target.value;};
+  if($('builder-w'))$('builder-w').onchange=$('builder-h').onchange=()=>{escapeBuilderModel=B.resize(m,Number($('builder-w').value),Number($('builder-h').value));escapeBuilderPick=null;rerender();};
   for(const input of document.querySelectorAll('[data-count]'))input.onchange=e=>{m[e.target.dataset.count]=Math.max(0,Math.min(5,Number(e.target.value)||0));rerender();};
-  $('builder-toll').onchange=e=>{m.requiredTreasure=Math.max(0,Math.min(99,Number(e.target.value)||0));rerender();};
-  $('builder-dark').onchange=e=>{m.explore=e.target.checked;};
+  if($('builder-toll'))$('builder-toll').onchange=e=>{m.requiredTreasure=Math.max(0,Math.min(99,Number(e.target.value)||0));rerender();};
+  if($('builder-dark'))$('builder-dark').onchange=e=>{m.explore=e.target.checked;rerender();};
+  // The menu bar, dialogs and the right-click menu.
+  for(const b of document.querySelectorAll('[data-menu]'))b.onclick=()=>{const id=b.dataset.menu;escapeBuilderMenu=escapeBuilderMenu?.id===id?null:{kind:'menu',id};rerender();};
+  for(const b of document.querySelectorAll('[data-menu]'))b.onpointerenter=()=>{if(escapeBuilderMenu?.kind==='menu'&&escapeBuilderMenu.id!==b.dataset.menu){escapeBuilderMenu={kind:'menu',id:b.dataset.menu};rerender();}};
+  for(const el of document.querySelectorAll('[data-close-menu]'))el.onpointerdown=e=>{e.preventDefault();escapeBuilderMenu=null;rerender();};
+  for(const el of document.querySelectorAll('[data-close-dialog]'))el.onclick=e=>{if(e.target!==el)return;escapeBuilderDialog=null;rerender();};
+  for(const b of document.querySelectorAll('[data-tab]'))b.onclick=()=>{escapeBuilderTab=b.dataset.tab;rerender();};
+  on('builder-undo',act(()=>escapeBuilderStep(true)));on('builder-redo',act(()=>escapeBuilderStep(false)));on('builder-deselect',act(()=>{escapeBuilderPick=null;rerender();}));
+  on('builder-details',()=>dialog('details'));on('builder-settings',()=>dialog('settings'));on('builder-keys',()=>dialog('keys'));on('builder-problems',()=>dialog('problems'));
+  on('builder-quick',()=>dialog('quick'));on('builder-levels',()=>dialog('levels'));on('builder-share',()=>{dialog('share');const t=$('builder-text');if(t){t.select?.();try{navigator.clipboard?.writeText(t.value);}catch(_){}}});on('builder-import',()=>{dialog('import');$('builder-text')?.focus?.();});
+  on('builder-import-go',()=>{const t=$('builder-text'),level=B.importText(t.value);if(!level){t.value='';t.placeholder='That text is not a Sally level. Paste the whole line that starts with SALLY';return;}escapeBuilderModel=level;escapeBuilderPick=null;escapeBuilderDialog=null;rerender();});
+  for(const b of document.querySelectorAll('[data-ctx]'))b.onclick=()=>escapeBuilderContext(b.dataset.ctx);
   for(const b of document.querySelectorAll('[data-tool]'))b.onclick=()=>{escapeBuilderTool=b.dataset.tool;escapeBuilderNote='';escapeBuilderAnchor=null;if(!['patrol','link','select','turn'].includes(escapeBuilderTool))escapeBuilderPick=null;rerender();};
   for(const b of document.querySelectorAll('[data-color]'))b.onclick=()=>{escapeBuilderColor=Number(b.dataset.color);if(!['door','bridge'].includes(escapeBuilderTool))escapeBuilderTool='door';rerender();};
   const p=escapeBuilderPick,insp=name=>document.querySelector('[data-insp="'+name+'"]');
@@ -423,44 +488,66 @@ function wireEscapeBuilder(){
   for(const [k,f] of [['cdir','dir'],['cspeed','speed']])if(insp(k))insp(k).onchange=e=>{B.setCurrent(m,p.index,{[f]:Number(e.target.value)});rerender();};
   for(const [k,f] of [['agroups','groups'],['asize','size'],['aspeed','speed']])if(insp(k))insp(k).onchange=e=>{B.setAnts(m,p.index,{[f]:Number(e.target.value)});rerender();};
   if(insp('anew'))insp('anew').onclick=()=>{escapeBuilderTool='ants';escapeBuilderAnchor='new';escapeBuilderNote='Click the first point of the new column.';rerender();};
-  const more=document.querySelector('.builder-more');if(more)more.ontoggle=()=>{escapeBuilderSettings.open=more.open;};
   for(const el of document.querySelectorAll('[data-set]'))el.onchange=e=>{const k=el.dataset.set;B.setSettings(m,{[k]:el.type==='checkbox'?(k==='biome'?(e.target.checked?'desert':''):e.target.checked):el.tagName==='TEXTAREA'?e.target.value:Number(e.target.value)});rerender();};
   const skyDefault={hawk:{every:9,warn:2.2,first:12},storm:{every:9,warn:1.6,first:8},tide:{period:14,high:6,offset:0}};
   for(const el of document.querySelectorAll('[data-sky]'))el.onchange=e=>{B.setSettings(m,{[el.dataset.sky]:e.target.checked?skyDefault[el.dataset.sky]:null});rerender();};
   for(const el of document.querySelectorAll('[data-skyf]'))el.onchange=e=>{const [k,f]=el.dataset.skyf.split('.');B.setSettings(m,{[k]:{...m[k],[f]:Number(e.target.value)}});rerender();};
   const grid=$('builder-grid'),cellAt=e=>{const el=document.elementFromPoint(e.clientX,e.clientY)?.closest?.('.builder-cell');return el?[Number(el.dataset.x),Number(el.dataset.y)]:null;};
-  grid.onpointerdown=e=>{e.preventDefault();const c=cellAt(e);if(!c)return;escapeBuilderPainting=escapeBuilderDrags(escapeBuilderTool);if(escapeBuilderApply(...c))rerender();};
+  grid.onpointerdown=e=>{if(e.button===2)return;e.preventDefault();const c=cellAt(e);if(!c)return;escapeBuilderStroke={pushed:false};escapeBuilderPainting=escapeBuilderDrags(escapeBuilderTool);if(escapeBuilderApply(...c))rerender();};
   grid.onpointermove=e=>{if(!escapeBuilderPainting||!e.buttons)return;const c=cellAt(e);if(c&&escapeBuilderModel.map[c[1]][c[0]]!==escapeBuilderTool&&escapeBuilderApply(...c))rerender();};
-  document.onpointerup=()=>{escapeBuilderPainting=false;};
-  $('builder-play').onclick=()=>{if(!B.validate(m).length)startEscape({custom:B.toRoute(m),from:'builder'});};
+  grid.oncontextmenu=e=>{e.preventDefault();const c=cellAt(e);if(!c)return;escapeBuilderMenu={kind:'context',cell:c,left:Math.min(e.clientX,(window.innerWidth||1e4)-230),top:Math.min(e.clientY,(window.innerHeight||1e4)-380)};rerender();};
+  document.onpointerup=()=>{escapeBuilderPainting=false;escapeBuilderStroke=null;};
+  on('builder-play',()=>{if(!B.validate(m).length)startEscape({custom:B.toRoute(m),from:'builder'});});
   if(ws){
-    $('workshop-save').onclick=()=>{const model=B.sanitize(m),ok=model&&EscapeEdits.save(ws.key,model,B.validate(model).length?null:B.toRoute(model));
-      escapeBuilderNote=!ok?'Could not save the draft.':B.validate(model).length?'Draft saved. Fix the problems below before it can be played in game.':'Draft saved'+(EscapeEdits.active()?'. Reload to play it from the map.':'.');rerender();};
-    $('workshop-export1').onclick=()=>escapeWorkshopExport([ws.key],$('builder-text'));
-    $('workshop-revert').onclick=()=>{if(!confirm('Load the game’s version into the builder? Your saved draft stays until you save over it or discard it.'))return;escapeBuilderModel=B.fromRoute(escapeGameLevel(ws.key));escapeBuilderPick=null;escapeBuilderNote='Loaded the game’s version.';rerender();};
-    if($('workshop-discard'))$('workshop-discard').onclick=()=>{if(!confirm('Discard your saved draft?'))return;EscapeEdits.remove(ws.key);escapeBuilderModel=B.fromRoute(escapeGameLevel(ws.key));escapeBuilderPick=null;escapeBuilderNote='Draft discarded; this is the game’s version.';rerender();};
+    on('workshop-save',act(()=>{const model=B.sanitize(m),ok=model&&EscapeEdits.save(ws.key,model,B.validate(model).length?null:B.toRoute(model));
+      escapeBuilderNote=!ok?'Could not save the draft.':B.validate(model).length?'Draft saved. Fix the problems before it can be played in game.':'Draft saved'+(EscapeEdits.active()?'. Reload to play it from the map.':'.');rerender();}));
+    on('workshop-export1',act(()=>{escapeBuilderDialog='share';rerender();const t=$('builder-text');if(t)escapeWorkshopExport([ws.key],t);}));
+    on('workshop-revert',act(()=>{if(!confirm('Load the game’s version into the builder? Your saved draft stays until you save over it or discard it.'))return rerender();escapeBuilderModel=B.fromRoute(escapeGameLevel(ws.key));escapeBuilderPick=null;escapeBuilderNote='Loaded the game’s version.';rerender();}));
+    on('workshop-discard',act(()=>{if(!confirm('Discard your saved draft?'))return rerender();EscapeEdits.remove(ws.key);escapeBuilderModel=B.fromRoute(escapeGameLevel(ws.key));escapeBuilderPick=null;escapeBuilderNote='Draft discarded; this is the game’s version.';rerender();}));
     return;
   }
-  $('builder-save').onclick=()=>{const ok=B.saveOne(ESCAPE_BUILDER_STORE,m);rerender();$('builder-save').textContent=ok?'Saved ✓':'Could not save';};
-  $('builder-publish').onclick=async()=>{const b=$('builder-publish');b.disabled=true;b.textContent='Publishing…';
+  on('builder-save',act(()=>{const ok=B.saveOne(ESCAPE_BUILDER_STORE,m);escapeBuilderNote=ok?'Saved in this browser ✓':'Could not save.';rerender();}));
+  on('builder-publish',act(async()=>{escapeBuilderNote='Publishing…';rerender();
     try{const r=await escapeBuilderApi('levels',{method:'POST',body:JSON.stringify({level:B.sanitize(m)})});const body=await r.json().catch(()=>({}));
       if(r.status===401){escapeAdminSignedIn=false;renderEscapeAdminLock({title:'Level builder',next:()=>openEscapeBuilder(),status:await escapeAdminStatus(),message:'Your admin session ended. Sign in again to publish; your level is kept.'});return;}
-      b.textContent=r.ok?'Published ✓':'Could not publish';if(!r.ok&&body.error){escapeBuilderNote=body.error;rerender();}}
-    catch(_){b.textContent='Could not reach the server';}};
+      escapeBuilderNote=r.ok?'Published to the community shelf ✓':(body.error||'Could not publish.');}
+    catch(_){escapeBuilderNote='Could not reach the server.';}rerender();}));
   for(const input of document.querySelectorAll('[data-quick]'))input.onchange=e=>{const k=e.target.dataset.quick;escapeQuickOptions[k]=k==='difficulty'||k==='seed'?Number(e.target.value)||0:e.target.value;};
-  if($('quick-panel'))$('quick-panel').ontoggle=e=>{escapeQuickOpen=e.target.open;};
-  if($('quick-build'))$('quick-build').onclick=()=>escapeQuickBuild(false);
-  if($('quick-reroll'))$('quick-reroll').onclick=()=>escapeQuickBuild(true);
-  $('builder-new').onclick=()=>{escapeBuilderModel=B.blank();escapeBuilderPick=null;rerender();};
-  $('builder-share').onclick=()=>{const t=$('builder-text');t.style.display='block';t.value=B.exportText(m);t.select();try{navigator.clipboard?.writeText(t.value);}catch(_){}};
-  $('builder-import').onclick=()=>{const t=$('builder-text');if(t.style.display!=='block'||!t.value.trim()){t.style.display='block';t.value='';t.focus();return;}const level=B.importText(t.value);if(!level){t.value='';t.placeholder='That text is not a Sally level. Paste the whole line that starts with SALLY';return;}escapeBuilderModel=level;escapeBuilderPick=null;rerender();};
-  $('builder-community').onclick=()=>openEscapeCommunity();
-  $('builder-admin').onclick=()=>openEscapeAdmin();
+  on('quick-build',()=>{escapeBuilderDialog=null;escapeQuickBuild(false);});
+  on('quick-reroll',()=>{escapeBuilderDialog=null;escapeQuickBuild(true);});
+  on('builder-new',act(()=>{escapeBuilderModel=B.blank();escapeBuilderPick=null;escapeBuilderNote='A new level. Ctrl+Z brings the last one back.';rerender();}));
+  on('builder-community',act(()=>openEscapeCommunity()));
+  on('builder-admin',act(()=>openEscapeAdmin()));
   const saved=B.loadAll(ESCAPE_BUILDER_STORE),byId=id=>saved.find(l=>l.id===id);
-  for(const b of document.querySelectorAll('[data-play]'))b.onclick=()=>{const l=byId(b.dataset.play);if(l&&!B.validate(l).length){escapeBuilderModel=l;startEscape({custom:B.toRoute(l),from:'builder'});}};
-  for(const b of document.querySelectorAll('[data-edit]'))b.onclick=()=>{const l=byId(b.dataset.edit);if(l){escapeBuilderModel=l;escapeBuilderPick=null;rerender();}};
-  for(const b of document.querySelectorAll('[data-delete]'))b.onclick=()=>{B.removeOne(ESCAPE_BUILDER_STORE,b.dataset.delete);rerender();};
+  for(const b of document.querySelectorAll('[data-play]'))b.onclick=()=>{const l=byId(b.dataset.play);if(l&&!B.validate(l).length){escapeBuilderModel=l;escapeBuilderDialog=null;startEscape({custom:B.toRoute(l),from:'builder'});}};
+  for(const b of document.querySelectorAll('[data-edit]'))b.onclick=()=>{const l=byId(b.dataset.edit);if(l){escapeBuilderModel=l;escapeBuilderPick=null;escapeBuilderDialog=null;rerender();}};
+  for(const b of document.querySelectorAll('[data-delete]'))b.onclick=()=>{if(confirm('Delete this saved level?')){B.removeOne(ESCAPE_BUILDER_STORE,b.dataset.delete);rerender();}};
 }
+// What the right-click menu's items do.
+function escapeBuilderContext(action){
+  const m=escapeBuilderModel,B=EscapeBuilder,[x,y]=escapeBuilderMenu.cell,here=escapeBuilderPickAt(x,y);escapeBuilderMenu=null;escapeBuilderNote='';
+  if(action==='select')escapeBuilderPick=here;
+  else if(action==='turn')B.turnEnemy(m,x,y);
+  else if(action==='patrol'){escapeBuilderPick=here;escapeBuilderTool='patrol';escapeBuilderNote='Click the tiles it should walk to, in order.';}
+  else if(action==='link'){escapeBuilderPick=here;escapeBuilderTool='link';escapeBuilderNote='Now click the doors, bridges or enemies it should affect.';}
+  else if(action==='remove'){if(B.removeAt(m,x,y)||B.removeExtraAt(m,x,y))escapeBuilderPick=null;}
+  else if(action==='pick'){escapeBuilderTool=m.map[y][x];escapeBuilderTab=EscapeBuilder.MARKS[escapeBuilderTool]?'places':'tiles';}
+  else B.paint(m,x,y,{floor:'.',wall:'#',leaves:'L',sally:'@',key:'K',hatch:'X'}[action]);
+  renderEscapeBuilder();
+}
+// Builder shortcuts. Typing in a field is left alone, apart from undo and save.
+if(typeof document!=='undefined'&&document.addEventListener)document.addEventListener('keydown',e=>{
+  if(typeof gameState==='undefined'||gameState!=='builder'||!escapeBuilderModel||!document.getElementById('builder-grid'))return;
+  const k=String(e.key||'').toLowerCase(),mod=e.ctrlKey||e.metaKey,typing=['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName);
+  if(mod&&k==='z'&&!typing){e.preventDefault();escapeBuilderStep(!e.shiftKey);return;}
+  if(mod&&k==='y'&&!typing){e.preventDefault();escapeBuilderStep(false);return;}
+  if(mod&&k==='s'){e.preventDefault();document.getElementById(escapeBuilderWorkshop?'workshop-save':'builder-save')?.click()||(escapeBuilderWorkshop?null:(EscapeBuilder.saveOne(ESCAPE_BUILDER_STORE,escapeBuilderModel),escapeBuilderNote='Saved in this browser ✓',renderEscapeBuilder()));return;}
+  if(k==='escape'){if(escapeBuilderMenu||escapeBuilderDialog){escapeBuilderMenu=null;escapeBuilderDialog=null;}else{escapeBuilderPick=null;escapeBuilderAnchor=null;}renderEscapeBuilder();return;}
+  if(typing||mod||escapeBuilderDialog)return;
+  const tools={v:'select',l:'link',p:'patrol',t:'turn',x:'remove',w:'#',f:'.'};
+  if(tools[k]){escapeBuilderTool=tools[k];escapeBuilderAnchor=null;if(!['patrol','link','select','turn'].includes(escapeBuilderTool))escapeBuilderPick=null;renderEscapeBuilder();return;}
+  const tab=ESCAPE_BUILDER_TABS[Number(k)-1];if(tab){escapeBuilderTab=tab[0];renderEscapeBuilder();}
+});
 
 // The community shelf: every published level, open to every player. A signed-in admin can also
 // copy a level into the builder or take it down.
