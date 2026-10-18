@@ -16,7 +16,7 @@ test('tongue reaches three tiles across a gap, collects the key on contact and r
 });
 test('out of range, off-axis, behind Sally and blocked grabs spend no uses',()=>{
  for(const modify of [g=>g.player.x=4.4,g=>g.player.y=9.1,g=>g.player.facing={x:-1,y:0},g=>g.grid[8][6]='#',g=>g.grid[8][6]='B',g=>g.grid[8][6]='G']){
-  const g=reach();modify(g);assert.equal(g.useTongue(),false);assert.equal(g.tongues,3);assert.equal(g.tongue,null);
+  const g=reach();modify(g);assert.equal(g.useTongue(),false);assert.equal(g.tongues,3);assert.ok(!g.tongue||g.tongue.kind==='miss','at most an empty flick');
  }
 });
 test('diagonal movement aims a diagonal tongue without changing the burrow direction',()=>{

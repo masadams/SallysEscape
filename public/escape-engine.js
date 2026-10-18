@@ -21,6 +21,13 @@
   const MOMENTUM={snake:{turn:2.4,grip:.55,accel:1.6,pulse:1.5,lead:.85},cobra:{turn:2,grip:.5,accel:1.3,pulse:1.1,lead:1},'sea-snake':{turn:2.4,grip:.55,accel:1.6,pulse:1.4,lead:.85},fish:{turn:4.5,grip:.6,accel:2.5,pulse:2.2,lead:.5},chameleon:{turn:3.5,grip:.55,accel:2,pulse:1,lead:.4}};
   // Hunters heavy enough to press a heavy plate.
   const HEAVY=new Set(['beetle']);
+  // Creatures a thrown pebble can bonk on the way: the ones that walk the floor in the open.
+  const BONKABLE=new Set(['snake','sea-snake','cobra','beetle','toad','spider','fox','chameleon','gecko','millipede','cricket']);
+  // How far a pebble's landing carries, by the ground it lands on: gravel clatters, leaves and mud
+  // muffle it, moss swallows it.
+  const LANDING={N:12,L:5,M:5,m:2.5,t:6};
+  // Insects Sally's tongue can snatch and eat.
+  const EDIBLE=new Set(['cricket','moth']);
   const centre=(x,y)=>({x:x+0.5,y:y+0.5});
   const directions=[[1,0],[-1,0],[0,1],[0,-1]];
   // A trail is a closed loop of axis-aligned corners; expand it to every tile centre on the way.
@@ -369,13 +376,15 @@
         pos=n;left-=step;
       }
       // It cannot come to rest over a gap or in deep water: it rolls back to the last good ground.
-      let land=copy(pos);for(let i=0;i<30&&!this.actorFloor(Math.floor(land.x),Math.floor(land.y));i++){land={x:land.x-v.x*step,y:land.y-v.y*step};}
-      points.push(land);return {points,bounces,land};
+      // In water it splashes and sinks; hunters listen from the bank it was thrown across.
+      const wet=this.water(pos)?copy(pos):null;
+      let land=copy(pos);for(let i=0;i<200&&(!this.actorFloor(Math.floor(land.x),Math.floor(land.y))||wet&&this.water(land));i++){land={x:land.x-v.x*step,y:land.y-v.y*step};}
+      points.push(wet||land);return {points,bounces,land,wet};
     }
     launch(kind,power){
       const plan=this.planThrow(power);if(distance(this.player,plan.land)<.5&&!plan.bounces.length){this.notice('Too close to a wall to throw.');return false;}
       let length=0;const legs=plan.points.slice(1).map((q,i)=>{const from=plan.points[i],d=distance(from,q);length+=d;return {from,to:q,end:length};});
-      this.flights.push({kind,legs,bounces:plan.bounces.map((b,i)=>({...b,at:legs[i].end,done:false})),land:plan.land,start:this.elapsed,speed:9,length});
+      this.flights.push({kind,legs,bounces:plan.bounces.map((b,i)=>({...b,at:legs[i].end,done:false})),land:plan.land,wet:plan.wet,start:this.elapsed,speed:9,length,from:copy(this.player)});
       this.player.throwAim=null;this.events.push('toss');return true;
     }
     throwSpore(power=0){
@@ -398,8 +407,18 @@
         for(const b of f.bounces)if(!b.done&&travelled>=b.at){b.done=true;this.events.push('clack');
           if(f.kind==='pebble')this.decoy={x:b.x,y:b.y,expires:this.elapsed+1.2,noticed:false,echo:true};}
         f.pos=null;for(const leg of f.legs)if(travelled<=leg.end){const t=1-(leg.end-travelled)/Math.max(1e-6,distance(leg.from,leg.to));f.pos={x:leg.from.x+(leg.to.x-leg.from.x)*t,y:leg.from.y+(leg.to.y-leg.from.y)*t};break;}
+        // A pebble that hits a creature on the way bonks it: it drops there, and the creature is dazed
+        // for a moment, then goes to look where the pebble came from.
+        if(f.kind==='pebble'&&f.pos&&travelled>.6){const h=this.hunters.find(h=>BONKABLE.has(h.kind)&&!h.eaten&&!['steamed','stunned','emerge','dig','buried','rise','clash'].includes(h.state)&&distance(h,f.pos)<.42);
+          if(h){f.done=true;h.state='steamed';h.phaseUntil=this.elapsed+1.1;h.path=[];h.targetId=null;h.awareness=0;h.bonkFrom=copy(f.from);this.bonks=(this.bonks||0)+1;this.cue('bonk',h);this.notice('Bonk! It is dazed, but it knows where that came from.');continue;}}
         if(travelled>=f.length){f.done=true;
-          if(f.kind==='pebble'){this.decoy={...f.land,expires:this.elapsed+4,noticed:false};this.events.push('decoy');}
+          // Into water: a splash, and the pebble is gone; hunters come to the bank to look, and an eel
+          // or fish nearby darts at the ripples.
+          if(f.kind==='pebble'&&f.wet){this.cue('splash',f.wet);this.decoy={...f.land,expires:this.elapsed+3,noticed:false,range:7};
+            for(const h of this.hunters)if(h.kind==='eel'&&h.state==='lurk'&&distance(h.post||h,f.wet)<2.6){h.state='ripple';h.aim=copy(f.wet);h.phaseUntil=this.elapsed+.3;}
+            continue;}
+          if(f.kind==='pebble'){const tile=this.grid[Math.floor(f.land.y)]?.[Math.floor(f.land.x)],ground=this.moss.has(this.tileKey(f.land))?'m':tile;
+            this.decoy={...f.land,expires:this.elapsed+4,noticed:false,range:LANDING[ground]||9};this.events.push(ground==='N'?'clatter':ground==='L'?'rustle':ground==='M'?'squish':'decoy');}
           else if(f.kind==='spore'){this.clouds.push({...f.land,r:1.9,born:this.elapsed,until:this.elapsed+6});this.events.push('puff');}
           else{this.lights.push({...f.land,born:this.elapsed,until:this.elapsed+12,r:2.5});this.events.push('glow');this.updateVisibility(true);}}
       }
@@ -430,23 +449,35 @@
       this.notice('Pebble tossed. Watch for the hunter\'s reaction.','decoy');return true;
     }
     tongueTarget(){
-      const p=this.player,d=p.tongueAim||p.facing,targets=[];
+      // Things to grab come first, then insects, then switches, each nearest first.
+      const p=this.player,d=p.tongueAim||p.facing,targets=[],rank={eat:1,switch:2};
       if(!this.hasKey)targets.push({kind:'key',point:this.key});
       this.loot.forEach((item,index)=>{if(!item.taken)targets.push({kind:'loot',index,point:item});});
       if(!this.hasTail)this.regrowthBugs.forEach((bug,index)=>{if(!bug.eaten)targets.push({kind:'bug',index,point:bug});});
       this.glowbugs.forEach((bug,index)=>{if(!bug.caught)targets.push({kind:'glow',index,point:bug});});
       // An angler's lure looks just like a glow bug, so the tongue will happily reach for it.
       this.hunters.forEach((h,index)=>{if(h.kind==='angler'&&h.state==='lurking')targets.push({kind:'lure',index,point:h.lure});});
-      return targets.filter(t=>{const dx=t.point.x-p.x,dy=t.point.y-p.y,forward=dx*d.x+dy*d.y,side=Math.abs(dx*d.y-dy*d.x);return forward>.25&&distance(p,t.point)<=this.tongueRange+1e-9&&side<=.35&&this.clear(p,t.point,true);}).sort((a,b)=>distance(p,a.point)-distance(p,b.point))[0]||null;
+      // Insects are food: a cricket or a moth within reach can be snatched and eaten.
+      this.hunters.forEach((h,index)=>{if(EDIBLE.has(h.kind)&&!h.eaten)targets.push({kind:'eat',index,point:h});});
+      // A gate's switch or lever can be flicked from a little way off.
+      this.gates.forEach((gate,index)=>{if(!gate.open&&!gate.sealed&&!gate.duration&&!gate.shut)for(const point of [...(gate.switch?[gate.switch]:[]),...(gate.levers||[])])targets.push({kind:'switch',index,point});});
+      return targets.filter(t=>{const dx=t.point.x-p.x,dy=t.point.y-p.y,forward=dx*d.x+dy*d.y,side=Math.abs(dx*d.y-dy*d.x);return forward>.25&&distance(p,t.point)<=this.tongueRange+1e-9&&side<=.35&&this.clear(p,t.point,true);}).sort((a,b)=>(rank[a.kind]||0)-(rank[b.kind]||0)||distance(p,a.point)-distance(p,b.point))[0]||null;
     }
     useTongue(){
       if(!this.active())return false;
       if(!this.tongues){this.notice(this.level.tongues?'No tongue grabs left. Take a walking route.':'No tongue grabs on this route.');return false;}
-      if(this.tongue||this.elapsed<this.tongueReadyAt)return false;
-      const target=this.tongueTarget();if(!target){this.notice('Face a key or treasure within three tiles. Walls and gates block your tongue.');return false;}
+      if(this.tongue&&this.tongue.kind!=='miss'||this.elapsed<this.tongueReadyAt)return false;
+      const target=this.tongueTarget();
+      // Nothing to grab: the tongue still flicks out and back (costing nothing), so it never feels dead.
+      if(!target){const p=this.player,d=p.tongueAim||p.facing,l=Math.hypot(d.x,d.y)||1;let reach={x:p.x,y:p.y};for(let i=1;i<=12;i++){const q={x:p.x+d.x/l*i*.25,y:p.y+d.y/l*i*.25};if(!this.clear(p,q,true))break;reach=q;}
+        this.tongue={kind:'miss',point:reach,startedAt:this.elapsed,hit:false};this.events.push('thwip');
+        this.notice('Nothing to grab there. The tongue reaches keys, treasure, bugs and switches within three tiles.');return false;}
       this.spend('tongues');this.tonguesUsed++;this.tongueReadyAt=this.elapsed+.55;
       this.tongue={...target,point:copy(target.point),startedAt:this.elapsed,hit:false};this.events.push('tongue');return true;
     }
+    // An insect snatched by the tongue is gone for good: a cricket chirps no more, a moth's light goes out.
+    eatInsect(h){if(!h||h.eaten)return;h.eaten=true;h.state='eaten';h.x=-99;h.y=-99;this.insectsEaten=(this.insectsEaten||0)+1;this.cue('gulp');this.notice(h.kind==='cricket'?'Gulp! That cricket will not be chirping again.':'Gulp! The moth\'s light goes out.');}
+    tongueSwitch(gate){if(gate.open||gate.sealed)return;gate.activations++;this.setGateOpen(gate,true);this.notice('Flick! Sally\'s tongue hits the switch. '+gate.name+' gates open.','gate');}
     collectKey(byTongue=false){
       if(this.hasKey)return;this.hasKey=true;this.keyByTongue=byTongue;
       this.notice(this.requiredTreasure>this.treasure?'Key found! Bring '+(this.requiredTreasure-this.treasure)+' more treasure to the hatch.':'Key found! The hatch is open.','key');
@@ -587,10 +618,10 @@
       const t=this.tongue;if(!t)return;
       const age=this.elapsed-t.startedAt;
       if(!t.hit&&age>=.14){
-        t.hit=true;const present=t.kind==='key'?!this.hasKey:t.kind==='bug'?!this.regrowthBugs[t.index].eaten&&!this.hasTail:t.kind==='glow'?!this.glowbugs[t.index].caught:t.kind==='lure'?this.hunters[t.index]?.state==='lurking':!this.loot[t.index].taken;
+        t.hit=true;if(t.kind==='miss')return;const present=t.kind==='eat'?!this.hunters[t.index]?.eaten:t.kind==='switch'?!this.gates[t.index].open&&!this.gates[t.index].sealed:t.kind==='key'?!this.hasKey:t.kind==='bug'?!this.regrowthBugs[t.index].eaten&&!this.hasTail:t.kind==='glow'?!this.glowbugs[t.index].caught:t.kind==='lure'?this.hunters[t.index]?.state==='lurking':!this.loot[t.index].taken;
         if(present&&t.kind==='lure')this.springAngler(this.hunters[t.index],copy(this.player),.35);
         else if(present&&distance(this.player,t.point)<=this.tongueRange+1e-9&&this.clear(this.player,t.point,true)){
-          t.caught=true;t.kind==='key'?this.collectKey(true):t.kind==='bug'?this.eatRegrowthBug(this.regrowthBugs[t.index]):t.kind==='glow'?this.catchGlowbug(this.glowbugs[t.index]):this.collectLoot(this.loot[t.index]);
+          t.caught=true;t.kind==='eat'?this.eatInsect(this.hunters[t.index]):t.kind==='switch'?this.tongueSwitch(this.gates[t.index]):t.kind==='key'?this.collectKey(true):t.kind==='bug'?this.eatRegrowthBug(this.regrowthBugs[t.index]):t.kind==='glow'?this.catchGlowbug(this.glowbugs[t.index]):this.collectLoot(this.loot[t.index]);
         }else this.notice('The grab missed. Keep a clear line and stay within reach.');
       }
       if(age>=.34)this.tongue=null;
@@ -676,7 +707,7 @@
       if(this.elapsed>=this.invulnerableUntil&&stinger&&this.shedTail(stinger))return;
       if(this.elapsed>=this.invulnerableUntil&&stinger){this.finish('caught','The scorpion struck. Cross its ring while the tail is down, or change direction when it strikes.');return;}
       // Capture wins over picking up the key or escaping in the same simulation step.
-      const captor=this.hunters.find(h=>!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='magpie'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='sentinel'&&h.kind!=='cloudray'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(h.kind==='beetle'&&h.state==='charge'?.62:.48)&&this.clear(p,h));
+      const captor=this.hunters.find(h=>!h.eaten&&!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='magpie'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='sentinel'&&h.kind!=='cloudray'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(h.kind==='beetle'&&h.state==='charge'?.62:.48)&&this.clear(p,h));
       if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
       if(this.elapsed>=this.invulnerableUntil && captor){
         this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. It crept up while Sally looked away. Keep it in view as you back off.':captor.kind==='mimic'?'That chest was a mimic! Watch for its tell, or throw a pebble to make it snap first.':captor.kind==='fox'?'A snow fox heard Sally and pounced. Stand still, keep to quiet ground, or toss a pebble to send it pouncing elsewhere.':captor.kind==='crab'?'A hermit crab scuttled out and pinched Sally. Pass its lane while it is tucked in, or send it back into its shell with a pebble.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'A hunter spotted you. Break sight at a corner or use a pebble.');return;
@@ -704,7 +735,7 @@
     }
     exitUnlocked(){return this.hasKey&&this.treasure>=this.requiredTreasure&&(!this.challenge?.keyByTongue||this.keyByTongue)&&(!this.challenge?.steamTraps||this.steamed>=this.challenge.steamTraps);}
     // A moth's glow lights Sally up: leaves no longer hide her and hunters see further.
-    lit(){const p=this.player;return this.hunters.some(m=>m.kind==='moth'&&distance(m,p)<=2.6&&this.clear(m,p,true));}
+    lit(){const p=this.player;return this.hunters.some(m=>m.kind==='moth'&&!m.eaten&&distance(m,p)<=2.6&&this.clear(m,p,true));}
     seesPlayer(h=this.hunter){
       // Just after a gentle level's "Oops!" nothing notices her for a moment.
       if(this.player.underground||this.player.dig?.buried||this.gentle&&this.elapsed<this.invulnerableUntil)return false;
@@ -718,7 +749,9 @@
     }
     updateHunter(dt,h=this.hunter){
       this.hunterDt=dt;
-      if(h.state==='steamed'){if(this.elapsed>=h.phaseUntil){h.state=h.kind==='mimic'?'rooted':'patrol';h.graceUntil=this.elapsed+.5;}return;}
+      if(h.eaten)return;
+      if(h.state==='steamed'){if(this.elapsed>=h.phaseUntil){h.state=h.kind==='mimic'?'rooted':'patrol';h.graceUntil=this.elapsed+.5;
+        if(h.bonkFrom){if(['snake','sea-snake','cobra','chameleon','spider','toad','beetle','gecko'].includes(h.kind)){h.state='search';h.lastKnown=h.bonkFrom;h.searchUntil=this.elapsed+this.cunning.search+1.5;}h.bonkFrom=null;}}return;}
       if(h.tailLureUntil){
         if(this.elapsed<h.tailLureUntil&&this.droppedTail){h.state='decoy';h.awareness=0;h.lastKnown=null;h.aim=null;if(distance(h,this.droppedTail)>.3)this.moveHunter(this.droppedTail,1.3*dt,h);return;}
         h.tailLureUntil=0;h.state=h.kind==='mimic'?'rooted':'patrol';h.path=[];h.targetId=null;h.aim=null;h.awareness=0;h.lastKnown=null;h.graceUntil=Math.max(h.graceUntil||0,this.elapsed+.4);
@@ -754,7 +787,7 @@
       const p=this.player,previousState=h.state;
       // Nearby visible danger overrides a lure; a pebble cannot make it ignore a bite.
       const seen=(this.seesPlayer(h)||this.feelsPlayer(h))&&!(p.crawling&&distance(h,p)>(this.hunters.length>1&&this.lit()?5.5:3.5)&&this.elapsed>=this.flashUntil),heard=(p.noisy||p.loud)&&!p.hidden&&this.audible(h,p,p.loud?6:3.5);
-      const lure=this.decoy&&this.audible(h,this.decoy,9)&&!(seen&&(this.decoy.chirp||distance(h,p)<1.2));
+      const lure=this.decoy&&this.audible(h,this.decoy,this.decoy.range||9)&&!(seen&&(this.decoy.chirp||distance(h,p)<1.2));
       let target,speed=1.25;
       if(lure){
         if(!this.decoy.noticed){this.decoy.noticed=true;this.notice(this.decoy.croak?'It heard the frog. Now is your chance!':'It heard the pebble. Now is your chance!','distracted');}

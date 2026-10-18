@@ -110,6 +110,11 @@
     dig:(v)=>{for(let i=0;i<6;i++)noise(v,{dur:.07,delay:i*.11,gain:.14,filter:'bandpass',freq:900+i*120,q:1.4});},
     buried:(v)=>{noise(v,{dur:.25,gain:.18,filter:'lowpass',freq:420,to:140});tone(v,{freq:110,to:70,dur:.2,type:'sine',gain:.16});},
     unbury:(v)=>{noise(v,{dur:.18,gain:.12,filter:'lowpass',freq:800,to:300});tone(v,{freq:240,to:420,dur:.12,type:'sine',gain:.1});},
+    // A pebble bonking a creature; clattering on gravel; Sally's tongue gulping a bug or flicking at nothing.
+    bonk:(v)=>{tone(v,{freq:420,to:180,dur:.12,type:'triangle',gain:.22});noise(v,{dur:.05,gain:.14,filter:'bandpass',freq:1800,q:2});},
+    clatter:(v)=>{for(let i=0;i<4;i++)noise(v,{dur:.03,delay:i*.05,gain:.2-i*.03,filter:'bandpass',freq:3000+i*400,q:3});},
+    gulp:(v)=>{tone(v,{freq:300,to:140,dur:.14,type:'sine',gain:.2});tone(v,{freq:200,to:420,dur:.1,delay:.12,type:'sine',gain:.12});},
+    thwip:(v)=>{noise(v,{dur:.08,gain:.08,filter:'bandpass',freq:1400,to:2600,q:4});},
     ping:(v)=>{tone(v,{freq:3400,to:4200,dur:.06,type:'sine',gain:.08});tone(v,{freq:3400,to:4200,dur:.05,delay:.12,type:'sine',gain:.04});},
     puff:(v)=>{noise(v,{dur:.45,gain:.16,filter:'lowpass',freq:900,to:300,attack:.01});tone(v,{freq:160,to:90,dur:.2,type:'sine',gain:.12});},
     buzz:(v)=>{tone(v,{freq:210,to:240,dur:.55,type:'sawtooth',gain:.07,attack:.05,wobble:18,wobbleRate:42});noise(v,{dur:.5,gain:.05,freq:1600,q:3,attack:.05});},
