@@ -415,22 +415,6 @@ body:not(.mobile-game) #game-toolbar.toolbar-open #menu-button { order:-1; }
 @media (max-height:520px){ .game-dialog-card { padding:12px 16px; } .game-dialog-card h2 { margin-bottom:8px; } .options-grid { gap:6px 10px; } .options-grid button { min-height:32px; padding:4px 10px; } }
 
 /* Story: part titles and cards (Old Moss's journal, the Great Map, a lost Wayfinder's note) */
-.story-overlay { position:fixed; inset:0; z-index:70; display:none; align-items:center; justify-content:center; padding:16px; background:#04100dcc; }
-.story-card { width:min(560px,100%); max-height:calc(100vh - 32px); overflow:auto; border-radius:14px; padding:22px 26px; box-shadow:0 20px 60px #000c; line-height:1.55; animation:story-in .45s ease-out both; }
-.story-card h2 { margin:4px 0 12px; font-size:1.45rem; }
-.story-card p { margin:0 0 12px; }
-.story-card button { margin-top:6px; }
-.story-eyebrow { display:block; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; opacity:.75; }
-.story-journal .story-card { background:#f1e6c8; color:#3b2f1c; border:1px solid #c9b48a; font-family:Georgia,'Times New Roman',serif; }
-.story-map .story-card { background:#e7ecd6; color:#24372c; border:2px solid #7fa07a; font-family:Georgia,'Times New Roman',serif; background-image:linear-gradient(#7fa07a22 1px,transparent 1px),linear-gradient(90deg,#7fa07a22 1px,transparent 1px); background-size:22px 22px; }
-.story-moment .story-card { background:#eef2e2; color:#26362a; border:1px solid #9ab48c; font-family:Georgia,'Times New Roman',serif; }
-.story-note .story-card { background:#fbf6e8; color:#3a3326; border:1px dashed #b9a57a; font-family:'Comic Sans MS','Segoe Print',cursive; transform:rotate(-1deg); }
-.story-part { background:#020806f2; }
-.story-part-inner { text-align:center; color:#eaf1d8; animation:story-in .9s ease-out both; }
-.story-part-inner h2 { font-size:clamp(2rem,6vw,3.4rem); margin:6px 0 10px; }
-.story-part-inner p { opacity:.85; margin:0 0 22px; font-style:italic; }
-@keyframes story-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
-@media (prefers-reduced-motion: reduce) { .story-card, .story-part-inner { animation:none; } }
 .story-book h3 { margin:14px 0 8px; font-size:1rem; color:#d6e4c6; }
 .story-tiles { display:flex; flex-wrap:wrap; gap:6px; }
 .story-tile { min-width:120px; padding:8px 10px; border-radius:9px; font-size:.82rem; text-align:left; border:1px solid #5d8a6e; background:#163a33; color:#eaf1d8; }
@@ -663,28 +647,80 @@ body.pad-nav #touch-controls{display:none!important}
 .title-toast { position:fixed; left:50%; bottom:32px; transform:translate(-50%,20px); background:#163b32f2; color:#fff7d6; border:1px solid #f1ce7a; border-radius:14px; padding:10px 18px; font-weight:700; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:50; }
 .title-toast-show { opacity:1; transform:translate(-50%,0); }
 /* Story cards: a little living scene, one page at a time, folded margin notes to open. */
-.story-scene { position:relative; height:84px; margin:-22px -26px 14px; border-radius:14px 14px 0 0; overflow:hidden; background:linear-gradient(180deg,var(--sky1),var(--sky2)); }
-.story-thing { position:absolute; bottom:14px; line-height:1; animation:story-bob 3.8s ease-in-out infinite; filter:drop-shadow(0 3px 2px #0003); }
-.story-thing:nth-child(even) { animation-name:story-drift; animation-duration:6s; }
-@keyframes story-bob { 0%,100% { transform:translateY(0) rotate(-3deg); } 50% { transform:translateY(-10px) rotate(3deg); } }
-@keyframes story-drift { 0%,100% { transform:translateX(-8px); } 50% { transform:translateX(10px) translateY(-6px); } }
-.story-still .story-thing { animation:none; }
-.story-trail { position:absolute; inset:6px 0 0; width:100%; height:100%; }
-.story-trail path { fill:none; stroke:#7a5a2c; stroke-width:2.2; stroke-dasharray:5 6; stroke-linecap:round; animation:story-trail 3s ease-out both; }
-@keyframes story-trail { from { stroke-dashoffset:300; opacity:0; } to { stroke-dashoffset:0; opacity:.8; } }
-.story-pages { min-height:4.5em; }
-.story-line { margin:0 0 12px; white-space:pre-line; }
-.story-line em { font-style:italic; }
-.story-jot { margin:4px 0 14px; padding:10px 14px; border:1px dashed #a8905e; border-radius:4px 14px 4px 4px; background:linear-gradient(135deg,#fff8e2 88%,#d9c69a 88%); color:#4a3b22; font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive; font-style:italic; transform:rotate(-.6deg); }
-.story-arrive { animation:story-page .35s ease-out both; }
-@keyframes story-page { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
-.story-say { font-style:italic; color:#6b3f12; quotes:none; }
-.story-map .story-say, .story-note .story-say { color:#3c5a2e; }
-.story-tag { display:inline-block; font-size:.72em; letter-spacing:.08em; text-transform:uppercase; padding:1px 7px; margin-right:6px; border-radius:6px; background:#7fa07a33; border:1px solid #7fa07a; }
-.story-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:6px; }
-.story-dots { display:flex; gap:6px; }
-.story-dots i { width:9px; height:9px; border-radius:50%; background:currentColor; opacity:.2; transition:opacity .3s; }
-.story-dots i.on { opacity:.75; }
+
+/* Story cards: a storybook spread. The painted scene on the left (on top on narrow screens), one page
+   of words on warm paper on the right, turned a page at a time. */
+.story-overlay { position:fixed; inset:0; z-index:70; display:none; align-items:center; justify-content:center; padding:16px; background:radial-gradient(ellipse at center,#0a1f19dd,#020806f0); }
+.story-card { --ink:#3a2c1a; --ink-soft:#7a6446; --paper:#f6ecd4; --paper-edge:#e4d3ad; --accent:#8a5a22;
+  display:grid; grid-template-columns:minmax(0,9fr) minmax(0,11fr); width:min(920px,100%); height:min(540px,calc(100vh - 32px)); border-radius:18px; overflow:hidden;
+  box-shadow:0 30px 80px #000c,0 0 0 1px #ffffff14; animation:story-in .5s cubic-bezier(.2,.8,.2,1) both; color:var(--ink);
+  font-family:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif; }
+.story-picture { position:relative; overflow:hidden; background:#cfe0c8; }
+.story-picture::after { content:''; position:absolute; inset:0; box-shadow:inset -18px 0 30px -14px #0006; pointer-events:none; }
+.story-land { position:absolute; inset:0; width:100%; height:100%; display:block; }
+.story-paper { position:relative; display:flex; flex-direction:column; min-height:0; padding:34px 40px 24px; background:
+  radial-gradient(ellipse at 30% 0%,#fffaf0 0%,transparent 60%),radial-gradient(ellipse at 100% 100%,var(--paper-edge) 0%,transparent 55%),var(--paper); }
+.story-paper::before { content:''; position:absolute; inset:12px; border:1px solid #b89a6a55; border-radius:8px; pointer-events:none; }
+.story-eyebrow { display:block; font-family:inherit; font-size:.72rem; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-soft); }
+.story-card h2 { margin:6px 0 14px; font-size:clamp(1.5rem,2.6vw,2rem); font-weight:600; line-height:1.15; color:var(--ink); }
+.story-card h2::after { content:''; display:block; width:56px; height:2px; margin-top:12px; background:linear-gradient(90deg,var(--accent),transparent); }
+.story-pages { flex:1; min-height:0; overflow:auto; font-size:clamp(1.02rem,1.5vw,1.16rem); line-height:1.7; padding-right:4px; }
+.story-page { animation:story-turn .45s ease-out both; }
+.story-page.story-from-left { animation-name:story-turn-back; }
+.story-page p { margin:0 0 .7em; transition:opacity .6s ease,transform .6s ease; }
+.story-page p.story-wait { opacity:0; transform:translateY(6px); }
+.story-first > p:first-child::first-letter { float:left; font-size:3.3em; line-height:.8; padding:.08em .08em 0 0; color:var(--accent); font-weight:600; }
+.story-say { color:#7a3e10; quotes:none; }
+.story-page em { font-style:italic; }
+.story-sign { text-align:right; font-style:italic; color:var(--ink-soft); }
+.story-letter-slip { position:relative; margin:4px 6px 10px; padding:18px 22px 10px; background:linear-gradient(180deg,#fffdf6,#fbf3df); border-radius:3px; box-shadow:0 6px 18px #5a40201f,0 1px 0 #d8c39a; transform:rotate(-.5deg); font-style:italic; color:#3d2a14; }
+.story-letter-slip::before { content:''; position:absolute; top:-7px; left:50%; width:54px; height:14px; margin-left:-27px; background:#e8d7a8cc; transform:rotate(2deg); }
+.story-letter-slip p { margin:0 0 .6em; }
+.story-foot { display:flex; align-items:center; gap:14px; margin-top:12px; padding-top:12px; border-top:1px solid #b89a6a44; }
+.story-count { flex:1; font-size:.8rem; letter-spacing:.14em; color:var(--ink-soft); }
+.story-back { width:38px; height:38px; border-radius:50%; border:1px solid #b89a6a88; background:transparent; color:var(--ink); font-size:1.4rem; line-height:1; cursor:pointer; }
+.story-back:hover, .story-back:focus-visible { background:#b89a6a22; }
+.story-card .escape-primary { min-width:120px; }
+/* Each kind of page has its own paper. */
+.story-map .story-card { --paper:#eaeed8; --paper-edge:#cdd8b0; --ink:#22362a; --ink-soft:#5a7258; --accent:#4f7a3e; }
+.story-map .story-paper { background-image:linear-gradient(#7fa07a18 1px,transparent 1px),linear-gradient(90deg,#7fa07a18 1px,transparent 1px),radial-gradient(ellipse at 30% 0%,#fbfdf2 0%,transparent 60%); background-size:24px 24px,24px 24px,auto; }
+.story-moment .story-card { --paper:#f3efe2; --paper-edge:#ddd3b8; --accent:#a8662a; }
+.story-note .story-card { --paper:#f8f2e2; --paper-edge:#e6d8b6; --ink:#3a3020; --accent:#6a5a8a; }
+/* A part's title: a quiet full page, the name rising letter by letter over an ornament. */
+.story-part { background:radial-gradient(ellipse at center,#123026f2,#020806fa); }
+.story-part-inner { text-align:center; color:#f2ead2; font-family:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif; animation:story-in .9s ease-out both; }
+.story-part-inner .story-eyebrow { color:#d8c89a; }
+.story-part-inner h2 { font-size:clamp(2.2rem,6.5vw,3.8rem); font-weight:500; margin:10px 0 6px; letter-spacing:.02em; }
+.story-rule { display:block; color:#d8b86a; font-size:1.4rem; margin:4px 0 10px; }
+.story-part-inner p { opacity:.85; margin:0 0 26px; font-style:italic; font-size:1.1rem; }
 .story-letter { display:inline-block; animation:story-letter .5s ease-out both; }
+/* The scene moves a little: drifting clouds and steam, twinkling stars, glowing lights, falling rain, and Sally's walk. */
+.story-cloud { animation:story-drift 9s ease-in-out infinite alternate; }
+.story-star { animation:story-twinkle 3s ease-in-out infinite; }
+.story-glow { animation:story-pulse 3.2s ease-in-out infinite; transform-box:fill-box; transform-origin:center; }
+.story-rain { animation:story-rain .8s linear infinite; }
+.story-sally { animation:story-walk 6s ease-in-out infinite alternate; }
+@keyframes story-in { from { opacity:0; transform:translateY(14px) scale(.98); } to { opacity:1; transform:none; } }
+@keyframes story-turn { from { opacity:0; transform:translateX(18px); } to { opacity:1; transform:none; } }
+@keyframes story-turn-back { from { opacity:0; transform:translateX(-18px); } to { opacity:1; transform:none; } }
 @keyframes story-letter { from { opacity:0; transform:translateY(14px) scale(.8); } to { opacity:1; transform:none; } }
-@media (prefers-reduced-motion: reduce) { .story-letter, .story-arrive, .story-trail path { animation:none; } }
+@keyframes story-drift { from { transform:translateX(-14px); } to { transform:translateX(16px); } }
+@keyframes story-twinkle { 50% { opacity:.25; } }
+@keyframes story-pulse { 50% { opacity:.55; transform:scale(1.12); } }
+@keyframes story-rain { from { transform:translateY(-10px); } to { transform:translateY(14px); } }
+@keyframes story-walk { from { transform:translate(178px,247px); } to { transform:translate(212px,245px); } }
+.story-still .story-card, .story-still .story-page, .story-still .story-cloud, .story-still .story-star, .story-still .story-glow, .story-still .story-rain, .story-still .story-sally, .story-still .story-letter, .story-still .story-part-inner { animation:none; }
+@media (prefers-reduced-motion: reduce) { .story-card, .story-page, .story-cloud, .story-star, .story-glow, .story-rain, .story-sally, .story-letter, .story-part-inner { animation:none; } .story-page p { transition:none; } }
+@media (max-width:560px) {
+  .story-card { grid-template-columns:1fr; grid-template-rows:clamp(110px,28vh,190px) minmax(0,1fr); height:min(640px,calc(100vh - 24px)); }
+  .story-picture::after { box-shadow:inset 0 -18px 30px -14px #0006; }
+  .story-paper { padding:22px 22px 16px; }
+}
+@media (max-height:480px) and (min-width:561px) {
+  .story-overlay { padding:8px; }
+  .story-card { height:calc(100vh - 16px); grid-template-columns:minmax(0,1fr) minmax(0,2fr); }
+  .story-paper { padding:16px 24px 10px; } .story-paper::before { inset:8px; }
+  .story-card h2 { font-size:1.3rem; margin:2px 0 8px; } .story-card h2::after { margin-top:6px; }
+  .story-pages { font-size:.98rem; line-height:1.55; } .story-foot { margin-top:6px; padding-top:8px; }
+  .story-back { width:34px; height:34px; }
+}

@@ -934,12 +934,18 @@ function drawEscapeVault(){
   // Crawling, Sally hugs the ground: a little smaller and dimmer, with a hush mark over her.
   const low=g.player.crawling;if(low){push();translate(g.player.x*cell,g.player.y*cell);scale(.86);translate(-g.player.x*cell,-g.player.y*cell);drawingContext.globalAlpha=.82;}
   if(g.player.underground){const u=g.player.underground,t=Math.min(1,(g.elapsed-u.start)/u.dur),x=(u.from.x+(u.to.x-u.from.x)*t)*cell,y=(u.from.y+(u.to.y-u.from.y)*t)*cell;noStroke();fill(110,82,54,180);for(let k=0;k<4;k++)ellipse(x-(u.to.x-u.from.x)*cell*k*.04,y-(u.to.y-u.from.y)*cell*k*.04,cell*(.34-k*.06),cell*(.22-k*.04));}
-  // Dug in: a little mound of dirt with two eyes peeking out. Digging: Sally shakes as dirt flies.
-  else if(g.player.dig?.buried){const x=g.player.x*cell,y=g.player.y*cell;stroke(226,196,140,200);strokeWeight(cell*.035);fill(150,112,70);ellipse(x,y+cell*.06,cell*.8,cell*.46);noStroke();fill(186,146,96);ellipse(x-cell*.1,y-cell*.02,cell*.44,cell*.22);
-    const blink=(g.elapsed%3.2)<.12;fill(122,222,120);ellipse(x-cell*.09,y-cell*.01,cell*.14,cell*.13);ellipse(x+cell*.09,y-cell*.01,cell*.14,cell*.13);fill(24,34,20);if(blink){rect(x-cell*.14,y-cell*.02,cell*.1,cell*.02);rect(x+cell*.04,y-cell*.02,cell*.1,cell*.02);}else{ellipse(x-cell*.09,y-cell*.01,cell*.08,cell*.09);ellipse(x+cell*.09,y-cell*.01,cell*.08,cell*.09);}}
-  else{if(g.player.dig){const k=(g.elapsed-g.player.dig.start)/EscapeAdventure.DIG_TIME;push();translate(Math.sin(g.elapsed*60)*cell*.03,cell*.12*k);scale(1-.3*k);}
+  // Digging in: Sally hunches down on the spot and digs, clods and pebbles flying and dust rising;
+  // a poof as she goes under, then the dust clears to a mound with two eyes peeking out. Climbing
+  // out throws up a small puff of its own.
+  else if(g.player.dig?.buried){drawEscapeDigFx(g,cell);drawEscapeBuried(g,cell);}
+  else{const dig=g.player.dig,x=g.player.x*cell,y=g.player.y*cell;
+    // She bunches up around her middle, scrabbling side to side, and sinks into the pile as it grows.
+    if(dig){const k=Math.min(1,(g.elapsed-dig.start)/EscapeAdventure.DIG_TIME),scoop=Math.sin(g.elapsed*38),my=y+cell*.3;drawEscapeDigPile(g,cell,k);
+      push();translate(x+scoop*cell*.035,my);rotate(scoop*.06);scale(1+.12*k,1-.45*k);translate(-x,-my);if(k>.6)drawingContext.globalAlpha=Math.max(.15,1-(k-.6)*2.2);}
     drawEscapeLizard(g.motion.lizard,cell,g.motion.clock,g.player.swimming,!g.hasTail,escapeCharacter?.face);
-    if(g.player.dig){pop();noStroke();for(let i=0;i<7;i++){const a=i*.9+g.elapsed*9,r=cell*(.3+.25*((g.elapsed*3+i*.37)%1));fill(140,104,66,170);ellipse(g.player.x*cell+Math.cos(a)*r,g.player.y*cell+Math.sin(a)*r*.6,cell*.1);}}}
+    if(dig){drawingContext.globalAlpha=1;pop();drawEscapeDigFx(g,cell);}
+    else if(escapeDigOut&&g.elapsed-escapeDigOut.at<.5)drawEscapeDust(escapeDigOut.x,escapeDigOut.y,g.elapsed-escapeDigOut.at,.5,cell,10,escapeDigOut.seed);}
+  escapeDigWas(g);
   if(low){drawingContext.globalAlpha=1;pop();noStroke();fill(214,232,190,150);textSize(cell*.3);text('shh',g.player.x*cell,(g.player.y-.62)*cell);}
   if(flight)pop();
   drawingContext.restore();drawingContext.restore();
@@ -1475,6 +1481,45 @@ function escapeSkinPalette(){
   const palette={body:k.body,dark:k.dark,light:k.light,spot:k.spot,leg:escapeShade(k.body,-.13),elbow:escapeShade(k.body,.12),head:escapeShade(k.body,.06),patch:escapeShade(k.light,-.02),toe:escapeShade(k.body,.15),toeLift:escapeShade(k.body,.35),nostril:escapeShade(k.spot,-.1)};
   escapeSkinCache={id,palette};return palette;
 }
+// Dig effects: drawn only (the run never sees them), from fixed per-dig seeds so they never jitter.
+let escapeDigOut=null,escapeDigLast=null;
+function escapeDigWas(g){const d=g.player.dig;if(escapeDigLast?.buried&&!d)escapeDigOut={at:g.elapsed,x:g.player.x,y:g.player.y,seed:Math.floor(escapeDigLast.start*97)};escapeDigLast=d?{start:d.start,buried:d.buried}:null;}
+const escapeDigRand=(seed,i)=>{const v=Math.sin(seed*12.9898+i*78.233)*43758.5453;return v-Math.floor(v);};
+// A puff of dust: soft clouds spreading out and fading over dur seconds.
+function drawEscapeDust(px,py,age,dur,cell,n,seed){
+  if(age<0||age>dur)return;const t=age/dur;noStroke();
+  for(let i=0;i<n;i++){const a=escapeDigRand(seed,i)*TAU,d=cell*(.15+.55*escapeDigRand(seed,i+40))*(.3+t),r=cell*(.25+.25*escapeDigRand(seed,i+80))*(.6+t*.9);
+    fill(178,148,108,150*(1-t)*(1-t));ellipse(px*cell+Math.cos(a)*d,py*cell+Math.sin(a)*d*.7-cell*.2*t,r,r*.8);}
+}
+// While digging: clods, pebbles and grit thrown out in little arcs, behind and to the sides, with dust
+// gathering around her; at the moment she goes under, one big poof.
+function drawEscapeDigFx(g,cell){
+  const dig=g.player.dig,T=EscapeAdventure.DIG_TIME,age=g.elapsed-dig.start,x=g.player.x*cell,y=g.player.y*cell,seed=Math.floor(dig.start*97);noStroke();
+  const N=30;for(let i=0;i<N;i++){const born=escapeDigRand(seed,i)*T*.95,life=.38+.3*escapeDigRand(seed,i+7),t=(age-born)/life;if(t<0||t>1)continue;
+    const a=(escapeDigRand(seed,i+3)-.5)*3.6+(i%2?0:Math.PI),reach=cell*(.45+.75*escapeDigRand(seed,i+11)),h=cell*(.35+.5*escapeDigRand(seed,i+19))*4*t*(1-t);
+    const px=x+Math.cos(a)*reach*t,py=y+Math.sin(a)*reach*t*.7-h,size=cell*(.05+.09*escapeDigRand(seed,i+23)),stone=i%5===0;
+    fill(0,0,0,40*(1-t));ellipse(x+Math.cos(a)*reach*t,y+Math.sin(a)*reach*t*.7+cell*.04,size*1.1,size*.5);
+    fill(...(stone?[150,146,138]:i%3?[122,88,54]:[96,70,44]),230);ellipse(px,py,size,size*(stone?.85:.75));}
+  if(!dig.buried)drawEscapeDust(g.player.x,g.player.y,Math.min(age,T)*.5,T,cell,6,seed+5);
+  drawEscapeDust(g.player.x,g.player.y+.2,age-T*.92,.75,cell,14,seed+9);
+}
+// Fresh dirt heaped around the hole, under Sally, growing as she digs.
+function drawEscapeDigPile(g,cell,k){const x=g.player.x*cell,y=(g.player.y+.25)*cell,seed=Math.floor(g.player.dig.start*97);noStroke();
+  fill(70,50,32,200*k);ellipse(x,y,cell*.5*k,cell*.3*k);
+  for(let i=0;i<5;i++){const a=i/5*TAU+escapeDigRand(seed,i+90),d=cell*.3*k;fill(...(i%2?[132,96,60]:[112,82,52]),230*k);ellipse(x+Math.cos(a)*d,y+Math.sin(a)*d*.6,cell*.26*k,cell*.18*k);}}
+// Buried: the mound settles and, once the dust has cleared, two eyes open and peek about.
+function drawEscapeBuried(g,cell){
+  const x=g.player.x*cell,y=g.player.y*cell,since=g.elapsed-g.player.dig.start-EscapeAdventure.DIG_TIME,rise=Math.min(1,Math.max(0,since/.25)),seed=Math.floor(g.player.dig.start*97);noStroke();
+  const my=y+cell*.22;fill(0,0,0,50);ellipse(x,my+cell*.14,cell*.78,cell*.26);
+  for(const [dx,dy,w,h,c] of [[-.16,.04,.42,.3,116],[.15,.06,.4,.28,108],[0,.12,.5,.3,124],[-.02,-.06,.34,.3*rise+.06,138]]){fill(c,c*.73,c*.47);ellipse(x+dx*cell,my+dy*cell,w*cell,h*cell);}
+  fill(166,128,86,180);ellipse(x-cell*.08,my-cell*.1*rise,cell*.2,cell*.08);
+  for(let i=0;i<6;i++){fill(...(i%2?[96,70,44]:[150,146,138]));ellipse(x+(escapeDigRand(seed,i+50)-.5)*cell*.8,my+cell*.06+(escapeDigRand(seed,i+60)-.5)*cell*.26,cell*.07,cell*.055);}
+  const open=Math.min(1,Math.max(0,(since-.55)/.2));if(open<=0)return;
+  const cycle=(g.elapsed+seed*.13)%3.4,blink=cycle<.14||(cycle>1.6&&cycle<1.72),look=Math.sin(g.elapsed*.9+seed)*cell*.025,lid=blink?.12:open;
+  for(const s of [-1,1]){const ex=x+s*cell*.1,ey=my-cell*.1;fill(146,108,70);ellipse(ex,ey+cell*.03,cell*.22,cell*.16);fill(122,222,120);ellipse(ex,ey,cell*.17,cell*.16*lid);
+    if(!blink){fill(24,34,20);ellipse(ex+look,ey,cell*.08,cell*.12*lid);fill(255,255,255,210);ellipse(ex+look-cell*.025,ey-cell*.035*lid,cell*.03,cell*.03);}}
+}
+
 function drawEscapeLizard(model,cell,clock,swimming=false,tailless=false,face=null){
   const skin=escapeSkinPalette();
   // A tailless Sally keeps her body and a short stump; the rig itself is unchanged.
