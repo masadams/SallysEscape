@@ -30,7 +30,7 @@
   }
   const notes=(volume,list,opts={})=>list.forEach(([freq,delay,dur=.14],i)=>tone(volume,{type:'triangle',gain:.45,...opts,freq,delay,dur}));
   const recipes={
-    'season-bones':v=>{for(let i=0;i<4;i++)noise(v,{dur:.035,delay:i*.045,gain:.09,filter:'bandpass',freq:1300+i*380,q:5});},
+    'season-bones':v=>{for(let i=0;i<4;i++){noise(v,{dur:.06,delay:i*.045,gain:.2,filter:'bandpass',freq:1300+i*380,q:3});tone(v,{freq:630+i*240,to:560+i*190,dur:.07,delay:i*.045,type:'triangle',gain:.11});}},
     'season-zombie':v=>{tone(v,{freq:145,to:95,dur:.35,type:'triangle',gain:.12,wobble:8,wobbleRate:6});noise(v,{dur:.12,gain:.06,filter:'lowpass',freq:340});},
     'season-ghost':v=>{tone(v,{freq:520,to:780,dur:.45,type:'sine',gain:.13,wobble:14,wobbleRate:5});tone(v,{freq:1040,to:1560,dur:.4,delay:.04,type:'sine',gain:.04});},
     'season-pumpkin':v=>{noise(v,{dur:.23,gain:.1,filter:'bandpass',freq:700,to:1700,q:2});tone(v,{freq:210,to:280,dur:.2,type:'triangle',gain:.07});},
@@ -230,4 +230,5 @@
   root.EscapeAudio={play,measure,setSpace,space:()=>space,SPACE,TRIM,recipes:Object.keys(recipes),cached:()=>cache.size,reset:()=>{cache.clear();lastPlayed.clear();active.length=0;}};
   if(typeof module!=='undefined'&&module.exports)module.exports=root.EscapeAudio;
 })(typeof globalThis!=='undefined'?globalThis:this);
+
 
