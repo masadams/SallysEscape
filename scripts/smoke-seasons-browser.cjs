@@ -1,0 +1,52 @@
+// Real Chromium rendering/integration check. CI supplies Google Chrome; no test npm package is needed.
+// Locally: CHROME_PATH=/path/to/chrome node scripts/smoke-seasons-browser.cjs
+const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),assert=require('node:assert/strict'),{spawn}=require('node:child_process');
+const {createServer}=require('../server/index.cjs');
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function smoke(){
+ const temp=fs.mkdtempSync(path.join(os.tmpdir(),'sally-season-browser-')),profile=path.join(temp,'profile');
+ const server=createServer({dataDir:path.join(temp,'data'),seedFile:path.join(temp,'no-seed.json'),log:()=>{}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const base='http://127.0.0.1:'+server.address().port,chrome=process.env.CHROME_PATH||'google-chrome';
+ const browser=spawn(chrome,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{windowsHide:true,stdio:['ignore','ignore','pipe']});
+ let browserError='',spawnError=null,ws;browser.stderr.on('data',d=>{browserError=(browserError+d).slice(-3000);});browser.on('error',e=>{spawnError=e;});
+ const pending=new Map();let id=0;
+ try{
+  let port;for(let i=0;i<150;i++){if(spawnError)throw spawnError;if(browser.exitCode!==null)throw Error('Chrome exited: '+browserError);try{port=fs.readFileSync(path.join(profile,'DevToolsActivePort'),'utf8').split('\n')[0];}catch(_){}if(port)break;await wait(100);}assert.ok(port,'Chrome debugging port did not start: '+browserError);
+  const tabs=await(await fetch('http://127.0.0.1:'+port+'/json/list',{signal:AbortSignal.timeout(5000)})).json(),tab=tabs.find(t=>t.type==='page');assert.ok(tab,'Chrome page missing');
+  ws=new WebSocket(tab.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
+  const errors=[];ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);if(!p)return;pending.delete(m.id);clearTimeout(p.timer);m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);}else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails.exception?.description||m.params.exceptionDetails.text);};
+  const send=(method,params={})=>new Promise((resolve,reject)=>{const n=++id,timer=setTimeout(()=>{pending.delete(n);reject(Error('Chrome timed out: '+method));},15000);pending.set(n,{resolve,reject,timer});ws.send(JSON.stringify({id:n,method,params}));});
+  const run=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text);return r.result.value;};
+  const frame=()=>run('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');
+  const screenshot=async name=>{if(!process.env.SEASON_SCREENSHOTS)return;const r=await send('Page.captureScreenshot',{format:'jpeg',quality:64,captureBeyondViewport:false});console.log('SEASON_SCREENSHOT '+name+' '+r.data);};
+  await send('Runtime.enable');await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:1200,height:850,deviceScaleFactor:1,mobile:false});await send('Page.navigate',{url:base});
+  let ready=false;for(let i=0;i<150;i++){if(await run('typeof gameState!=="undefined"&&!!document.getElementById("seasons-button")?.onclick')){ready=true;break;}await wait(100);}assert.ok(ready,'Game did not initialise');
+  await run('document.getElementById("seasons-button").click()');await frame();assert.equal(await run('gameState'),'seasonalHub');assert.equal(await run('document.querySelectorAll("[data-season-clock]").length'),4);
+  await screenshot('crossroads');await run('seasonVisit("winter")');assert.equal(await run('seasonPack'),null,'unbuilt winter stays locked');
+  await run('document.querySelector("[data-season-id=autumn-hollow]").click()');await frame();assert.equal(await run('document.querySelectorAll(".season-level").length'),8);await screenshot('autumn-hub');
+  const ids=await run('EscapeCatalog.seasonal.map(l=>l.id)');
+  for(const level of ids)for(const lighting of ['full','simple']){
+   await run('escapeLightingMode='+JSON.stringify(lighting)+';escapeLightingAuto=false;startEscape({seasonalId:'+JSON.stringify(level)+',skipIntro:true});paused=true;drawEscapeVault()');await frame();
+   assert.equal(await run('escapeLightingFull()'),lighting==='full',level+' lighting');assert.ok(await run('document.querySelector("canvas").width>0'),level+' real canvas');
+   // Exercise the new silhouettes' warning poses too. These are rendering checks, not solution runs.
+   await run('for(const h of escapeGame.hunters){h.state=({owl:"glare",mimic:"reveal",fox:"crouch",toad:"windup",beetle:"windup",snake:"alert"})[h.kind]||h.state;}drawEscapeVault()');
+  }
+  await run('startEscape({seasonalId:"autumn-mill",skipIntro:true});paused=true;drawEscapeVault()');await frame();await screenshot('mill');
+  await run('escapeGame.player.x=11.5;escapeGame.player.y=15.5;paused=false;tickEscapeKidsSign(escapeGame)');assert.equal(await run('escapeStoryOpen.card.kind'),'season-sign');await run('document.querySelector("#story-card button:last-of-type").click()');
+  await run('openSeasonalHub("autumn-hollow");seasonTogglePanel(true)');assert.equal(await run('seasonPanelOpen'),true);await run('escapeGoBack()');assert.equal(await run('seasonPanelOpen'),false);
+  await send('Emulation.setDeviceMetricsOverride',{width:844,height:390,deviceScaleFactor:1,mobile:true});await run('mobile=true;windowResized();openSeasonalHub("autumn-hollow")');await frame();assert.equal(await run('getComputedStyle(document.getElementById("touch-controls")).display'),'flex');await screenshot('mobile-hub');
+  await run('startEscape({seasonalId:"autumn-finale",skipIntro:true});paused=true;drawEscapeVault()');await frame();await screenshot('mobile-finale');
+  await run('mobile=false;for(const l of EscapeCatalog.seasonal){startEscape({seasonalId:l.id,skipIntro:true});escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.treasure=10;escapeGame.finish("won","browser reward check");showEscapeResult();}');
+  assert.equal(await run('seasonProgress().complete()&&seasonProgress().mastered()'),true);await run('openSeasonalHub();seasonBack()');assert.equal(await run('gameState'),'start');assert.equal(await run('document.getElementById("title-keepsakes").hidden'),false);
+  // Render each seasonal SFX through actual Web Audio, checking that its samples are finite and audible.
+  const sounds=await run('(async()=>{const out=[];for(const name of ["season-bones","season-zombie","season-ghost","season-pumpkin","season-basket","season-turkey"])out.push(await EscapeAudio.measure(name));return out;})()');
+  for(const s of sounds)assert.ok(s&&Number.isFinite(s.rms)&&Number.isFinite(s.peak)&&s.rms>.0001&&s.peak>0,s?.name+' real sound samples');console.log('Seasonal Web Audio measurements: '+JSON.stringify(sounds));
+  assert.deepEqual(errors,[],'uncaught errors while loading/drawing game');console.log('Seasonal browser smoke passed: real desktop/mobile rendering, menus, notes, rewards and Web Audio.');
+ }finally{
+  for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('Browser closed'));}ws?.close();browser.kill();await new Promise(r=>server.close(r));
+  // Only this mkdtemp-created directory is eligible for cleanup, and only after Chrome exits.
+  const target=path.resolve(temp),parent=path.resolve(os.tmpdir());if(target.startsWith(parent+path.sep)&&path.basename(target).startsWith('sally-season-browser-')){for(let i=0;i<20&&browser.exitCode===null;i++)await wait(50);try{fs.rmSync(target,{recursive:true,force:true});}catch(_){}}
+ }
+}
+smoke().catch(e=>{console.error(e);process.exitCode=1;});
+
