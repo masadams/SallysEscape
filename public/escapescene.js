@@ -161,7 +161,7 @@ let escapeHardRun=false;
 function startEscape(options={}){
   escapeAbandonRun();if(typeof clearSeasonScenery==='function')clearSeasonScenery();escapeHardRun=escapeHardMode;
   escapeFx.clear();escapeFxDecoy=null;escapeMoment=null;escapeCurtain={at:millis(),ms:options.quick?260:620,seed:Math.random()*10};
-  if(options.seasonalId&&!seasonOpen(EscapeSeasons.packs.find(p=>p.id==='autumn-hollow'))){openSeasonalHub();return;}
+  if(options.seasonalId){const level=EscapeCatalog.seasonal.find(l=>l.id===options.seasonalId),pack=EscapeSeasons.packs.find(p=>p.id===level?.seasonal);if(!level||!pack||!seasonOpen(pack)){openSeasonalHub();return;}}
   if(options.custom||options.kidsId||options.seasonalId?false:options.hiddenId?!escapeProgress.hiddenLevelOpen(options.hiddenId,EscapeWorld.chapters):options.challengeId?!escapeProgress.challengeUnlocked(options.challengeId):!escapeProgress.unlocked(options.levelId||'quiet-vault')){showEscapeSelect();return;}
   // Now and then (about one escape in four, never in a challenge) glow bugs drift about as a bonus.
   if(options.glowbugs===undefined&&!options.challengeId&&!options.custom&&!options.kidsId&&!options.seasonalId&&Math.random()<ESCAPE_GLOWBUG_CHANCE)options={...options,glowbugs:1+Math.floor(Math.random()*1e6)};
