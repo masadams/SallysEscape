@@ -18,9 +18,9 @@ function paintSeasonWorldDetails(d,w,c,x1,x2,y1,y2){
  const inside=(x,y,r=2)=>x>=x1-r&&x<=x2+r&&y>=y1-r&&y<=y2+r;
  // Painted shallows, a dark bed, shore stones and reeds stay attractive in Simple mode.
  for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)if(w.grid[y][x]==='P'&&w.areaAt({x,y}).theme==='autumn'){
-  const px=x*c,py=y*c;d.noStroke();d.fill(48,101,105);d.rect(px,py,c+.5,c+.5);
-  d.fill(59,120,119);d.ellipse(px+c*.45,py+c*.6,c*.9,c*.5);
-  d.stroke(115,168,145,125);d.strokeWeight(c*.025);d.line(px+c*.14,py+c*.3,px+c*.61,py+c*.3);
+  const px=x*c,py=y*c;d.noStroke();d.fill(38,91,104);
+  // One world-space depth gradient runs across the pond, without repeating tile pools.
+  const dc=d.drawingContext;if(dc?.createLinearGradient){dc.save();const water=dc.createLinearGradient(25*c,19*c,29*c,23*c);water.addColorStop(0,'#4c9191');water.addColorStop(.45,'#2c697b');water.addColorStop(.72,'#205166');water.addColorStop(1,'#4b8384');dc.fillStyle=water;dc.fillRect(px,py,c+.5,c+.5);dc.restore();}else d.rect(px,py,c+.5,c+.5);
   for(const [dx,dy]of [[-1,0],[1,0],[0,-1],[0,1]])if(w.grid[y+dy]?.[x+dx]!== 'P'){
    const ax=px+(dx<0?0:dx>0?1:.5)*c,ay=py+(dy<0?0:dy>0?1:.5)*c;
    d.stroke(171,153,102);d.strokeWeight(c*.12);d.line(ax+(dy?-.48:0)*c,ay+(dx?-.48:0)*c,ax+(dy?.48:0)*c,ay+(dx?.48:0)*c);
@@ -35,7 +35,7 @@ function paintSeasonWorldDetails(d,w,c,x1,x2,y1,y2){
   if(area.theme==='autumn'){d.fill(177,86,33);d.ellipse(px,py,c*.45,c*.31);d.fill(226,139,45);d.ellipse(px,py,c*.24,c*.33);d.fill(86,118,61);d.rect(px-c*.025,py-c*.23,c*.05,c*.1);}
   if(area.theme==='frost'&&hash%3===0){d.fill(59,98,89);d.triangle(px,py-c*.7,px-c*.33,py+c*.1,px+c*.33,py+c*.1);d.fill(233,247,249);d.triangle(px,py-c*.7,px-c*.25,py-c*.1,px+c*.25,py-c*.1);}
  }
- if(inside(20,20,3)){d.noStroke();d.fill(88,54,36);d.rect(20*c,19*c,c,c*2.4,c*.12);for(const [x,y,r,color]of [[19.2,19,1.7,[188,103,46]],[21.2,18.8,1.9,[216,141,51]],[20,17.8,2.1,[232,176,73]]]){d.fill(...color);d.ellipse(x*c,y*c,r*c,r*.85*c);}d.stroke(106,70,40);d.strokeWeight(c*.06);d.line(18.8*c,19*c,21.7*c,19*c);for(const x of[19,21.5]){d.noStroke();d.fill(255,217,114);d.rect(x*c,19.2*c,c*.22,c*.35,c*.04);}}
+ if(inside(20,20,3)){d.noStroke();d.fill(88,54,36);d.rect(20*c,19*c,c,c*2.4,c*.12);for(const [x,y,r,color]of [[19.2,19,1.7,[188,103,46]],[21.2,18.8,1.9,[216,141,51]],[20,17.8,2.1,[232,176,73]]]){d.fill(color[0]-35,color[1]-28,color[2]-12);d.ellipse(x*c,(y+.08)*c,r*c,r*.85*c);for(let k=0;k<9;k++){const a=k*2.39996,rr=(k%3===0?.3:.23)*r,tone=(k%3-1)*12;d.fill(color[0]+tone,color[1]+tone*.7,color[2]+tone*.3);d.ellipse((x+Math.cos(a)*rr)*c,(y+Math.sin(a)*rr*.7)*c,r*c*.62,r*c*.52);}d.fill(255,224,146,30);d.ellipse((x-r*.15)*c,(y-r*.17)*c,r*c*.5,r*c*.32);}d.stroke(106,70,40);d.strokeWeight(c*.06);d.line(18.8*c,19*c,21.7*c,19*c);for(const x of[19,21.5]){d.noStroke();d.fill(255,217,114);d.rect(x*c,19.2*c,c*.22,c*.35,c*.04);}}
  if(inside(29,20)){d.noStroke();d.fill(70,54,41,70);d.ellipse(30.4*c,20*c,c*3,c*.9);d.fill(101,67,44);d.rect(29.5*c,18.6*c,c*1.8,c*1.3);d.stroke(126,88,52);d.strokeWeight(c*.035);for(let y=18.8;y<19.9;y+=.17)d.line(29.6*c,y*c,31.2*c,y*c);d.noStroke();d.fill(161,89,47);d.triangle(29.2*c,18.7*c,30.4*c,17.8*c,31.6*c,18.7*c);d.stroke(110,67,42);d.strokeWeight(c*.035);for(let y=18.1;y<18.7;y+=.16)d.line((30.4-(y-17.8)*1.25)*c,y*c,(30.4+(y-17.8)*1.25)*c,y*c);d.noStroke();d.fill(247,203,120);d.rect(30*c,19*c,c*.34,c*.4);d.stroke(115,76,41);d.line(30.17*c,19*c,30.17*c,19.4*c);}
  // Small leaf drifts and fungi belong to the scenery, kept away from trail markers.
  for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)if(w.areaAt({x,y}).theme==='autumn'&&w.grid[y][x]==='.'&&!escapeWorldBusy(w).has(x+','+y)&&(x*13+y*7)%11===0){
