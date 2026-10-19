@@ -1567,7 +1567,7 @@
       const avoidGlow=!fleeGlow&&LIGHT_SHY.has(h.kind)&&this.lights.length>0;
       if(h.glowRouteVersion!==this.glowVersion||h.pathAvoidGlow!==avoidGlow){h.path=[];h.targetId=null;h.glowRetryAt=0;h.glowRouteVersion=this.glowVersion;h.pathAvoidGlow=avoidGlow;}
       if(h.targetId!==id || !h.path.length){
-        if(avoidGlow&&h.targetId===id&&this.elapsed<(h.glowRetryAt||0))return;
+        if((avoidGlow||fleeGlow)&&h.targetId===id&&this.elapsed<(h.glowRetryAt||0))return;
         h.path=this.route(h,target,h,Infinity,avoidGlow);h.targetId=id;h.glowRetryAt=this.elapsed+.5;
       }
       while(h.path.length&&budget>0){

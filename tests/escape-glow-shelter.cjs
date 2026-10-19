@@ -100,6 +100,13 @@ test('a blocked patrol retries at most twice a second instead of pathfinding eve
  assert.ok(routes<=5,'bounded blocked-route attempts: '+routes);assert.equal(g.inLight(h),false);
 });
 
+test('a door closing during retreat cannot trigger repeated pathfinding every frame',()=>{
+ const g=room({hunter:[18,10]});glow(g);tick(g,.025);for(let y=1;y<g.height-1;y++)g.grid[y][19]='#';
+ let routes=0;const route=g.route;g.route=function(...args){routes++;return route.apply(this,args);};tick(g,.3);
+ assert.ok(routes<=1,'the blocked retreat route waits before retrying: '+routes);tick(g,3);
+ assert.ok(g.hunter.x<19);assert.ok(g.fits(g.hunter,.22,g.hunter));assert.equal(g.inLight(g.hunter,.35),false);
+});
+
 test('pause freezes shelter time, and a fresh attempt restores ordinary creatures and tools',()=>{
  const g=room();glow(g);tick(g,2);g.paused=true;const before={elapsed:g.elapsed,light:g.lights[0].until,h:pos(g.hunter)};tick(g,20);
  assert.equal(g.elapsed,before.elapsed);assert.equal(g.lights[0].until,before.light);assert.deepEqual(pos(g.hunter),before.h);
