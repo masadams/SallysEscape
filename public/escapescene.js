@@ -143,7 +143,7 @@ const ESCAPE_TIPS=[
   {key:'sally-escape-echo-tip',live:g=>g.echoes.length>0&&g.inEcho(g.player)&&g.player.noisy,text:()=>'This hall echoes: every sound here carries much further.'},
   {key:'sally-escape-current-tip',live:g=>g.currents.length>0&&g.player.swimming&&g.currents.some(c=>g.player.x>=c.x1&&g.player.x<c.x2+1&&g.player.y>=c.y1&&g.player.y<c.y2+1),text:()=>'A current! It carries Sally along. Swim with it, or find another way.'},
   {key:'sally-escape-glow-tip',live:g=>g.level.glows>0&&g.elapsed>3,
-    text:()=>mobile?'Glow mushrooms: hold Glow, aim and let go to light up the dark for a while.':'Glow mushrooms: hold L, aim and let go to light up the dark for a while.'}
+    text:()=>mobile?'Glow mushrooms: hold Glow, aim and release. Their light keeps spiders and millipedes back until it fades.':'Glow mushrooms: hold L, aim and release. Their light keeps spiders and millipedes back until it fades.'}
 ];
 let escapeTipQueue=[],escapeTipsPending=[];
 function escapeCrawlTip(g){
@@ -970,7 +970,7 @@ function drawEscapeVault(){
   drawEscapeCritters(g,cell,view,'air');drawEscapeFx(g,cell);drawEscapeMotes(g,cell);
   const place=escapePlace(g.level),mood=place?EscapeLighting.moodFor(place.key,place.step):null;
   drawEscapeCloudShadows(g,cell,mood);drawEscapeLights(g,cell,mood);
-  if(view.follow)drawEscapeFog(g,cell);
+  if(view.follow){drawEscapeFog(g,cell);drawEscapeGlowWatchers(g,cell);}
   pop();
   drawEscapeGrade(mood,g);
   // Storm: the sky darkens while thunder rumbles, then a white flash lights everything for a moment.
@@ -1108,9 +1108,19 @@ function drawEscapeEel(h,cell,clock){
 // tile is in view, so the ring can be read from a distance before the plant itself is in sight.
 // Thrown pebbles and glow mushrooms in the air (a little arc on each leg), glow mushrooms
 // lighting the ground, and, while a throw is held, the dotted line of where it will go.
+function drawEscapeGlowWatchers(g,cell){
+  // Only eyes in the mushroom's faint outer halo show through fog. Never reveal
+  // a watcher through masonry or a creature Sally has slipped away from unseen.
+  for(const h of g.hunters){
+    if(h.state!=='light-watch'||!h.glowFear?.lastSeen||g.elapsed-h.glowFear.seenAt>.2||g.visibleTile(Math.floor(h.x),Math.floor(h.y))||!g.clear(g.player,h,true))continue;
+    if(!g.lights.some(l=>l.until>g.elapsed&&Math.hypot(l.x-h.x,l.y-h.y)<=l.r+.8&&g.clear(l,h,true)))continue;
+    const dx=Math.cos(h.facing),dy=Math.sin(h.facing);noStroke();
+    for(const side of[-1,1]){const x=(h.x+dx*.2-dy*side*.065)*cell,y=(h.y+dy*.2+dx*side*.065)*cell;fill(235,206,160,35);ellipse(x,y,cell*.14,cell*.14);fill(245,220,178,190);ellipse(x,y,cell*.055,cell*.055);}
+  }
+}
 function drawEscapeThrows(g,cell){
   for(const l of g.lights||[]){const left=l.until-g.elapsed,fade=Math.min(1,left/3,(g.elapsed-l.born)*4),pulse=1+Math.sin(g.elapsed*2.2+l.x)*.04;noStroke();
-    for(const k of [1,.7,.4]){fill(111,232,212,(14+k*16)*fade);ellipse(l.x*cell,l.y*cell,l.r*2*cell*k*pulse,l.r*2*cell*k*pulse);}
+    for(const k of [1,.84,.68,.52,.36,.2]){fill(111,232,212,(5+(1-k)*18.75)*fade);ellipse(l.x*cell,l.y*cell,l.r*2*cell*k*pulse,l.r*2*cell*k*pulse);}
     fill(143,240,220,230*fade);arc(l.x*cell,l.y*cell,cell*.32,cell*.26,PI,TWO_PI,CHORD);fill(217,245,228,230*fade);rect(l.x*cell-cell*.04,l.y*cell,cell*.08,cell*.12);
     fill(255,255,255,200*fade);ellipse(l.x*cell-cell*.05,l.y*cell-cell*.06,cell*.04,cell*.04);}
   for(const f of g.flights||[]){if(!f.pos)continue;const travelled=(g.elapsed-f.start)*f.speed,leg=f.legs.find(q=>travelled<=q.end)||f.legs.at(-1),legLen=Math.hypot(leg.to.x-leg.from.x,leg.to.y-leg.from.y),t=legLen?1-(leg.end-travelled)/legLen:1,lift=Math.sin(Math.PI*Math.max(0,Math.min(1,t)))*Math.min(.5,legLen*.12)*cell;
@@ -1599,4 +1609,3 @@ function drawEscapeFish(h,cell,clock){
   fill(207,233,213);ellipse(0,0,cell*.55,cell*.25);fill(82,153,164);triangle(-cell*.05,0,-cell*.14,-cell*.22,cell*.08,-cell*.06);triangle(-cell*.07,0,-cell*.16,cell*.18,cell*.05,cell*.07);
   fill(17,38,46);ellipse(cell*.16,-cell*.06,cell*.045,cell*.045);pop();
 }
-

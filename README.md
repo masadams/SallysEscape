@@ -21,6 +21,10 @@ traps, cold rooms, steam, storms and tides change the routes. Escaping on the fi
 First try badge; earning every star in an area masters it and lends Sally its colours. About one
 escape in four, a few glow bugs drift about: free one for a little bonus treasure.
 
+**Glow mushroom shelter.** Thrown mushrooms cast a wider, soft-edged light for twelve seconds.
+Spiders and millipedes retreat into shade; a spider that watches Sally sheltering waits for the
+light to fade, then rushes her last seen spot. See [the glow mushroom guide](docs/GLOW-MUSHROOMS.md).
+
 **Sound and light.** Effects are synthesised with Web Audio; the adaptive music is composed in code
 with Tone.js; each area has its own ambience; footsteps follow the ground and caves echo
 (`docs/MUSIC.md`). Lighting and per-area moods are in `docs/LIGHTING.md`.
