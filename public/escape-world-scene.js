@@ -119,7 +119,7 @@ function escapeWorldFoundCache(cache){
 }
 function escapeMovement(){
   if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return {x:0,y:0,sprint:false,crawl:false,dig:false};
-  const pad=typeof escapePad!=='undefined'?escapePad:{x:0,y:0};
+  const pad=typeof escapePad!=='undefined'&&escapePad.active?escapePad:{x:0,y:0};
   return {x:pad.x+touchStick.x+Number(gameKeyDown(39)||gameKeyDown(68)||touchInput.right)-Number(gameKeyDown(37)||gameKeyDown(65)||touchInput.left),y:pad.y+touchStick.y+Number(gameKeyDown(40)||gameKeyDown(83)||touchInput.down)-Number(gameKeyDown(38)||gameKeyDown(87)||touchInput.up),sprint:gameKeyDown(16)||touchInput.sprint||Boolean(pad.sprint),crawl:gameKeyDown(67)||touchInput.crawl||Boolean(pad.crawl),dig:gameKeyDown(69)||Boolean(touchInput.dig)||Boolean(pad.dig)};
 }
 function mountEscapeChrome(active){
@@ -189,7 +189,7 @@ function renderEscapeWorldHUD(){
   challengeButton.style.display=challengeOpen?'':'none';challengeButton.textContent=challengeSaved?'Replay challenge':'Try challenge';challengeButton.onclick=challengeOpen?()=>startEscape({challengeId:challenge.id}):null;
   // Away from an entrance there is nothing to enter, so the card steps aside and the map shows.
   document.getElementById('world-route')?.classList.toggle('world-route-idle',!node);
-  const enter=document.getElementById('world-enter');enter.disabled=!unlocked;enter.innerHTML=unlocked?(saved?'Play again':'Enter escape')+' <span class="key-hint">[Enter]</span>':node?'Trail locked':'Find an entrance';
+  const enter=document.getElementById('world-enter');enter.disabled=!unlocked;enter.innerHTML=unlocked?(saved?'Play again':'Enter escape')+escapeControlHint('Enter','A'):node?'Trail locked':'Find an entrance';
 }
 function playEscapeWorld(){
   if(!escapeWorld||escapeLibraryOpen)return;if(typeof tickEscapeStory==='function')tickEscapeStory();if(escapeBestiaryOpen||escapeStoryOpen){drawEscapeWorld();return;}if(!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){escapeWorld.advance(deltaTime/1000,escapeMovement());escapeFootsteps(escapeWorld.player);}drawEscapeWorld();renderEscapeWorldHUD();

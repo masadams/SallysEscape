@@ -36,6 +36,7 @@
     'season-pumpkin':v=>{noise(v,{dur:.23,gain:.1,filter:'bandpass',freq:700,to:1700,q:2});tone(v,{freq:210,to:280,dur:.2,type:'triangle',gain:.07});},
     'season-basket':v=>{notes(v,[[410,0,.08],[520,.09,.08],[440,.18,.13]],{type:'triangle',gain:.13});noise(v,{dur:.12,gain:.05,filter:'bandpass',freq:1900});},
     'season-turkey':v=>{for(let i=0;i<4;i++)tone(v,{freq:i%2?340:220,to:180,dur:.085,delay:i*.075,type:'triangle',gain:.13,wobble:12,wobbleRate:18});},
+    'winter-snowball':v=>{noise(v,{dur:.11,gain:.16,filter:'lowpass',freq:1900,to:650,q:.8});tone(v,{freq:155,to:75,dur:.075,gain:.05});},
     'winter-yeti':v=>{tone(v,{freq:120,to:72,dur:.46,type:'triangle',gain:.19,wobble:7,wobbleRate:5});noise(v,{dur:.15,gain:.09,filter:'lowpass',freq:400});},
     'winter-wisp':v=>notes(v,[[1047,0,.2],[1568,.1,.35]],{type:'sine',gain:.12}),
     'winter-cane':v=>{noise(v,{dur:.08,gain:.08,freq:3500,q:4});tone(v,{freq:2200,to:1800,dur:.13,gain:.07});},

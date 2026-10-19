@@ -38,6 +38,7 @@ function drawWinterScenery(g,c){
   seasonSceneryCache={game:g,cell:c,image:d};cached=seasonSceneryCache;
  }image(cached.image,0,0);
  for(const [x,y]of g.level.slippery||[])if(g.grid[y][x]==='c'){noStroke();fill(155,205,222);rect(x*c,y*c,c,c);stroke(246,252,250);strokeWeight(c*.025);line(x*c,(y+.7)*c,(x+.7)*c,(y+.2)*c);}
+ for(const flow of g.currents.filter(c=>c.surface==='ground'))drawWinterFlow(flow,c);
  const moving=winterMoving(),t=moving?g.elapsed:0;
  if(moving)for(let i=0;i<36;i++){const x=((i*5.73+t*.19)%g.width),y=((i*3.17+t*.36)%g.height);if(!g.floor(Math.floor(x),Math.floor(y)))continue;noStroke();fill(245,251,250,140);ellipse(x*c,y*c,c*(i%4===0?.055:.025),c*(i%4===0?.055:.025));}
  if(g.level.millWheel){push();translate((g.level.millWheel[0]+.5)*c,(g.level.millWheel[1]+.5)*c);rotate(t*.22);noFill();stroke(133,115,83);strokeWeight(c*.12);ellipse(0,0,c*1.65,c*1.65);for(let i=0;i<8;i++){const a=i*Math.PI/4;line(0,0,Math.cos(a)*c*.82,Math.sin(a)*c*.82);}pop();}
@@ -55,7 +56,7 @@ function paintWinterWorldDetails(d,w,c,x1,x2,y1,y2){
  for(const[x,y]of[[49,20],[60,21],[57,29]])if(x>=x1-1&&x<=x2+1&&y>=y1-1&&y<=y2+1)winterBrazier(d,x*c,y*c,c*.8);
 }
 function drawWinterWorld(w,c,near,save){
- if(!w.areaOpen('winter')||!near(55,20,18))return;const moving=winterMoving(),t=moving?w.elapsed:0;
+ if(!w.areaOpen('winter')||!near(55,20,18))return;const moving=winterMoving(),t=moving?w.elapsed:0;for(const flow of w.currents)if(near(flow.x1,flow.y1,5))drawWinterFlow(flow,c);
  if(near(55,20,5)){winterPine(globalThis,55.5*c,20.6*c,c*3.2,true);const count=save.cleared('winter');for(let i=0;i<8;i++){const a=i*2.39996,x=55.5+Math.sin(a)*(.35+i*.08),y=17.5+i*.35;noStroke();fill(...(i<count?[[239,100,108],[255,219,126],[131,210,171]][i%3]:[111,149,153]));ellipse(x*c,y*c,c*.17,c*.2);}push();translate(55.5*c,16.2*c);noStroke();fill(...(count===8?[255,224,124]:[167,199,202]));beginShape();for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,r=i%2?.16:.36;vertex(Math.cos(a)*r*c,Math.sin(a)*r*c);}endShape(CLOSE);pop();if(count===8&&escapeLightingFull())seasonLightPool(55.5*c,16.2*c,c*3,'255,217,126',.2);}
  const sled=w.sled.riding?w.player:w.sled.at;if(near(sled.x,sled.y)){push();translate(sled.x*c,sled.y*c);if(w.sled.riding)rotate(Math.atan2(w.slideVelocity.y,w.slideVelocity.x)+Math.PI/2);noFill();stroke(129,146,156);strokeWeight(c*.07);for(const x of[-.25,.25]){line(x*c,-c*.43,x*c,c*.45);arc((x+.09)*c,-c*.43,c*.18,c*.25,Math.PI,Math.PI*1.7);}noStroke();fill(170,57,69);rect(-c*.3,-c*.25,c*.6,c*.65,c*.07);stroke(224,175,117);strokeWeight(c*.035);for(let j=0;j<4;j++)line(-c*.22,(-.16+j*.14)*c,c*.22,(-.16+j*.14)*c);pop();}
  // A tiny background sledder follows the open practice slope, clear of entrances.
@@ -67,3 +68,6 @@ function drawWinterWorld(w,c,near,save){
 }
 
 function winterSnowmanSVG(){return '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M8 84h78q10 0 10-10" fill="none" stroke="#b3cbd7" stroke-width="5"/><path d="M14 73h64v8H14z" fill="#b34b5f"/><circle cx="48" cy="58" r="20" fill="#e4f2ed"/><circle cx="48" cy="31" r="15" fill="#f3f8ed"/><path d="M33 23h31v6H33zM39 7h18v17H39z" fill="#304b61"/><path d="M32 43h31v6H32z" fill="#bd5362"/><path d="m49 31 18 4-18 3z" fill="#e2a060"/><g fill="#304b61"><circle cx="43" cy="29" r="2"/><circle cx="54" cy="29" r="2"/><circle cx="48" cy="55" r="2"/><circle cx="48" cy="64" r="2"/></g></svg>';}
+
+// Downhill chevrons remain readable with Simple lighting and reduced motion.
+function drawWinterFlow(f,c){for(let y=f.y1;y<=f.y2;y++)for(let x=f.x1;x<=f.x2;x++){push();translate((x+.5)*c,(y+.5)*c);rotate(Math.atan2(f.dir[1],f.dir[0])-Math.PI/2);noFill();stroke(64,116,141,160);strokeWeight(c*.035);for(const k of[-.15,.12]){beginShape();vertex(-c*.14,(k-.08)*c);vertex(0,(k+.04)*c);vertex(c*.14,(k-.08)*c);endShape();}pop();}}

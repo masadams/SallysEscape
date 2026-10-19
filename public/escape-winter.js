@@ -75,7 +75,7 @@
           8
         ],
         "title": "A letter from Pip",
-        "body": "The Christmas tree has lost its star! Eight ornaments will wake it. I have marked the village trails. The striped serpent is a serpent, however festive its coat. - Pip"
+        "body": "The Christmas tree has lost its star! Eight ornaments will wake it. I have marked the village trails. Snowballs distract creatures just like pebbles do elsewhere. The striped serpent is a serpent, however festive its coat. - Pip"
       },
       {
         "id": "winter-welcome-note-1",
@@ -84,7 +84,7 @@
           5
         ],
         "title": "Little skating feet",
-        "body": "On ice, Sally needs time to speed up and slow down. Push the other way to brake, or hold Crawl for more grip. Snow and wooden landings help her stop."
+        "body": "On ice, Sally needs time to speed up and slow down. Hold Crawl for more grip. The chevrons mark a downhill slide: it carries Sally south until she steps off or reaches the end. Step sideways onto snow to get out."
       }
     ],
     "props": [
@@ -151,7 +151,23 @@
       ]
     ],
     "brief": "A new village, one old switch and a serpent dressed for Christmas.",
-    "hint": "Blue opens the candy garden. Try the little ice patch: hold Crawl to brake, and use snow to stop. The star key opens the short way home.",
+    "hint": "Blue opens the candy garden. Try the little ice slope: chevrons point downhill. Step sideways onto snow to leave the slide; hold Crawl to brake. The star key opens the short way home.",
+    "currents": [
+      {
+        "area": [
+          3,
+          5,
+          4,
+          7
+        ],
+        "dir": [
+          0,
+          1
+        ],
+        "speed": 0.85,
+        "surface": "ground"
+      }
+    ],
     "reactions": [
       {
         "id": "welcome-key",
@@ -1077,7 +1093,7 @@
       ]
     ],
     "brief": "Three workshop switches, a suspicious parcel and a thief with very good ears.",
-    "hint": "Blue, green, then red opens the delivery route. A twitching present deserves a pebble. Creep past the Gift Snatcher. The key opens the upper doors home.",
+    "hint": "Blue, green, then red opens the delivery route. A twitching present deserves a snowball. Creep past the Gift Snatcher. The key opens the upper doors home.",
     "foxWarn": 1.05,
     "reactions": [
       {

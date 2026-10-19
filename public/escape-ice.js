@@ -10,5 +10,6 @@
   if(Math.hypot(v.x,v.y)<.018){v.x=0;v.y=0;}
   return {x:v.x*dt,y:v.y*dt};
  }
- const api={steer};root.EscapeIce=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+ function currentAt(currents,p,water=false){return currents.find(c=>(c.surface==='ground'?!water:water)&&p.x>=c.x1&&p.x<c.x2+1&&p.y>=c.y1&&p.y<c.y2+1)||null;}
+ const api={steer,currentAt};root.EscapeIce=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

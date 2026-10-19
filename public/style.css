@@ -736,3 +736,6 @@ body.pad-nav #touch-controls{display:none!important}
 
 .kids-section-title { margin:26px 0 16px; color:#ffe58a; font-size:1.35rem; }
 .kids-guide-note { margin:10px 0 16px; opacity:.9; }
+
+/* All worlds use the active input device for shortcut hints. */
+.touch-nav .key-hint{display:none!important}.keyboard-nav .key-hint,.pad-nav .key-hint{display:inline}

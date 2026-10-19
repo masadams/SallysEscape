@@ -109,7 +109,7 @@
       // Ice walls are walls that a frost sentinel's gaze glances off.
       this.ice=new Set((this.level.ice||[]).map(([x,y])=>x+','+y));
       this.echoes=(this.level.echoes||[]).map(([x1,y1,x2,y2])=>({x1,y1,x2,y2}));
-      this.currents=(this.level.currents||[]).map(c=>{const [x1,y1,x2,y2]=c.area;return {x1,y1,x2,y2,dir:c.dir,speed:c.speed||1.2};});
+      this.currents=(this.level.currents||[]).map(c=>{const [x1,y1,x2,y2]=c.area;return {x1,y1,x2,y2,dir:c.dir,speed:c.speed||1.2,...(c.surface==='ground'?{surface:'ground'}:{})};});
       this.tunnels=(this.level.tunnels||[]).map(([a,b])=>({a:centre(...a),b:centre(...b)}));this.tunnelReadyAt=0;
       this.spores=this.level.spores||0;this.sporesUsed=0;this.tunnelsUsed=0;
       this.caps=(this.level.caps||[]).map(c=>({at:c.at.slice(),to:c.to.slice(),key:c.at.join(','),readyAt:0}));
@@ -728,7 +728,7 @@
       if(this.wind.length&&!p.flight){const gust=this.wind.find(w=>this.gustPhase(w).active&&w.keys.has(this.tileKey(p)));if(gust)for(const [axis,d] of [['x',gust.dir[0]],['y',gust.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*2.3*dt};if(this.fits(next))p[axis]=next[axis];
         // A gust that shoves Sally against a ledge over a gap blows her off it.
         else if(this.grid[Math.floor(next.y+d*(axis==='y'?.3:0))]?.[Math.floor(next.x+d*(axis==='x'?.3:0))]==='P'&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(null)){this.finish('caught','A gust blew Sally off the ledge. Watch the streaks: when they thicken, get out of the lane or brace against a wall.');return;}}}
-      if(this.currents.length&&this.water(p)&&!p.underground){const c=this.currents.find(c=>p.x>=c.x1&&p.x<c.x2+1&&p.y>=c.y1&&p.y<c.y2+1);
+      if(this.currents.length&&!p.underground&&!p.flight){const c=Ice.currentAt(this.currents,p,this.water(p));
         if(c)for(const [axis,d] of [['x',c.dir[0]],['y',c.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*c.speed*dt};if(this.fits(next))p[axis]=next[axis];}}
       p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);if(p.swimming&&!this.water(old))this.events.push('splash');p.moving=distance(old,p)>0.0001;p.sprinting=sprint&&p.moving;p.crawling=crawl&&!p.swimming;this.playerVelocity={x:(p.x-old.x)/dt,y:(p.y-old.y)/dt};this.trackSally(dt);
       p.stamina=Math.max(0,Math.min(100,p.stamina+(p.sprinting?-24:18)*dt));
@@ -1646,7 +1646,7 @@
     noteCatch(by,tail){const p=this.player;if(this.catches.length<12)this.catches.push({x:Math.floor(p.x),y:Math.floor(p.y),t:+this.elapsed.toFixed(1),by:by||'?',...(tail?{tail:true}:{})});}
     // What caught Sally when no creature did: the sky, the wind, a trap.
     static causeOf(message){return [['hawk',/hawk/i],['wind',/gust/i],['ants',/ant column/i],['log',/log/i],['thorns',/thorns/i],['vine',/vine/i],['scorpion',/scorpion/i],['toad',/toad/i]].find(([,re])=>re.test(message||''))?.[0]||'?';}
-    winterMessage(message){if(typeof message!=='string')return message;return message.replace(/snow fox/gi,'Gift Snatcher').replace(/beetle/gi,'Yeti').replace(/lowers its horn/gi,'raises its arms').replace(/spider/gi,'Krampus').replace(/toad/gi,'snowman').replace(/owl/gi,'wisp').replace(/sentinel/gi,'Nutcracker').replace(/rolling log/gi,'rolling snowball').replace(/thorns/gi,'icicles').replace(/silk/gi,'tangled ribbon');}
+    winterMessage(message){if(typeof message!=='string')return message;return message.replace(/pebbles/gi,'snowballs').replace(/pebble/gi,'snowball').replace(/snow fox/gi,'Gift Snatcher').replace(/beetle/gi,'Yeti').replace(/lowers its horn/gi,'raises its arms').replace(/spider/gi,'Krampus').replace(/toad/gi,'snowman').replace(/owl/gi,'wisp').replace(/sentinel/gi,'Nutcracker').replace(/rolling log/gi,'rolling snowball').replace(/thorns/gi,'icicles').replace(/silk/gi,'tangled ribbon');}
     finish(status,message){
       if(this.status!=='playing')return;
       if(status==='caught')this.noteCatch(this.lastCaptor?.at===this.elapsed&&this.lastCaptor.by||EscapeAdventure.causeOf(message));
