@@ -257,3 +257,7 @@ test('seasonal world rendering bounds and releases terrain graphics, and leaving
 test('switching players creates a fresh seasonal walker and loads only that player\'s lanterns',()=>{
  const h=harness();h.el('season-hub').querySelectorAll=()=>[];h.run('openSeasonalHub();globalThis.firstSeasonWorld=seasonWorld;globalThis.nextSeasonPlayer=EscapePlayers.create("Another Walker");EscapePlayers.select(nextSeasonPlayer.id);openSeasonalHub()');assert.equal(h.run('seasonWorld===firstSeasonWorld'),false);assert.equal(h.run('seasonWorldOwner===nextSeasonPlayer.id'),true);assert.equal(h.run('seasonProgress().cleared()'),0);
 });
+
+test('seasonal launch checks the requested area, including real future levels staged before release',()=>{
+ const h=harness();h.el('season-hub').querySelectorAll=()=>[];h.run('EscapeCatalog={...EscapeCatalog,seasonal:[...EscapeCatalog.seasonal,{...EscapeCatalog.seasonal[0],id:"winter-staged-test",seasonal:"winter"}]};startEscape({seasonalId:"winter-staged-test",skipIntro:true})');assert.equal(h.run('gameState'),'seasonalHub');assert.equal(h.run('escapeGame'),null);h.run('startEscape({seasonalId:"missing-seasonal-level"})');assert.equal(h.run('gameState'),'seasonalHub');
+});
