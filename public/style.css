@@ -724,3 +724,11 @@ body.pad-nav #touch-controls{display:none!important}
   .story-pages { font-size:.98rem; line-height:1.55; } .story-foot { margin-top:6px; padding-top:8px; }
   .story-back { width:34px; height:34px; }
 }
+/* Pages found in levels. */
+.story-found .story-card { --paper:#f7f0de; --paper-edge:#e3d4ae; --accent:#8a6a32; }
+.story-tile-found { background:#3e3a2a; border-color:#c9b27a; }
+.story-tile-unread { box-shadow:inset 3px 0 0 #e8c25a; }
+.story-area-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:8px 14px; }
+.story-area-notes > b { display:block; font-size:.78rem; color:#c9d8b8; margin:2px 0 4px; } .story-area-notes > b span { color:#e8c25a; font-weight:400; }
+.story-marks { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 8px; } .story-mark { font-size:.8rem; padding:3px 10px; border-radius:999px; background:#4a3e1e; border:1px solid #c9a64e; color:#f4e2a8; }
+.escape-note-btn { display:block; margin:10px auto 0; }

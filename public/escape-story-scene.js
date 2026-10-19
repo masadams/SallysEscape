@@ -109,18 +109,19 @@ function escapeStoryTheme(c){return c.id==='opening'?'flood':c.id==='after'?'coa
 // A page of a card, as markup: short paragraphs, spoken lines set apart. A page in *italics* is
 // something written down, shown as a letter on a slip of paper; a signature sits to the right.
 function escapeStoryPageHtml(text){
-  const lines=text.split('\n'),jot=lines.every(l=>/^\*.+\*$/.test(l)),say=t=>t.replace(/(“[^”]+”|&quot;[^&]+?&quot;|"[^"]+")/g,'<q class="story-say">$1</q>');
-  if(jot)return '<div class="story-letter-slip">'+lines.map(l=>'<p>'+escapeText(l.slice(1,-1))+'</p>').join('')+'</div>';
+  const lines=text.split('\n'),jot=lines.some(l=>/^\*.+\*$/.test(l))&&lines.every(l=>/^\*.+\*$/.test(l)||/^— /.test(l)),say=t=>t.replace(/(“[^”]+”|&quot;[^&]+?&quot;|"[^"]+")/g,'<q class="story-say">$1</q>');
+  if(jot)return '<div class="story-letter-slip">'+lines.map(l=>/^— /.test(l)?'<p class="story-sign">'+escapeText(l)+'</p>':'<p>'+escapeText(l.slice(1,-1))+'</p>').join('')+'</div>';
   return lines.map(l=>/^— /.test(l)?'<p class="story-sign">'+escapeText(l)+'</p>':'<p>'+say(escapeText(l).replace(/\*([^*]+)\*/g,'<em>$1</em>'))+'</p>').join('');
 }
 // Show a part title or a card. fresh: it is being found now, so it is saved and the next queued one follows.
 // A card is a page of a storybook: the picture on one side, one page of words on the other, turned
 // with Next (or Back); the paragraphs fade in one after another and a press shows them all at once.
-function showEscapeStory(entry,fresh){
-  const page=escapeStoryPage();if(!page)return;const kindLabel={journal:'From Old Moss’s journal',map:'A field sheet of the Great Map',moment:'Along the way',note:'A note, left behind'};
+function showEscapeStory(entry,fresh,onDone){
+  const page=escapeStoryPage();if(!page)return;const kindLabel={journal:'From Old Moss’s journal',map:'A field sheet of the Great Map',moment:'Along the way',note:'A note, left behind',found:entry.card?.what||'A page, found'};
   const reduced=Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
   escapeStoryOpen=entry;
   const finish=()=>{if(fresh)escapeProgress.markStory(entry.id);page.style.display='none';escapeStoryOpen=null;
+    if(onDone){onDone();return;}
     if(fresh&&escapeStoryQueue.length)showEscapeStory(escapeStoryQueue.shift(),true);else if(!fresh)openEscapeStoryBook();else renderEscapeWorldTotals?.();};
   if(entry.part){const p=entry.part;page.className='story-overlay story-part'+(reduced?' story-still':'');
     page.innerHTML='<div class="story-part-inner"><span class="story-eyebrow">'+escapeText(p.title)+'</span><h2>'+[...p.name].map((ch,i)=>'<span class="story-letter" style="animation-delay:'+(.3+i*.06)+'s">'+(ch===' '?'&nbsp;':escapeText(ch))+'</span>').join('')+'</h2><span class="story-rule" aria-hidden="true">❦</span><p>'+escapeText(p.line)+'</p><button type="button" class="escape-primary" id="story-next">Begin</button></div>';
@@ -150,6 +151,51 @@ if(typeof document!=='undefined')document.addEventListener('keydown',e=>{if(!esc
   if(e.key==='ArrowLeft'){document.getElementById('story-back')?.click();return;}
   if(e.key==='Escape'){for(let i=0;i<40&&escapeStoryOpen&&document.getElementById('story-next')===next;i++)next.click();return;}
   next.click();},true);
+// Notes hidden in levels (escape-notes.js): one may lie on a floor tile of an ordinary escape. Walking
+// onto it picks it up and saves it at once (being caught afterwards keeps it); a small banner says so
+// and the page waits to be read, from the results or the Journal, never during the run.
+let escapeNoteRun={game:null,note:null,fresh:false};
+function escapeNoteFor(g){
+  if(escapeNoteRun.game!==g){let note=typeof EscapeNotes==='undefined'?null:EscapeNotes.forLevel(g.level);
+    // An anchor that is no longer open floor (a changed layout) shows nothing rather than a page in a wall.
+    if(note&&!g.floor(note.at[0],note.at[1]))note=null;escapeNoteRun={game:g,note,fresh:false};}
+  return escapeNoteRun.note;
+}
+function tickEscapeNote(g){
+  const n=escapeNoteFor(g);if(!n||g.status!=='playing'||g.player.underground||g.player.dig?.buried||escapeProgress.noteFound(n.id))return;
+  if(Math.hypot(g.player.x-(n.at[0]+.5),g.player.y-(n.at[1]+.5))>.6)return;
+  if(escapeProgress.findNote(n.id)){escapeNoteRun.fresh=true;escapeBestiaryNote={text:'📜 You found a page: '+n.title,until:millis()+3800};escapeSound('flutter');}
+}
+// A page on the floor: a folded scrap with two lines of ink and a little glint; once found, faded.
+function drawEscapeNote(g,cell){
+  const n=escapeNoteFor(g);if(!n)return;const found=escapeProgress.noteFound(n.id),x=(n.at[0]+.5)*cell,y=(n.at[1]+.55)*cell,bob=Math.sin(g.elapsed*2.2)*cell*.02;
+  push();translate(x,y+bob);rotate(-.18);noStroke();if(found)drawingContext.globalAlpha=.35;
+  fill(0,0,0,50);ellipse(cell*.03,cell*.16,cell*.5,cell*.12);fill(246,236,210);rect(-cell*.22,-cell*.16,cell*.44,cell*.32,cell*.03);
+  fill(214,196,158);triangle(cell*.22,-cell*.16,cell*.08,-cell*.16,cell*.22,-cell*.02);stroke(120,92,58,190);strokeWeight(cell*.025);line(-cell*.14,-cell*.04,cell*.08,-cell*.04);line(-cell*.14,cell*.05,cell*.12,cell*.05);
+  noStroke();if(!found){const glint=Math.max(0,Math.sin(g.elapsed*1.7))**10;fill(255,250,220,200*glint);ellipse(-cell*.12,-cell*.1,cell*.12,cell*.12);}
+  drawingContext.globalAlpha=1;pop();
+}
+// A found note as a card to read.
+function escapeNoteCard(n){const {who,what}=EscapeNotes.signed(n);return {id:n.id,kind:'found',title:n.title,what:what?what[0].toUpperCase()+what.slice(1):'A page',area:n.area,body:['*'+n.body+'*'+(who&&!/^Unsigned/.test(who)?'\n— '+who:'')]};}
+function showEscapeNote(n,onDone){escapeProgress.readNote(n.id);showEscapeStory({id:n.id,card:escapeNoteCard(n)},false,onDone);}
+// The results offer the page found in this level when it has not been read yet.
+function escapeNoteResultButton(){
+  document.getElementById('escape-note-btn')?.remove?.();
+  const n=escapeGame&&escapeNoteFor(escapeGame);if(!n||!escapeProgress.noteFound(n.id)||escapeProgress.noteRead(n.id))return;
+  const b=document.createElement('button');b.id='escape-note-btn';b.type='button';b.className='escape-secondary escape-note-btn';b.textContent='📜 Read the page you found: '+n.title;
+  b.onclick=()=>showEscapeNote(n,()=>{b.remove();document.getElementById('escape-next-btn')?.focus?.();});
+  document.getElementById('escape-result-challenge')?.after?.(b);
+}
+// Pages found along the way, by area: two to an area, whose little sketch is whole once both are
+// found; the journal's border gains a leaf, a lantern and a path at 14, 28 and 42 pages.
+function escapeNotesBookHtml(){
+  if(typeof EscapeNotes==='undefined')return '';const N=EscapeNotes.NOTES,found=N.filter(n=>escapeProgress.noteFound(n.id)),chapters=EscapeWorld.chapters;
+  const marks=[[14,'🍃 A leaf in the border'],[28,'🏮 A lantern in the border'],[42,'✦ A path all the way round']].filter(([n])=>found.length>=n).map(([,t])=>'<span class="story-mark">'+t+'</span>').join('');
+  const areas=chapters.map((c,i)=>{const two=N.filter(n=>n.area===i);if(!two.length)return '';const both=two.every(n=>escapeProgress.noteFound(n.id));
+    return '<div class="story-area-notes"><b>'+escapeText(c.name)+(both?' <span title="Sketch complete: '+escapeText(two[0].sketch)+'">✎ '+escapeText(two[0].sketch)+'</span>':'')+'</b><div class="story-tiles">'+two.map(n=>escapeProgress.noteFound(n.id)
+      ?'<button type="button" class="story-tile story-tile-found'+(escapeProgress.noteRead(n.id)?'':' story-tile-unread')+'" data-note="'+n.id+'"><b>'+escapeText(n.title)+'</b></button>':'<span class="story-tile story-locked">???</span>').join('')+'</div></div>';}).join('');
+  return '<h3>Pages found along the way · '+found.length+' / '+N.length+'</h3>'+(marks?'<div class="story-marks">'+marks+'</div>':'')+'<div class="story-area-grid">'+areas+'</div>';
+}
 // The Journal's Story page: each part's cards (found ones can be read again; the ones waiting after
 // the ending show unopened), the lost Wayfinder's notes, and the Great Map, an area joined for
 // each one Sally has walked through (all of it once she is home).
@@ -169,8 +215,9 @@ function openEscapeStoryBook(){
   const mapPages=S.AREAS.filter((_,i)=>joined(i)).length,mapTotal=S.AREAS.length;
   page.innerHTML='<div class="bestiary-head"><h2>Story</h2><span>'+found+' of '+S.CARDS.length+' pages found</span><button type="button" id="world-bestiary-close" class="escape-secondary">Close</button></div>'+
     '<div class="story-book">'+parts+'<h3>Notes from a lost Wayfinder · '+notes.filter(c=>seen(c.id)).length+' / '+notes.length+'</h3><div class="story-tiles">'+notes.map(tile).join('')+'</div>'+
-    '<h3>The Great Map · '+mapPages+' / '+mapTotal+' areas joined</h3><svg class="great-map" viewBox="0 0 360 154" role="img" aria-label="The Great Map: '+mapPages+' of '+mapTotal+' areas joined">'+mapCells+'</svg></div>';
+    escapeNotesBookHtml()+'<h3>The Great Map · '+mapPages+' / '+mapTotal+' areas joined</h3><svg class="great-map" viewBox="0 0 360 154" role="img" aria-label="The Great Map: '+mapPages+' of '+mapTotal+' areas joined">'+mapCells+'</svg></div>';
   escapeBestiaryOpen=true;page.style.display='block';
+  for(const b of page.querySelectorAll('[data-note]'))b.onclick=()=>{page.style.display='none';escapeBestiaryOpen=false;showEscapeNote(EscapeNotes.byId(b.dataset.note),openEscapeStoryBook);};
   for(const b of page.querySelectorAll('[data-story]'))b.onclick=()=>{page.style.display='none';escapeBestiaryOpen=false;showEscapeStory({id:b.dataset.story,card:S.byId(b.dataset.story)},Boolean(b.dataset.fresh));};
   const close=()=>{escapeBestiaryOpen=false;page.style.display='none';renderEscapeWorldTotals();};
   document.getElementById('world-bestiary-close').onclick=close;page.onkeydown=e=>{if(e.key==='Escape')close();};document.getElementById('world-bestiary-close').focus?.();
