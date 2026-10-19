@@ -193,13 +193,13 @@ test('Full lighting draws every area with terrain, water and small lives, and th
 });
 
 
-test('seasonal crossroads enters its own hub, keeps future paths locked and goes back one screen',()=>{
+test('seasonal menu enters a continuous campaign-style map, keeps future paths locked and goes back to the title',()=>{
  const h=harness(),panel=h.el('season-hub');panel.querySelectorAll=()=>[];panel.contains=()=>false;
- h.el('seasons-button').onclick();assert.equal(h.run('gameState'),'seasonalHub');assert.match(panel.innerHTML,/Seasonal Adventures/);assert.match(panel.innerHTML,/A snowy path/);assert.match(panel.innerHTML,/data-season-clock="winter"/);
- h.run('seasonVisit("winter")');assert.equal(h.run('seasonPack'),null);assert.match(h.el('season-prompt').textContent,/opens when its adventure is ready/);
- h.run('seasonVisit("autumn-hollow")');assert.equal(h.run('seasonPack'),'autumn-hollow');assert.equal((panel.innerHTML.match(/data-season-id="autumn-/g)||[]).length,8);
+ h.el('seasons-button').onclick();assert.equal(h.run('gameState'),'seasonalHub');assert.match(panel.innerHTML,/SEASONAL ADVENTURES/);assert.match(panel.innerHTML,/A snowy path/);assert.match(panel.innerHTML,/data-season-clock="winter"/);assert.equal(h.el('game-container').style.display,'block');
+ h.run('seasonVisit("winter")');assert.equal(h.run('seasonPack'),'autumn-hollow');assert.equal(h.run('seasonWorld.areaOpen("winter")'),false);assert.match(h.el('season-prompt').textContent,/opens when its adventure is ready/);
+ h.run('seasonVisit("autumn-hollow")');assert.equal(h.run('seasonPack'),'autumn-hollow');assert.equal((panel.innerHTML.match(/class="world-node season-level/g)||[]).length,8);
  h.run('seasonTogglePanel(true);escapeGoBack()');assert.equal(h.run('seasonPanelOpen'),false);assert.equal(h.run('seasonPack'),'autumn-hollow');
- h.run('escapeGoBack()');assert.equal(h.run('seasonPack'),null);h.run('escapeGoBack()');assert.equal(h.run('gameState'),'start');
+ h.run('seasonToggleOverview();escapeGoBack()');assert.equal(h.run('seasonOverview'),false);h.run('escapeGoBack()');assert.equal(h.run('gameState'),'start');
 });
 
 test('every seasonal level renders in Full and Simple lighting on desktop and touch, including all six costumes',()=>{
@@ -224,8 +224,8 @@ test('festival completion unlocks persistent menu keepsakes and a selectable ski
 });
 
 test('seasonal walking follows the hub paths, stops on collection panels and supports touch input',()=>{
- const h=harness(),panel=h.el('season-hub');panel.querySelectorAll=()=>[];panel.contains=()=>false;h.run('openSeasonalHub();mobile=true;touchStick.x=-.5;touchStick.y=-.5');const before=h.run('JSON.stringify(seasonPosition)');h.run('tickSeasonHub()');assert.notEqual(h.run('JSON.stringify(seasonPosition)'),before);
- h.run('seasonTogglePanel(true);touchStick.x=-1');const frozen=h.run('JSON.stringify(seasonPosition)');h.run('tickSeasonHub()');assert.equal(h.run('JSON.stringify(seasonPosition)'),frozen);
+ const h=harness(),panel=h.el('season-hub');panel.querySelectorAll=()=>[];panel.contains=()=>false;h.run('openSeasonalHub();mobile=true;touchStick.x=-.5;touchStick.y=-.5');const before=h.run('JSON.stringify(seasonWorld.player)');h.run('tickSeasonHub()');assert.notEqual(h.run('JSON.stringify(seasonWorld.player)'),before);
+ h.run('seasonTogglePanel(true);touchStick.x=-1');const frozen=h.run('JSON.stringify(seasonWorld.player)');h.run('tickSeasonHub()');assert.equal(h.run('JSON.stringify(seasonWorld.player)'),frozen);
  h.run('seasonTogglePanel(false);mobile=true;windowWidth=900;windowHeight=500;updateToolbar()');assert.equal(h.el('touch-controls').style.display,'flex');
 });
 
@@ -236,11 +236,11 @@ test('seasonal notes pause the real engine, resume once and stay independent of 
 
 test('seasonal warning aids stay visible when campaign hard mode is selected',()=>{const h=harness();h.run('escapeHardMode=true;startEscape({seasonalId:"autumn-gardener",skipIntro:true})');assert.equal(h.run('escapeAidsHidden(escapeGame)'),false);assert.equal(h.run('escapeHardMode'),true);});
 
-test('controller A enters a nearby seasonal path; View opens its list and B returns one screen',()=>{
+test('controller A enters a nearby seasonal level; View opens its list and B closes it',()=>{
  const h=harness();for(const id of ['season-hub','season-panel']){h.el(id).querySelectorAll=()=>[];h.el(id).contains=()=>false;}
  const pad={index:0,connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:16},()=>({pressed:false,value:0}))};h.c.navigator.getGamepads=()=>[pad];
- h.run('openSeasonalHub();pollEscapePad();seasonPosition={x:20,y:25};tickSeasonHub()');pad.buttons[0].pressed=true;h.run('pollEscapePad()');assert.equal(h.run('seasonPack'),'autumn-hollow');pad.buttons[0].pressed=false;h.run('pollEscapePad()');
- pad.buttons[8].pressed=true;h.run('pollEscapePad()');assert.equal(h.run('seasonPanelOpen'),true);pad.buttons[8].pressed=false;h.run('pollEscapePad()');pad.buttons[1].pressed=true;h.run('pollEscapePad()');assert.equal(h.run('seasonPanelOpen'),false);assert.equal(h.run('seasonPack'),'autumn-hollow');pad.buttons[1].pressed=false;h.run('pollEscapePad()');pad.buttons[1].pressed=true;h.run('pollEscapePad()');assert.equal(h.run('seasonPack'),null);
+ h.run('openSeasonalHub();pollEscapePad();renderSeasonHUD(true)');pad.buttons[0].pressed=true;h.run('pollEscapePad()');assert.equal(h.run('gameState'),'escape');assert.equal(h.run('escapeGame.level.id'),'autumn-orchard');pad.buttons[0].pressed=false;h.run('escapeLeaveRun();pollEscapePad()');
+ pad.buttons[8].pressed=true;h.run('pollEscapePad()');assert.equal(h.run('seasonPanelOpen'),true);pad.buttons[8].pressed=false;h.run('pollEscapePad()');pad.buttons[1].pressed=true;h.run('pollEscapePad()');assert.equal(h.run('seasonPanelOpen'),false);assert.equal(h.run('seasonPack'),'autumn-hollow');pad.buttons[1].pressed=false;h.run('pollEscapePad()');pad.buttons[1].pressed=true;h.run('pollEscapePad()');assert.equal(h.run('gameState'),'start');
 });
 
 test('the earned autumn outfit participates in the ordinary world Colours cycle',()=>{
