@@ -62,6 +62,41 @@ function harness() {
   run('setup();');
   return {c:context,run,el:element,events,storage,setTime:value=>now=value,tick:fps=>{c.deltaTime=1000/fps;now+=c.deltaTime;c.frameCount++}};
 }
+
+test('Little Explorers groups all 26 levels, preserves old stickers and remembers the guide choice per player',()=>{
+ const h=harness(),panel=h.el('escape-builder');panel.querySelectorAll=()=>[];panel.querySelector=()=>({focus(){}});
+ h.run('escapeKidsMark("hello-sally");openLittleExplorers();');
+ assert.equal((panel.innerHTML.match(/class="kids-stone(?: |")/g)||[]).length,26);
+ assert.match(panel.innerHTML,/Little discoveries/);assert.match(panel.innerHTML,/Bigger adventures/);assert.match(panel.innerHTML,/Stickers: 1 of 26/);
+ h.el('kids-guide-toggle').onclick();assert.equal(h.run('escapeKidsGuideOn()'),false);assert.equal(h.el('kids-guide-toggle').textContent,'Guiding dots: Off');
+ h.run('globalThis.otherPlayer=EscapePlayers.create("Explorer Two");');
+ assert.equal(h.run('EscapePlayers.storage(otherPlayer.id).getItem("sallys-escape-kids-guide")'),null);
+ assert.equal(h.run('escapeKidsDone().includes("hello-sally")'),true);
+});
+
+test('the twentieth sticker leads into the adventures; the final one returns to the sticker collection',()=>{
+ const h=harness();
+ h.run('startEscape({kidsId:"great-explorer",skipIntro:true});escapeGame.finish("won","home");showEscapeResult();');
+ assert.match(h.el('escape-next-btn').textContent,/Next adventure/);h.el('escape-next-btn').onclick();assert.equal(h.run('escapeGame.level.id'),'garden-gate');
+ h.run('startEscape({kidsId:"sallys-way-home",skipIntro:true});escapeGame.finish("won","home");showEscapeResult();');
+ assert.equal(h.el('escape-next-btn').textContent,'See your stickers');assert.equal(h.el('escape-menu-btn').textContent,'Little Explorers');
+ assert.equal(h.run('escapeKidsDone().includes("sallys-way-home")'),true);assert.equal(h.run('Object.keys(escapeProgress.data.levels).length'),0);
+});
+
+test('every kids adventure renders on desktop and touch, and supplied tools show endless supplies',()=>{
+ const h=harness();for(const id of h.run('EscapeCatalog.kids.filter(l=>l.adventure).map(l=>l.id)')){
+   h.run('startEscape({kidsId:'+JSON.stringify(id)+',skipIntro:true});draw();mobile=true;windowWidth=944;windowHeight=524;updateToolbar();draw();');
+   assert.equal(h.run('gameState'),'escape');assert.equal(h.el('touch-controls').style.display,'flex');assert.equal(h.run('escapeGame.level.unlimited'),true);
+ }
+});
+
+test('an optional trail note opens a card, freezes the real engine, and resumes without reopening in place',()=>{
+ const h=harness();h.run('globalThis.readSign=null;globalThis.signDone=null;showEscapeStory=(entry,fresh,done)=>{readSign=entry;escapeStoryOpen=entry;signDone=()=>{escapeStoryOpen=null;done();};};startEscape({kidsId:"beetle-courtyard",skipIntro:true});escapeGame.player.x=11.5;escapeGame.player.y=13.5;tickEscapeKidsSign(escapeGame);');
+ assert.equal(h.run('readSign.card.title'),'Watch the horn');assert.match(h.run('readSign.card.body[0]'),/Step sideways/);
+ const t=h.run('escapeGame.elapsed');h.run('draw();draw();');assert.equal(h.run('escapeGame.elapsed'),t,'creatures and timers wait while reading');
+ h.run('signDone();readSign=null;draw();draw();tickEscapeKidsSign(escapeGame);');assert.equal(h.run('readSign'),null,'closing the card does not instantly reopen it');
+ assert.ok(h.run('escapeGame.elapsed')>t);h.run('escapeGame.player.x=9.5;tickEscapeKidsSign(escapeGame);escapeGame.player.x=11.5;tickEscapeKidsSign(escapeGame);');assert.equal(h.run('readSign.card.title'),'Watch the horn','returning later can reread it');
+});
 test('the standalone world enters the real engine and renders the result in its existing playfield',()=>{const h=harness();h.run('showEscapeSelect();startEscape({levelId:"quiet-vault"});draw();escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.finish("won","escaped");draw();escapeMoment.hold=0;draw();');assert.equal(h.run('gameState'),'escapeResult');assert.equal(h.el('game-container').style.display,'block');assert.equal(h.el('escape-result').style.display,'block');assert.equal(h.el('escape-menu-btn').textContent,'World map');assert.equal(h.run('escapeProgress.unlocked("crumbling-hall")'),true);});
 test('Sally celebrates the finished run, keeps retry available, and resets her expression on retry',()=>{
  const h=harness();h.run('startEscape({levelId:"quiet-vault",skipIntro:true});escapeGame.elapsed=20;escapeGame.treasure=8;escapeGame.finish("won","escaped");draw();escapeMoment.hold=0;draw();');
@@ -155,3 +190,4 @@ test('Full lighting draws every area with terrain, water and small lives, and th
   h.run('escapeGame.elapsed+=5;for(let i=0;i<80;i++){escapeGame.elapsed+=.05;tickEscapeCritters(escapeGame);}');
   assert.ok(['perch','gone','fly'].includes(h.run('escapeCritters.list.find(c=>c.kind==="bird").state')));
 });
+

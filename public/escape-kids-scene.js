@@ -5,16 +5,20 @@ const ESCAPE_KIDS_KEY='sallys-escape-kids';
 function escapeKidsLevels(){return typeof EscapeCatalog!=='undefined'&&EscapeCatalog.kids||[];}
 function escapeKidsDone(){try{const v=JSON.parse(escapeStore.getItem(ESCAPE_KIDS_KEY)||'[]');return Array.isArray(v)?escapeKidsLevels().map(l=>l.id).filter(id=>v.includes(id)):[];}catch(_){return [];}}
 function escapeKidsMark(id){const done=escapeKidsDone();if(done.includes(id)||!escapeKidsLevels().some(l=>l.id===id))return false;done.push(id);try{escapeStore.setItem(ESCAPE_KIDS_KEY,JSON.stringify(done));}catch(_){}return true;}
+function escapeKidsGuideOn(){try{return escapeStore.getItem('sallys-escape-kids-guide')!=='off';}catch(_){return true;}}
 function openLittleExplorers(focusId){
   const panel=escapeBuilderShow();gameState='kids';
   const done=escapeKidsDone(),levels=escapeKidsLevels(),next=levels.find(l=>!done.includes(l.id)),t=escapeText;
   panel.innerHTML='<div class="kids-picker"><div class="builder-head"><button id="kids-back" class="escape-secondary">← Main menu</button></div>'
     +'<h2 class="kids-title">Little Explorers</h2><p class="kids-sub">Help Sally on '+levels.length+' little adventures. Every one you finish gives you a sticker!</p>'
-    +'<ol class="kids-stones">'+levels.map((l,i)=>{const got=done.includes(l.id);
-      return '<li><button class="kids-stone'+(got?' kids-done':'')+(l===next?' kids-next':'')+'" data-id="'+t(l.id)+'" aria-label="'+(i+1)+'. '+t(l.name)+(got?', finished':'')+'">'
+    +'<button id="kids-guide-toggle" class="escape-secondary" aria-pressed="'+escapeKidsGuideOn()+'">Guiding dots: '+(escapeKidsGuideOn()?'On':'Off')+'</button><p class="kids-guide-note">Follow the dots, or turn them off and explore. Your tools never run out. Step on a trail note to read it.</p>'
+    +'<h3 class="kids-section-title">Little discoveries</h3><ol class="kids-stones">'+levels.map((l,i)=>{const got=done.includes(l.id);
+      const section=l.adventure&&!levels[i-1]?.adventure?'</ol><h3 class="kids-section-title">Bigger adventures</h3><p class="kids-sub">Six journeys with room to explore. Every treasure is optional.</p><ol class="kids-stones" start="'+(i+1)+'">':'';
+      return section+'<li><button class="kids-stone'+(got?' kids-done':'')+(l===next?' kids-next':'')+'" data-id="'+t(l.id)+'" aria-label="'+(i+1)+'. '+t(l.name)+(got?', finished':'')+'">'
         +'<span class="kids-num">'+(i+1)+'</span><span class="kids-sticker" aria-hidden="true">'+(got?t(l.sticker||'⭐'):'?')+'</span><span class="kids-name">'+t(l.name)+'</span></button></li>';}).join('')+'</ol>'
     +'<p class="kids-count">Stickers: '+done.length+' of '+levels.length+(done.length===levels.length?' · You finished them all! 🎉':'')+'</p></div>';
   document.getElementById('kids-back').onclick=closeEscapeBuilder;
+  const guide=document.getElementById('kids-guide-toggle');guide.onclick=()=>{const on=!escapeKidsGuideOn();try{escapeStore.setItem('sallys-escape-kids-guide',on?'on':'off');}catch(_){}guide.textContent='Guiding dots: '+(escapeKidsGuideOn()?'On':'Off');guide.setAttribute('aria-pressed',String(escapeKidsGuideOn()));};
   for(const b of panel.querySelectorAll('.kids-stone'))b.onclick=()=>startEscape({kidsId:b.dataset.id});
   const focus=panel.querySelector('.kids-stone[data-id="'+(focusId||next?.id||levels[0]?.id)+'"]');focus?.focus();
 }
@@ -28,24 +32,44 @@ function escapeKidsResult(r){
   nextButton.onclick=next?()=>startEscape({kidsId:next.id}):()=>openLittleExplorers(level.id);
   menu.style.display='';menu.textContent='Little Explorers';menu.className='escape-secondary';menu.onclick=()=>openLittleExplorers(level.id);
 }
-// The guide trail: glowing dots from Sally along the shortest way to the key, then to the door (or
-// to a gate's button first when a shut gate is in the way), plus a flag on each checkpoint.
-let escapeKidsTrail={key:'',path:[]};
-function escapeKidsPath(g,from,to){
-  const w=g.width,id=(x,y)=>y*w+x,start=id(from[0],from[1]),goal=id(to[0],to[1]),prev=new Map([[start,-1]]),queue=[start];
-  while(queue.length){const at=queue.shift();if(at===goal)break;const x=at%w,y=Math.floor(at/w);
-    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy,n=id(nx,ny);if(prev.has(n)||!g.floor(nx,ny))continue;prev.set(n,at);queue.push(n);}}
-  if(!prev.has(goal))return null;const path=[];for(let at=goal;at!==-1;at=prev.get(at))path.push([at%w,Math.floor(at/w)]);return path.reverse();
-}
+// Cache per run: two different levels can have identical start/key coordinates.
+// Include the small grid in the key so a grown bush, opened door or tide cannot leave stale dots.
+const escapeKidsTrails=new WeakMap();
 function drawEscapeKidsGuide(g,cell){
   if(g.status!=='playing')return;
-  const tile=p=>[Math.floor(p.x),Math.floor(p.y)],here=tile(g.player),goal=tile(g.hasKey?g.exit:g.key);
-  const key=here+'|'+goal+'|'+g.gates.map(gate=>gate.open?1:0).join('');
-  if(escapeKidsTrail.key!==key){let path=escapeKidsPath(g,here,goal);
-    if(!path){const shut=g.gates.find(gate=>!gate.open&&gate.switch);if(shut)path=escapeKidsPath(g,here,tile(shut.switch));}
-    escapeKidsTrail={key,path:path||[]};}
-  const t=g.elapsed;noStroke();
-  escapeKidsTrail.path.slice(1,16).forEach(([x,y],i)=>{const pulse=.5+.5*Math.sin(t*5-i*.7);fill(255,236,140,90+120*pulse);ellipse((x+.5)*cell,(y+.5)*cell,cell*(.22+.08*pulse));});
-  for(const c of g.checkpoints){const x=c.x*cell,y=c.y*cell;stroke(90,70,40);strokeWeight(cell*.05);line(x-cell*.15,y+cell*.3,x-cell*.15,y-cell*.32);noStroke();
+  const t=g.elapsed;drawEscapeKidsSigns(g,cell);push();
+  if(escapeKidsGuideOn()){
+    const key=[Math.floor(g.player.x),Math.floor(g.player.y),g.hasKey,g.burrows,g.tongues,g.grid.map(r=>r.join('')).join('')].join('|');
+    let guide=escapeKidsTrails.get(g);if(guide?.key!==key){guide={key,...EscapeKidsGuide.plan(g)};escapeKidsTrails.set(g,guide);}
+    noStroke();guide.path.slice(1,16).forEach(([x,y],i)=>{const pulse=.5+.5*Math.sin(t*5-i*.7);fill(255,236,140,90+120*pulse);ellipse((x+.5)*cell,(y+.5)*cell,cell*(.22+.08*pulse));});
+    const a=guide.action;
+    if(a&&Math.hypot(a.at[0]+.5-g.player.x,a.at[1]+.5-g.player.y)<3){
+      const x=(a.at[0]+.5)*cell,y=(a.at[1]+.5)*cell;
+      noFill();stroke(255,236,140);strokeWeight(cell*.06);ellipse(x,y,cell*.8,cell*.8);
+      const label=a.kind==='tongue'?'Tongue':a.kind==='bounce'?'Bounce':'Burrow';
+      noStroke();fill(20,35,25,225);rect(x-cell*1.1,y-cell*1.05,cell*2.2,cell*.5,cell*.1);
+      fill(255,244,190);textAlign(CENTER,CENTER);textSize(cell*.33);text(label,x,y-cell*.8);
+      if(a.face){stroke(255,236,140);strokeWeight(cell*.06);line(x,y,x+a.face[0]*cell*.7,y+a.face[1]*cell*.7);}
+    }
+  }
+  // Checkpoint flags remain visible when guiding dots are off.
+  for(const c of g.checkpoints){if(!g.visibleTile(Math.floor(c.x),Math.floor(c.y)))continue;const x=c.x*cell,y=c.y*cell;stroke(90,70,40);strokeWeight(cell*.05);line(x-cell*.15,y+cell*.3,x-cell*.15,y-cell*.32);noStroke();
     fill(...(c.reached?[110,220,120]:[245,245,235]));triangle(x-cell*.13,y-cell*.32,x+cell*.28,y-cell*.2,x-cell*.13,y-cell*.08);}
+  pop();
+}
+
+// Trail notes are optional reading spots, independent of the campaign's collectable story pages.
+// Step on a note to read it. The existing story card supports mouse, touch, A/B and Android Back.
+const escapeKidsSignVisits=new WeakMap();
+function tickEscapeKidsSign(g){
+  if(!g?.level.kids||g.status!=='playing'||paused||escapeIntroOpen||escapeStoryOpen||g.player.flight||g.player.underground)return;
+  const notes=g.level.fieldNotes||[],near=notes.find(n=>Math.hypot(g.player.x-n.at[0]-.5,g.player.y-n.at[1]-.5)<.65);
+  const last=escapeKidsSignVisits.get(g);if(!near){if(last&&!notes.some(n=>n.id===last&&Math.hypot(g.player.x-n.at[0]-.5,g.player.y-n.at[1]-.5)<1.5))escapeKidsSignVisits.delete(g);return;}
+  if(last===near.id)return;escapeKidsSignVisits.set(g,near.id);clearTouchInput();suppressHeldKeys();g.paused=true;
+  showEscapeStory({id:near.id,card:{id:near.id,kind:'kids-sign',theme:g.level.kidsTheme,title:near.title,body:[near.body]}},false,()=>{clearTouchInput();suppressHeldKeys();g.paused=paused;skipSimulationFrame=true;});
+}
+function drawEscapeKidsSigns(g,cell){
+  for(const n of g.level.fieldNotes||[]){const [x,y]=n.at;if(!g.visibleTile(x,y))continue;push();translate((x+.5)*cell,(y+.5)*cell);noStroke();
+    fill(82,60,35);rect(-cell*.04,0,cell*.08,cell*.38);fill(252,238,193);rect(-cell*.3,-cell*.25,cell*.6,cell*.4,cell*.04);
+    stroke(111,87,48);strokeWeight(cell*.03);line(-cell*.19,-cell*.12,cell*.19,-cell*.12);line(-cell*.19,-cell*.02,cell*.1,-cell*.02);pop();}
 }
