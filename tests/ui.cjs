@@ -195,9 +195,9 @@ test('Full lighting draws every area with terrain, water and small lives, and th
 
 test('seasonal menu enters a continuous campaign-style map, keeps future paths locked and goes back to the title',()=>{
  const h=harness(),panel=h.el('season-hub');panel.querySelectorAll=()=>[];panel.contains=()=>false;
- h.el('seasons-button').onclick();assert.equal(h.run('gameState'),'seasonalHub');assert.match(panel.innerHTML,/SEASONAL ADVENTURES/);assert.match(panel.innerHTML,/A snowy path/);assert.match(panel.innerHTML,/data-season-clock="winter"/);assert.equal(h.el('game-container').style.display,'block');
- h.run('seasonVisit("winter")');assert.equal(h.run('seasonPack'),'autumn-hollow');assert.equal(h.run('seasonWorld.areaOpen("winter")'),false);assert.match(h.el('season-prompt').textContent,/blizzard.*Christmas lights/);
- h.run('seasonVisit("autumn-hollow")');assert.equal(h.run('seasonPack'),'autumn-hollow');assert.equal((panel.innerHTML.match(/class="world-node season-level/g)||[]).length,8);
+ h.el('seasons-button').onclick();assert.equal(h.run('gameState'),'seasonalHub');assert.match(panel.innerHTML,/SEASONAL ADVENTURES/);assert.match(panel.innerHTML,/Winterlight Hollow/);assert.match(panel.innerHTML,/data-season-clock="winter"/);assert.equal(h.el('game-container').style.display,'block');
+ h.run('seasonVisit("winter")');assert.equal(h.run('seasonPack'),'winter');assert.equal(h.run('seasonWorld.areaOpen("winter")'),true);h.run('seasonVisit("spring")');assert.match(h.el('season-prompt').textContent,/rain.*blossom/);
+ h.run('seasonVisit("autumn-hollow")');assert.equal(h.run('seasonPack'),'autumn-hollow');assert.equal((panel.innerHTML.match(/class="world-node season-level/g)||[]).length,16);
  h.run('seasonTogglePanel(true);escapeGoBack()');assert.equal(h.run('seasonPanelOpen'),false);assert.equal(h.run('seasonPack'),'autumn-hollow');
  h.run('seasonToggleOverview();escapeGoBack()');assert.equal(h.run('seasonOverview'),false);h.run('escapeGoBack()');assert.equal(h.run('gameState'),'start');
 });
@@ -205,7 +205,7 @@ test('seasonal menu enters a continuous campaign-style map, keeps future paths l
 test('every seasonal level renders in Full and Simple lighting on desktop and touch, including all six costumes',()=>{
  const h=harness();Object.assign(h.c.drawingContext,{createRadialGradient:()=>({addColorStop(){}}),translate(){},scale(){},drawImage(){},setLineDash(){},arc(){},closePath(){}});for(const id of h.run('EscapeCatalog.seasonal.map(l=>l.id)'))for(const lighting of ['full','simple']){
   h.run('escapeLightingMode='+JSON.stringify(lighting)+';escapeLightingAuto=false;startEscape({seasonalId:'+JSON.stringify(id)+',skipIntro:true});draw();mobile=true;windowWidth=944;windowHeight=524;updateToolbar();draw();');
-  assert.equal(h.run('escapeLightingFull()'),lighting==='full');assert.equal(h.run('gameState'),'escape');assert.match(h.el('escape-mission-name').textContent,/Lantern/);assert.equal(h.el('touch-controls').style.display,'flex');assert.ok(!h.run('escapeGame.level.unlimited'));
+  assert.equal(h.run('escapeLightingFull()'),lighting==='full');assert.equal(h.run('gameState'),'escape');assert.match(h.el('escape-mission-name').textContent,/Lantern|Ornament/);assert.equal(h.el('touch-controls').style.display,'flex');assert.ok(!h.run('escapeGame.level.unlimited'));
  }
 });
 
@@ -245,7 +245,7 @@ test('controller A enters a nearby seasonal level; View opens its list and B clo
 
 test('the earned autumn outfit participates in the ordinary world Colours cycle',()=>{
  const h=harness();h.run('for(const l of EscapeCatalog.seasonal)seasonProgress().record({status:"won",levelId:l.id,seasonal:l.seasonal,routeRevision:l.revision,time:20,treasure:0,totalTreasure:10});showEscapeSelect();cycleEscapeSkin();');
- assert.equal(h.run('seasonProgress().data.skin'),true);assert.match(h.el('toolbar-skin').textContent,/Copper Lantern/);h.run('cycleEscapeSkin()');assert.equal(h.run('seasonProgress().data.skin'),false);assert.match(h.el('toolbar-skin').textContent,/Colours:/);
+ assert.equal(h.run('seasonProgress().data.skin'),true);assert.match(h.el('toolbar-skin').textContent,/Copper Lantern/);h.run('cycleEscapeSkin()');assert.equal(h.run('seasonProgress().activeSkin().id'),'winterberry');h.run('cycleEscapeSkin()');assert.equal(h.run('seasonProgress().data.skin'),false);assert.match(h.el('toolbar-skin').textContent,/Colours:/);
 });
 
 test('seasonal world rendering bounds and releases terrain graphics, and leaving restores the campaign',()=>{
@@ -259,7 +259,7 @@ test('switching players creates a fresh seasonal walker and loads only that play
 });
 
 test('seasonal launch checks the requested area, including real future levels staged before release',()=>{
- const h=harness();h.el('season-hub').querySelectorAll=()=>[];h.run('EscapeCatalog={...EscapeCatalog,seasonal:[...EscapeCatalog.seasonal,{...EscapeCatalog.seasonal[0],id:"winter-staged-test",seasonal:"winter"}]};startEscape({seasonalId:"winter-staged-test",skipIntro:true})');assert.equal(h.run('gameState'),'seasonalHub');assert.equal(h.run('escapeGame'),null);h.run('startEscape({seasonalId:"missing-seasonal-level"})');assert.equal(h.run('gameState'),'seasonalHub');
+ const h=harness();h.el('season-hub').querySelectorAll=()=>[];h.run('EscapeCatalog={...EscapeCatalog,seasonal:[...EscapeCatalog.seasonal,{...EscapeCatalog.seasonal[0],id:"spring-staged-test",seasonal:"spring"}]};startEscape({seasonalId:"spring-staged-test",skipIntro:true})');assert.equal(h.run('gameState'),'seasonalHub');assert.equal(h.run('escapeGame'),null);h.run('startEscape({seasonalId:"missing-seasonal-level"})');assert.equal(h.run('gameState'),'seasonalHub');
 });
 
 test('autumn water and ambience respect motion preferences without allocating frame graphics',()=>{

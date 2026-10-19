@@ -7,6 +7,11 @@
 (function(root){
   // beds: [kind, level]; calls: [kind, [min s, max s] between, level].
   const SCAPES={
+    'winter-village':{beds:[['breeze',.2]],calls:[['jingle',[8,15],.18],['creak',[12,22],.13]]},
+    'winter-ice':{beds:[['icewind',.18]],calls:[['tinkle',[7,13],.13],['creak',[12,20],.16]]},
+    'winter-workshop':{beds:[['breeze',.1]],calls:[['clank',[9,16],.12],['jingle',[12,20],.14]]},
+    'winter-night':{beds:[['icewind',.24]],calls:[['jingle',[12,21],.12],['owl',[15,24],.1]]},
+    'winter-finale':{beds:[['breeze',.17]],calls:[['jingle',[7,15],.18],['tinkle',[12,22],.1]]},
     autumn:{beds:[['breeze',.4]],calls:[['crow',[12,20],.18],['creak',[8,15],.16]]},
     'autumn-dusk':{beds:[['breeze',.25],['insects',.14]],calls:[['creak',[10,17],.18],['chime',[14,22],.14]]},
     'autumn-night':{beds:[['wind',.2],['insects',.15]],calls:[['owl',[12,20],.17],['chime',[13,21],.15]]},
@@ -130,6 +135,7 @@
         case 'bubble':for(let i=0;i<3;i++)tone(rand(250,400),rand(700,1000),i*rand(.06,.12),.06,{gain:.12});break;
         case 'thunder':hush(300,0,2.6,{filter:'lowpass',to:70,gain:.6,attack:.12});hush(900,.05,.4,{filter:'lowpass',to:200,gain:.25});break;
         case 'bee':tone(220,240,0,.7,{type:'sawtooth',gain:.03,vib:30,attack:.08});break;
+        case 'jingle':for(let i=0;i<6;i++){tone(1900+i%3*370,null,i*.065,.12,{gain:.035});hush(6200,i*.065,.055,{gain:.025});}break;
         case 'chime':tone(880,null,0,2.2,{gain:.08,attack:.01});tone(1320,null,.02,1.8,{gain:.05});tone(1760,null,.04,1.2,{gain:.03});break;
       }
       setTimeout(()=>{try{out.disconnect();panner?.disconnect();}catch(_){}},4000);

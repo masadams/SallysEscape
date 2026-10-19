@@ -8798,7 +8798,8 @@
     try{list[i]=applyEdit(old,route);originals[prefix+old.id]=freeze(old);}catch(e){if(typeof console!=='undefined')console.warn('Workshop draft for '+old.id+' skipped: '+e.message);}});
   // Seasonal content has its own catalog and saves. It never joins the campaign trail.
   const autumn=typeof module!=='undefined'&&module.exports?require('./escape-autumn.js'):root.EscapeAutumn||[];
-  const seasonal=autumn.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,...route,seasonal:'autumn-hollow'}));
+  const winter=typeof module!=='undefined'&&module.exports?require('./escape-winter.js'):root.EscapeWinter||[];
+  const seasonal=[...autumn.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,...route,seasonal:'autumn-hollow'})),...winter.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,...route,seasonal:'winter'}))];
   const catalog=freeze({levels,challenges,regions,hidden,kids,seasonal});
   // Custom levels from the builder go through the same text-map path as every rebuilt route.
   function applyEdit(old,route){const keep={};for(const k of EDIT_KEEP)if(old[k]!==undefined)keep[k]=old[k];

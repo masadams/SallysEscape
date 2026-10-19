@@ -22,7 +22,7 @@ async function smoke(){
   await send('Runtime.enable');await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:1200,height:850,deviceScaleFactor:1,mobile:false});await send('Page.navigate',{url:base});
   let ready=false;for(let i=0;i<150;i++){if(await run('typeof gameState!=="undefined"&&!!document.getElementById("seasons-button")?.onclick')){ready=true;break;}await wait(100);}assert.ok(ready,'Game did not initialise');
   await run('document.getElementById("seasons-button").click()');await frame();assert.equal(await run('gameState'),'seasonalHub');assert.equal(await run('document.querySelectorAll("[data-season-clock]").length'),8);
-  assert.equal(await run('getComputedStyle(document.querySelector("#game-container canvas")).display'),'block');assert.equal(await run('seasonWorld.motion.lizard.joints.length>8'),true);assert.equal(await run('document.querySelectorAll(".season-level").length'),8);await screenshot('autumn-world');
+  assert.equal(await run('getComputedStyle(document.querySelector("#game-container canvas")).display'),'block');assert.equal(await run('seasonWorld.motion.lizard.joints.length>8'),true);assert.equal(await run('document.querySelectorAll(".season-level").length'),16);await screenshot('autumn-world');
   await run('escapeLightingMode="full";escapeLightingAuto=false;seasonWorld.player.x=26;seasonWorld.player.y=23.8;seasonWorld.motion.resetPlayer(seasonWorld.player);drawSeasonWorld()');await frame();await screenshot('autumn-pond-full');
   await run('escapeLightingMode="simple";drawSeasonWorld()');await frame();await screenshot('autumn-pond-simple');
   await run('escapeLightingMode="full";seasonWorld.player.x=20;seasonWorld.player.y=23.5;seasonWorld.motion.resetPlayer(seasonWorld.player);drawSeasonWorld()');await frame();await screenshot('autumn-oak');
@@ -30,8 +30,7 @@ async function smoke(){
   await run('escapeLightingMode="simple";drawSeasonWorld()');await frame();await screenshot('seasonal-weather-simple');
   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await run('escapeLightingMode="full";drawSeasonWorld()');await frame();assert.equal(await run('matchMedia("(prefers-reduced-motion: reduce)").matches'),true);await screenshot('seasonal-weather-reduced-motion');
   await send('Emulation.setEmulatedMedia',{features:[]});
-  await run('seasonVisit("winter");for(let i=0;i<120*60&&seasonWorld.target;i++)seasonWorld.advance(1/120);renderSeasonHUD(true);drawSeasonWorld()');await frame();assert.equal(await run('seasonWorld.areaOpen("winter")'),false,'unbuilt winter stays locked');assert.equal(await run('seasonWorld.nearbyGate()?.id'),'winter');await screenshot('winter-gate');
-  assert.match(await run('document.getElementById("season-route-brief").textContent'),/blizzard/i);
+  await require('./smoke-winter-browser.cjs').checkWinterBrowser({run,frame,screenshot,send});
   for(const area of ['spring','summer']){
    await run('seasonVisit('+JSON.stringify(area)+');for(let i=0;i<120*60&&seasonWorld.target;i++)seasonWorld.advance(1/120);renderSeasonHUD(true);drawSeasonWorld()');await frame();assert.equal(await run('seasonWorld.nearbyGate()?.id'),area);await screenshot(area+'-gate');
   }
@@ -55,7 +54,7 @@ async function smoke(){
   await send('Emulation.setDeviceMetricsOverride',{width:1200,height:850,deviceScaleFactor:1,mobile:false});await send('Emulation.setTouchEmulationEnabled',{enabled:false});await send('Emulation.setUserAgentOverride',{userAgent:'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140.0 Safari/537.36'});await run('windowResized()');await frame();assert.equal(await run('document.getElementById("title-keepsakes").parentElement.classList.contains("title-art")'),true,'keepsakes stay inside the art column');assert.equal(await run('(()=>{const p=document.querySelector(".title-menu").getBoundingClientRect(),b=document.getElementById("start-menu-container").getBoundingClientRect();return p.top>=b.top&&p.bottom<=b.bottom&&p.left>=b.left&&p.right<=b.right;})()'),true,'earned rewards do not push the menu outside its panel');await screenshot('menu-keepsakes');
   // Render each seasonal SFX through actual Web Audio, checking that its samples are finite and audible.
   await require('./smoke-glow-browser.cjs').checkGlowBrowser({run,frame,screenshot,send});
-  const sounds=await run('(async()=>{const out=[];for(const name of ["season-bones","season-zombie","season-ghost","season-pumpkin","season-basket","season-turkey"])out.push(await EscapeAudio.measure(name));return out;})()');
+  const sounds=await run('(async()=>{const out=[];for(const name of ["season-bones","season-zombie","season-ghost","season-pumpkin","season-basket","season-turkey","winter-yeti","winter-wisp","winter-cane","winter-snowman","winter-present","winter-snatcher","winter-krampus","winter-watchman"])out.push(await EscapeAudio.measure(name));return out;})()');
   for(const s of sounds)assert.ok(s&&Number.isFinite(s.rms)&&Number.isFinite(s.peak)&&s.rms>.0001&&s.peak>0,s?.name+' real sound samples');console.log('Seasonal Web Audio measurements: '+JSON.stringify(sounds));
   assert.deepEqual(errors,[],'uncaught errors while loading/drawing game');console.log('Seasonal browser smoke passed: real desktop/mobile rendering, menus, notes, rewards and Web Audio.');
  }finally{

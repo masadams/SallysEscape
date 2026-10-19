@@ -329,7 +329,7 @@ function playEscape(){
 function renderEscapeHUD(force=false){
   if(!escapeGame||(!force&&gameNow()-escapeHudAt<100))return;escapeHudAt=gameNow();
   const g=escapeGame;
-  document.getElementById('escape-mission-name').textContent=(g.level.draft?'✎ ':'')+(g.challenge?g.challenge.name:g.level.custom?'✎ '+g.level.name:g.level.seasonal?'Lantern '+(g.level.index+1)+' · '+g.level.name:g.level.kids?(g.level.sticker||'⭐')+' '+g.level.name:g.level.hidden?'✦ '+g.level.name:(EscapeCatalog.levels.indexOf(g.level)+1)+' · '+g.level.name);
+  document.getElementById('escape-mission-name').textContent=(g.level.draft?'✎ ':'')+(g.challenge?g.challenge.name:g.level.custom?'✎ '+g.level.name:g.level.seasonal?(g.level.seasonal==='winter'?'Ornament ':'Lantern ')+(g.level.index+1)+' · '+g.level.name:g.level.kids?(g.level.sticker||'⭐')+' '+g.level.name:g.level.hidden?'✦ '+g.level.name:(EscapeCatalog.levels.indexOf(g.level)+1)+' · '+g.level.name);
   const crossing=g.gates.filter(gate=>gate.duration&&gate.open&&gate.expiresAt!==null).sort((a,b)=>a.expiresAt-b.expiresAt)[0];
   const brace=g.gates.filter(gate=>gate.bracedUntil>g.elapsed).sort((a,b)=>a.bracedUntil-b.bracedUntil)[0],growing=g.seedGrowth.slice().sort((a,b)=>a.expires-b.expires)[0];
   const remaining=Math.max(0,Math.ceil((g.timeLimit||0)-g.elapsed));
@@ -426,7 +426,7 @@ function tickEscapeMusic(){
   if(!escapeMusic)return;
   escapeMusic.setVolume((paused?.35:1)*.6*musicVolume,isMuted||!musicOn||musicVolume===0);
   const screen=gameState==='start'?'menu':gameState==='escapeSelect'||gameState==='seasonalHub'?'world':'game';
-  const seasonTheme=gameState==='seasonalHub'?'autumn-festival':screen==='game'&&escapeGame?.level.seasonal?escapeGame.level.seasonalTheme:null;
+  const seasonTheme=gameState==='seasonalHub'?(seasonPack==='winter'?'winter-village':'autumn-festival'):screen==='game'&&escapeGame?.level.seasonal?escapeGame.level.seasonalTheme:null;
   // A story card being read has music of its own: a music box, warmer once Sally knows she is a Wayfinder.
   if(typeof escapeStoryOpen!=='undefined'&&escapeStoryOpen){const part=escapeStoryOpen.part?.n||escapeStoryOpen.card?.part||1;escapeMusic.setState('story',millis()/1000);escapeMusic.setStyle(EscapeMusic.styleFor(escapeStoryOpen.card?.kind==='season-sign'?escapeStoryOpen.card.theme:part>=2?'wayfinder':'tale'));escapeAmbience?.setVolume(0);return;}
   escapeMusic.setState(EscapeMusic.stateFor({screen,game:screen==='game'?escapeGame:null}),millis()/1000);
@@ -462,7 +462,7 @@ function escapeFootsteps(p){
   escapeStepDistance+=Math.hypot(p.x-escapeStepFrom.x,p.y-escapeStepFrom.y);escapeStepFrom={x:p.x,y:p.y};
   if(escapeStepDistance>=(p.sprinting?.62:p.crawling?.7:.48)){escapeStepDistance=0;escapeStepAlt=!escapeStepAlt;
     // The world map walks on plain ground; inside an escape the ground decides the step.
-    const inRun=gameState==='escape'&&escapeGame&&typeof EscapeFeel!=='undefined',surface=inRun?EscapeFeel.surface(escapeGame):'floor';
+    const inRun=gameState==='escape'&&escapeGame&&typeof EscapeFeel!=='undefined',surface=inRun?EscapeFeel.surface(escapeGame):gameState==='seasonalHub'&&seasonWorld?.areaAt().id==='winter'?(seasonWorld.sled.riding||seasonWorld.slippery.has(Math.floor(p.x)+','+Math.floor(p.y))?'ice':'snow'):'floor';
     escapeSound(p.swimming?'paddle':p.crawling?'crawl':'step',{sprint:p.sprinting,alt:escapeStepAlt,surface});
     if(inRun&&!p.swimming&&!p.crawling)EscapeFeel.step(escapeFx,escapeGame,{t:escapeFxClock,sprint:p.sprinting,alt:escapeStepAlt});}
 }
@@ -877,8 +877,8 @@ function drawEscapeVault(){
   for(const cap of g.caps||[]){const [ax,ay]=cap.at,[tx,ty]=cap.to;if(view.follow&&!g.visibleTile(ax,ay))continue;const x=(ax+.5)*cell,y=(ay+.5)*cell,ex=(tx+.5)*cell,ey=(ty+.5)*cell,mx=(x+ex)/2,my=(y+ey)/2-cell*1.2;
     noFill();stroke(255,190,120,70);strokeWeight(Math.max(1,cell*.035));drawingContext.setLineDash?.([cell*.08,cell*.12]);bezier(x,y,mx,my,mx,my,ex,ey);drawingContext.setLineDash?.([]);noStroke();fill(255,190,120,60);ellipse(ex,ey,cell*.5,cell*.5);
     const squash=g.elapsed<cap.readyAt-.6?.75:1;fill(0,0,0,50);ellipse(x,y+cell*.25,cell*.8,cell*.22);fill(240,230,210);rect(x-cell*.1,y,cell*.2,cell*.25,cell*.05);fill(214,70,58);arc(x,y+cell*.05,cell*.86,cell*.7*squash,PI,TWO_PI);fill(255,240,230);for(const [dx,dy] of [[-.2,-.12],[.05,-.22],[.22,-.08]])ellipse(x+dx*cell,y+dy*cell*squash,cell*.12,cell*.1);}
-  for(const th of g.thorns||[])for(const key of th.keys){const [x,y]=key.split(',').map(Number);if(view.follow&&!g.visibleTile(x,y))continue;noStroke();fill(th.raised?150:90,th.raised?60:70,th.raised?60:60,th.raised?220:140);rect(x*cell+cell*.08,y*cell+cell*.08,cell*.84,cell*.84,cell*.1);const shake=th.warning?Math.sin(g.elapsed*40)*cell*.03:0,h=th.raised?.38:th.warning?.12:.06;fill(225,210,180);for(const [ox,oy]of [[.3,.3],[.7,.3],[.5,.55],[.3,.78],[.7,.78]])triangle((x+ox-.08)*cell+shake,(y+oy+.06)*cell,(x+ox+.08)*cell+shake,(y+oy+.06)*cell,(x+ox)*cell+shake,(y+oy+.06-h)*cell);}
-  for(const log of g.logs||[]){stroke(255,150,80,log.warning?120+100*Math.sin(g.elapsed*20):40);strokeWeight(cell*.05);drawingContext.setLineDash([cell*.15,cell*.15]);line(log.from.x*cell,log.from.y*cell,log.to.x*cell,log.to.y*cell);drawingContext.setLineDash([]);
+  for(const th of g.thorns||[])for(const key of th.keys){const [x,y]=key.split(',').map(Number);if(view.follow&&!g.visibleTile(x,y))continue;if(g.level.seasonal==='winter'){drawWinterIcicles(th,key,cell,g);continue;}noStroke();fill(th.raised?150:90,th.raised?60:70,th.raised?60:60,th.raised?220:140);rect(x*cell+cell*.08,y*cell+cell*.08,cell*.84,cell*.84,cell*.1);const shake=th.warning?Math.sin(g.elapsed*40)*cell*.03:0,h=th.raised?.38:th.warning?.12:.06;fill(225,210,180);for(const [ox,oy]of [[.3,.3],[.7,.3],[.5,.55],[.3,.78],[.7,.78]])triangle((x+ox-.08)*cell+shake,(y+oy+.06)*cell,(x+ox+.08)*cell+shake,(y+oy+.06)*cell,(x+ox)*cell+shake,(y+oy+.06-h)*cell);}
+  for(const log of g.logs||[]){if(g.level.seasonal==='winter'){drawWinterSnowball(log,cell,g);continue;}stroke(255,150,80,log.warning?120+100*Math.sin(g.elapsed*20):40);strokeWeight(cell*.05);drawingContext.setLineDash([cell*.15,cell*.15]);line(log.from.x*cell,log.from.y*cell,log.to.x*cell,log.to.y*cell);drawingContext.setLineDash([]);
     if(log.pos){push();translate(log.pos.x*cell,log.pos.y*cell);const across=Math.abs(log.to.x-log.from.x)>Math.abs(log.to.y-log.from.y);if(across)rotate(HALF_PI);noStroke();fill(0,0,0,70);rect(-cell*.42,-cell*.3,cell*.9,cell*.66,cell*.25);fill(122,84,50);rect(-cell*.45,-cell*.34,cell*.9,cell*.62,cell*.25);fill(170,125,80);ellipse(-cell*.45,0,cell*.2,cell*.6);ellipse(cell*.45,0,cell*.2,cell*.6);stroke(90,60,35);strokeWeight(cell*.03);const roll=(g.elapsed*12)%1;for(const k of [0,.33,.66])line(-cell*.4,(-.3+((k+roll)%1)*.6)*cell,cell*.4,(-.3+((k+roll)%1)*.6)*cell);pop();}}
   for(const v of g.vents){const [vx,vy]=v.at;if(view.follow&&!g.visibleTile(vx,vy)&&!v.tiles.some(([x,y])=>g.visibleTile(x,y)))continue;noStroke();fill(120,96,80);rect((vx+.18)*cell,(vy+.18)*cell,cell*.64,cell*.64,cell*.1);stroke(60,44,36);strokeWeight(cell*.05);for(const o of [.35,.5,.65])line((vx+o)*cell,(vy+.25)*cell,(vx+o)*cell,(vy+.75)*cell);noStroke();
     for(const [i,[x,y]] of v.tiles.entries()){if(view.follow&&!g.visibleTile(x,y))continue;if(v.active){for(let k=0;k<3;k++){const wob=Math.sin(g.elapsed*9+i*1.7+k*2.1)*.15;fill(245,245,245,150-k*30);ellipse((x+.5+wob)*cell,(y+.5-wob)*cell,cell*(.9-k*.15),cell*(.9-k*.15));}}else if(v.warning){fill(235,235,235,60+40*Math.sin(g.elapsed*20));if(i<2)ellipse((x+.5)*cell,(y+.5)*cell,cell*.35,cell*.35);}else{stroke(200,120,80,60);strokeWeight(cell*.03);noFill();rect(x*cell+cell*.2,y*cell+cell*.2,cell*.6,cell*.6,cell*.1);noStroke();}}}
@@ -913,7 +913,7 @@ function drawEscapeVault(){
     for(let a=-cone;a<=cone+.001;a+=cone/24){let reach=0,from=h;for(let d=step;d<=range;d+=step){const to={x:h.x+Math.cos(ang+a)*d,y:h.y+Math.sin(ang+a)*d};if(!g.clear(from,to,true))break;reach=d;from=to;}vertex((h.x+Math.cos(ang+a)*reach)*cell,(h.y+Math.sin(ang+a)*reach)*cell);}endShape(CLOSE);
   }
   if(aids&&h.kind==='toad'&&h.state==='windup'){let d=0;const dx=Math.cos(h.facing),dy=Math.sin(h.facing);while(d<5.5&&g.sightFloor(Math.floor(h.x+dx*(d+.1)),Math.floor(h.y+dy*(d+.1))))d+=.1;stroke(240,120,140,90+70*Math.sin(g.elapsed*22));strokeWeight(cell*.06);drawingContext.setLineDash([cell*.12,cell*.12]);line(h.x*cell,h.y*cell,(h.x+dx*d)*cell,(h.y+dy*d)*cell);drawingContext.setLineDash([]);}
-  if(h.kind==='toad'&&h.state==='tongue'&&h.tongueLength>0){stroke(...(g.level.seasonal?[112,157,65]:[232,110,140]));strokeWeight(cell*.12);line(h.x*cell,h.y*cell,(h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell);noStroke();fill(250,150,170);ellipse((h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell,cell*.22,cell*.22);}
+  if(h.kind==='toad'&&h.state==='tongue'&&h.tongueLength>0){stroke(...(g.level.seasonal==='winter'?[188,234,248]:g.level.seasonal?[112,157,65]:[232,110,140]));strokeWeight(cell*.12);line(h.x*cell,h.y*cell,(h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell);noStroke();fill(250,150,170);ellipse((h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell,cell*.22,cell*.22);}
   if(aids&&h.kind==='cricket'&&h.state==='chirp'){noFill();for(let k=0;k<3;k++){const r=((g.elapsed*3+k/3)%1);stroke(255,230,140,200*(1-r));strokeWeight(cell*.04);ellipse(h.x*cell,h.y*cell,cell*(.5+r*2.5),cell*(.5+r*2.5));}}
   // A scorpion's strike ring is always shown: bright while the tail is up, faint while it rests.
   if(aids&&h.kind==='scorpion'&&h.state!=='buried'){const up=h.tailUp||['raise','windup','sting'].includes(h.state),r=(h.reach||1.8)*2*cell;noStroke();fill(255,140,70,up?34:12);ellipse(h.x*cell,h.y*cell,r,r);noFill();stroke(255,up?150:200,up?70:150,up?200:70);strokeWeight(cell*(up?.06:.035));drawingContext.setLineDash(up?[]:[cell*.18,cell*.14]);ellipse(h.x*cell,h.y*cell,r,r);drawingContext.setLineDash([]);}
@@ -1497,9 +1497,9 @@ function drawEscapeCompanion(p,cell,clock){
 const escapeShade=(c,amount)=>c.map(v=>Math.round(amount>0?v+(255-v)*amount:v*(1+amount)));
 let escapeSkinCache={id:null,palette:null};
 function escapeSkinPalette(){
-  const seasonal=typeof seasonProgress==='function'&&seasonProgress().data.skin&&seasonProgress().complete();
-  const id=seasonal?'copper-lantern':typeof escapeProgress!=='undefined'&&typeof EscapeWorld!=='undefined'?escapeProgress.skin(EscapeWorld.chapters):'classic';
-  if(escapeSkinCache.id===id)return escapeSkinCache.palette;const k=seasonal?EscapeSeasons.copper:ESCAPE_SKINS[id]||ESCAPE_SKINS.classic;
+  const seasonal=typeof seasonProgress==='function'&&seasonProgress().activeSkin();
+  const id=seasonal?seasonal.id:typeof escapeProgress!=='undefined'&&typeof EscapeWorld!=='undefined'?escapeProgress.skin(EscapeWorld.chapters):'classic';
+  if(escapeSkinCache.id===id)return escapeSkinCache.palette;const k=seasonal?seasonal:ESCAPE_SKINS[id]||ESCAPE_SKINS.classic;
   const palette={body:k.body,dark:k.dark,light:k.light,spot:k.spot,leg:escapeShade(k.body,-.13),elbow:escapeShade(k.body,.12),head:escapeShade(k.body,.06),patch:escapeShade(k.light,-.02),toe:escapeShade(k.body,.15),toeLift:escapeShade(k.body,.35),nostril:escapeShade(k.spot,-.1)};
   escapeSkinCache={id,palette};return palette;
 }

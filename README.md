@@ -81,6 +81,8 @@ straight for her, and any pebble or glow mushroom thrown near a magpie gets snat
 **Glow bugs.** Every glow bug freed (and golden fly caught) counts: 25 open the Cloud Nest, 40 and 75 earn
 new colours for Sally (Firefly and Moonbeam), and at 100 a little sea-green glow bug of her own follows her.
 
+**Winterlight Hollow.** The seasonal world now includes eight Christmas/winter escapes, slippery ice floors, eight themed creatures, a safe steerable sledding hill and independent winter keepsakes. Winter is open for testing; `access` in `public/escape-seasons.js` can later close or schedule it without deleting progress. See [Winter design and level notes](docs/WINTER.md).
+
 ## Self hosting
 
 Deploy `compose.yaml` from this repository in Portainer. Set `IMAGE_TAG=latest` and `NPM_NETWORK=nginx_default` (or your existing proxy network). In Nginx Proxy Manager, point your chosen hostname to `sallys-escape:8080`. No database volume, API hostname or Netlify project is required. The game serves its own code and libraries; progress is stored in each browser, per player.
