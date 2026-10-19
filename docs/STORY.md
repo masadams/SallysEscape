@@ -48,13 +48,23 @@ stands beside it. The Journal's Great Map joins an area once the trail past it o
   Sally reaches it on the world map; a part's title comes before its first card.
 - A card turns a page at a time; a page in *italics* in the manuscript is something written down and
   shows as a scrap of paper.
-- Cards are saved per player (`progress.data.story`) and can be read again from **Journal → Story**.
+- Cards are saved per player (`progress.data.story`; found and read pages in `notes` and `notesRead`)
+  and can be read again from **Journal → Story**.
 - While a card is open the world map holds still, ambience fades and the reading music plays: a slow
   music box (`tale`) in Part One, a warmer theme (`wayfinder`) from Part Two on.
 - The new story began with a fresh start: the first load of save era 2 cleared every player's
   progress, stickers and tips (names, settings and built levels stayed).
 
+## Pages found along the way
+
+42 short notes lie in ordinary escapes, two in each area (`public/escape-notes.js`, from
+`docs/story-revision/placements.json`). A page is a folded scrap on one floor tile; walking onto it
+picks it up and saves it at once, even if Sally is caught. It is read afterwards, from the results
+(“Read the page you found”) or **Journal → Story**, never during a run. A page shows only in its own
+official level at the revision it was placed for, and only on open floor. Finding pages gives no
+treasure, stars or unlocks: an area's little sketch is whole once both its pages are found, and the
+journal's border gains a leaf, a lantern and a path at 14, 28 and 42 pages.
+
 ## Still to build
 
-Notes hidden in levels (42, two per area, in `docs/story-revision/LEVEL-NOTES.md`), the world map's
-recovery art, and narration for five scenes (`NARRATION-SCRIPTS.md`).
+The world map's recovery art and narration for five scenes (`NARRATION-SCRIPTS.md`).

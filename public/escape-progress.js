@@ -22,7 +22,7 @@
   };
   const GLOW_GIFTS=[{at:40,skin:'firefly',text:'40 glow bugs freed! Sally can wear Firefly colours.'},{at:75,skin:'moonbeam',text:'75 glow bugs freed! Sally can wear Moonbeam colours.'},{at:100,companion:true,text:'100 glow bugs freed! One of them stays with Sally now, a little sea-green light of her own.'}];
   class EscapeProgress{
-    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],challengesSeen:[],attempts:{},masterySeen:[],skin:'classic',whisper:false,hidden:{},met:[],secrets:[],items:[],story:[],hard:[]};this.lastPerfect=false;this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
+    constructor(storage){this.storage=storage;this.data={version:1,view:'follow',levels:{},challenges:{},caches:[],goldflies:0,regionsSeen:[],challengesSeen:[],attempts:{},masterySeen:[],skin:'classic',whisper:false,hidden:{},met:[],secrets:[],items:[],story:[],notes:[],notesRead:[],hard:[]};this.lastPerfect=false;this.lastFirstTry=false;this.persistent=Boolean(storage);this.read();}
     read(){
       let raw,value;
       try{raw=this.storage?.getItem(KEY);this.persistent=Boolean(this.storage);}catch(_){this.persistent=false;return;}
@@ -43,6 +43,8 @@
       if(Array.isArray(value.secrets))for(const id of value.secrets)if((SECRET_RULES[id]?.bump||SECRET_RULES[id]?.cache||id==='moss-den')&&!this.data.secrets.includes(id))this.data.secrets.push(id);
       if(Array.isArray(value.items))for(const id of value.items)if(SECRET_RULES['moss-den'].items.includes(id)&&!this.data.items.includes(id))this.data.items.push(id);
       if(Array.isArray(value.story))for(const id of value.story)if(typeof id==='string'&&/^[a-z0-9:-]{1,40}$/.test(id)&&!this.data.story.includes(id)&&this.data.story.length<200)this.data.story.push(id);
+      // Notes found in levels, and which of them have been read; ids only, never the words.
+      for(const k of ['notes','notesRead'])if(Array.isArray(value[k]))for(const id of value[k])if(typeof id==='string'&&/^level-note:[a-z]+:[12]$/.test(id)&&!this.data[k].includes(id)&&this.data[k].length<64)this.data[k].push(id);
       if(Array.isArray(value.met))for(const k of value.met)if(typeof k==='string'&&/^[a-z-]{2,20}$/.test(k)&&!this.data.met.includes(k)&&this.data.met.length<64)this.data.met.push(k);
       for(const level of catalog.hidden||[]){const saved=value.hidden?.[level.id],old=this.data.hidden[level.id];if(!saved||saved.cleared!==true||!validTime(saved.bestTime)||!Number.isInteger(saved.stars)||saved.stars<1||saved.stars>3)continue;
         this.data.hidden[level.id]={cleared:true,bestTime:Math.min(old?.bestTime||Infinity,saved.bestTime),stars:Math.max(old?.stars||0,saved.stars)};}
@@ -130,6 +132,10 @@
     catchGoldfly(){this.read();this.data.goldflies=Math.min(this.data.goldflies+1,100000);this.write();return this.data.goldflies;}
     // Returns the regions that are open now but were never announced before.
     // Story cards read so far, in the order they were found.
+    noteFound(id){return this.data.notes.includes(id);}
+    noteRead(id){return this.data.notesRead.includes(id);}
+    findNote(id){this.read();if(this.data.notes.includes(id))return false;this.data.notes.push(id);this.write();return true;}
+    readNote(id){this.read();if(this.data.notesRead.includes(id)||!this.data.notes.includes(id))return false;this.data.notesRead.push(id);this.write();return true;}
     storySeen(id){return this.data.story.includes(id);}
     markStory(id){this.read();if(this.data.story.includes(id))return false;this.data.story.push(id);this.write();return true;}
     announceRegions(open){this.read();const fresh=open.filter(i=>!this.data.regionsSeen.includes(i));if(fresh.length){this.data.regionsSeen.push(...fresh);this.write();}return fresh;}

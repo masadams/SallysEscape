@@ -318,6 +318,7 @@ function playEscape(){
   if(events.length&&typeof escapePadRumble==='function')escapePadRumble(events);
   drawEscapeVault();drawEscapeMoment();drawEscapeCurtain();renderEscapeHUD();
   // A creature met for the first time joins the bestiary, with a short note at the top.
+  if(typeof tickEscapeNote==='function')tickEscapeNote(escapeGame);
   if(escapeGame.met&&escapeGame.met.size!==escapeMetCount&&!escapeGame.level.custom){escapeMetCount=escapeGame.met.size;const fresh=escapeProgress.meet([...escapeGame.met]);const first=fresh.map(k=>EscapeBestiary.byKind(k)).find(Boolean);if(first)escapeBestiaryNote={text:'📖 New in the bestiary: '+first.name,until:millis()+3500};}
   if(escapeBestiaryNote&&millis()<escapeBestiaryNote.until){push();textAlign(CENTER,CENTER);const size=width<600?13:16;textSize(size);const w=escapeBestiaryNote.text.length*size*.56+28,a=Math.min(1,(escapeBestiaryNote.until-millis())/600);noStroke();fill(20,44,40,220*a);rect(width/2-w/2,54,w,32,16);fill(255,236,170,255*a);text(escapeBestiaryNote.text,width/2,70);pop();}
   if(escapeGame.status!=='playing'&&!escapeResultShown){if(!escapeMoment)startEscapeMoment(escapeGame);else if(millis()-escapeMoment.at>=escapeMoment.hold)showEscapeResult();}
@@ -394,6 +395,7 @@ function showEscapeResult(){
   document.getElementById('escape-result-challenge').textContent=[opened.length?'⚑ New challenge open: '+openedText+'. Find the glowing flag on the map.':'',...mastered.map(c=>'♛ '+c.name+' mastered! Every star is yours, and Sally can now wear its '+(ESCAPE_SKINS[c.theme]?.name||c.name)+' colours. Change them on the world map.')].filter(Boolean).join(' ');
   if(mastered.length)escapeSound('cache');
   if(perfect&&escapeProgress.whisper())document.getElementById('escape-result-challenge').textContent+=' ✦ Somewhere beyond the trail, something has noticed you.';
+  if(typeof escapeNoteResultButton==='function')escapeNoteResultButton();
   nextButton.style.display=won&&!r.challengeId?'inline-block':'none';
   nextButton.textContent=next?'Try next escape →':'World map';
   const community=escapeGame.level.custom&&escapeOptions.from==='community';
@@ -837,6 +839,7 @@ function drawEscapeVault(){
   if(!g.hasKey){
     stroke(255,213,112);strokeWeight(cell*.13);noFill();ellipse((g.key.x-.12)*cell,g.key.y*cell,cell*.28,cell*.28);line(g.key.x*cell,g.key.y*cell,(g.key.x+.3)*cell,g.key.y*cell);line((g.key.x+.22)*cell,g.key.y*cell,(g.key.x+.22)*cell,(g.key.y+.18)*cell);
   }
+  if(typeof drawEscapeNote==='function')drawEscapeNote(g,cell);
   for(const loot of g.loot)if(!loot.taken){
     noStroke();fill(245,189,87);push();translate(loot.x*cell,loot.y*cell);
     if(loot.value>1){rect(-cell*.3,-cell*.22,cell*.6,cell*.44,cell*.08);fill(100,71,40);rect(-cell*.06,-cell*.22,cell*.12,cell*.44);}
