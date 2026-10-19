@@ -11,7 +11,7 @@ The mushroom lasts **12 seconds of active play**. Its final three seconds visibl
 | Magpie | Still flies off to steal the mushroom. Stealing it ends that mushroom's protection immediately. |
 | Other creatures | Keep their existing behaviors. Ordinary hunters can spot a lit Sally farther away, and leafy cover does not conceal her in the glow. |
 
-This is temporary breathing room, not a place to wait indefinitely. A spider can pursue a Sally who steps out into its view before the light expires. If she slips away unseen, it does not learn her new position. Without a recent sighting, it resumes its original patrol. A creature trapped in a fully lit pocket cowers there instead of teleporting or attacking a sheltered Sally.
+This is temporary breathing room, not a place to wait indefinitely. In fog, a watching creature's eyes glint just beyond the glow, giving Sally a warning without revealing the surrounding room. Walls still hide those eyes. A spider can pursue a Sally who steps out into its view before the light expires. If she slips away unseen, it does not learn her new position. Without a recent sighting, it resumes its original patrol. A creature trapped in a fully lit pocket cowers there instead of teleporting or attacking a sheltered Sally.
 
 Only **thrown mushrooms** repel these two creatures. Decorative glow plants, the companion bug, moths, lightning and warm stones retain their own roles. Spiders still leave webs; old webs still slow Sally, but touching one cannot override the spider's fear while Sally is sheltered.
 

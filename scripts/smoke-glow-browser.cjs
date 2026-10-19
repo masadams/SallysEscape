@@ -21,8 +21,8 @@ async function checkGlowBrowser({run,frame,screenshot,send}){
  await send('Emulation.setDeviceMetricsOverride',{width:1200,height:850,deviceScaleFactor:1,mobile:false});await send('Emulation.setTouchEmulationEnabled',{enabled:false});
  await send('Emulation.setUserAgentOverride',{userAgent:'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140.0 Safari/537.36'});await run('windowResized();escapeLightingMode="full"');
  await start(true);await screenshot('glow-fog');
- await run('for(let i=0;i<120*12&&escapeGame.lights[0]&&escapeGame.lights[0].until-escapeGame.elapsed>.6;i++)escapeGame.advance(1/120,{});renderEscapeHUD();drawEscapeVault()');await frame();assert.equal(await run('escapeGame.hunters[0].state'),'light-watch');await screenshot('glow-fading');
- await run('for(let i=0;i<120*.9;i++)escapeGame.advance(1/120,{});renderEscapeHUD();drawEscapeVault()');await frame();assert.equal(await run('escapeGame.lights.length'),0);assert.equal(await run('escapeGame.hunters[0].state'),'rush');await screenshot('glow-rush');
+ await run('escapeGame.paused=false;for(let i=0;i<120*12&&escapeGame.lights[0]&&escapeGame.lights[0].until-escapeGame.elapsed>.6;i++)escapeGame.advance(1/120,{});renderEscapeHUD();drawEscapeVault()');await frame();assert.equal(await run('escapeGame.hunters[0].state'),'light-watch');assert.ok(await run('escapeGame.lights[0].until-escapeGame.elapsed<.61'),'the fade screenshot is near actual expiry');await screenshot('glow-fading');
+ await run('escapeGame.paused=false;for(let i=0;i<120*.9;i++)escapeGame.advance(1/120,{});renderEscapeHUD();drawEscapeVault()');await frame();assert.equal(await run('escapeGame.lights.length'),0);assert.equal(await run('escapeGame.hunters[0].state'),'rush');await screenshot('glow-rush');
  console.log('Glow browser smoke passed: real throw, wider light, Full/Simple falloff, touch layout, fog, waiting, fade and rush.');
 }
 module.exports={glowBrowserRoute,checkGlowBrowser};
