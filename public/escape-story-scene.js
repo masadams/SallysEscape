@@ -3,7 +3,7 @@
 // and show on the world map, each once; the Journal's Story page lists every card found, lets
 // them be read again, and draws the Great Map joining up as the garden recovers. While a card is open the world map holds still and the
 // reading music plays (escapescene.js tickEscapeMusic).
-let escapeStoryQueue=[],escapeStoryOpen=null;
+let escapeStoryQueue=[],escapeStoryOpen=null,escapeStoryOpenedAt=0;
 // Queue a card the first time it comes up; a part's title goes in front of its first card.
 function queueEscapeStory(id){
   if(typeof EscapeStory==='undefined')return false;const card=EscapeStory.byId(id);
@@ -119,7 +119,7 @@ function escapeStoryPageHtml(text){
 function showEscapeStory(entry,fresh,onDone){
   const page=escapeStoryPage();if(!page)return;const kindLabel={journal:'From Old Moss’s journal',map:'A field sheet of the Great Map',moment:'Along the way',note:'A note, left behind',found:entry.card?.what||'A page, found'};
   const reduced=Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
-  escapeStoryOpen=entry;
+  escapeStoryOpen=entry;escapeStoryOpenedAt=Date.now();
   const finish=()=>{if(fresh)escapeProgress.markStory(entry.id);page.style.display='none';escapeStoryOpen=null;
     if(onDone){onDone();return;}
     if(fresh&&escapeStoryQueue.length)showEscapeStory(escapeStoryQueue.shift(),true);else if(!fresh)openEscapeStoryBook();else renderEscapeWorldTotals?.();};
@@ -138,16 +138,23 @@ function showEscapeStory(entry,fresh,onDone){
   const show=(i,dir=1)=>{settle();at=i;pages.innerHTML='<div class="story-page'+(dir<0?' story-from-left':'')+'">'+escapeStoryPageHtml(c.body[i])+'</div>';
     const page1=i===0&&!/^\*/.test(c.body[0]);pages.firstChild.classList.toggle('story-first',page1);
     count.textContent=c.body.length>1?(i+1)+' / '+c.body.length:'';back.hidden=i===0;next.textContent=i<last?'Next ›':doneLabel;
-    if(pages.querySelector('.story-letter-slip'))escapeSound('flutter');
+    escapeStoryFit(pages);if(pages.querySelector('.story-letter-slip'))escapeSound('flutter');
     if(!reduced){const parts=[...pages.querySelectorAll('.story-page > p, .story-letter-slip p')];parts.forEach((el,k)=>{if(!k)return;el.classList.add('story-wait');timers.push(setTimeout(()=>el.classList.remove('story-wait'),k*650));});}};
   const waiting=()=>pages.querySelector('.story-wait');
   next.onclick=()=>{if(waiting()){settle();return;}if(at<last){show(at+1);escapeSound('ping');return;}settle();finish();};
   back.onclick=()=>{if(at>0){show(at-1,-1);escapeSound('ping');next.focus?.();}};
   show(0);next.focus?.();
 }
+// A page's words shrink a little, down to a floor, until they fit without scrolling.
+function escapeStoryFit(pages){
+  pages.style.fontSize='';if(!pages.clientHeight)return;let size=parseFloat(getComputedStyle(pages).fontSize)||17;
+  for(let i=0;i<10&&pages.scrollHeight>pages.clientHeight+1&&size>13.5;i++){size-=.75;pages.style.fontSize=size+'px';}
+}
 // Enter or Space turn the page (as A does), the left arrow turns back; Escape (or B) skips to the end
-// of the card and closes it.
-if(typeof document!=='undefined')document.addEventListener('keydown',e=>{if(!escapeStoryOpen||!['Enter',' ','Escape','ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();e.stopPropagation();const next=document.getElementById('story-next');if(!next)return;
+// of the card and closes it. A key still held from walking (a repeat, or one in the first moment a card
+// is open) does nothing, so running into a card on the world map never flicks it shut.
+if(typeof document!=='undefined')document.addEventListener('keydown',e=>{if(!escapeStoryOpen||!['Enter',' ','Escape','ArrowLeft'].includes(e.key))return;e.preventDefault();e.stopPropagation();const next=document.getElementById('story-next');if(!next)return;
+  if(e.repeat||Date.now()-escapeStoryOpenedAt<450)return;
   if(e.key==='ArrowLeft'){document.getElementById('story-back')?.click();return;}
   if(e.key==='Escape'){for(let i=0;i<40&&escapeStoryOpen&&document.getElementById('story-next')===next;i++)next.click();return;}
   next.click();},true);

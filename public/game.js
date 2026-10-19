@@ -13,7 +13,7 @@ function suppressHeldKeys(){Object.values(controlCodes).forEach(c=>suppressedKey
 // route picks Auto (TV boxes only), Direct or Through media; it applies from the next start.
 let escapeAudioRoute=(()=>{try{return localStorage.getItem('sallys-escape-audio-route')||'auto';}catch(_){return 'auto';}})(),escapeAudioElement=null;
 function escapeAudioViaMedia(){return escapeAudioRoute==='media'||escapeAudioRoute==='auto'&&typeof isTvDevice==='function'&&isTvDevice();}
-function getAudioContext(){if(escapeAudio)return escapeAudio;const A=window.AudioContext||window.webkitAudioContext;try{escapeAudio=new A({latencyHint:'balanced'});}catch(_){escapeAudio=new A();}
+function getAudioContext(){if(escapeAudio)return escapeAudio;const A=window.AudioContext||window.webkitAudioContext;try{escapeAudio=new A({latencyHint:typeof isTvDevice==='function'&&isTvDevice()?'playback':'balanced'});}catch(_){escapeAudio=new A();}
   if(escapeAudioViaMedia()&&escapeAudio.createMediaStreamDestination&&typeof Audio!=='undefined'){try{const out=escapeAudio.createMediaStreamDestination();escapeAudioElement=new Audio();escapeAudioElement.srcObject=out.stream;escapeAudioElement.autoplay=true;Object.defineProperty(escapeAudio,'destination',{configurable:true,get:()=>out});escapeAudioElement.play?.()?.catch?.(()=>{});}catch(_){escapeAudioElement=null;}}
   return escapeAudio;}
 // Browsers keep sound off until the player presses something. Every press tries again until the sound

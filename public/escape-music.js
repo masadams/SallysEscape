@@ -188,18 +188,21 @@
       try{
         if(context&&context!==T.getContext()&&context!==T.getContext().rawContext)T.setContext(context);
         this.context=T.getContext(); // Remember it: callbacks may run while another context is current.
-        // Notes are scheduled a quarter second ahead, so a slow frame (a busy phone) never makes the music stutter.
-        try{this.context.lookAhead=.25;}catch(_){}
+        // Notes are scheduled a quarter second ahead, so a slow frame (a busy phone) never makes the music
+        // stutter. A TV box gets more room (its frames can be much slower) and lighter instruments: a short
+        // reverb and plain voices, which cost the sound engine far less. Phones and computers are unchanged.
+        const lite=Boolean(root.isTvDevice?.());this.lite=lite;
+        try{this.context.lookAhead=lite?.6:.25;}catch(_){}
         // Everything passes a low-pass that stays wide open until Sally swims (muffled, as if heard
         // underwater) or hides in leaves (a little softened).
         this.muffleFilter=new T.Filter({frequency:18000,type:'lowpass',rolloff:-12}).connect(new T.Limiter(-6).toDestination());
         this.master=new T.Gain({gain:this.muted?0:this.volume}).connect(this.muffleFilter);
-        const reverb=new T.Reverb({decay:3.2,wet:.28}).connect(this.master);await reverb.ready;
+        const reverb=new T.Reverb({decay:lite?1.3:3.2,wet:lite?.22:.28}).connect(this.master);await reverb.ready;
         // Tone treats new Gain(0) as the default gain of 1, so silent gains are passed as options.
         for(const name of LAYERS){const gain=new T.Gain({gain:0}).connect(['pad','melody','tension'].includes(name)?reverb:this.master);this.layers.set(name,{gain,target:0,quietAt:0});}
         const out=name=>this.layers.get(name).gain;
         const v=this.voices;
-        v.pad=new T.PolySynth(T.Synth,{oscillator:{type:'fattriangle',spread:18,count:2},envelope:{attack:.9,decay:.5,sustain:.7,release:2}}).connect(new T.Filter(1400,'lowpass').connect(out('pad')));
+        v.pad=new T.PolySynth(T.Synth,{oscillator:lite?{type:'triangle'}:{type:'fattriangle',spread:18,count:2},envelope:{attack:.9,decay:.5,sustain:.7,release:2}}).connect(new T.Filter(1400,'lowpass').connect(out('pad')));
         v.bass=new T.MonoSynth({oscillator:{type:'triangle'},filter:{Q:1,type:'lowpass'},envelope:{attack:.005,decay:.18,sustain:.1,release:.15},filterEnvelope:{attack:.005,decay:.12,sustain:.2,baseFrequency:220,octaves:2.5}}).connect(out('bass'));
         v.melody=new T.FMSynth({harmonicity:3.01,modulationIndex:2,oscillator:{type:'sine'},envelope:{attack:.004,decay:.35,sustain:.05,release:.4},modulationEnvelope:{attack:.002,decay:.2,sustain:0,release:.2}}).connect(out('melody'));
         // Region leads: a soft pluck, a glassy bell and a breathy flute, plus an arpeggio voice.

@@ -664,7 +664,7 @@ body.pad-nav #touch-controls{display:none!important}
 .story-eyebrow { display:block; font-family:inherit; font-size:.72rem; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-soft); }
 .story-card h2 { margin:6px 0 14px; font-size:clamp(1.5rem,2.6vw,2rem); font-weight:600; line-height:1.15; color:var(--ink); }
 .story-card h2::after { content:''; display:block; width:56px; height:2px; margin-top:12px; background:linear-gradient(90deg,var(--accent),transparent); }
-.story-pages { flex:1; min-height:0; overflow:auto; font-size:clamp(1.02rem,1.5vw,1.16rem); line-height:1.7; padding-right:4px; }
+.story-pages { flex:1; min-height:0; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#b89a6a66 transparent; font-size:clamp(1.02rem,1.5vw,1.16rem); line-height:1.7; padding-right:4px; }
 .story-page { animation:story-turn .45s ease-out both; }
 .story-page.story-from-left { animation-name:story-turn-back; }
 .story-page p { margin:0 0 .7em; transition:opacity .6s ease,transform .6s ease; }
@@ -732,3 +732,10 @@ body.pad-nav #touch-controls{display:none!important}
 .story-area-notes > b { display:block; font-size:.78rem; color:#c9d8b8; margin:2px 0 4px; } .story-area-notes > b span { color:#e8c25a; font-weight:400; }
 .story-marks { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 8px; } .story-mark { font-size:.8rem; padding:3px 10px; border-radius:999px; background:#4a3e1e; border:1px solid #c9a64e; color:#f4e2a8; }
 .escape-note-btn { display:block; margin:10px auto 0; }
+/* Controller glyphs: shown only while a pad is in use, in place of keyboard hints. */
+.pad-glyph { display:none; font-style:normal; width:1.45em; height:1.45em; margin-right:.45em; border-radius:50%; font:700 .78em/1.45em system-ui,sans-serif; text-align:center; color:#fff; vertical-align:.08em; box-shadow:inset 0 -2px 0 #0003; }
+body.pad-nav .pad-glyph { display:inline-block; } body.pad-nav .key-hint { display:none; }
+.pad-a { background:#3f9a4a; } .pad-b { background:#c8463e; } .pad-x { background:#3a6fc4; } .pad-y { background:#d6a62a; color:#2a2008; }
+.world-pad-bar { display:none; } body.pad-nav .world-pad-bar { display:flex; }
+.world-pad-bar { position:absolute; left:50%; top:16px; transform:translateX(-50%); gap:16px; align-items:center; padding:7px 16px; border-radius:999px; background:#0b1f1acc; border:1px solid #ffffff1c; color:#e8efd8; font-size:.86rem; white-space:nowrap; pointer-events:none; z-index:5; }
+.world-pad-bar span { display:inline-flex; align-items:center; }

@@ -10,7 +10,7 @@ const ESCAPE_PAD_ACTIONS={A:'look',B:'burrow',X:'pebble',Y:'tongue',LB:'glow',RB
 // The labels shown on the tool buttons while a pad is in use, in place of the keyboard keys.
 const ESCAPE_PAD_LABELS={Space:'A',E:'B',Q:'X',R:'Y',L:'LB',Z:'RB',X:'L3',F:'R3'};
 const ESCAPE_PAD_DEAD=.22;
-const escapePad={exitAt:0,index:null,active:false,x:0,y:0,sprint:false,crawl:false,prev:[],nav:{dir:null,at:0,repeat:false}};
+const escapePad={exitAt:0,holdY:null,index:null,active:false,x:0,y:0,sprint:false,crawl:false,prev:[],nav:{dir:null,at:0,repeat:false}};
 const escapePadActive=()=>escapePad.active;
 function escapePadLabel(key){return escapePad.active?ESCAPE_PAD_LABELS[key]||key:key;}
 
@@ -38,10 +38,12 @@ function pollEscapePad(){
   if(gameState==='escapeSelect'){
     if(pressed(ESCAPE_PAD.A))escapeKeyPressed('enter',13);
     if(pressed(ESCAPE_PAD.B)&&typeof escapeGoBack==='function'){escapeGoBack();return;}
-    if(pressed(ESCAPE_PAD.Y))escapeKeyPressed('t',84);
-    // X opens the panel (travel, Journal, the escape card, Main menu) for the stick; LB and RB step
-    // between the areas that are open.
-    if(pressed(ESCAPE_PAD.X)&&typeof openEscapeWorldPanel==='function')openEscapeWorldPanel();
+    // Y: a tap grabs a golden fly; held, it opens the panel (travel, Journal, Main menu) for the stick.
+    if(pressed(ESCAPE_PAD.Y))escapePad.holdY=millis();
+    if(escapePad.holdY!==null&&down(ESCAPE_PAD.Y)&&millis()-escapePad.holdY>450){escapePad.holdY=null;if(typeof openEscapeWorldPanel==='function')openEscapeWorldPanel();return;}
+    if(released(ESCAPE_PAD.Y)&&escapePad.holdY!==null){escapePad.holdY=null;escapeKeyPressed('t',84);}
+    // X tries the challenge at this entrance, when it is open. LB and RB step between open areas.
+    if(pressed(ESCAPE_PAD.X)){const b=document.getElementById('world-challenge');if(b&&b.style.display!=='none'&&b.onclick)b.onclick();}
     if((pressed(ESCAPE_PAD.LB)||pressed(ESCAPE_PAD.RB))&&escapeWorld){const n=escapeWorld.chapters.length,dir=pressed(ESCAPE_PAD.RB)?1:-1;let i=escapeWorld.chapterAt();for(let k=0;k<n;k++){i=(i+dir+n)%n;if(escapeWorld.regionOpen(i))break;}if(escapeWorld.travel(i)){renderEscapeWorldHUD();escapeSound?.('hop');}}
     return;
   }
