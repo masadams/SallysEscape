@@ -23,7 +23,10 @@ async function smoke(){
   let ready=false;for(let i=0;i<150;i++){if(await run('typeof gameState!=="undefined"&&!!document.getElementById("seasons-button")?.onclick')){ready=true;break;}await wait(100);}assert.ok(ready,'Game did not initialise');
   await run('document.getElementById("seasons-button").click()');await frame();assert.equal(await run('gameState'),'seasonalHub');assert.equal(await run('document.querySelectorAll("[data-season-clock]").length'),8);
   assert.equal(await run('getComputedStyle(document.querySelector("#game-container canvas")).display'),'block');assert.equal(await run('seasonWorld.motion.lizard.joints.length>8'),true);assert.equal(await run('document.querySelectorAll(".season-level").length'),8);await screenshot('autumn-world');
-  await run('seasonToggleOverview()');await frame();await screenshot('seasonal-world-overview');assert.equal(await run('seasonOverview'),true);
+  await run('escapeLightingMode="full";escapeLightingAuto=false;seasonToggleOverview()');await frame();await screenshot('seasonal-world-overview');assert.equal(await run('seasonOverview'),true);
+  await run('escapeLightingMode="simple";drawSeasonWorld()');await frame();await screenshot('seasonal-weather-simple');
+  await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await run('escapeLightingMode="full";drawSeasonWorld()');await frame();assert.equal(await run('matchMedia("(prefers-reduced-motion: reduce)").matches'),true);await screenshot('seasonal-weather-reduced-motion');
+  await send('Emulation.setEmulatedMedia',{features:[]});
   await run('seasonVisit("winter");for(let i=0;i<120*60&&seasonWorld.target;i++)seasonWorld.advance(1/120);renderSeasonHUD(true);drawSeasonWorld()');await frame();assert.equal(await run('seasonWorld.areaOpen("winter")'),false,'unbuilt winter stays locked');assert.equal(await run('seasonWorld.nearbyGate()?.id'),'winter');await screenshot('winter-gate');
   await run('seasonVisit("autumn-hollow");seasonEnter()');assert.equal(await run('gameState'),'escape');assert.equal(await run('escapeGame.level.id'),'autumn-orchard');await run('escapeLeaveRun()');assert.equal(await run('gameState'),'seasonalHub');
   const ids=await run('EscapeCatalog.seasonal.map(l=>l.id)');

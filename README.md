@@ -1,6 +1,6 @@
 # Sally's Escape
 
-**Seasonal Adventures:** A continuous campaign-style world contains Autumn Hollow's eight autumn/Halloween levels, with six themed creatures (including a roast turkey), separate progress, a completion outfit and main-menu keepsakes. Other regions preview winter, spring and summer behind themed clouds and countdown gates. Enter from the main menu; G shows the whole seasonal world. See [the seasonal level and implementation guide](docs/SEASONS.md).
+**Seasonal Adventures:** A continuous campaign-style world contains Autumn Hollow's eight autumn/Halloween levels, with six themed creatures (including a roast turkey), separate progress, a completion outfit and main-menu keepsakes. Other regions preview winter, spring and summer behind seasonal weather and countdown gates. Enter from the main menu; G shows the whole seasonal world. See [the seasonal level and implementation guide](docs/SEASONS.md).
 
 A top-down stealth and exploration game in the browser. Sally, a small garden lizard, is carried
 far from home by a flood and must sneak back across the Overgrowth: 100 escapes in 21 areas, 14
