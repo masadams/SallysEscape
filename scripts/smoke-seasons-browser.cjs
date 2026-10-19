@@ -31,11 +31,11 @@ async function smoke(){
    // Exercise the new silhouettes' warning poses too. These are rendering checks, not solution runs.
    await run('for(const h of escapeGame.hunters){h.state=({owl:"glare",mimic:"reveal",fox:"crouch",toad:"windup",beetle:"windup",snake:"alert"})[h.kind]||h.state;}drawEscapeVault()');
   }
-  await run('startEscape({seasonalId:"autumn-mill",skipIntro:true});paused=true;drawEscapeVault()');await frame();await screenshot('mill');
+  await run('escapeLightingMode="full";escapeLightingAuto=false;startEscape({seasonalId:"autumn-mill",skipIntro:true});paused=true;drawEscapeVault()');await wait(750);await frame();await screenshot('mill');
   await run('escapeGame.player.x=11.5;escapeGame.player.y=15.5;paused=false;tickEscapeKidsSign(escapeGame)');assert.equal(await run('escapeStoryOpen.card.kind'),'season-sign');await run('document.querySelector("#story-card button:last-of-type").click()');
   await run('openSeasonalHub("autumn-hollow");seasonTogglePanel(true)');assert.equal(await run('seasonPanelOpen'),true);await run('escapeGoBack()');assert.equal(await run('seasonPanelOpen'),false);
-  await send('Emulation.setDeviceMetricsOverride',{width:844,height:390,deviceScaleFactor:1,mobile:true});await run('mobile=true;windowResized();openSeasonalHub("autumn-hollow")');await frame();assert.equal(await run('getComputedStyle(document.getElementById("touch-controls")).display'),'flex');await screenshot('mobile-hub');
-  await run('startEscape({seasonalId:"autumn-finale",skipIntro:true});paused=true;drawEscapeVault()');await frame();await screenshot('mobile-finale');
+  await send('Emulation.setDeviceMetricsOverride',{width:844,height:390,deviceScaleFactor:1,mobile:true});await send('Emulation.setUserAgentOverride',{userAgent:'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36'});await run('windowResized();openSeasonalHub("autumn-hollow")');await frame();assert.equal(await run('getComputedStyle(document.getElementById("touch-controls")).display'),'flex');await screenshot('mobile-hub');
+  await run('startEscape({seasonalId:"autumn-finale",skipIntro:true});paused=true;drawEscapeVault()');await wait(750);await frame();await screenshot('mobile-finale');
   await run('mobile=false;for(const l of EscapeCatalog.seasonal){startEscape({seasonalId:l.id,skipIntro:true});escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.treasure=10;escapeGame.finish("won","browser reward check");showEscapeResult();}');
   assert.equal(await run('seasonProgress().complete()&&seasonProgress().mastered()'),true);await run('openSeasonalHub();seasonBack()');assert.equal(await run('gameState'),'start');assert.equal(await run('document.getElementById("title-keepsakes").hidden'),false);
   // Render each seasonal SFX through actual Web Audio, checking that its samples are finite and audible.
@@ -49,4 +49,5 @@ async function smoke(){
  }
 }
 smoke().catch(e=>{console.error(e);process.exitCode=1;});
+
 
