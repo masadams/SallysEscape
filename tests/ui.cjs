@@ -276,3 +276,11 @@ test('earlier Autumn Hollow clears remain labelled and retain keepsakes without 
  h.run('escapeStore.setItem(EscapeSeasons.KEY,JSON.stringify({version:1,records:Object.fromEntries(EscapeCatalog.seasonal.map(l=>[l.id,{revision:1,bestTime:3,treasure:10}])),skin:true}));escapeSeasonProgress=null;openSeasonalHub();renderSeasonKeepsakes();');
  assert.equal(h.run('seasonProgress().cleared()'),8);assert.match(h.el('season-hub').innerHTML,/Earlier route cleared; new layout unplayed/);assert.match(h.el('season-route-best').textContent,/Earlier route cleared/);assert.doesNotMatch(h.el('season-route-best').textContent,/best 3/);assert.equal(h.el('title-keepsakes').hidden,false);assert.ok(h.run('seasonProgress().data.skin'));
 });
+
+test('a seasonal catch shows retry rather than a lantern award and cannot advance or alter campaign saves',()=>{
+ const h=harness();h.el('season-hub').querySelectorAll=()=>[];const campaign=h.run('JSON.stringify(escapeProgress.data)');
+ h.run('startEscape({seasonalId:"autumn-mill",skipIntro:true});escapeGame.throwSpore(0);escapeGame.elapsed=12;escapeGame.finish("caught","The turkey caught Sally.");showEscapeResult();');
+ assert.equal(h.run('gameState'),'escapeResult');assert.equal(h.el('escape-result-title').textContent,'Nearly. Try another way');assert.match(h.el('escape-result-summary').textContent,/turkey caught/);assert.match(h.el('escape-result-challenge').textContent,/Retry with fresh supplies/);assert.equal(h.el('escape-next-btn').style.display,'none');assert.equal(h.run('seasonProgress().cleared()'),0);assert.equal(h.run('JSON.stringify(escapeProgress.data)'),campaign);
+ h.el('escape-retry-btn').onclick();assert.equal(h.run('escapeGame.level.id'),'autumn-mill');assert.equal(h.run('escapeGame.status'),'playing');assert.equal(h.run('escapeGame.spores'),1);assert.equal(h.run('escapeGame.hasKey'),false);
+ h.run('escapeGame.finish("caught","caught");showEscapeResult();');h.el('escape-menu-btn').onclick();assert.equal(h.run('gameState'),'seasonalHub');assert.equal(h.run('seasonWorld.nearby().id'),'autumn-mill');assert.equal(h.run('JSON.stringify(escapeProgress.data)'),campaign);
+});
