@@ -38,8 +38,14 @@ grabs the key, treasure, pink regrowth bugs and glow bugs, and reaches for an an
 It also **eats insects** (a cricket chirps no more; a moth's light goes out) and **flicks gate
 switches and levers** from where Sally stands. With nothing in reach it still flicks out and back
 (a thwip) and costs no grab.
-- A **glow mushroom** lights the ground 2.5 tiles round where it lands for about 12 s, even round
-  a corner from Sally. Standing in its light lights Sally up too: leaves stop hiding her.
+## Glow mushrooms
+
+- A **glow mushroom** lights a four-tile radius for 12 s, even round a corner from Sally.
+  The light softens toward its edge and fades during its final three seconds. Spiders and
+  millipedes retreat into shade. A spider that watches Sally sheltering waits for darkness,
+  then rushes her last seen spot. Walls block the light, and overlapping mushrooms keep the
+  shelter active. Standing in the light still exposes Sally to ordinary hunters.
+  See [the shelter guide](GLOW-MUSHROOMS.md) for the full rules.
 - Fogged mazes from escape 20 on carry one; the darkest and biggest carry two.
 
 ## Tricks of the ground
@@ -81,7 +87,7 @@ keener.
 | Beetle | Battering ram | Locks a lane toward where Sally is heading (shown as a striped lane), then charges up to three tiles past its aim. A charge flattens leaf cover and smashes cracked walls open for everyone. It is dazed for a moment after hitting a wall. | Step out of the lane; never stand at the end of a long corridor. Lure it into a cracked wall to open a shortcut. |
 | Scorpion | Living trap | Guards a ring around itself (always shown). Its tail rises and falls on a rhythm; with the tail up, anything entering the ring is stung where it is heading. Noise keeps the tail up. A buried scorpion shows only a sand mound until Sally is close. | Cross the ring while the tail is down and change direction if it strikes. Leaves inside the ring still hide Sally. |
 | Toad | Sniper | Fires its tongue down any clear straight line toward Sally, up to five tiles. | Break its line of sight behind pillars, walls or leaves. |
-| Spider | Builder | Leaves lasting tripwire webs on its rounds (up to five). Touching one slows Sally and sends the spider rushing. Up close it spits a sticky shot. | Watch the floor, step around webs, or move through them only when the spider is far away. |
+| Spider | Builder | Leaves lasting tripwire webs on its rounds (up to five). Touching one slows Sally and sends the spider rushing. Up close it spits a sticky shot. Thrown mushroom light makes it retreat and watch from shade. | Step around webs, or use a glow mushroom to buy time. If it saw Sally sheltering, it rushes her last seen spot when the light goes out. |
 | Cricket | Alarm | Harmless itself. When it sees or hears Sally it chirps, and hunters in earshot that cannot see her come to the spot for two seconds. A hunter that can see her ignores the call, it chirps at most every eight seconds, and it never drowns out a pebble Sally threw. | Stay quiet and out of its sight, or let it chirp somewhere useless. |
 | Moth | Lantern | Its glow lights Sally up: leaves stop hiding her and every hunter sees further. It swoops on glowing footprints. | Keep out of its light; time crossings while it drifts away. |
 | Echo frog | Mimic of sounds | Harmless itself. Noise near it (steps on gravel, a sprint, a pebble's clack) fills its throat; two seconds later it croaks the sound back loudly from where it sits, and hunters in earshot go to look there. Then it rests about six seconds. Lives in the Mossy Well. | Keep quiet near it, or make a noise on purpose and send the hunters to the frog. |
@@ -90,7 +96,7 @@ keener.
 | Magpie | Lookout and thief | Sits on its perch turning to look at each of its patrol points. If it sees Sally it caws: every hunter in earshot learns exactly where she is and comes for her as if it had seen her. It cannot leave anything shiny alone: a pebble landing or a glow mushroom lit near it sends it flapping off to steal it, ending the distraction, and while it is away it sees nothing. Harmless itself. | Throw something shiny past it to send it off, then slip by while its perch is empty. Never let it see you before you are ready to run. |
 | Cloud ray | Moving cover | Glides high over everything along its patrol loop, ignoring walls. Harmless. Its shadow (`range`, default 2.1 tiles) hides Sally from the hawk and from every hunter, even moving. Lives in the Cloud Nest. | Keep pace under the shadow to cross open ground while the hawk hunts. |
 | Mimic | Greed trap | Looks like a treasure chest, with a slow breath and an occasional blink. When Sally reaches for it, it snaps toward where she is heading. | Learn the tell, or throw a pebble to make it snap first. |
-| Millipede | Lurker | Freezes while watched and follows when Sally looks away, a little slower than she walks. Out of her gaze it shows as a dim shape creeping after her (with a scrape when it starts); once she faces it, it is solid and still. | Keep it in view while you back off. |
+| Millipede | Lurker | Freezes while watched and follows when Sally looks away, a little slower than she walks. Out of her gaze it shows as a dim shape creeping after her (with a scrape when it starts); once she faces it, it is solid and still. Thrown mushroom light makes it retreat into shade until the glow fades. | Keep it in view while you back off, or throw a glow mushroom for breathing room. |
 | Owl | Searchlight | Turns between look-outs with a long narrow beam, glares, then swoops; the swoop bends toward Sally. | Hide in leaves or behind cover before it lands. |
 | Hawk | Sky | A shadow follows Sally and dives on a timer. | Shelter under an awning, in leaves, or blend in with camouflage. |
 | Gecko | Thief | Steals the last treasure Sally picked up and runs for its burrow. | Catch it before it gets there. |
@@ -141,3 +147,4 @@ Guards, gates and traps keep their own lists, with coordinates matching the map.
 `scripts/route-solver.cjs solve <levelId> "<hints>"` records a winning run for
 `tests/fixtures/escape-playthroughs.json`. Its hints are waypoints such as `g12,4`,
 tools such as `burrow`, and waits such as `w2`.
+
