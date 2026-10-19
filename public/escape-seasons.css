@@ -11,3 +11,14 @@
 .seasonal-open #touch-controls.world-touch{position:fixed;left:16px;right:auto;bottom:16px;z-index:25;width:auto;padding:8px;border-radius:60px;background:#142c2999;pointer-events:auto}
 .seasonal-open #touch-controls .ability-pad,.seasonal-open #touch-controls .direction-pad{display:none!important}
 .seasonal-open #movement-stick{width:90px;height:90px}
+/* The walking stick has its own gutter on short phones; all eight entrances stay in view. */
+@media(max-height:600px) and (orientation:landscape){
+ .season-map{width:100%;height:clamp(190px,calc(100dvh - 180px),250px);min-height:190px;max-height:250px;aspect-ratio:auto}
+ .season-portal{top:clamp(44px,var(--y),calc(100% - 44px))}
+ .mobile-game.seasonal-open #season-hub{padding-left:120px}
+}
+@media(max-width:650px) and (max-height:600px) and (orientation:landscape){
+ .season-portal{width:76px;min-width:76px;max-width:76px;padding:3px 4px;gap:2px}
+ .season-portal b{font-size:10px}.season-portal small{font-size:9px}.season-portal-icon{font-size:18px}
+ .season-heading{gap:6px}.season-heading h1{font-size:23px}.season-heading button{font-size:11px;max-width:105px}
+}

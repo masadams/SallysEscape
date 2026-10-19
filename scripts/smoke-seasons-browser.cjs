@@ -34,7 +34,7 @@ async function smoke(){
   await run('escapeLightingMode="full";escapeLightingAuto=false;startEscape({seasonalId:"autumn-mill",skipIntro:true});paused=true;drawEscapeVault()');await wait(750);await frame();await screenshot('mill');
   await run('escapeGame.player.x=11.5;escapeGame.player.y=15.5;paused=false;tickEscapeKidsSign(escapeGame)');assert.equal(await run('escapeStoryOpen.card.kind'),'season-sign');await run('document.querySelector("#story-card button:last-of-type").click()');
   await run('openSeasonalHub("autumn-hollow");seasonTogglePanel(true)');assert.equal(await run('seasonPanelOpen'),true);await run('escapeGoBack()');assert.equal(await run('seasonPanelOpen'),false);
-  await send('Emulation.setDeviceMetricsOverride',{width:844,height:390,deviceScaleFactor:1,mobile:true});await send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:5});await send('Emulation.setUserAgentOverride',{userAgent:'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36'});await run('windowResized();openSeasonalHub("autumn-hollow")');await frame();assert.equal(await run('isMobileDevice()'),true,'emulated phone has a touchscreen');assert.equal(await run('getComputedStyle(document.getElementById("touch-controls")).display'),'flex');await screenshot('mobile-hub');
+  await send('Emulation.setDeviceMetricsOverride',{width:844,height:390,deviceScaleFactor:1,mobile:true});await send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:5});await send('Emulation.setUserAgentOverride',{userAgent:'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36'});await run('windowResized();openSeasonalHub("autumn-hollow")');await frame();assert.equal(await run('isMobileDevice()'),true,'emulated phone has a touchscreen');assert.equal(await run('getComputedStyle(document.getElementById("touch-controls")).display'),'flex');const mobileLayout=await run('(()=>{const stick=document.getElementById("movement-stick").getBoundingClientRect();return [...document.querySelectorAll(".season-level")].map(el=>{const b=el.getBoundingClientRect();return {name:el.textContent,inside:b.top>=0&&b.bottom<=innerHeight,clear:b.left>=stick.right||b.top>=stick.bottom||b.bottom<=stick.top};});})()');for(const b of mobileLayout){assert.ok(b.inside,b.name+' fits landscape screen');assert.ok(b.clear,b.name+' is clear of the stick');}await screenshot('mobile-hub');
   await run('startEscape({seasonalId:"autumn-finale",skipIntro:true});paused=true;drawEscapeVault()');await wait(750);await frame();await screenshot('mobile-finale');
   await run('mobile=false;for(const l of EscapeCatalog.seasonal){startEscape({seasonalId:l.id,skipIntro:true});escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.treasure=10;escapeGame.finish("won","browser reward check");showEscapeResult();}');
   assert.equal(await run('seasonProgress().complete()&&seasonProgress().mastered()'),true);await run('openSeasonalHub();seasonBack()');assert.equal(await run('gameState'),'start');assert.equal(await run('document.getElementById("title-keepsakes").hidden'),false);
@@ -49,6 +49,7 @@ async function smoke(){
  }
 }
 smoke().catch(e=>{console.error(e);process.exitCode=1;});
+
 
 
 
