@@ -1,212 +1,949 @@
-// Authored Autumn Hollow maps. See docs/SEASONS.md.
+// Compact, authored autumn escapes. See docs/SEASONS.md.
 (function(root){const routes=[
   {
     "id": "autumn-orchard",
     "name": "The Orchard Gate",
     "difficulty": "Easy",
     "seasonalTheme": "autumn",
-    "brief": "The orchard is full of red leaves. Open its gate and bring a golden key home to the festival.",
-    "hint": "The amber button beside the old tree opens the orchard gate. Stand still in leaf cover to hide from the bony serpent. Treasure is a bonus.",
+    "brief": "An orchard switch, a patrolling serpent and a little gate home.",
+    "hint": "The amber switch is in the north orchard. The key opens the lower return gate. Leaf pockets and corners break the serpent's sight.",
+    "index": 0,
+    "revision": 2,
+    "cunning": 0,
     "pebbles": 2,
-    "spores": 2,
-    "tongues": 2,
-    "seeds": 2,
-    "checkpoints": [
-      [
-        15,
-        9
-      ]
-    ],
+    "tongues": 1,
     "guards": [
       {
         "kind": "snake",
         "spawn": [
-          24,
-          13
+          15,
+          6
         ],
-        "facing": 0,
         "patrol": [
           [
-            24,
-            10
+            13,
+            6
           ],
           [
-            25,
-            10
-          ],
-          [
-            25,
-            16
-          ],
-          [
-            24,
-            16
+            17,
+            6
           ]
-        ]
+        ],
+        "facing": 0
       }
     ],
     "gates": [
       {
         "id": "orchard",
-        "name": "Orchard gate",
+        "name": "orchard",
         "color": [
           242,
           177,
           85
         ],
+        "tiles": [
+          [
+            12,
+            2
+          ]
+        ],
         "switch": [
-          9,
-          3
+          3,
+          2
+        ]
+      },
+      {
+        "id": "orchard-home",
+        "name": "orchard home",
+        "color": [
+          242,
+          177,
+          85
         ],
         "tiles": [
           [
-            13,
-            7
-          ],
-          [
-            13,
-            8
-          ],
-          [
-            13,
-            9
+            12,
+            10
           ]
         ]
       }
     ],
     "fieldNotes": [
       {
-        "id": "orchard-note",
+        "id": "autumn-orchard-note-0",
         "at": [
-          8,
+          4,
+          10
+        ],
+        "title": "The orchard keeper",
+        "body": "The old switch still works. The little gate at the bottom answers to the golden key. Keep your pebbles for a tight corner."
+      }
+    ],
+    "props": [
+      {
+        "at": [
+          12,
+          1
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          6,
           3
         ],
-        "title": "Welcome to Autumn Hollow",
-        "body": "Eight lost lanterns are waiting. Find each key and return to the green door. A catch brings Sally to her last flag; treasure and notes are optional."
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          13,
+          4
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          18,
+          4
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          12,
+          6
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          19,
+          7
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          1,
+          8
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          6,
+          8
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          16,
+          8
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          12,
+          11
+        ],
+        "kind": "tree"
+      }
+    ],
+    "spores": 1,
+    "reactions": [
+      {
+        "id": "orchard-key",
+        "when": "key",
+        "open": [
+          "orchard-home"
+        ],
+        "message": "The little return gate swings open.",
+        "objective": "Return to the green door."
       }
     ],
     "map": [
-      "#############################",
-      "#............#..............#",
-      "#............#..............#",
-      "#..1.........#...........K..#",
-      "#........1...#..1.......1...#",
-      "#...###......#..............#",
-      "#...###......#....###...L...#",
-      "#...###...L.......###.......#",
-      "#..............L..###.......#",
-      "#..1........................#",
-      "#............#........1L....#",
-      "#...###..L...#..1...........#",
-      "#...###......#.....####.....#",
-      "#...###......#.....####.....#",
-      "#.........1..#.....####.....#",
-      "#..@.........#..............#",
-      "#..X....1....#.......1......#",
-      "#............#..............#",
-      "#############################"
-    ],
-    "gentle": 0.75,
+      "#####################",
+      "#.....#.....#.......#",
+      "#.1...#.......1...K.#",
+      "#.....#L1...#L....1.#",
+      "###.###.....#####.###",
+      "#.....#.....#.....###",
+      "#...1...#.###.1...###",
+      "#..L..#.....#...L.###",
+      "###.###..L1.#####.###",
+      "#.1...#.....#....L..#",
+      "#.@...#.1.........1.#",
+      "#.X...#.....#.......#",
+      "#####################"
+    ]
+  },
+  {
+    "id": "autumn-pumpkins",
+    "name": "The Pumpkin Patch",
+    "difficulty": "Easy",
+    "seasonalTheme": "autumn",
+    "brief": "Two pumpkin sentries watch the garden loops. Choose where to cross.",
+    "hint": "Open the north gate from the west garden. The centre switch opens a second way home. Step sideways when a pumpkin aims its vine.",
+    "index": 1,
+    "revision": 2,
     "cunning": 0,
-    "index": 0,
+    "pebbles": 2,
+    "tongues": 1,
+    "guards": [
+      {
+        "kind": "toad",
+        "spawn": [
+          9,
+          2
+        ],
+        "patrol": [
+          [
+            9,
+            2
+          ]
+        ],
+        "facing": 1.5707963267948966
+      },
+      {
+        "kind": "toad",
+        "spawn": [
+          16,
+          8
+        ],
+        "patrol": [
+          [
+            16,
+            8
+          ]
+        ],
+        "facing": -1.5707963267948966
+      }
+    ],
+    "gates": [
+      {
+        "id": "north-patch",
+        "name": "north patch",
+        "color": [
+          242,
+          177,
+          85
+        ],
+        "tiles": [
+          [
+            14,
+            2
+          ]
+        ],
+        "switch": [
+          3,
+          8
+        ]
+      },
+      {
+        "id": "south-patch",
+        "name": "south patch",
+        "color": [
+          141,
+          184,
+          109
+        ],
+        "tiles": [
+          [
+            14,
+            10
+          ]
+        ],
+        "switch": [
+          10,
+          6
+        ]
+      }
+    ],
+    "fieldNotes": [
+      {
+        "id": "autumn-pumpkins-note-0",
+        "at": [
+          4,
+          8
+        ],
+        "title": "Straight as a vine",
+        "body": "A pumpkin can lash in a straight line. The beds leave room to step sideways. Open the south gate if you want another way back."
+      }
+    ],
     "props": [
+      {
+        "at": [
+          6,
+          3
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          8,
+          4
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          13,
+          4
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          12,
+          6
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          14,
+          7
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          6,
+          8
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          11,
+          8
+        ],
+        "kind": "tree"
+      }
+    ],
+    "spores": 1,
+    "map": [
+      "#####################",
+      "#.....#1......#.....#",
+      "#.1.............1...#",
+      "#.....#L...1..#...K.#",
+      "#..L..###.#####.....#",
+      "#...1.#.....###.L.1.#",
+      "#.....#1L...#####.###",
+      "#.....#.....###...L.#",
+      "#.....###.#####.....#",
+      "#.....#.......#.....#",
+      "#.@.1.....1..L.....1#",
+      "#.X...#.......#.....#",
+      "#####################"
+    ]
+  },
+  {
+    "id": "autumn-gardener",
+    "name": "The Gardener’s Yard",
+    "difficulty": "Easy–medium",
+    "seasonalTheme": "autumn-dusk",
+    "brief": "Turn the garden wheel, cross the working yard, then unlock the potting shed.",
+    "hint": "The blue switch opens the yard. Find the green shed switch beyond it. A gardener commits to its charge; use the stone beds to turn aside.",
+    "index": 2,
+    "revision": 2,
+    "cunning": 0,
+    "pebbles": 2,
+    "tongues": 1,
+    "guards": [
+      {
+        "kind": "beetle",
+        "spawn": [
+          13,
+          7
+        ],
+        "patrol": [
+          [
+            12,
+            7
+          ],
+          [
+            14,
+            7
+          ]
+        ],
+        "facing": 0
+      },
+      {
+        "kind": "snake",
+        "spawn": [
+          20,
+          10
+        ],
+        "patrol": [
+          [
+            19,
+            10
+          ],
+          [
+            20,
+            10
+          ]
+        ],
+        "facing": 0
+      }
+    ],
+    "gates": [
+      {
+        "id": "yard",
+        "name": "yard",
+        "color": [
+          131,
+          190,
+          218
+        ],
+        "tiles": [
+          [
+            7,
+            3
+          ]
+        ],
+        "switch": [
+          3,
+          11
+        ]
+      },
+      {
+        "id": "potting-shed",
+        "name": "potting shed",
+        "color": [
+          141,
+          184,
+          109
+        ],
+        "tiles": [
+          [
+            15,
+            3
+          ]
+        ],
+        "switch": [
+          10,
+          8
+        ]
+      },
+      {
+        "id": "yard-home",
+        "name": "yard home",
+        "color": [
+          242,
+          177,
+          85
+        ],
+        "tiles": [
+          [
+            15,
+            12
+          ]
+        ]
+      }
+    ],
+    "fieldNotes": [
+      {
+        "id": "autumn-gardener-note-0",
+        "at": [
+          2,
+          11
+        ],
+        "title": "The gardener's wheel",
+        "body": "Blue first, green second. A charge is very determined about its direction, even after you have stepped behind a stone bed."
+      }
+    ],
+    "props": [
+      {
+        "at": [
+          7,
+          1
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          10,
+          5
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          15,
+          5
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          2,
+          6
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          7,
+          6
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          17,
+          6
+        ],
+        "kind": "lantern"
+      },
       {
         "at": [
           4,
           7
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          19,
+          7
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          1,
+          8
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          6,
+          8
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          11,
+          8
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          16,
+          8
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          21,
+          8
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          18,
+          9
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          10,
+          10
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          15,
+          10
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          7,
+          11
+        ],
+        "kind": "pumpkin"
+      }
+    ],
+    "spores": 1,
+    "reactions": [
+      {
+        "id": "yard-key",
+        "when": "key",
+        "open": [
+          "yard-home"
+        ],
+        "message": "The potting-shed key opens the lower yard gate."
+      }
+    ],
+    "map": [
+      "#######################",
+      "#......#.......#......#",
+      "#.@..1.#.1.....#.1..K.#",
+      "#.....................#",
+      "#...L..#L....1.#....1.#",
+      "#.1....##.#.####.L....#",
+      "###.####.......###.####",
+      "###.####...........####",
+      "###.####.L.##..###.####",
+      "#......#.1...L.#..#...#",
+      "#......####.####.L#...#",
+      "#....1.#.......#..#...#",
+      "#.X..........1....#.L.#",
+      "#......#.......#....1.#",
+      "#######################"
+    ]
+  },
+  {
+    "id": "autumn-lanterns",
+    "name": "Lantern Lane",
+    "difficulty": "Easy–medium",
+    "seasonalTheme": "autumn-night",
+    "brief": "Carry a lantern through two courtyards watched by a ghost.",
+    "hint": "The centre switch opens the upper lanes. Shelter beside the hedges when the ghost glares. The southern loop offers room to break a serpent's sight.",
+    "index": 3,
+    "revision": 2,
+    "cunning": 0,
+    "pebbles": 2,
+    "tongues": 1,
+    "guards": [
+      {
+        "kind": "owl",
+        "spawn": [
+          16,
+          3
+        ],
+        "patrol": [
+          [
+            8,
+            2
+          ],
+          [
+            20,
+            2
+          ],
+          [
+            16,
+            3
+          ]
+        ],
+        "facing": 3.141592653589793
+      },
+      {
+        "kind": "snake",
+        "spawn": [
+          18,
+          11
+        ],
+        "patrol": [
+          [
+            17,
+            11
+          ],
+          [
+            20,
+            11
+          ]
+        ],
+        "facing": 0
+      }
+    ],
+    "gates": [
+      {
+        "id": "lantern-walk",
+        "name": "lantern walk",
+        "color": [
+          131,
+          190,
+          218
+        ],
+        "tiles": [
+          [
+            1,
+            4
+          ],
+          [
+            2,
+            4
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            6,
+            4
+          ],
+          [
+            7,
+            4
+          ],
+          [
+            19,
+            4
+          ],
+          [
+            20,
+            4
+          ],
+          [
+            21,
+            4
+          ]
+        ],
+        "switch": [
+          12,
+          7
+        ]
+      }
+    ],
+    "fieldNotes": [
+      {
+        "id": "autumn-lanterns-note-0",
+        "at": [
+          3,
+          11
+        ],
+        "title": "Borrowed lanterns",
+        "body": "Light helps you read the courtyard. It also helps the serpent read you. The ghost shows the place it means to land; leave that place before it arrives."
+      }
+    ],
+    "props": [
+      {
+        "at": [
+          8,
+          4
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          13,
+          4
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          18,
+          4
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          5,
+          5
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          10,
+          5
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          15,
+          5
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          4,
+          7
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          8,
+          9
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          13,
+          9
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          18,
+          9
         ],
         "kind": "pumpkin"
       },
       {
         "at": [
           5,
-          7
+          10
         ],
-        "kind": "tree"
+        "kind": "lantern"
       },
       {
         "at": [
-          6,
-          7
-        ],
-        "kind": "pumpkin"
-      },
-      {
-        "at": [
-          19,
-          14
-        ],
-        "kind": "tree"
-      },
-      {
-        "at": [
-          20,
-          14
-        ],
-        "kind": "pumpkin"
-      },
-      {
-        "at": [
-          21,
-          14
-        ],
-        "kind": "pumpkin"
-      },
-      {
-        "at": [
-          22,
-          14
+          10,
+          10
         ],
         "kind": "tree"
       }
+    ],
+    "glows": 1,
+    "explore": true,
+    "dark": true,
+    "sightRadius": 4.5,
+    "spores": 1,
+    "map": [
+      "#######################",
+      "#.......1...........1.#",
+      "#.1............###..K.#",
+      "#......L....1......L..#",
+      "#...##..###########...#",
+      "#...##..###########...#",
+      "#...#..L..........#...#",
+      "#...#.1...L.....1.#L.1#",
+      "#..L#..........L..#...#",
+      "#...#######.###..##...#",
+      "#..1#######.###..##...#",
+      "#.....................#",
+      "#.@.......1..L........#",
+      "#.X...............1...#",
+      "#######################"
     ]
   },
   {
-    "id": "autumn-pumpkins",
-    "name": "The Pumpkin Patch",
+    "id": "autumn-store",
+    "name": "The Harvest Store",
     "difficulty": "Easy–medium",
-    "seasonalTheme": "autumn",
-    "brief": "Someone has planted pumpkins with very long vines. Follow the winding garden paths to the key.",
-    "hint": "The jack-o’-lantern glows before it lashes a vine. Step behind a hedge or walk round its side. A spore cloud hides Sally even while moving.",
-    "pebbles": 2,
-    "spores": 2,
-    "tongues": 2,
-    "seeds": 2,
-    "checkpoints": [
-      [
-        12,
-        6
-      ],
-      [
-        22,
-        13
-      ]
-    ],
+    "seasonalTheme": "autumn-dusk",
+    "brief": "Find three store switches among narrow shelves and suspicious treat baskets.",
+    "hint": "Blue opens the first aisle, green the centre shelves, amber the pantry. A twitching basket can be exposed with a pebble. The key opens the lower delivery doors.",
+    "index": 4,
+    "revision": 2,
+    "cunning": 1,
+    "pebbles": 3,
+    "tongues": 1,
     "guards": [
       {
-        "kind": "toad",
+        "kind": "mimic",
         "spawn": [
-          16,
-          4
+          9,
+          3
         ],
-        "facing": 1.5707963267948966,
         "patrol": [
           [
-            16,
-            4
+            9,
+            3
           ]
+        ],
+        "facing": 0
+      },
+      {
+        "kind": "mimic",
+        "spawn": [
+          13,
+          8
+        ],
+        "patrol": [
+          [
+            13,
+            8
+          ]
+        ],
+        "facing": 0
+      }
+    ],
+    "gates": [
+      {
+        "id": "blue-entry",
+        "name": "blue entry",
+        "color": [
+          131,
+          190,
+          218
+        ],
+        "tiles": [
+          [
+            6,
+            3
+          ]
+        ],
+        "switch": [
+          3,
+          11
         ]
       },
       {
-        "kind": "toad",
-        "spawn": [
-          26,
-          11
+        "id": "green-shelves",
+        "name": "green shelves",
+        "color": [
+          141,
+          184,
+          109
         ],
-        "facing": 3.141592653589793,
-        "patrol": [
+        "tiles": [
           [
-            26,
+            10,
+            7
+          ]
+        ],
+        "switch": [
+          8,
+          12
+        ]
+      },
+      {
+        "id": "amber-pantry",
+        "name": "amber pantry",
+        "color": [
+          242,
+          177,
+          85
+        ],
+        "tiles": [
+          [
+            14,
+            5
+          ]
+        ],
+        "switch": [
+          12,
+          3
+        ]
+      },
+      {
+        "id": "store-home",
+        "name": "store home",
+        "color": [
+          242,
+          177,
+          85
+        ],
+        "tiles": [
+          [
+            6,
+            11
+          ],
+          [
+            14,
             11
           ]
         ]
@@ -214,1052 +951,1098 @@
     ],
     "fieldNotes": [
       {
-        "id": "pumpkin-note",
+        "id": "autumn-store-note-0",
         "at": [
-          12,
-          6
-        ],
-        "title": "Watch the pumpkin glow",
-        "body": "A bright face means a vine is coming. Step behind a hedge or move out of its line. Spore pouches can hide Sally on the move. Tools refill after their cooldown."
-      }
-    ],
-    "map": [
-      "###############################",
-      "#.........#...................#",
-      "#.........#...................#",
-      "#..1......#.1..............K..#",
-      "#.......1.#...................#",
-      "#.......L...............###...#",
-      "#...........L.......#...###...#",
-      "#.........#......1..#...###...#",
-      "#.........#.........#..L...1..#",
-      "#...###...#...###...#.........#",
-      "#...###...#...###...#..1......#",
-      "#...###...#...###...#.........#",
-      "#.........#.......L...L.......#",
-      "#.............................#",
-      "#......1............#.........#",
-      "#..@.........1....1.#......1..#",
-      "#..X................#.........#",
-      "#...................#.........#",
-      "###############################"
-    ],
-    "gentle": 0.8,
-    "cunning": 0,
-    "index": 1,
-    "props": []
-  },
-  {
-    "id": "autumn-gardener",
-    "name": "The Gardener’s Yard",
-    "difficulty": "Medium",
-    "seasonalTheme": "autumn-dusk",
-    "brief": "The old gardener has a very clumsy charge. Take the hedged courtyard to his little garden shed.",
-    "hint": "Raised arms warn of a straight charge. Move sideways or behind a hedge. The blue button opens the shed; the key opens a shortcut home.",
-    "pebbles": 2,
-    "spores": 2,
-    "tongues": 2,
-    "seeds": 2,
-    "checkpoints": [
-      [
-        12,
-        16
-      ],
-      [
-        24,
-        6
-      ]
-    ],
-    "guards": [
-      {
-        "kind": "beetle",
-        "spawn": [
-          19,
+          4,
           10
         ],
-        "facing": 3.141592653589793,
-        "patrol": [
-          [
-            19,
-            6
-          ],
-          [
-            19,
-            17
-          ]
-        ]
+        "title": "Stocktaking",
+        "body": "Three honest switches and two dishonest baskets. The key opens the delivery doors, so you need not thread every shelf twice."
       }
     ],
-    "gates": [
+    "props": [
       {
-        "id": "shed",
-        "name": "Garden shed",
-        "color": [
-          113,
-          192,
-          225
+        "at": [
+          14,
+          2
         ],
-        "switch": [
-          12,
-          4
-        ],
-        "tiles": [
-          [
-            22,
-            4
-          ],
-          [
-            22,
-            5
-          ],
-          [
-            22,
-            6
-          ]
-        ]
+        "kind": "lantern"
       },
       {
-        "id": "return",
-        "name": "Home path",
-        "color": [
-          239,
-          177,
-          82
-        ],
-        "tiles": [
-          [
-            10,
-            4
-          ],
-          [
-            10,
-            5
-          ]
-        ]
-      }
-    ],
-    "reactions": [
-      {
-        "id": "return-key",
-        "when": "key",
-        "open": [
-          "return"
-        ],
-        "message": "A gate opens beside the orchard. A shorter way home!",
-        "objective": "Take either path back to the green door."
-      }
-    ],
-    "fieldNotes": [
-      {
-        "id": "gardener-note",
         "at": [
-          7,
-          15
-        ],
-        "title": "Arms up? Step sideways!",
-        "body": "The zombie gardener raises both arms before charging in a straight line. A hedge stops the charge. You have time to walk round while he catches his breath."
-      }
-    ],
-    "map": [
-      "###############################",
-      "#.........#...........#.......#",
-      "#.........#...........#.......#",
-      "#..@...1..#.1.........#....K..#",
-      "#.........#........1..........#",
-      "#.........#.............L.....#",
-      "#.........#.L......L..........#",
-      "#.........#...####....#.......#",
-      "#.........#...####....#.......#",
-      "#.........#...####....#.......#",
-      "#.........#...........#..1....#",
-      "#..1......#.1.........#.......#",
-      "#.........#........L..#.......#",
-      "#.........#...####....#.......#",
-      "#.............####....#.......#",
-      "#.......L...L.####....#.......#",
-      "#.....................#....1..#",
-      "#.........#...........#.......#",
-      "#..X...1..#..1........#..1....#",
-      "#.........#...........#.......#",
-      "###############################"
-    ],
-    "gentle": 0.9,
-    "cunning": 1,
-    "index": 2,
-    "props": []
-  },
-  {
-    "id": "autumn-lanterns",
-    "name": "Lantern Lane",
-    "difficulty": "Medium",
-    "seasonalTheme": "autumn-night",
-    "brief": "A ghostly lantern keeper sweeps a cold beam across the lane. Little islands of leaves offer a quiet rest.",
-    "hint": "Avoid the cold lantern beam. If the ghost marks the ground, step away before it swoops. You can see the whole lane; the darkness is only decoration.",
-    "pebbles": 2,
-    "spores": 2,
-    "tongues": 2,
-    "seeds": 2,
-    "checkpoints": [
-      [
-        11,
-        5
-      ],
-      [
-        20,
-        13
-      ],
-      [
-        27,
-        5
-      ]
-    ],
-    "guards": [
-      {
-        "kind": "owl",
-        "spawn": [
-          15,
-          5
-        ],
-        "facing": 1.5707963267948966,
-        "patrol": [
-          [
-            15,
-            5
-          ],
-          [
-            16,
-            5
-          ],
-          [
-            16,
-            15
-          ],
-          [
-            15,
-            15
-          ]
-        ]
-      }
-    ],
-    "glows": 2,
-    "fieldNotes": [
-      {
-        "id": "lantern-note",
-        "at": [
-          7,
+          18,
           4
         ],
-        "title": "The cold lantern",
-        "body": "The ghost sweeps a pale blue beam. If it sees Sally, a circle marks its next swoop. Leave that circle, then slip past as the ghost rests."
-      }
-    ],
-    "map": [
-      "#################################",
-      "#........#...............#......#",
-      "#........#...............#......#",
-      "#..@..1..#..1............#...K..#",
-      "#......L........................#",
-      "#..........L...........L...L....#",
-      "#........#........#......#......#",
-      "#........#..###...#..1...#......#",
-      "#........#..###...#......#...1..#",
-      "#........#..###...#......#......#",
-      "#..1.....#......1.#......#......#",
-      "#........#........#.............#",
-      "#........#......L...............#",
-      "#...................L.###....1..#",
-      "#.................#...###.......#",
-      "#......1....1.....#...###.......#",
-      "#..X..............#..1..........#",
-      "#.................#.............#",
-      "#################################"
-    ],
-    "gentle": 0.95,
-    "cunning": 1,
-    "index": 3,
-    "props": []
-  },
-  {
-    "id": "autumn-store",
-    "name": "The Harvest Store",
-    "difficulty": "Medium",
-    "seasonalTheme": "autumn-dusk",
-    "brief": "Three coloured switches open the old store. Work out which aisle each one reaches, then bring the lantern key home.",
-    "hint": "The blue switch opens the first aisle. Inside, find the green shelf switch and amber pantry switch before heading downstairs. Baskets twitch before they spring; use cover or a pebble.",
-    "pebbles": 2,
-    "spores": 2,
-    "tongues": 2,
-    "seeds": 2,
-    "checkpoints": [
-      [
-        13,
-        5
-      ],
-      [
-        24,
-        15
-      ]
-    ],
-    "guards": [
+        "kind": "lantern"
+      },
       {
-        "kind": "mimic",
-        "spawn": [
+        "at": [
+          10,
+          5
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          4,
+          7
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          14,
+          7
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          6,
+          8
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
           18,
+          9
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          10,
+          10
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          14,
           12
         ],
-        "facing": 0,
-        "patrol": [
-          [
-            18,
-            12
-          ]
-        ]
+        "kind": "lantern"
       },
       {
-        "kind": "mimic",
-        "spawn": [
-          27,
-          5
-        ],
-        "facing": 1.5707963267948966,
-        "patrol": [
-          [
-            27,
-            5
-          ]
-        ]
-      }
-    ],
-    "gates": [
-      {
-        "id": "store-blue",
-        "name": "Blue storeroom",
-        "color": [
-          110,
-          190,
-          235
-        ],
-        "switch": [
-          7,
-          14
-        ],
-        "tiles": [
-          [
-            11,
-            4
-          ],
-          [
-            11,
-            5
-          ]
-        ]
-      },
-      {
-        "id": "store-amber",
-        "name": "Amber pantry",
-        "color": [
-          245,
-          184,
-          85
-        ],
-        "switch": [
-          14,
-          3
-        ],
-        "tiles": [
-          [
-            22,
-            14
-          ],
-          [
-            22,
-            15
-          ]
-        ]
-      },
-      {
-        "id": "store-shelves",
-        "name": "Store aisle",
-        "color": [
-          170,
-          210,
-          123
-        ],
-        "switch": [
-          19,
-          4
-        ],
-        "tiles": [
-          [
-            18,
-            10
-          ],
-          [
-            19,
-            10
-          ]
-        ]
-      }
-    ],
-    "fieldNotes": [
-      {
-        "id": "store-note",
         "at": [
-          8,
-          5
+          6,
+          13
         ],
-        "title": "Treat or trick?",
-        "body": "Three switches, three routes. Blue gets you inside; green opens the narrow shelf aisle, and amber opens the far pantry. Gates stay open. A basket that twitches is about to spring—step away or distract it."
+        "kind": "tree"
+      }
+    ],
+    "spores": 1,
+    "reactions": [
+      {
+        "id": "store-key",
+        "when": "key",
+        "open": [
+          "store-home"
+        ],
+        "message": "The delivery doors open. There is a short way home."
       }
     ],
     "map": [
-      "#################################",
-      "#..........#..........#.........#",
-      "#..........#..........#.........#",
-      "#..@...1...#..1.......#......K..#",
-      "#..................1..#.........#",
-      "#.......L....L........#......1..#",
-      "#..........#..........#.........#",
-      "#..........#...####...#..####...#",
-      "#..........#...####...#..####...#",
-      "#..........#...####...#..####...#",
-      "#..........#######..###.........#",
-      "#..1.......#..........#......L..#",
-      "#..........#..........#..1......#",
-      "#..........#..........#.........#",
-      "#..........#..1.....L...........#",
-      "#..........#............L.......#",
-      "#..........#..........#.........#",
-      "#......1...#..........#......1..#",
-      "#..X.......#.......1..#.........#",
-      "#..........#..........#.........#",
-      "#################################"
-    ],
-    "gentle": 1,
-    "cunning": 1,
-    "index": 4,
-    "props": []
+      "#######################",
+      "#.....#...#...#.......#",
+      "#.@.1.#.1.#.1.#.1...K.#",
+      "#.........#...#..###..#",
+      "#...L.#...#...#..###..#",
+      "#.....#...#.....L.....#",
+      "#.....#...#.L.#.......#",
+      "###.###1......#.......#",
+      "#.....#.L.#...#..###..#",
+      "#.....#...#...#..###..#",
+      "#.1...#...#...#..###..#",
+      "#.........#.........L.#",
+      "#.X..1#...#.L.#.....1.#",
+      "#.....#.1.#..1#.......#",
+      "#######################"
+    ]
   },
   {
     "id": "autumn-mill",
     "name": "The Hollow Mill",
     "difficulty": "Medium",
     "seasonalTheme": "autumn-mill",
-    "brief": "The mill wheel turns beside a leafy stream. A bridge and an old rabbit tunnel give Sally two ways across.",
-    "hint": "The loft switch is across the lower bridge. Creep past the roast turkey, or throw a pebble away from the crossing. Its crouch and gobble warn of a rush. The paired tunnels offer another way round.",
+    "brief": "Flick the bridge wheel across the millrace, then slip past a very alert roast turkey.",
+    "hint": "From the west bank, face the blue wheel and use Tongue. The loft switch opens the key room. Creep past the turkey, or throw a pebble away from your crossing.",
+    "index": 5,
+    "revision": 2,
+    "cunning": 1,
     "pebbles": 2,
-    "spores": 2,
     "tongues": 2,
-    "seeds": 2,
-    "checkpoints": [
-      [
-        19,
-        6
-      ],
-      [
-        19,
-        17
-      ]
-    ],
     "guards": [
       {
         "kind": "fox",
         "spawn": [
-          24,
-          17
+          16,
+          7
         ],
-        "facing": 3.141592653589793,
         "patrol": [
           [
-            22,
-            16
+            16,
+            7
           ],
           [
-            26,
-            16
-          ],
-          [
-            26,
-            18
-          ],
-          [
-            22,
-            18
+            16,
+            8
           ]
-        ]
+        ],
+        "facing": 1.5707963267948966
       },
       {
         "kind": "toad",
         "spawn": [
-          10,
-          12
+          23,
+          10
         ],
-        "facing": 3.141592653589793,
         "patrol": [
           [
-            10,
-            12
+            23,
+            10
           ]
-        ]
-      }
-    ],
-    "tunnels": [
-      [
-        [
-          11,
-          16
         ],
-        [
-          21,
-          16
-        ]
-      ]
+        "facing": 3.141592653589793
+      }
     ],
     "gates": [
       {
-        "id": "mill",
-        "name": "Mill loft",
+        "id": "millrace-bridge",
+        "name": "millrace bridge",
         "color": [
-          235,
-          176,
-          83
-        ],
-        "switch": [
-          20,
-          18
+          131,
+          190,
+          218
         ],
         "tiles": [
           [
-            27,
-            3
-          ],
-          [
-            27,
+            10,
             4
           ],
           [
-            27,
-            5
+            11,
+            4
           ],
           [
-            27,
-            6
+            12,
+            4
+          ],
+          [
+            13,
+            4
+          ],
+          [
+            14,
+            4
           ]
+        ],
+        "switch": [
+          11,
+          7
+        ],
+        "bridge": true
+      },
+      {
+        "id": "mill-loft",
+        "name": "mill loft",
+        "color": [
+          141,
+          184,
+          109
+        ],
+        "tiles": [
+          [
+            22,
+            4
+          ]
+        ],
+        "switch": [
+          16,
+          12
         ]
+      },
+      {
+        "id": "mill-home",
+        "name": "mill home",
+        "color": [
+          242,
+          177,
+          85
+        ],
+        "tiles": [
+          [
+            10,
+            10
+          ],
+          [
+            11,
+            10
+          ],
+          [
+            12,
+            10
+          ],
+          [
+            13,
+            10
+          ],
+          [
+            14,
+            10
+          ]
+        ],
+        "bridge": true
       }
     ],
     "fieldNotes": [
       {
-        "id": "mill-note",
+        "id": "autumn-mill-note-0",
         "at": [
-          12,
-          5
+          8,
+          7
         ],
-        "title": "The old mill stream",
-        "body": "You can swim safely, walk over either bridge, or step onto a rabbit mound to use its tunnel. The mill wheel is just scenery; it will never catch Sally."
+        "title": "The water wheel",
+        "body": "Tongue the blue wheel from this bank. The old millrace is too wide to jump, but its upper bridge is sound."
       },
       {
-        "id": "turkey-note",
+        "id": "autumn-mill-note-1",
         "at": [
-          11,
-          15
+          16,
+          4
         ],
-        "title": "A very lively dinner",
-        "body": "The roast turkey listens for footsteps. Hold C, the crawl button, or the left trigger to creep quietly. It dips its drumsticks and gobbles before rushing. Move sideways, or distract it with a pebble."
+        "title": "The roast turkey",
+        "body": "It hears footsteps and gobbles before it pounces. Creep quietly, or send it after a pebble somewhere you do not mean to stand."
       }
     ],
-    "map": [
-      "#################################",
-      "#..............~~~.........#....#",
-      "#..............~~~.........#....#",
-      "#..@.......1...~~~..1........K..#",
-      "#..............~~~..............#",
-      "#............L..................#",
-      "#..................L.........1..#",
-      "#....####......~~~.........#....#",
-      "#....####......~~~.....##########",
-      "#....####...1..~~~.....####.....#",
-      "#....####......~~~..1..####.....#",
-      "#..............~~~.....####.....#",
-      "#..1...........~~~..............#",
-      "#..............~~~...L..........#",
-      "#..............~~~...........1..#",
-      "#..............~~~..............#",
-      "#..........L....................#",
-      "#..................L............#",
-      "#..X........1..~~~...1......1...#",
-      "#..............~~~..............#",
-      "#################################"
-    ],
-    "gentle": 1,
-    "cunning": 1,
-    "index": 5,
     "props": [
+      {
+        "at": [
+          3,
+          4
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          18,
+          4
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          23,
+          4
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          5,
+          5
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          20,
+          5
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          3,
+          9
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          18,
+          9
+        ],
+        "kind": "pumpkin"
+      },
       {
         "at": [
           5,
           10
         ],
-        "kind": "tree"
+        "kind": "lantern"
       },
       {
         "at": [
-          6,
+          20,
           10
         ],
-        "kind": "pumpkin"
+        "kind": "lantern"
       },
       {
         "at": [
-          7,
-          10
-        ],
-        "kind": "pumpkin"
-      },
-      {
-        "at": [
-          8,
-          10
+          17,
+          11
         ],
         "kind": "tree"
       }
     ],
-    "foxWarn": 1.05
+    "spores": 1,
+    "foxWarn": 1.05,
+    "millWheel": [
+      13,
+      7
+    ],
+    "reactions": [
+      {
+        "id": "mill-key",
+        "when": "key",
+        "open": [
+          "mill-home"
+        ],
+        "message": "The lower mill bridge is ready for the return."
+      }
+    ],
+    "map": [
+      "#########################",
+      "#........._____.....#...#",
+      "#.@...1..._____.1...#.K1#",
+      "#..###.L.._____..####...#",
+      "#..###...........#####.##",
+      "#..###...._____L1####...#",
+      "#.1......._____......L.1#",
+      "#.......L1_____.........#",
+      "#..###...._____.........#",
+      "#..###...._____..####...#",
+      "#..###..........L####...#",
+      "#.......L._____..####...#",
+      "#.X....1.._____......1.L#",
+      "#........._____.1.......#",
+      "#########################"
+    ]
   },
   {
     "id": "autumn-maze",
     "name": "The Moonlit Maze",
-    "difficulty": "Medium+",
+    "difficulty": "Medium",
     "seasonalTheme": "autumn-night",
-    "brief": "Find the violet switch deep in the hedge maze, then choose a crossing to reach the lantern key. The upper way has a ghost; the lower way has a gardener.",
-    "hint": "The violet switch opens both crossings. Wait for the ghost to turn on the upper route, or bait the gardener and use leaf cover on the lower route. The green exit is back in the first garden.",
+    "brief": "Two courtyard switches open two ways past the moonlit watchers.",
+    "hint": "Find the amber switch in the western loop, then the violet switch beyond it. Choose the ghost's upper lane or the gardener's lower crossing. The key opens the centre route home.",
+    "index": 6,
+    "revision": 2,
+    "cunning": 1,
     "pebbles": 2,
-    "spores": 2,
-    "tongues": 2,
-    "seeds": 2,
-    "checkpoints": [
-      [
-        11,
-        6
-      ],
-      [
-        22,
-        17
-      ]
-    ],
+    "tongues": 1,
     "guards": [
       {
         "kind": "owl",
         "spawn": [
-          17,
-          4
+          15,
+          3
         ],
-        "facing": 1.5707963267948966,
         "patrol": [
           [
-            17,
+            12,
             3
           ],
           [
-            18,
-            3
+            15,
+            2
           ],
           [
-            18,
-            7
-          ],
-          [
-            17,
-            7
+            14,
+            5
           ]
-        ]
+        ],
+        "facing": 3.141592653589793
       },
       {
         "kind": "beetle",
         "spawn": [
-          27,
-          16
+          15,
+          12
         ],
-        "facing": 3.141592653589793,
         "patrol": [
           [
-            23,
-            16
+            15,
+            12
           ],
           [
-            28,
-            16
+            15,
+            14
+          ]
+        ],
+        "facing": 0
+      }
+    ],
+    "gates": [
+      {
+        "id": "amber-crossings",
+        "name": "amber crossings",
+        "color": [
+          242,
+          177,
+          85
+        ],
+        "tiles": [
+          [
+            11,
+            3
+          ],
+          [
+            11,
+            13
+          ]
+        ],
+        "switch": [
+          8,
+          8
+        ]
+      },
+      {
+        "id": "violet-crossings",
+        "name": "violet crossings",
+        "color": [
+          186,
+          148,
+          218
+        ],
+        "tiles": [
+          [
+            17,
+            3
+          ],
+          [
+            17,
+            13
+          ]
+        ],
+        "switch": [
+          13,
+          14
+        ]
+      },
+      {
+        "id": "maze-home",
+        "name": "maze home",
+        "color": [
+          242,
+          177,
+          85
+        ],
+        "tiles": [
+          [
+            5,
+            8
+          ],
+          [
+            11,
+            8
           ]
         ]
       }
     ],
     "fieldNotes": [
       {
-        "id": "maze-note",
+        "id": "autumn-maze-note-0",
         "at": [
-          11,
-          6
+          7,
+          5
         ],
-        "title": "A garden at a time",
-        "body": "The violet switch is deeper in the maze, beside the old hedge at the left of the middle garden. It opens two crossings: a ghost watches the upper one and a gardener patrols the lower one. Choose your way."
+        "title": "Moonlit choices",
+        "body": "The upper crossing belongs to the lantern keeper. The lower one belongs to the gardener. Both reach the far garden; neither is the only way back."
       }
     ],
-    "map": [
-      "###############################",
-      "#........#..........#.........#",
-      "#........#..........#.........#",
-      "#..@...1.#..1...............K.#",
-      "#........#.............L......#",
-      "#.......L...........#...###...#",
-      "#..........L........#...###...#",
-      "#........#........1.#...###...#",
-      "#..###...#..........#...###.1.#",
-      "#..###...#..######..#...###...#",
-      "#..###...#..######..#...###...#",
-      "#.1###...#..######..#...###...#",
-      "#..###...#..........#...###...#",
-      "#..###...#.1......L.#.........#",
-      "#..###...#..........#......L..#",
-      "#........#..........#..1......#",
-      "#........#..####..............#",
-      "#......1....####..L...L.......#",
-      "#...........####....#.........#",
-      "#...................#.......1.#",
-      "#..X..............1.#.........#",
-      "#...................#.........#",
-      "###############################"
-    ],
-    "gentle": 1,
-    "cunning": 1,
-    "index": 6,
     "props": [
       {
         "at": [
-          24,
+          17,
+          1
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          4,
+          2
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          18,
+          4
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          10,
+          5
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          7,
+          6
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          12,
+          6
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          17,
+          6
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          22,
+          6
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          4,
+          7
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          19,
+          7
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          16,
+          8
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          18,
+          9
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          23,
+          9
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          5,
+          10
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          10,
+          10
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          15,
+          10
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          20,
+          10
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          17,
+          11
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          4,
           12
         ],
         "kind": "tree"
       },
       {
         "at": [
-          25,
-          12
+          18,
+          14
         ],
-        "kind": "pumpkin"
+        "kind": "lantern"
       },
       {
         "at": [
-          26,
-          12
+          5,
+          15
         ],
-        "kind": "pumpkin"
+        "kind": "tree"
+      },
+      {
+        "at": [
+          10,
+          15
+        ],
+        "kind": "tree"
       }
     ],
-    "gates": [
+    "spores": 1,
+    "glows": 1,
+    "reactions": [
       {
-        "id": "maze-crossings",
-        "name": "Moonlit crossings",
-        "color": [
-          190,
-          164,
-          235
+        "id": "maze-key",
+        "when": "key",
+        "open": [
+          "maze-home"
         ],
-        "switch": [
-          11,
-          13
-        ],
-        "tiles": [
-          [
-            20,
-            3
-          ],
-          [
-            20,
-            4
-          ],
-          [
-            20,
-            16
-          ],
-          [
-            20,
-            17
-          ]
-        ]
+        "message": "The middle garden gates open for the return."
       }
+    ],
+    "map": [
+      "#########################",
+      "#...##....##....###.....#",
+      "#.@.##.1..##1...###...K1#",
+      "#.......................#",
+      "#...##L...##L...###L1...#",
+      "#...SS....##..L.###.....#",
+      "#.L.####.#####L######.###",
+      "#...##....##....#####.###",
+      "#......L....L..1#####.###",
+      "#...##1...##....#####.###",
+      "#...####.#####.######.###",
+      "#...##....##....###.....#",
+      "#.1.##..L.##....###.L.1.#",
+      "#.......................#",
+      "#.X.##...1##L.#.###.....#",
+      "#...##....##1...###.....#",
+      "#########################"
     ]
   },
   {
     "id": "autumn-finale",
     "name": "The Last Lantern",
-    "difficulty": "Medium+",
+    "difficulty": "Medium",
     "seasonalTheme": "autumn-festival",
-    "brief": "One last trip through orchard, courtyard and lantern house. Open the orchard arch, outwit the gardener at the second switch, and bring the final key home.",
-    "hint": "Open the orchard arch, then use the narrow lizard passage beside it to leave the serpent behind. The second switch is in the lower courtyard, watched by a gardener. Leaves and a decoy help; the key opens both low return gates.",
-    "pebbles": 2,
-    "spores": 2,
+    "brief": "Bring the final lantern through orchard, courtyard and mill garden.",
+    "hint": "The orchard switch opens the central hall; the courtyard switch opens the far garden. Lizard cracks offer a serpent-free shortcut. The key opens the lower gates home.",
+    "index": 7,
+    "revision": 2,
+    "cunning": 1,
+    "pebbles": 3,
     "tongues": 2,
-    "seeds": 2,
-    "checkpoints": [
-      [
-        14,
-        6
-      ],
-      [
-        26,
-        6
-      ],
-      [
-        26,
-        18
-      ]
-    ],
     "guards": [
       {
         "kind": "snake",
         "spawn": [
-          8,
-          6
+          15,
+          1
         ],
-        "facing": 1.5707963267948966,
         "patrol": [
           [
-            8,
-            6
+            14,
+            1
           ],
           [
-            9,
-            6
-          ],
-          [
-            9,
-            9
-          ],
-          [
-            8,
-            9
+            16,
+            1
           ]
-        ]
+        ],
+        "facing": 0
       },
       {
         "kind": "beetle",
         "spawn": [
-          21,
-          15
+          22,
+          4
         ],
-        "facing": 3.141592653589793,
         "patrol": [
           [
-            21,
-            13
+            22,
+            4
           ],
           [
-            21,
-            16
+            25,
+            4
           ]
-        ]
+        ],
+        "facing": 0
       },
       {
         "kind": "toad",
         "spawn": [
-          33,
-          12
+          16,
+          7
         ],
-        "facing": 0,
         "patrol": [
           [
-            33,
-            12
+            16,
+            7
           ]
-        ]
+        ],
+        "facing": 3.141592653589793
       },
       {
         "kind": "fox",
         "spawn": [
-          34,
-          20
+          22,
+          13
         ],
-        "facing": 3.141592653589793,
         "patrol": [
           [
-            32,
-            20
+            20,
+            13
           ],
           [
-            34,
-            20
+            24,
+            13
           ]
-        ]
+        ],
+        "facing": 0
       }
     ],
     "gates": [
       {
         "id": "festival-orchard",
-        "name": "Orchard arch",
+        "name": "festival orchard",
         "color": [
-          192,
-          216,
-          125
-        ],
-        "switch": [
-          8,
-          15
-        ],
-        "tiles": [
-          [
-            12,
-            5
-          ],
-          [
-            12,
-            6
-          ]
-        ]
-      },
-      {
-        "id": "festival-house",
-        "name": "Lantern house",
-        "color": [
-          112,
-          194,
-          231
-        ],
-        "switch": [
-          17,
-          15
-        ],
-        "tiles": [
-          [
-            24,
-            5
-          ],
-          [
-            24,
-            6
-          ]
-        ]
-      },
-      {
-        "id": "festival-home-a",
-        "name": "Orchard return",
-        "color": [
-          243,
-          184,
+          242,
+          177,
           85
         ],
         "tiles": [
           [
-            12,
-            17
-          ],
-          [
-            12,
-            18
+            8,
+            3
           ]
+        ],
+        "switch": [
+          3,
+          13
         ]
       },
       {
-        "id": "festival-home-b",
-        "name": "Courtyard return",
+        "id": "festival-courtyard",
+        "name": "festival courtyard",
         "color": [
-          243,
+          141,
           184,
+          109
+        ],
+        "tiles": [
+          [
+            17,
+            3
+          ]
+        ],
+        "switch": [
+          14,
+          8
+        ]
+      },
+      {
+        "id": "festival-home-west",
+        "name": "festival home west",
+        "color": [
+          242,
+          177,
           85
         ],
         "tiles": [
           [
-            24,
-            17
-          ],
+            8,
+            13
+          ]
+        ]
+      },
+      {
+        "id": "festival-home-east",
+        "name": "festival home east",
+        "color": [
+          242,
+          177,
+          85
+        ],
+        "tiles": [
           [
-            24,
-            18
+            17,
+            13
           ]
         ]
       }
     ],
+    "fieldNotes": [
+      {
+        "id": "autumn-finale-note-0",
+        "at": [
+          2,
+          12
+        ],
+        "title": "One last lantern",
+        "body": "A little of every trail, and a way to think around every creature. The cracks are yours alone. Do not spend every pebble before the far garden."
+      }
+    ],
+    "props": [
+      {
+        "at": [
+          17,
+          1
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          9,
+          2
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          14,
+          2
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          21,
+          3
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          8,
+          4
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          18,
+          4
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          2,
+          6
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          7,
+          6
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          12,
+          6
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          17,
+          6
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          22,
+          6
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          4,
+          7
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          9,
+          7
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          19,
+          7
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          24,
+          7
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          1,
+          8
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          6,
+          8
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          21,
+          8
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          8,
+          9
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          18,
+          9
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          5,
+          10
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          10,
+          10
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          15,
+          10
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          20,
+          10
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          25,
+          10
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          17,
+          11
+        ],
+        "kind": "lantern"
+      },
+      {
+        "at": [
+          9,
+          12
+        ],
+        "kind": "pumpkin"
+      },
+      {
+        "at": [
+          8,
+          14
+        ],
+        "kind": "tree"
+      },
+      {
+        "at": [
+          18,
+          14
+        ],
+        "kind": "tree"
+      }
+    ],
+    "spores": 1,
+    "seeds": 1,
+    "foxWarn": 1.05,
     "reactions": [
       {
         "id": "festival-key",
         "when": "key",
         "open": [
-          "festival-home-a",
-          "festival-home-b"
+          "festival-home-west",
+          "festival-home-east"
         ],
-        "message": "The last lantern is lit! The low garden gates open for Sally.",
-        "objective": "Follow the low garden path home, or explore for optional treasure."
-      }
-    ],
-    "fieldNotes": [
-      {
-        "id": "finale-note",
-        "at": [
-          26,
-          6
-        ],
-        "title": "A light to bring home",
-        "body": "Two switches lead to the last lantern. The orchard switch opens the first arch, with a narrow lizard passage beside it that the serpent cannot follow. The courtyard switch opens the lantern house. The key opens both low return gates."
+        "message": "The festival gates swing wide. Bring the last lantern home."
       }
     ],
     "map": [
-      "#####################################",
-      "#...........#...........#...........#",
-      "#...........#...........#...........#",
-      "#..@....1...#..1........#........K..#",
-      "#...........#...........#..1........#",
-      "#.........LS........................#",
-      "#..........S..L...........L.........#",
-      "#..........S#........1..#...........#",
-      "#....###...S#...####....#........L..#",
-      "#....###...S#...####....#...........#",
-      "#....###....#...####....#...####....#",
-      "#....###....#...####....#...####....#",
-      "#....###....#...........#...####....#",
-      "#...........#....L...L..#...####....#",
-      "#...........#....L......#...####....#",
-      "#..1........#..1........#...........#",
-      "#...........#...........#...........#",
-      "#...................###..........1..#",
-      "#........1L...L.......L...L.........#",
-      "#...........#...........#...........#",
-      "#..X........#....1......#..1........#",
-      "#...........#...........#...........#",
-      "#####################################"
-    ],
-    "gentle": 1,
-    "cunning": 1,
-    "index": 7,
-    "props": [
-      {
-        "at": [
-          28,
-          14
-        ],
-        "kind": "tree"
-      },
-      {
-        "at": [
-          29,
-          14
-        ],
-        "kind": "pumpkin"
-      },
-      {
-        "at": [
-          30,
-          14
-        ],
-        "kind": "pumpkin"
-      },
-      {
-        "at": [
-          31,
-          14
-        ],
-        "kind": "tree"
-      }
-    ],
-    "foxWarn": 1.05
+      "###########################",
+      "#.......##.......##.......#",
+      "#.@...1.##.1..#####.1...K.#",
+      "#...................##....#",
+      "#....L..##L....1.##L1.....#",
+      "#.......##...S...##...L...#",
+      "###.######S##S#########.###",
+      "###.######...S...######.###",
+      "###.######.L#....######.###",
+      "###.######.1.....######.###",
+      "###.#########.#########.###",
+      "#.......##.......##.......#",
+      "#...L1..##...L...##.L...1.#",
+      "#..............1..........#",
+      "#.X.....##......L##1....L.#",
+      "#.......##.......##.......#",
+      "###########################"
+    ]
   }
 ];
 root.EscapeAutumn=routes;if(typeof module!=="undefined"&&module.exports)module.exports=routes;
