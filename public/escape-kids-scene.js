@@ -38,7 +38,7 @@ const escapeKidsTrails=new WeakMap();
 function drawEscapeKidsGuide(g,cell){
   if(g.status!=='playing')return;
   const t=g.elapsed;drawEscapeKidsSigns(g,cell);push();
-  if(escapeKidsGuideOn()){
+  if(g.level.seasonal?seasonProgress().data.guide:escapeKidsGuideOn()){
     const key=[Math.floor(g.player.x),Math.floor(g.player.y),g.hasKey,g.burrows,g.tongues,g.grid.map(r=>r.join('')).join('')].join('|');
     let guide=escapeKidsTrails.get(g);if(guide?.key!==key){guide={key,...EscapeKidsGuide.plan(g)};escapeKidsTrails.set(g,guide);}
     noStroke();guide.path.slice(1,16).forEach(([x,y],i)=>{const pulse=.5+.5*Math.sin(t*5-i*.7);fill(255,236,140,90+120*pulse);ellipse((x+.5)*cell,(y+.5)*cell,cell*(.22+.08*pulse));});
@@ -62,11 +62,11 @@ function drawEscapeKidsGuide(g,cell){
 // Step on a note to read it. The existing story card supports mouse, touch, A/B and Android Back.
 const escapeKidsSignVisits=new WeakMap();
 function tickEscapeKidsSign(g){
-  if(!g?.level.kids||g.status!=='playing'||paused||escapeIntroOpen||escapeStoryOpen||g.player.flight||g.player.underground)return;
+  if(!(g?.level.kids||g?.level.seasonal)||g.status!=='playing'||paused||escapeIntroOpen||escapeStoryOpen||g.player.flight||g.player.underground)return;
   const notes=g.level.fieldNotes||[],near=notes.find(n=>Math.hypot(g.player.x-n.at[0]-.5,g.player.y-n.at[1]-.5)<.65);
   const last=escapeKidsSignVisits.get(g);if(!near){if(last&&!notes.some(n=>n.id===last&&Math.hypot(g.player.x-n.at[0]-.5,g.player.y-n.at[1]-.5)<1.5))escapeKidsSignVisits.delete(g);return;}
   if(last===near.id)return;escapeKidsSignVisits.set(g,near.id);clearTouchInput();suppressHeldKeys();g.paused=true;
-  showEscapeStory({id:near.id,card:{id:near.id,kind:'kids-sign',theme:g.level.kidsTheme,title:near.title,body:[near.body]}},false,()=>{clearTouchInput();suppressHeldKeys();g.paused=paused;skipSimulationFrame=true;});
+  showEscapeStory({id:near.id,card:{id:near.id,kind:g.level.seasonal?'season-sign':'kids-sign',theme:g.level.seasonalTheme||g.level.kidsTheme,title:near.title,body:[near.body]}},false,()=>{clearTouchInput();suppressHeldKeys();g.paused=paused;skipSimulationFrame=true;});
 }
 function drawEscapeKidsSigns(g,cell){
   for(const n of g.level.fieldNotes||[]){const [x,y]=n.at;if(!g.visibleTile(x,y))continue;push();translate((x+.5)*cell,(y+.5)*cell);noStroke();

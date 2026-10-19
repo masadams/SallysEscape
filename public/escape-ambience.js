@@ -7,6 +7,11 @@
 (function(root){
   // beds: [kind, level]; calls: [kind, [min s, max s] between, level].
   const SCAPES={
+    autumn:{beds:[['breeze',.4]],calls:[['crow',[12,20],.18],['creak',[8,15],.16]]},
+    'autumn-dusk':{beds:[['breeze',.25],['insects',.14]],calls:[['creak',[10,17],.18],['chime',[14,22],.14]]},
+    'autumn-night':{beds:[['wind',.2],['insects',.15]],calls:[['owl',[12,20],.17],['chime',[13,21],.15]]},
+    'autumn-mill':{beds:[['stream',.4],['breeze',.2]],calls:[['creak',[8,13],.2],['crow',[15,23],.13]]},
+    'autumn-festival':{beds:[['breeze',.3]],calls:[['chime',[7,14],.18],['cricket',[12,20],.15]]},
     meadow:{beds:[['breeze',.5]],calls:[['bird',[3,7],.5],['cricket',[7,13],.22]]},
     garden:{beds:[['breeze',.4]],calls:[['bird',[3,6],.45],['bee',[8,14],.3]]},
     river:{beds:[['stream',.6]],calls:[['frog',[3,7],.5],['bird',[8,14],.3]]},
@@ -134,3 +139,4 @@
   root.EscapeAmbience=EscapeAmbience;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeAmbience};
 })(typeof globalThis!=='undefined'?globalThis:this);
+
