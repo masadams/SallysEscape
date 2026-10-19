@@ -72,7 +72,8 @@ function openEscapeBestiary(){
 }
 function escapeNpcLine(npc){
   const w=escapeWorld,c=w.chapters[npc.chapter],r=escapeRegionStars(npc.chapter),here=w.caches.filter(k=>k.chapter===npc.chapter),found=here.filter(k=>w.found.has(k.id)).length;
-  const lines=[ESCAPE_FOLK_TIPS[npc.chapter]||'Mind the hunters out there.'];
+  const lines=[ESCAPE_FOLK_TIPS[npc.chapter]||'Mind the hunters out there.'],own=typeof EscapeStory!=='undefined'&&EscapeStory.localLine(npc.chapter,c.theme,escapeStoryStage());
+  if(own)lines.unshift(own);
   // Once the secret world is revealed, Old Moss asks for help finding what he lost.
   if(npc.name==='Old Moss'&&w.revealed()){const items=EscapeProgress.SECRET_RULES['moss-den'].items,left=items.filter(i=>!escapeProgress.data.items.includes(i)).length;
     return npc.name+': '+(left?['I have lost my spectacles, my pocket watch and my scarf somewhere on the trail. Ruins, jungle and snow, I think…','If you find my things, bring them to my den, by the Shedding Hollow. '+left+' still missing.'][Math.floor(w.elapsed/4.5)%2]:escapeProgress.data.secrets.includes('moss-den')?'Thank you, Sally. Wear my colours well.':'You found them all! Come to my den, by the Shedding Hollow. The door is open.');}
@@ -153,7 +154,7 @@ function openEscapeLibrary(){
   escapeLibraryOpen=true;clearTouchInput();suppressHeldKeys();document.getElementById('game-area').classList.remove('escape-world-open');
   document.getElementById('game-container').style.display='none';document.getElementById('escape-select').style.display='block';document.getElementById('world-list-back').focus();updateToolbar();
 }
-function enterEscapeWorld(){const id=escapeWorld?.enter();if(id==='room:sallys-burrow'){openEscapeTrophies();return;}if(id==='room:moss-den'){openEscapeMossDen();return;}if(id?.startsWith('hidden:'))startEscape({hiddenId:id.slice(7)});else if(id)startEscape({levelId:id});}
+function enterEscapeWorld(){const id=escapeWorld?.enter();if(id==='room:sallys-burrow'){const waiting=escapeStoryWaiting();if(waiting.length){for(const c of waiting)queueEscapeStory(c.id);return;}openEscapeTrophies();return;}if(id==='room:moss-den'){openEscapeMossDen();return;}if(id?.startsWith('hidden:'))startEscape({hiddenId:id.slice(7)});else if(id)startEscape({levelId:id});}
 // The Gilded Burrow's three escapes, shown only to those who found it.
 function renderEscapeHiddenHUD(node){
   document.getElementById('world-route')?.classList.remove('world-route-idle');
@@ -331,7 +332,7 @@ function drawEscapeWorld(){
   const w=escapeWorld,cell=escapeWorldCell(w),clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),cx=clamp(w.player.x,width/(2*cell),w.width-width/(2*cell)),cy=clamp(w.player.y,(height-90)/(2*cell),w.height-(height-90)/(2*cell)),ox=width/2-cx*cell,oy=(width<600?height*.42:(height+30)/2)-cy*cell;
   const bounds=document.getElementById('game-container').getBoundingClientRect?.()||{left:0,top:0,width,height},panels=escapeWorldPanels();
   // Flag number buttons are DOM elements above the canvas; hide any the villager's speech bubble covers.
-  const talking=w.nearbyNpc();if(talking){const b=escapeSpeechRect(talking,cell),sx=v=>bounds.left+(v+ox)/width*bounds.width,sy=v=>bounds.top+(v+oy)/height*bounds.height;panels.push({left:sx(b.x),right:sx(b.x+b.w),top:sy(b.y),bottom:sy(b.y+b.h+cell*.3)});}
+  const talking=w.nearbyNpc()||escapeWorldSignNear(w);if(talking){const b=escapeSpeechRect(talking,cell),sx=v=>bounds.left+(v+ox)/width*bounds.width,sy=v=>bounds.top+(v+oy)/height*bounds.height;panels.push({left:sx(b.x),right:sx(b.x+b.w),top:sy(b.y),bottom:sy(b.y+b.h+cell*.3)});}
   const palettes={meadow:[[134,168,106],[51,86,65],[175,190,130]],garden:[[114,153,102],[50,83,63],[161,177,123]],river:[[103,156,127],[43,90,81],[150,182,139]],ruins:[[123,147,111],[73,94,82],[171,177,139]],quarry:[[155,138,104],[99,91,75],[192,173,132]],desert:[[201,162,99],[135,112,73],[232,193,125]],marsh:[[99,141,109],[40,81,72],[143,164,120]],jungle:[[77,125,91],[27,74,54],[122,153,94]],glow:[[38,77,82],[18,44,52],[96,168,151]],orchard:[[126,153,93],[56,93,53],[180,185,119]],coast:[[179,176,121],[56,118,110],[221,201,143]],hollow:[[128,104,112],[58,40,56],[176,140,150]],lantern:[[70,104,104],[24,52,58],[120,170,150]],rooftops:[[196,150,108],[132,78,56],[226,190,140]],ants:[[150,112,76],[78,52,34],[190,150,104]],frost:[[196,214,226],[96,124,146],[236,244,250]],vents:[[150,120,100],[86,60,50],[196,160,130]],grotto:[[96,92,124],[44,36,70],[150,214,190]],storm:[[118,130,140],[54,62,76],[178,192,204]],tide:[[198,186,140],[70,124,130],[232,220,176]],home:[[150,140,110],[70,62,74],[214,180,130]]};
   background(37,66,54);push();translate(ox,oy);
   const x1=Math.max(0,Math.floor(-ox/cell)),x2=Math.min(w.width-1,Math.ceil((width-ox)/cell)),y1=Math.max(0,Math.floor(-oy/cell)),y2=Math.min(w.height-1,Math.ceil((height-oy)/cell));
@@ -386,7 +387,7 @@ function drawEscapeWorld(){
   if(w.fly)drawEscapeGoldfly(w.fly,cell,w.elapsed);
   // Cloud shadows drift across the whole trail.
   noStroke();for(let i=0;i<7;i++){const cx=((i*41+w.elapsed*.35)%(w.width+24))-12,cy=(i*13+7)%w.height;fill(10,30,25,26);ellipse(cx*cell,cy*cell,cell*7,cell*3.4);ellipse((cx+2.6)*cell,(cy-.8)*cell,cell*5,cell*2.6);}
-  if(talking)drawEscapeSpeech(talking,escapeNpcLine(talking),cell);
+  if(talking)drawEscapeSpeech(talking,talking.name?escapeNpcLine(talking):'The sign reads: '+EscapeStory.LOCALS[talking.chapter].sign,cell);
   pop();
   drawEscapeWorldWeather(w);
   // A slow day and night cycle tints the trail every four minutes.
@@ -460,6 +461,8 @@ function drawEscapeWorldNpc(npc,cell,clock){
   else{fill(70,92,150);ellipse(x,y,cell*.42,cell*.6);stroke(30,40,70);strokeWeight(cell*.03);line(x,y-cell*.3,x,y+cell*.3);for(const s of [-1,1])for(const o of [-.12,0,.12])line(x+s*cell*.2,y+o*cell,x+s*cell*.34,y+o*cell+cell*.06);noStroke();fill(150,190,255,120);ellipse(x-cell*.08,y-cell*.12,cell*.1,cell*.18);}
   fill(255,246,220,230);textAlign(CENTER,CENTER);textSize(cell*.28);text(npc.name,x,y-cell*.62);pop();
 }
+// Standing right by a courtyard's signpost shows its one extra line.
+function escapeWorldSignNear(w){if(typeof EscapeStory==='undefined')return null;return w.signs.find(s=>w.regionOpen(s.chapter)&&EscapeStory.LOCALS[s.chapter]&&Math.hypot(s.x+.5-w.player.x,s.y+.5-w.player.y)<=1.4)||null;}
 function escapeSpeechRect(npc,cell){const w=cell*8,h=cell*2.2;return {x:(npc.x+.5)*cell-w/2,y:(npc.y+.5)*cell-cell*1.2-h,w,h};}
 function drawEscapeSpeech(npc,line,cell){
   const {w,h,x,y}=escapeSpeechRect(npc,cell);noStroke();fill(250,244,222,240);rect(x,y,w,h,cell*.25);triangle((npc.x+.3)*cell,y+h,(npc.x+.7)*cell,y+h,(npc.x+.5)*cell,y+h+cell*.3);

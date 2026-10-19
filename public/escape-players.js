@@ -6,6 +6,16 @@
   const KEY='sally-escape-players-v1',MAX=6,PROGRESS='sallys-escape-progress-v1';
   const COLORS=[['Leaf','#7cc46a'],['Sky','#6aa8e8'],['Sun','#f0c050'],['Berry','#d86a9a'],['Ember','#e8865a'],['Dusk','#a68ae0']];
   const raw=(()=>{try{return typeof localStorage==='undefined'?null:localStorage;}catch(_){return null;}})();
+  // A fresh start for the new story: the first load of this save era clears every player's progress,
+  // stickers, tips and last-played escape (names, colours, settings and built levels stay).
+  const ERA_KEY='sally-escape-save-era',ERA='2',WIPE=['sallys-escape-progress-v1','sallys-escape-kids','sally-escape-last-played','sally-escape-community-best','sally-escape-current-tip','sally-escape-unlock-all'];
+  function freshStart(){
+    if(!raw)return false;try{if(raw.getItem(ERA_KEY)===ERA)return false;
+      const keys=[];for(let i=0;i<raw.length;i++)keys.push(raw.key(i));
+      for(const k of keys){const base=String(k).split('@')[0];if(WIPE.includes(base)||/^sally-escape-[a-z]+-tip$/.test(base))raw.removeItem(k);}
+      raw.setItem(ERA_KEY,ERA);return true;}catch(_){return false;}
+  }
+  freshStart();
   const clean=n=>String(n||'').replace(/\s+/g,' ').trim().slice(0,20);
   const stamp=()=>new Date().toISOString();
   function read(){
@@ -32,7 +42,7 @@
       for(const l of Object.values(d.levels||{})){stars+=Number(l?.stars)||0;if(l?.stars>0||l?.best)cleared++;}
       return {stars,cleared};}catch(_){return {stars:0,cleared:0};}
   }
-  const api={KEY,MAX,COLORS,
+  const api={KEY,MAX,COLORS,ERA_KEY,freshStart,
     list:()=>read().list,
     current:()=>{const s=read();return s.list.find(p=>p.id===s.current);},
     storage,summary,

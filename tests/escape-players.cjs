@@ -18,3 +18,14 @@ test('each player saves into their own space, up to six, and a removed player is
   assert.equal(P.remove(b.id),true);assert.equal(data.has('sally-escape-settings@'+b.id),false);assert.notEqual(P.current().id,b.id,'removing the current player picks another');
   for(const p of P.list().slice(1))P.remove(p.id);assert.equal(P.list().length,1);assert.equal(P.remove(P.list()[0].id),false,'the last player stays');
 });
+
+test('the new story starts everyone afresh once: progress, stickers and tips go, names, settings and built levels stay',()=>{
+  const data=new Map([['sally-escape-players-v1',JSON.stringify({current:'p1',list:[{id:'p1',name:'Ada',color:0,legacy:true},{id:'p2',name:'Bo',color:1}],keys:[]})],
+    ['sallys-escape-progress-v1','{"levels":{"meadow-dash":{"stars":3}}}'],['sallys-escape-progress-v1@p2','{}'],['sallys-escape-kids','["hello-sally"]'],['sally-escape-throw-tip','1'],['sally-escape-last-played@p2','x'],
+    ['sally-escape-settings','{"muted":true}'],['sally-escape-custom-v1@p2','[]'],['sally-escape-workshop-v1','{}']]);
+  const store={getItem:k=>data.has(k)?data.get(k):null,setItem:(k,v)=>data.set(k,String(v)),removeItem:k=>data.delete(k),key:i=>[...data.keys()][i]??null,get length(){return data.size;}};
+  global.localStorage=store;delete require.cache[require.resolve('../public/escape-players.js')];const P=require('../public/escape-players.js');
+  assert.deepEqual([...data.keys()].sort(),['sally-escape-custom-v1@p2','sally-escape-players-v1','sally-escape-save-era','sally-escape-settings','sally-escape-workshop-v1']);
+  assert.deepEqual(P.list().map(p=>p.name),['Ada','Bo']);
+  data.set('sallys-escape-progress-v1','{"levels":{}}');assert.equal(P.freshStart(),false,'only once');assert.ok(data.has('sallys-escape-progress-v1'));
+});
