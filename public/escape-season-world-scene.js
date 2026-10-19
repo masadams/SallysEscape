@@ -43,17 +43,20 @@ function drawSeasonWorldVeil(a,c,clock){
  if(a.theme==='frost'){
   mist([205,222,233]);fill(228,239,244,155);ellipse(-2,3,22,13);
   // Snow-laden trees and steady bulbs emerge between the banks of windblown snow.
-  for(const [x,y,s]of[[-7,5,1.3],[-4,7,1],[5,6,1.25],[8,3,1]]){
+  for(const [x,y,s]of[[-7,7.4,1.3],[-4,9.5,1],[5,9.4,1.25],[8,6,1]]){
    fill(76,112,111,185);triangle(x,y-3*s,x-1.25*s,y+.5*s,x+1.25*s,y+.5*s);
    fill(242,248,248,235);triangle(x,y-3*s,x-.93*s,y-1.1*s,x+.93*s,y-1.1*s);
    triangle(x,y-1.8*s,x-1.12*s,y,x+1.12*s,y);
   }
-  for(const [x,y]of[[-6.8,5.9],[4.1,6.3]]){
+  for(const [x,y]of[[-6.8,8.8],[4.1,9.4]]){
    noFill();stroke(100,128,120,180);strokeWeight(.055);beginShape();
    for(let j=0;j<=12;j++)vertex(x+j*.3,y+Math.sin(j/12*Math.PI)*.45);endShape();noStroke();
-   for(let j=0;j<7;j++){const bx=x+j*.6,by=y+Math.sin(j/6*Math.PI)*.45;fill(255,217,141,35);ellipse(bx,by,.7,.7);fill(...[[255,219,139],[209,128,111],[153,189,148]][j%3],240);ellipse(bx,by,.23,.3);}
+   for(let j=0;j<7;j++){const bx=x+j*.6,by=y+Math.sin(j/6*Math.PI)*.45;fill(255,217,141,45);ellipse(bx,by,.8,.8);fill(...[[255,219,139],[209,128,111],[153,189,148]][j%3],240);ellipse(bx,by,.26,.33);}
   }
   fill(235,244,248,150);ellipse(-5,8,14,3.4);ellipse(5,8.3,13,3);
+  noFill();stroke(247,251,253,85);strokeWeight(.25);
+  for(let j=0;j<5;j++){const y=-6+j*3.4,sway=Math.sin(t*.3+j)*.3;bezier(-10,y+1,-4,y+sway,4,y+.3+sway,10,y-1);}
+  noStroke();
   for(let j=0;j<28;j++){
    const u=((j*.61803398875+t*.045)%1)*2-1,v=((j*.38196601125-t*.027)%1+1)%1*2-1;
    if(u*u+v*v>.94)continue;const x=u*11.7,y=v*9.6;
@@ -62,7 +65,7 @@ function drawSeasonWorldVeil(a,c,clock){
   }
  }else if(a.theme==='garden'){
   mist([190,207,203]);fill(222,220,228,120);ellipse(1,-1,21,17);
-  for(const [x,y,s]of[[-7,5,1],[6,5.7,1.25]]){
+  for(const [x,y,s]of[[-9,-3,.9],[-7,5,1],[6,5.7,1.25]]){
    stroke(118,111,99,175);strokeWeight(.17*s);line(x,y,x+.2,y-2.5*s);noStroke();
    fill(209,161,184,180);ellipse(x,y-2*s,3.4*s,2.4*s);fill(240,206,214,205);ellipse(x-.6*s,y-2.5*s,2*s,1.3*s);
   }
@@ -76,8 +79,8 @@ function drawSeasonWorldVeil(a,c,clock){
  }else{
   mist([223,210,165]);fill(245,225,173,150);ellipse(0,-2,22,16);
   // Warm haze parts just enough to show meadow grasses and summer flowers.
-  for(let j=0;j<18;j++){
-   const x=-9+j*1.05,y=6.8+Math.sin(j*2)*.8,h=1.1+(j%4)*.45,sway=Math.sin(t*.35+j)*.12;
+  for(let j=0;j<28;j++){
+   const x=j<18?-9+j*1.05:-6+(j-18)*1.3,y=(j<18?6.8:-8.6)+Math.sin(j*2)*.6,h=1.1+(j%4)*.45,sway=Math.sin(t*.35+j)*.12;
    stroke(135,147,96,175);strokeWeight(.065);line(x,y,x+sway,y-h);line(x,y-.3,x-.3+sway,y-h*.7);noStroke();
    if(j%5===0){fill(238,199,97,210);ellipse(x+sway,y-h,.6,.6);fill(150,121,79,210);ellipse(x+sway,y-h,.22,.22);}
   }

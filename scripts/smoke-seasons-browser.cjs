@@ -28,6 +28,10 @@ async function smoke(){
   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await run('escapeLightingMode="full";drawSeasonWorld()');await frame();assert.equal(await run('matchMedia("(prefers-reduced-motion: reduce)").matches'),true);await screenshot('seasonal-weather-reduced-motion');
   await send('Emulation.setEmulatedMedia',{features:[]});
   await run('seasonVisit("winter");for(let i=0;i<120*60&&seasonWorld.target;i++)seasonWorld.advance(1/120);renderSeasonHUD(true);drawSeasonWorld()');await frame();assert.equal(await run('seasonWorld.areaOpen("winter")'),false,'unbuilt winter stays locked');assert.equal(await run('seasonWorld.nearbyGate()?.id'),'winter');await screenshot('winter-gate');
+  assert.match(await run('document.getElementById("season-route-brief").textContent'),/blizzard/i);
+  for(const area of ['spring','summer']){
+   await run('seasonVisit('+JSON.stringify(area)+');for(let i=0;i<120*60&&seasonWorld.target;i++)seasonWorld.advance(1/120);renderSeasonHUD(true);drawSeasonWorld()');await frame();assert.equal(await run('seasonWorld.nearbyGate()?.id'),area);await screenshot(area+'-gate');
+  }
   await run('seasonVisit("autumn-hollow");seasonEnter()');assert.equal(await run('gameState'),'escape');assert.equal(await run('escapeGame.level.id'),'autumn-orchard');await run('escapeLeaveRun()');assert.equal(await run('gameState'),'seasonalHub');
   const ids=await run('EscapeCatalog.seasonal.map(l=>l.id)');
   for(const level of ids)for(const lighting of ['full','simple']){

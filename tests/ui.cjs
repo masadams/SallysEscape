@@ -196,7 +196,7 @@ test('Full lighting draws every area with terrain, water and small lives, and th
 test('seasonal menu enters a continuous campaign-style map, keeps future paths locked and goes back to the title',()=>{
  const h=harness(),panel=h.el('season-hub');panel.querySelectorAll=()=>[];panel.contains=()=>false;
  h.el('seasons-button').onclick();assert.equal(h.run('gameState'),'seasonalHub');assert.match(panel.innerHTML,/SEASONAL ADVENTURES/);assert.match(panel.innerHTML,/A snowy path/);assert.match(panel.innerHTML,/data-season-clock="winter"/);assert.equal(h.el('game-container').style.display,'block');
- h.run('seasonVisit("winter")');assert.equal(h.run('seasonPack'),'autumn-hollow');assert.equal(h.run('seasonWorld.areaOpen("winter")'),false);assert.match(h.el('season-prompt').textContent,/opens when its adventure is ready/);
+ h.run('seasonVisit("winter")');assert.equal(h.run('seasonPack'),'autumn-hollow');assert.equal(h.run('seasonWorld.areaOpen("winter")'),false);assert.match(h.el('season-prompt').textContent,/blizzard.*Christmas lights/);
  h.run('seasonVisit("autumn-hollow")');assert.equal(h.run('seasonPack'),'autumn-hollow');assert.equal((panel.innerHTML.match(/class="world-node season-level/g)||[]).length,8);
  h.run('seasonTogglePanel(true);escapeGoBack()');assert.equal(h.run('seasonPanelOpen'),false);assert.equal(h.run('seasonPack'),'autumn-hollow');
  h.run('seasonToggleOverview();escapeGoBack()');assert.equal(h.run('seasonOverview'),false);h.run('escapeGoBack()');assert.equal(h.run('gameState'),'start');
