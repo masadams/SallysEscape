@@ -25,7 +25,7 @@
    room(17,36,57,38);room(36,36,38,57);room(19,29,21,56);room(54,29,56,38);room(36,54,44,56);room(34,34,40,40);
    // Autumn's loop winds round an ancient oak and a mill pond. The other regions are real
    // terrain behind their gates, ready to accept future packs without changing the map.
-   room(19,19,21,21,'#');room(25,20,29,21,'P');room(53,17,56,18,'P');room(57,54,59,56,'P');room(17,54,20,56,'P');
+   room(19,19,21,21,'#');room(25,19,29,22,'P');room(25,19,25,19);room(29,22,29,22);room(53,17,56,18,'P');room(57,54,59,56,'P');room(17,54,20,56,'P');
    const paths=[[{x:20,y:30},{x:20,y:37},{x:37,y:37}],[{x:37,y:37},{x:55,y:37},{x:55,y:30}],[{x:37,y:37},{x:37,y:55},{x:43,y:55}],[{x:20,y:37},{x:20,y:45}]];
    for(const points of paths)this.tracks.push({points:points.map(p=>({x:p.x+.5,y:p.y+.5})),side:false});
    for(const a of AREAS){const ns=this.nodes.filter(n=>AREAS[n.chapter]===a);for(let i=1;i<ns.length;i++){const points=this.route(ns[i],ns[i-1],true);if(points)this.tracks.push({from:ns[i-1].id,to:ns[i].id,points:[{x:ns[i-1].x+.5,y:ns[i-1].y+.5},...points],side:false});}}
