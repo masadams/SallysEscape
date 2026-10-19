@@ -42,7 +42,7 @@
       if(value.whisper===true)this.data.whisper=true;
       if(Array.isArray(value.secrets))for(const id of value.secrets)if((SECRET_RULES[id]?.bump||SECRET_RULES[id]?.cache||id==='moss-den')&&!this.data.secrets.includes(id))this.data.secrets.push(id);
       if(Array.isArray(value.items))for(const id of value.items)if(SECRET_RULES['moss-den'].items.includes(id)&&!this.data.items.includes(id))this.data.items.push(id);
-      if(Array.isArray(value.story))for(const id of value.story)if(typeof id==='string'&&/^[a-z0-9:-]{1,40}$/.test(id)&&!this.data.story.includes(id)&&this.data.story.length<80)this.data.story.push(id);
+      if(Array.isArray(value.story))for(const id of value.story)if(typeof id==='string'&&/^[a-z0-9:-]{1,40}$/.test(id)&&!this.data.story.includes(id)&&this.data.story.length<200)this.data.story.push(id);
       if(Array.isArray(value.met))for(const k of value.met)if(typeof k==='string'&&/^[a-z-]{2,20}$/.test(k)&&!this.data.met.includes(k)&&this.data.met.length<64)this.data.met.push(k);
       for(const level of catalog.hidden||[]){const saved=value.hidden?.[level.id],old=this.data.hidden[level.id];if(!saved||saved.cleared!==true||!validTime(saved.bestTime)||!Number.isInteger(saved.stars)||saved.stars<1||saved.stars>3)continue;
         this.data.hidden[level.id]={cleared:true,bestTime:Math.min(old?.bestTime||Infinity,saved.bestTime),stars:Math.max(old?.stars||0,saved.stars)};}
