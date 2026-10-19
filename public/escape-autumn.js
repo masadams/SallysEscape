@@ -106,7 +106,7 @@
       "#............#..............#",
       "#############################"
     ],
-    "gentle": 0.65,
+    "gentle": 0.75,
     "cunning": 0,
     "index": 0,
     "props": [
@@ -164,7 +164,7 @@
   {
     "id": "autumn-pumpkins",
     "name": "The Pumpkin Patch",
-    "difficulty": "Easy",
+    "difficulty": "Easy–medium",
     "seasonalTheme": "autumn",
     "brief": "Someone has planted pumpkins with very long vines. Follow the winding garden paths to the key.",
     "hint": "The jack-o’-lantern glows before it lashes a vine. Step behind a hedge or walk round its side. A spore cloud hides Sally even while moving.",
@@ -244,7 +244,7 @@
       "#...................#.........#",
       "###############################"
     ],
-    "gentle": 0.65,
+    "gentle": 0.8,
     "cunning": 0,
     "index": 1,
     "props": []
@@ -252,7 +252,7 @@
   {
     "id": "autumn-gardener",
     "name": "The Gardener’s Yard",
-    "difficulty": "Easy–medium",
+    "difficulty": "Medium",
     "seasonalTheme": "autumn-dusk",
     "brief": "The old gardener has a very clumsy charge. Take the hedged courtyard to his little garden shed.",
     "hint": "Raised arms warn of a straight charge. Move sideways or behind a hedge. The blue button opens the shed; the key opens a shortcut home.",
@@ -383,15 +383,15 @@
       "#.........#...........#.......#",
       "###############################"
     ],
-    "gentle": 0.72,
-    "cunning": 0,
+    "gentle": 0.9,
+    "cunning": 1,
     "index": 2,
     "props": []
   },
   {
     "id": "autumn-lanterns",
     "name": "Lantern Lane",
-    "difficulty": "Easy–medium",
+    "difficulty": "Medium",
     "seasonalTheme": "autumn-night",
     "brief": "A ghostly lantern keeper sweeps a cold beam across the lane. Little islands of leaves offer a quiet rest.",
     "hint": "Avoid the cold lantern beam. If the ghost marks the ground, step away before it swoops. You can see the whole lane; the darkness is only decoration.",
@@ -474,8 +474,8 @@
       "#.................#.............#",
       "#################################"
     ],
-    "gentle": 0.72,
-    "cunning": 0,
+    "gentle": 0.95,
+    "cunning": 1,
     "index": 3,
     "props": []
   },
@@ -484,8 +484,8 @@
     "name": "The Harvest Store",
     "difficulty": "Medium",
     "seasonalTheme": "autumn-dusk",
-    "brief": "Two colourful doors lead through the harvest store. Some treat baskets have a mischievous grin.",
-    "hint": "Match each button to its door. A haunted basket twitches before it lunges. Throw a pebble toward it to make it show itself, then go round. No door here closes on a timer.",
+    "brief": "Three coloured switches open the old store. Work out which aisle each one reaches, then bring the lantern key home.",
+    "hint": "The blue switch opens the first aisle. Inside, find the green shelf switch and amber pantry switch before heading downstairs. Baskets twitch before they spring; use cover or a pebble.",
     "pebbles": 2,
     "spores": 2,
     "tongues": 2,
@@ -576,6 +576,29 @@
             15
           ]
         ]
+      },
+      {
+        "id": "store-shelves",
+        "name": "Store aisle",
+        "color": [
+          170,
+          210,
+          123
+        ],
+        "switch": [
+          19,
+          4
+        ],
+        "tiles": [
+          [
+            18,
+            10
+          ],
+          [
+            19,
+            10
+          ]
+        ]
       }
     ],
     "fieldNotes": [
@@ -586,7 +609,7 @@
           5
         ],
         "title": "Treat or trick?",
-        "body": "A real treasure shines gold. A haunted treat basket has handles and a twitching lid. Toss a pebble toward a basket to expose it safely. Its first giggle is your warning to move away."
+        "body": "Three switches, three routes. Blue gets you inside; green opens the narrow shelf aisle, and amber opens the far pantry. Gates stay open. A basket that twitches is about to spring—step away or distract it."
       }
     ],
     "map": [
@@ -600,7 +623,7 @@
       "#..........#...####...#..####...#",
       "#..........#...####...#..####...#",
       "#..........#...####...#..####...#",
-      "#..........#..........#.........#",
+      "#..........#######..###.........#",
       "#..1.......#..........#......L..#",
       "#..........#..........#..1......#",
       "#..........#..........#.........#",
@@ -612,7 +635,7 @@
       "#..........#..........#.........#",
       "#################################"
     ],
-    "gentle": 0.8,
+    "gentle": 1,
     "cunning": 1,
     "index": 4,
     "props": []
@@ -623,7 +646,7 @@
     "difficulty": "Medium",
     "seasonalTheme": "autumn-mill",
     "brief": "The mill wheel turns beside a leafy stream. A bridge and an old rabbit tunnel give Sally two ways across.",
-    "hint": "Water slows Sally but is safe to swim. The bridge is always there. Walk onto a paired mound for a tunnel shortcut. Turn the mill button to open the key room.",
+    "hint": "The loft switch is across the lower bridge. Creep past the roast turkey, or throw a pebble away from the crossing. Its crouch and gobble warn of a rush. The paired tunnels offer another way round.",
     "pebbles": 2,
     "spores": 2,
     "tongues": 2,
@@ -642,25 +665,25 @@
       {
         "kind": "fox",
         "spawn": [
-          29,
+          24,
           17
         ],
         "facing": 3.141592653589793,
         "patrol": [
           [
-            28,
+            22,
             16
           ],
           [
-            30,
+            26,
             16
           ],
           [
-            30,
+            26,
             18
           ],
           [
-            28,
+            22,
             18
           ]
         ]
@@ -768,7 +791,7 @@
       "#..............~~~..............#",
       "#################################"
     ],
-    "gentle": 0.8,
+    "gentle": 1,
     "cunning": 1,
     "index": 5,
     "props": [
@@ -806,10 +829,10 @@
   {
     "id": "autumn-maze",
     "name": "The Moonlit Maze",
-    "difficulty": "Medium",
+    "difficulty": "Medium+",
     "seasonalTheme": "autumn-night",
-    "brief": "Moonlight catches the tips of the hedges. Find a way through three little gardens, each with a place to hide.",
-    "hint": "The ghost and gardener live in separate gardens. Use the leaf alcoves, and follow the broad paths round the hedges. Every turn has room to dodge.",
+    "brief": "Find the violet switch deep in the hedge maze, then choose a crossing to reach the lantern key. The upper way has a ghost; the lower way has a gardener.",
+    "hint": "The violet switch opens both crossings. Wait for the ghost to turn on the upper route, or bait the gardener and use leaf cover on the lower route. The green exit is back in the first garden.",
     "pebbles": 2,
     "spores": 2,
     "tongues": 2,
@@ -855,17 +878,17 @@
         "kind": "beetle",
         "spawn": [
           27,
-          20
+          16
         ],
         "facing": 3.141592653589793,
         "patrol": [
           [
-            25,
-            20
+            23,
+            16
           ],
           [
             28,
-            20
+            16
           ]
         ]
       }
@@ -878,16 +901,16 @@
           6
         ],
         "title": "A garden at a time",
-        "body": "Hedges block a lantern beam and stop a charging gardener. Find a quiet patch before looking for your next turn. The two creatures have their own gardens; you can tackle one at a time."
+        "body": "The violet switch is deeper in the maze, beside the old hedge at the left of the middle garden. It opens two crossings: a ghost watches the upper one and a gardener patrols the lower one. Choose your way."
       }
     ],
     "map": [
       "###############################",
-      "#........#....................#",
-      "#........#....................#",
+      "#........#..........#.........#",
+      "#........#..........#.........#",
       "#..@...1.#..1...............K.#",
       "#........#.............L......#",
-      "#.......L...............###...#",
+      "#.......L...........#...###...#",
       "#..........L........#...###...#",
       "#........#........1.#...###...#",
       "#..###...#..........#...###.1.#",
@@ -906,7 +929,7 @@
       "#...................#.........#",
       "###############################"
     ],
-    "gentle": 0.8,
+    "gentle": 1,
     "cunning": 1,
     "index": 6,
     "props": [
@@ -931,15 +954,48 @@
         ],
         "kind": "pumpkin"
       }
+    ],
+    "gates": [
+      {
+        "id": "maze-crossings",
+        "name": "Moonlit crossings",
+        "color": [
+          190,
+          164,
+          235
+        ],
+        "switch": [
+          11,
+          13
+        ],
+        "tiles": [
+          [
+            20,
+            3
+          ],
+          [
+            20,
+            4
+          ],
+          [
+            20,
+            16
+          ],
+          [
+            20,
+            17
+          ]
+        ]
+      }
     ]
   },
   {
     "id": "autumn-finale",
     "name": "The Last Lantern",
-    "difficulty": "Medium",
+    "difficulty": "Medium+",
     "seasonalTheme": "autumn-festival",
-    "brief": "The festival needs one last light. Cross the orchard and courtyard, find the lantern key, and come home by the new path.",
-    "hint": "The blue orchard button opens the house. The key opens the low garden path home. You have met all these tricks before. Take your time; every lantern waits for you.",
+    "brief": "One last trip through orchard, courtyard and lantern house. Open the orchard arch, outwit the gardener at the second switch, and bring the final key home.",
+    "hint": "Open the orchard arch, then use the narrow lizard passage beside it to leave the serpent behind. The second switch is in the lower courtyard, watched by a gardener. Leaves and a decoy help; the key opens both low return gates.",
     "pebbles": 2,
     "spores": 2,
     "tongues": 2,
@@ -1038,6 +1094,29 @@
     ],
     "gates": [
       {
+        "id": "festival-orchard",
+        "name": "Orchard arch",
+        "color": [
+          192,
+          216,
+          125
+        ],
+        "switch": [
+          8,
+          15
+        ],
+        "tiles": [
+          [
+            12,
+            5
+          ],
+          [
+            12,
+            6
+          ]
+        ]
+      },
+      {
         "id": "festival-house",
         "name": "Lantern house",
         "color": [
@@ -1046,7 +1125,7 @@
           231
         ],
         "switch": [
-          8,
+          17,
           15
         ],
         "tiles": [
@@ -1119,7 +1198,7 @@
           6
         ],
         "title": "A light to bring home",
-        "body": "Find the key upstairs. It opens both lower gates, so your journey home can take a different path. All eight festival lanterns earn a Copper Lantern outfit and a pumpkin for your main menu."
+        "body": "Two switches lead to the last lantern. The orchard switch opens the first arch, with a narrow lizard passage beside it that the serpent cannot follow. The courtyard switch opens the lantern house. The key opens both low return gates."
       }
     ],
     "map": [
@@ -1128,16 +1207,16 @@
       "#...........#...........#...........#",
       "#..@....1...#..1........#........K..#",
       "#...........#...........#..1........#",
-      "#.........L.........................#",
-      "#.............L...........L.........#",
-      "#...........#........1..#...........#",
-      "#....###....#...####....#........L..#",
-      "#....###....#...####....#...........#",
+      "#.........LS........................#",
+      "#..........S..L...........L.........#",
+      "#..........S#........1..#...........#",
+      "#....###...S#...####....#........L..#",
+      "#....###...S#...####....#...........#",
       "#....###....#...####....#...####....#",
       "#....###....#...####....#...####....#",
       "#....###....#...........#...####....#",
-      "#...........#........L..#...####....#",
-      "#...........#...........#...####....#",
+      "#...........#....L...L..#...####....#",
+      "#...........#....L......#...####....#",
       "#..1........#..1........#...........#",
       "#...........#...........#...........#",
       "#...................###..........1..#",
@@ -1147,7 +1226,7 @@
       "#...........#...........#...........#",
       "#####################################"
     ],
-    "gentle": 0.8,
+    "gentle": 1,
     "cunning": 1,
     "index": 7,
     "props": [
@@ -1182,4 +1261,6 @@
     ],
     "foxWarn": 1.05
   }
-];root.EscapeAutumn=routes;if(typeof module!=='undefined'&&module.exports)module.exports=routes;})(typeof globalThis!=='undefined'?globalThis:this);
+];
+root.EscapeAutumn=routes;if(typeof module!=="undefined"&&module.exports)module.exports=routes;
+})(typeof globalThis!=="undefined"?globalThis:this);

@@ -247,3 +247,13 @@ test('the earned autumn outfit participates in the ordinary world Colours cycle'
  const h=harness();h.run('for(const l of EscapeCatalog.seasonal)seasonProgress().record({status:"won",levelId:l.id,seasonal:l.seasonal,routeRevision:l.revision,time:20,treasure:0,totalTreasure:10});showEscapeSelect();cycleEscapeSkin();');
  assert.equal(h.run('seasonProgress().data.skin'),true);assert.match(h.el('toolbar-skin').textContent,/Copper Lantern/);h.run('cycleEscapeSkin()');assert.equal(h.run('seasonProgress().data.skin'),false);assert.match(h.el('toolbar-skin').textContent,/Colours:/);
 });
+
+test('seasonal world rendering bounds and releases terrain graphics, and leaving restores the campaign',()=>{
+ const h=harness();h.el('season-hub').querySelectorAll=()=>[];const make=h.c.createGraphics;let alive=0;h.c.createGraphics=(...args)=>{const g=make(...args);alive++;g.remove=()=>{alive--;};return g;};
+ h.run('openSeasonalHub();drawSeasonWorld()');assert.ok(h.run('seasonWorld.motion.lizard.joints.length')>8);assert.ok(h.run('seasonWorldChunks.map.size')<=16);assert.ok(alive>0);
+ h.run('seasonToggleOverview();drawSeasonWorld()');assert.ok(h.run('seasonWorldChunks.map.size')<=49);h.run('seasonToggleOverview();seasonBack()');assert.equal(alive,0);assert.equal(h.run('gameState'),'start');h.run('showEscapeSelect();draw()');assert.equal(h.run('gameState'),'escapeSelect');
+});
+
+test('switching players creates a fresh seasonal walker and loads only that player\'s lanterns',()=>{
+ const h=harness();h.el('season-hub').querySelectorAll=()=>[];h.run('openSeasonalHub();globalThis.firstSeasonWorld=seasonWorld;globalThis.nextSeasonPlayer=EscapePlayers.create("Another Walker");EscapePlayers.select(nextSeasonPlayer.id);openSeasonalHub()');assert.equal(h.run('seasonWorld===firstSeasonWorld'),false);assert.equal(h.run('seasonWorldOwner===nextSeasonPlayer.id'),true);assert.equal(h.run('seasonProgress().cleared()'),0);
+});
