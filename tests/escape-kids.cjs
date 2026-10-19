@@ -2,8 +2,8 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {EscapeAdventure}=require('../public/escape-engine.js'),{EscapeCatalog}=require('../public/escape-levels.js');
 const run=(g,seconds,input={})=>{for(let i=0;i<seconds*120;i++)g.advance(1/120,input);};
 
-test('Little Explorers has twenty gentle levels outside the trail, each with its own sticker',()=>{
-  assert.equal(EscapeCatalog.kids.length,20);assert.equal(new Set(EscapeCatalog.kids.map(l=>l.sticker)).size,20);
+test('Little Explorers has twenty-six gentle levels outside the trail, each with its own sticker',()=>{
+  assert.equal(EscapeCatalog.kids.length,26);assert.equal(new Set(EscapeCatalog.kids.map(l=>l.sticker)).size,26);
   for(const l of EscapeCatalog.kids){assert.equal(l.kids,true);assert.equal(l.cunning,0);assert.ok(l.gentle>0&&l.gentle<1,l.id);assert.ok(l.sticker,l.id);
     assert.ok(!EscapeCatalog.levels.some(c=>c.id===l.id),'not on the campaign trail');}
 });
@@ -25,3 +25,4 @@ test('holding crouch crouches Sally where she stands, and a crouch is quieter ev
   assert.equal(g.player.crawling,true);assert.equal(g.player.moving,false);
   run(g,.2,{});assert.equal(g.player.crawling,false);
 });
+

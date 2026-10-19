@@ -7,7 +7,7 @@ function escapeRecordSummary(level,saved,challenge=false){
   if(!saved)return '';
   return challenge?'✓ Complete · Best '+saved.bestTime.toFixed(1)+'s':'★'.repeat(saved.stars)+'☆'.repeat(3-saved.stars)+' · Best '+saved.bestTime.toFixed(1)+'s'+(saved.perfect?' · ✦ Perfect':saved.firstTry?' · ✓ First try':'')+(escapeProgress.isHard(level.id)?' · ◆ Hard mode':'');
 }
-function escapeToolkit(level){return [[level.camos||0,'camouflage'],[level.seeds||0,'seed pod'],[level.tongues||0,'tongue grab'],[level.burrows,'burrow'],[level.pebbles,'pebble']].filter(([n])=>n>0).map(([n,label])=>n+' '+label+(n>1&&label!=='camouflage'?'s':'')).concat(level.requiredTreasure?[level.requiredTreasure+' treasure to escape']:[],level.timeLimit?[level.timeLimit+' second escape']:[],level.tailDrop?['spare tail']:[],level.soil?.length?['soft dirt to dig into (hold '+(typeof escapePadActive==='function'&&escapePadActive()?'B':typeof mobile!=='undefined'&&mobile?'Burrow':'E')+')']:[],level.regrowth?.length?[level.regrowth.length+' pink regrowth bug'+(level.regrowth.length>1?'s':'')]:[],level.hawk?['hawk overhead']:[],level.antTrails?[level.antTrails.length+' ant column'+(level.antTrails.length>1?'s':'')]:[],level.guards.some(h=>h.kind==='gecko')?['gecko thief']:[],level.cold?['cold rooms']:[],level.vents?[level.vents.length+' steam vents']:[]);}
+function escapeToolkit(level){return [[level.camos||0,'camouflage'],[level.seeds||0,'seed pod'],[level.tongues||0,'tongue grab'],[level.glows||0,'glow mushroom'],[level.spores||0,'spore pouch'],[level.burrows,'burrow'],[level.pebbles,'pebble']].filter(([n])=>n>0).map(([n,label])=>n+' '+label+(n>1&&label!=='camouflage'?'s':'')).concat(level.requiredTreasure?[level.requiredTreasure+' treasure to escape']:[],level.timeLimit?[level.timeLimit+' second escape']:[],level.tailDrop?['spare tail']:[],level.soil?.length?['soft dirt to dig into (hold '+(typeof escapePadActive==='function'&&escapePadActive()?'B':typeof mobile!=='undefined'&&mobile?'Burrow':'E')+')']:[],level.regrowth?.length?[level.regrowth.length+' pink regrowth bug'+(level.regrowth.length>1?'s':'')]:[],level.hawk?['hawk overhead']:[],level.antTrails?[level.antTrails.length+' ant column'+(level.antTrails.length>1?'s':'')]:[],level.guards.some(h=>h.kind==='gecko')?['gecko thief']:[],level.cold?['cold rooms']:[],level.vents?[level.vents.length+' steam vents']:[]);}
 let escapeGame=null,escapeIntroOpen=false,escapeCharacter=null;
 // Leaving a route part-way counts as an attempt, so the first-try bonus stays honest.
 // Anonymous play data: a run left part-way counts as quit once it has really started.
@@ -26,7 +26,7 @@ function showEscapeIntro(){
   const mode=typeof introMode==='undefined'?'full':introMode,full=mode==='full',showHint=escapeHintOpen(g);
   escapeHintHidden=false;if(mode==='off')return;
   const card=document.getElementById('escape-intro');escapeIntroOpen=true;escapeHintHidden=!showHint;
-  const tools=escapeToolkit(level),toolList=full?(tools.length?'<ul class="escape-intro-tools">'+tools.map(t=>'<li>'+t+'</li>').join('')+'</ul>':''):(tools.length?'<p class="escape-intro-kit">'+tools.join(' · ')+'</p>':'');
+  const tools=level.kids?[...escapeToolkit(level),'Your tools never run out. Treasure is optional.']:escapeToolkit(level),toolList=full?(tools.length?'<ul class="escape-intro-tools">'+tools.map(t=>'<li>'+t+'</li>').join('')+'</ul>':''):(tools.length?'<p class="escape-intro-kit">'+tools.join(' · ')+'</p>':'');
   const brief=g.challenge?g.challenge.brief:full?level.brief:'';
   // Names, briefs and hints can come from a shared or community level, so they are escaped as text.
   const t=escapeText;
@@ -290,10 +290,10 @@ function toggleEscapeMap(){
 }
 function playEscape(){
   if(!escapeGame)return;
-  escapeGame.paused=paused;
+  escapeGame.paused=paused||Boolean(typeof escapeStoryOpen!=='undefined'&&escapeStoryOpen);
   if(!paused&&gameState==='escape')escapeWatchFrameRate(deltaTime);
   if(escapeIntroOpen&&gameState==='escape'&&!paused){const m=escapeMovement();if(m.x||m.y)hideEscapeIntro();}
-  if(gameState==='escape'&&!paused&&!skipSimulationFrame&&!escapeIntroOpen){
+  if(gameState==='escape'&&!escapeGame.paused&&!skipSimulationFrame&&!escapeIntroOpen){
     let {x,y,sprint,crawl,dig}=escapeMovement();
     // A key held for a throw can be let go while the window was away: drop the throw then.
     if(escapeCharge?.source==='key'&&!keyIsDown({glow:76,spore:90}[escapeCharge.kind]||81))releaseEscapeCharge();
@@ -319,6 +319,7 @@ function playEscape(){
   drawEscapeVault();drawEscapeMoment();drawEscapeCurtain();renderEscapeHUD();
   // A creature met for the first time joins the bestiary, with a short note at the top.
   if(typeof tickEscapeNote==='function')tickEscapeNote(escapeGame);
+  if(typeof tickEscapeKidsSign==='function')tickEscapeKidsSign(escapeGame);
   if(escapeGame.met&&escapeGame.met.size!==escapeMetCount&&!escapeGame.level.custom){escapeMetCount=escapeGame.met.size;const fresh=escapeProgress.meet([...escapeGame.met]);const first=fresh.map(k=>EscapeBestiary.byKind(k)).find(Boolean);if(first)escapeBestiaryNote={text:'📖 New in the bestiary: '+first.name,until:millis()+3500};}
   if(escapeBestiaryNote&&millis()<escapeBestiaryNote.until){push();textAlign(CENTER,CENTER);const size=width<600?13:16;textSize(size);const w=escapeBestiaryNote.text.length*size*.56+28,a=Math.min(1,(escapeBestiaryNote.until-millis())/600);noStroke();fill(20,44,40,220*a);rect(width/2-w/2,54,w,32,16);fill(255,236,170,255*a);text(escapeBestiaryNote.text,width/2,70);pop();}
   if(escapeGame.status!=='playing'&&!escapeResultShown){if(!escapeMoment)startEscapeMoment(escapeGame);else if(millis()-escapeMoment.at>=escapeMoment.hold)showEscapeResult();}
@@ -368,7 +369,7 @@ function renderEscapeHUD(force=false){
 }
 function showEscapeResult(){
   escapeResultShown=true;gameState='escapeResult';clearTouchInput();suppressHeldKeys();
-  const r=escapeGame.result,won=r.status==='won',hardWin=won&&!r.challengeId&&!escapeGame.level.custom&&!r.draft&&(escapeHardRun||escapeGame.level.noAids);if(hardWin)escapeProgress.markHard(r.levelId);
+  const r=escapeGame.result,won=r.status==='won',hardWin=won&&!r.challengeId&&!escapeGame.level.kids&&!escapeGame.level.custom&&!r.draft&&(escapeHardRun||escapeGame.level.noAids);if(hardWin)escapeProgress.markHard(r.levelId);
   escapeProgress.record(r);if(typeof escapeStoryForResult==='function')escapeStoryForResult(escapeGame.level,won);if(typeof EscapePlayData!=='undefined')EscapePlayData.record(escapeGame,r.status,escapeDevice());const firstTry=won&&!r.challengeId&&escapeProgress.lastFirstTry,perfect=won&&!r.challengeId&&escapeProgress.lastPerfect;document.getElementById('escape-result').classList.toggle('escape-first-try',firstTry&&!perfect);document.getElementById('escape-result').classList.toggle('escape-perfect',perfect);
   document.getElementById('game-area').classList.add('escape-results-open');
   document.getElementById('escape-result-location').textContent=r.levelName;
@@ -666,7 +667,7 @@ function escapeWatchFrameRate(dt){
 // Where a level sits, for its mood: its region (and how far into it), or a place of its own.
 function escapePlace(level){
   if(!level||level.custom)return null;
-  if(level.kids)return {key:EscapeWorld.chapters[0]?.theme||'meadow',step:0};
+  if(level.kids)return {key:level.kidsTheme||EscapeWorld.chapters[0]?.theme||'meadow',step:0};
   if(level.secret)return {key:'secret:'+level.secret,step:0};
   if(level.id==='the-long-way-home'||level.id==='home')return {key:'finale',step:0};
   if(level.bonus)return {key:'hollow',step:0};if(level.hidden)return {key:'gilded',step:0};
@@ -1590,3 +1591,4 @@ function drawEscapeFish(h,cell,clock){
   fill(207,233,213);ellipse(0,0,cell*.55,cell*.25);fill(82,153,164);triangle(-cell*.05,0,-cell*.14,-cell*.22,cell*.08,-cell*.06);triangle(-cell*.07,0,-cell*.16,cell*.18,cell*.05,cell*.07);
   fill(17,38,46);ellipse(cell*.16,-cell*.06,cell*.045,cell*.045);pop();
 }
+

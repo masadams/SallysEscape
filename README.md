@@ -49,10 +49,10 @@ slider), A presses and B goes back. Options → Frame rate shows frames a second
 Options → Test sound plays two beeps to check where sound is lost on a device. The tool buttons show pad labels once a pad is used, and
 big moments rumble where the pad supports it.
 
-**Little Explorers.** Twenty gentle levels for young players (about 5 and up), from the title screen and
+**Little Explorers.** Twenty-six gentle levels for young players (about 5 and up), from the title screen and
 outside the campaign. Each teaches one thing (walking, keys, leaves, crouching, a button, a pebble,
 running, a maze, swimming; then digging in, the tongue, a Sally-only crack, bounce caps, spore puffs,
-camouflage, seeds, cracked walls, tunnels, and a grand tour of them all). They can't be lost: a catch is an "Oops!" that hops Sally back
+camouflage, seeds, cracked walls, tunnels, and a grand tour of them all). Six larger adventures follow: a garden, beetle courtyard, lily pond, lantern house, steamworks and a journey home. They combine familiar tricks with optional treasure, gentle new creatures and safe return routes. Supplied tools never run out; cooldowns still apply. The picker can turn guiding dots off for free exploration. They can't be lost: a catch is an "Oops!" that hops Sally back
 to the last checkpoint flag, the creatures are slow and simple, and glowing dots lead to the key and the
 door. Every level finished earns a sticker (each player's own). Levels are in `public/escape-kids.js`.
 
@@ -91,3 +91,4 @@ Design notes are in `docs/`: the story, roadmap, creatures, music, lighting, bui
 ## License
 
 Copyright (c) 2026 masadams. All rights reserved. The code, levels, story, art and music may be viewed here but not copied, modified, hosted or redistributed without written permission; see `LICENSE`. The bundled p5.js (LGPL 2.1) and Tone.js (MIT) keep their own licenses, in `public/vendor/`.
+

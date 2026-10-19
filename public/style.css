@@ -732,3 +732,7 @@ body.pad-nav #touch-controls{display:none!important}
 .story-area-notes > b { display:block; font-size:.78rem; color:#c9d8b8; margin:2px 0 4px; } .story-area-notes > b span { color:#e8c25a; font-weight:400; }
 .story-marks { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 8px; } .story-mark { font-size:.8rem; padding:3px 10px; border-radius:999px; background:#4a3e1e; border:1px solid #c9a64e; color:#f4e2a8; }
 .escape-note-btn { display:block; margin:10px auto 0; }
+
+
+.kids-section-title { margin:26px 0 16px; color:#ffe58a; font-size:1.35rem; }
+.kids-guide-note { margin:10px 0 16px; opacity:.9; }
