@@ -107,7 +107,7 @@ function escapeStoryLand(theme,tall){
     // The things in the scene gather towards the middle, so a tall picture beside the page keeps them all.
     +(tall?'<g transform="translate(200 262) scale(.72) translate(-200 -262)">'+(props[theme]||'')+'</g>':props[theme]||'')+(theme==='flood'?'':sally)+'</svg>';
 }
-function escapeStoryTheme(c){if(c.kind==='kids-sign'||c.kind==='season-sign')return c.theme||'garden';return c.id==='opening'?'flood':c.id==='after'?'coast':c.id==='finale'||c.later?'home':c.kind==='note'?'lantern':c.kind==='moment'?EscapeWorld.chapters[c.opens-1]?.theme:EscapeWorld.chapters[c.area]?.theme||'meadow';}
+function escapeStoryTheme(c){if(c.kind==='kids-sign'||c.kind==='season-sign')return c.theme?.startsWith('winter')?'frost':c.theme||'garden';return c.id==='opening'?'flood':c.id==='after'?'coast':c.id==='finale'||c.later?'home':c.kind==='note'?'lantern':c.kind==='moment'?EscapeWorld.chapters[c.opens-1]?.theme:EscapeWorld.chapters[c.area]?.theme||'meadow';}
 // A page of a card, as markup: short paragraphs, spoken lines set apart. A page in *italics* is
 // something written down, shown as a letter on a slip of paper; a signature sits to the right.
 function escapeStoryPageHtml(text){
@@ -119,7 +119,7 @@ function escapeStoryPageHtml(text){
 // A card is a page of a storybook: the picture on one side, one page of words on the other, turned
 // with Next (or Back); the paragraphs fade in one after another and a press shows them all at once.
 function showEscapeStory(entry,fresh,onDone){
-  const page=escapeStoryPage();if(!page)return;const kindLabel={'season-sign':'Autumn Hollow - trail note','kids-sign':'Little Explorers — trail note',journal:'From Old Moss’s journal',map:'A field sheet of the Great Map',moment:'Along the way',note:'A note, left behind',found:entry.card?.what||'A page, found'};
+  const page=escapeStoryPage();if(!page)return;const kindLabel={'season-sign':(entry.card?.theme?.startsWith('winter')?'Winterlight Hollow':'Autumn Hollow')+' - trail note','kids-sign':'Little Explorers — trail note',journal:'From Old Moss’s journal',map:'A field sheet of the Great Map',moment:'Along the way',note:'A note, left behind',found:entry.card?.what||'A page, found'};
   const reduced=Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
   escapeStoryOpen=entry;
   const finish=()=>{if(fresh)escapeProgress.markStory(entry.id);page.style.display='none';escapeStoryOpen=null;
