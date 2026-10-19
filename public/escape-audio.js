@@ -30,6 +30,13 @@
   }
   const notes=(volume,list,opts={})=>list.forEach(([freq,delay,dur=.14],i)=>tone(volume,{type:'triangle',gain:.45,...opts,freq,delay,dur}));
   const recipes={
+    'season-bones':v=>{for(let i=0;i<4;i++)noise(v,{dur:.035,delay:i*.045,gain:.09,filter:'bandpass',freq:1300+i*380,q:5});},
+    'season-zombie':v=>{tone(v,{freq:145,to:95,dur:.35,type:'triangle',gain:.12,wobble:8,wobbleRate:6});noise(v,{dur:.12,gain:.06,filter:'lowpass',freq:340});},
+    'season-ghost':v=>{tone(v,{freq:520,to:780,dur:.45,type:'sine',gain:.13,wobble:14,wobbleRate:5});tone(v,{freq:1040,to:1560,dur:.4,delay:.04,type:'sine',gain:.04});},
+    'season-pumpkin':v=>{noise(v,{dur:.23,gain:.1,filter:'bandpass',freq:700,to:1700,q:2});tone(v,{freq:210,to:280,dur:.2,type:'triangle',gain:.07});},
+    'season-basket':v=>{notes(v,[[410,0,.08],[520,.09,.08],[440,.18,.13]],{type:'triangle',gain:.13});noise(v,{dur:.12,gain:.05,filter:'bandpass',freq:1900});},
+    'season-turkey':v=>{for(let i=0;i<4;i++)tone(v,{freq:i%2?340:220,to:180,dur:.085,delay:i*.075,type:'triangle',gain:.13,wobble:12,wobbleRate:18});},
+    gobble:v=>{for(let i=0;i<3;i++)tone(v,{freq:i%2?330:240,to:170,dur:.085,delay:i*.075,type:'triangle',gain:.12});},
     // Footsteps sound like the ground: a soft pad on plain floor, a crunch of gravel (loud: hunters
     // hear it), a rustle of leaves, next to nothing on moss, a squelch of mud, a hiss of sand, the
     // squeak and crunch of snow, a wet slap on the tide flats.
@@ -223,3 +230,4 @@
   root.EscapeAudio={play,measure,setSpace,space:()=>space,SPACE,TRIM,recipes:Object.keys(recipes),cached:()=>cache.size,reset:()=>{cache.clear();lastPlayed.clear();active.length=0;}};
   if(typeof module!=='undefined'&&module.exports)module.exports=root.EscapeAudio;
 })(typeof globalThis!=='undefined'?globalThis:this);
+

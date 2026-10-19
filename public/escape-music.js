@@ -8,6 +8,9 @@
   const hz=note=>440*2**((note-69)/12);
   // Every mood shares one structure: a four-bar progression, bass roots and fifths, and a melody scale.
   const MOODS={
+    harvest:{chords:[['D3','F3','A3','E4'],['G3','B3','D4'],['C3','E3','G3'],['A2','C3','E3','G3']],bass:['D2','G2','C2','A1'],fifth:['A2','D3','G2','E2'],scale:['D4','E4','F4','A4','B4','D5'],seed:127},
+    lanternfair:{chords:[['A3','C4','E4','B4'],['D3','F#3','A3'],['F3','A3','C4'],['E3','G#3','B3']],bass:['A2','D2','F2','E2'],fifth:['E3','A2','C3','B2'],scale:['A4','B4','C5','D5','E5','G#5'],seed:131},
+    festival:{chords:[['D3','F#3','A3'],['G3','B3','D4','E4'],['B2','D3','F#3'],['A2','C#3','E3']],bass:['D2','G2','B1','A1'],fifth:['A2','D3','F#2','E2'],scale:['D4','E4','F#4','A4','B4','D5'],seed:137},
     meadow:{chords:[['G3','B3','D4'],['E3','G3','B3'],['C3','E3','G3'],['D3','F#3','A3']],bass:['G2','E2','C2','D2'],fifth:['D3','B2','G2','A2'],scale:['G4','A4','B4','D5','E5','G5'],seed:3},
     sneaky:{chords:[['D3','F3','A3','C4'],['G3','B3','D4'],['A3','C4','E4'],['C3','E3','G3']],bass:['D2','G2','A2','C2'],fifth:['A2','D3','E3','G2'],scale:['D4','F4','G4','A4','C5','D5'],seed:7},
     warm:{chords:[['E3','G#3','B3'],['D3','F#3','A3'],['A3','C#4','E4'],['E3','G#3','B3']],bass:['E2','D2','A2','E2'],fifth:['B2','A2','E3','B2'],scale:['E4','F#4','G#4','B4','C#5','E5'],seed:11},
@@ -47,6 +50,11 @@
   };
   // Each region has its own style: a mood, a lead instrument, a tempo and a groove.
   const STYLES={
+    autumn:{mood:'harvest',lead:'pluck',bpm:86,groove:2},
+    'autumn-dusk':{mood:'lanternfair',lead:'pluck',bpm:82,groove:1},
+    'autumn-night':{mood:'lanternfair',lead:'bell',bpm:76,groove:3},
+    'autumn-mill':{mood:'harvest',lead:'flute',bpm:88,groove:2,transpose:-2},
+    'autumn-festival':{mood:'festival',lead:'bell',bpm:90,groove:2},
     meadow:{mood:'meadow',lead:'melody',bpm:96,groove:0},garden:{mood:'garden',lead:'pluck',bpm:100,groove:1},
     river:{mood:'river',lead:'flute',bpm:88,groove:2},ruins:{mood:'sneaky',lead:'pluck',bpm:92,groove:1},
     quarry:{mood:'quarry',lead:'bell',bpm:100,groove:0},desert:{mood:'desert',lead:'pluck',bpm:98,groove:1},
@@ -290,3 +298,4 @@
   root.EscapeMusic=EscapeMusic;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeMusic};
 })(typeof globalThis!=='undefined'?globalThis:this);
+

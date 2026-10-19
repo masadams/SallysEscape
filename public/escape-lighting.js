@@ -8,6 +8,11 @@
   // night: light sources glow brighter, as they do in the dark levels; shafts: [r,g,b] light
   // shafts slanting down through a canopy or cave roof.
   const MOODS={
+    autumn:{grade:[255,194,120,.14],wash:{from:'left',color:[255,222,164],alpha:.1},vignette:.18},
+    'autumn-dusk':{grade:[216,148,140,.12],vignette:.22},
+    'autumn-night':{grade:[154,175,225,.13],vignette:.25},
+    'autumn-mill':{grade:[210,208,160,.12],vignette:.2},
+    'autumn-festival':{grade:[255,205,145,.12],wash:{from:'top',color:[255,223,158],alpha:.1},vignette:.18},
     meadow:{grade:[255,236,200,.16],wash:{from:'top',color:[255,244,214],alpha:.14},vignette:.22},
     garden:{grade:[255,240,210,.14],wash:{from:'left',color:[255,236,200],alpha:.12},vignette:.25},
     river:{grade:[200,235,255,.14],wash:{from:'top',color:[220,240,255],alpha:.12},vignette:.25},
@@ -69,3 +74,4 @@
   root.EscapeLighting=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
+
