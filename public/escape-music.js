@@ -109,13 +109,19 @@
     // The Magpie Roost: a bright, bouncy bonus tune, like the shrine's but quicker and higher.
     'secret:magpie-roost':{mood:'shrine',lead:'pluck',bpm:100,groove:2,transpose:2}
   };
+  // Each season plays on its own band, so the areas sound unmistakably different, not just in another
+  // key: winter on sleigh bells, a music-box celesta and a soft choir; spring on harp and birdsong;
+  // summer on steel drum, marimba and congas in a calypso lilt; the autumn festival on accordion with
+  // a stomp-and-clap and an oom-pah bass. A pluck or bell lead becomes the season's own instrument.
+  const ENSEMBLES={winter:{ens:'sleigh',lead:'celesta'},spring:{ens:'garden',lead:'harp'},summer:{ens:'steel',lead:'steel'},autumn:{ens:'festival',lead:'accordion'}};
+  for(const [theme,style] of Object.entries(STYLES)){const season=theme.split('-')[0],e=ENSEMBLES[season];if(!e)continue;style.ens=e.ens;if(['pluck','bell'].includes(style.lead))style.lead=e.lead;if(season==='summer'&&style.groove!==3)style.groove=4;if(season==='autumn'&&style.groove===2)style.groove=5;}
   const THEME_MOOD=Object.fromEntries(Object.entries(STYLES).map(([theme,style])=>[theme,style.mood]));
   // Every escape in a region gets its own tune and key: the region's style, a new melody seed,
   // a shifted key and a rotated groove. Escape -1 is the region's theme on the world map.
   const SHIFTS=[0,2,-3,4,-2,3,-4];
   function styleFor(theme,escape=-1){
     const base=STYLES[theme]||STYLES.meadow,n=Math.max(0,escape+1),shift=escape<0?0:SHIFTS[escape%SHIFTS.length];
-    return {...base,theme:theme in STYLES?theme:'meadow',seed:n,transpose:(base.transpose||0)+shift,groove:base.groove===3?3:(base.groove+Math.max(0,escape))%3,bpm:base.bpm+(escape<0?0:[0,4,-3,6,-5][escape%5]),id:(theme in STYLES?theme:'meadow')+':'+escape};
+    return {...base,theme:theme in STYLES?theme:'meadow',seed:n,transpose:(base.transpose||0)+shift,groove:base.groove>=3?base.groove:(base.groove+Math.max(0,escape))%3,bpm:base.bpm+(escape<0?0:[0,4,-3,6,-5][escape%5]),id:(theme in STYLES?theme:'meadow')+':'+escape};
   }
   // How loud each layer is in each state (0–1), and how long the fades take.
   const MIX={
@@ -145,17 +151,26 @@
   function events(mood,step,style={},flavor=null){
     const m=MOODS[mood]||MOODS.meadow,t=style.transpose||0,groove=style.groove||0,bar=Math.floor(step/16),s=step%16,c=bar%4,root=midi(m.bass[c])+t,fifth=midi(m.fifth[c])+t,chord=m.chords[c].map(n=>midi(n)+t),out=[];
     const add=(layer,voice,notes,dur,vel)=>out.push({layer,voice,notes:[].concat(notes),dur,vel});
-    if(s===0)add('pad','pad',chord,'1m',.32);
-    const bassSteps=groove===3?[0,8]:groove===2?[0,6,8,14]:[0,4,8,12],bassNotes=groove===1?[root,root,fifth,root+12]:[root,fifth,root+12,fifth];
-    if(bassSteps.includes(s))add('bass','bass',bassNotes[bassSteps.indexOf(s)],'8n',s===0?.8:.6);
+    const ens=style.ens;
+    if(s===0)add('pad',ens==='sleigh'||ens==='garden'?'choir':'pad',chord,'1m',.32);
+    // Grooves: 0 straight, 1 backbeat, 2 swung, 3 sparse, 4 calypso (summer), 5 oom-pah (autumn festival).
+    const bassSteps=groove===3?[0,8]:groove===2?[0,6,8,14]:groove===4?[0,3,6,10,12]:groove===5?[0,8]:[0,4,8,12],bassNotes=groove===4?[root,root+12,fifth,root,fifth+12]:groove===5?[root,fifth]:groove===1?[root,root,fifth,root+12]:[root,fifth,root+12,fifth];
+    const bassVoice=ens==='steel'?'marimba':ens==='sleigh'?'pizz':'bass';
+    if(bassSteps.includes(s))add('bass',bassVoice,bassNotes[bassSteps.indexOf(s)]+(ens==='steel'?12:0),'8n',s===0?.8:.6);
+    if(groove===5&&[4,12].includes(s))add('bass','pah',chord,'16n',.4);
     // Long runs do not loop one tune: every other sixteen bars an answering tune takes over, and the
     // last four bars of each thirty-two leave the lead out for a breath of pad and bass.
     const section=Math.floor(bar/16)%2,breath=bar%32>=28;
     if(s%2===0&&!breath){const n=tuneFor(mood,(style.seed||0)+section*7)[bar%8][s/2];if(n!=null)add('melody',style.lead||'melody',n+t,'8n',s%8===0?.55:.42);}
     // A soft arpeggio answers the tune on off-beats in the second half of each phrase, and carries the breath.
-    if((bar%8>=4||breath)&&s%4===2)add('melody','arp',chord[(s/4|0)%chord.length]+12,'16n',breath?.18:.22);
-    const shaker=groove===3?[0,10]:groove===2?[0,3,4,7,8,11,12,15]:[0,2,4,6,8,10,12,14];
-    if(shaker.includes(s))add('perc','shaker',null,'32n',s%4===2||s%4===3?.5:.22);
+    if((bar%8>=4||breath||ens==='garden')&&s%4===2)add('melody',ens==='garden'?'harp':'arp',chord[(s/4|0)%chord.length]+12,'16n',breath?.18:.22);
+    // Each season's percussion: sleigh bells on the eighths, congas under the calypso, a folk stomp
+    // and clap at the festival, and a little birdsong in the spring garden.
+    if(ens==='sleigh'){if(s%2===0&&(groove!==3||s%4===0))add('perc','sleigh',null,'16n',s%8===0?.55:s%4===0?.38:.22);}
+    else if(ens==='festival'){if(s===0||s===8)add('perc','stomp',midi('C2'),'8n',.75);if(s===4||s===12)add('perc','clap',null,'16n',.55);}
+    else{const shaker=groove===3?[0,10]:groove===2?[0,3,4,7,8,11,12,15]:[0,2,4,6,8,10,12,14];if(shaker.includes(s))add('perc','shaker',null,'32n',s%4===2||s%4===3?.5:.22);}
+    if(ens==='steel'&&groove!==3){const conga={0:'A3',3:'E3',6:'A3',8:'A3',11:'E3',14:'D4'}[s];if(conga)add('perc','conga',midi(conga),'16n',s%8===0?.6:.42);}
+    if(ens==='garden'&&bar%4===1&&[9,10,11].includes(s))add('perc','bird',midi(m.scale[(s+c)%m.scale.length])+24,'32n',.3);
     if(groove===1&&(s===4||s===12))add('perc','rim',null,'32n',.45);
     if(groove===3&&s===6)add('perc','rim',null,'32n',.25);
     if(s===0){add('tension','strings',chord.map(n=>n+12),'1m',.3);add('tension','heart',midi('A1'),'8n',.9);}
@@ -260,9 +275,24 @@
         v.snare=new T.NoiseSynth({noise:{type:'pink'},envelope:{attack:.001,decay:.13,sustain:0}}).connect(new T.Filter(1800,'bandpass').connect(out('chase')));
         v.ostinato=new T.MonoSynth({oscillator:{type:'square'},filter:{Q:2,type:'lowpass'},envelope:{attack:.003,decay:.08,sustain:.2,release:.05},filterEnvelope:{attack:.002,decay:.08,sustain:.1,baseFrequency:300,octaves:2}}).connect(new T.Gain(.5).connect(out('chase')));
         v.stab=new T.PolySynth(T.Synth,{oscillator:{type:'sawtooth'},envelope:{attack:.004,decay:.12,sustain:0,release:.08}}).connect(new T.Filter(2200,'lowpass').connect(out('chase')));
+        // The seasonal bands (lighter versions on TV boxes).
+        v.choir=new T.PolySynth(T.Synth,{oscillator:lite?{type:'sine'}:{type:'fatsine',spread:24,count:3},envelope:{attack:1.2,decay:.5,sustain:.8,release:2.5}}).connect(new T.Filter(1600,'lowpass').connect(out('pad')));
+        v.pizz=new T.Synth({oscillator:{type:'triangle'},envelope:{attack:.002,decay:.25,sustain:0,release:.15}}).connect(out('bass'));
+        v.marimba=new T.Synth({oscillator:{type:'sine'},envelope:{attack:.002,decay:.35,sustain:0,release:.2}}).connect(out('bass'));
+        v.pah=new T.PolySynth(T.Synth,{oscillator:{type:'triangle'},envelope:{attack:.003,decay:.12,sustain:0,release:.08}}).connect(new T.Filter(1800,'lowpass').connect(out('bass')));
+        v.celesta=new T.FMSynth({harmonicity:7.01,modulationIndex:2.5,oscillator:{type:'sine'},envelope:{attack:.002,decay:1.4,sustain:0,release:1},modulationEnvelope:{attack:.002,decay:.6,sustain:0,release:.4}}).connect(out('melody'));
+        v.harp=new T.Synth({oscillator:{type:'triangle'},envelope:{attack:.002,decay:1.1,sustain:0,release:.8}}).connect(new T.Filter(3200,'lowpass').connect(out('melody')));
+        v.steel=new T.FMSynth({harmonicity:2.8,modulationIndex:4,oscillator:{type:'sine'},envelope:{attack:.003,decay:.55,sustain:.05,release:.4},modulationEnvelope:{attack:.002,decay:.25,sustain:0,release:.2}}).connect(out('melody'));
+        v.accordion=new T.Synth({oscillator:lite?{type:'square'}:{type:'fatsquare',spread:12,count:2},envelope:{attack:.03,decay:.1,sustain:.7,release:.2}}).connect(new T.Filter(2000,'lowpass').connect(new T.Vibrato(6,.06).connect(out('melody'))));
+        try{v.sleigh=lite?null:new T.MetalSynth({harmonicity:12,resonance:900,modulationIndex:20,octaves:1.2,envelope:{attack:.001,decay:.14,release:.05}}).connect(out('perc'));if(v.sleigh)v.sleigh.frequency.value=520;}catch(_){v.sleigh=null;}
+        v.sleigh||=new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.08,sustain:0}}).connect(new T.Filter({frequency:6500,type:'bandpass',Q:2}).connect(out('perc')));
+        v.conga=new T.MembraneSynth({pitchDecay:.02,octaves:1.2,envelope:{attack:.001,decay:.18,sustain:0}}).connect(out('perc'));
+        v.stomp=new T.MembraneSynth({pitchDecay:.05,octaves:3,envelope:{attack:.001,decay:.25,sustain:0}}).connect(out('perc'));
+        v.clap=new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.09,sustain:0}}).connect(new T.Filter(1500,'bandpass').connect(out('perc')));
+        v.bird=new T.Synth({portamento:.03,oscillator:{type:'sine'},envelope:{attack:.005,decay:.08,sustain:.3,release:.05}}).connect(out('perc'));
         v.sting=new T.PolySynth(T.Synth,{oscillator:{type:'triangle'},envelope:{attack:.005,decay:.3,sustain:.3,release:.8}}).connect(reverb);
         // Levels measured offline so every layer sits at a similar loudness at full mix.
-        for(const [name,voice] of Object.entries(v))if(voice.volume)voice.volume.value={pad:-5,strings:-16,stab:-17,sting:-6,shaker:-1,snare:-15,ostinato:-11,bass:-1,melody:7,heart:-4,kick:-7,pluck:-4,bell:-9,flute:-6,arp:-14,rim:-12,boom:-4,alarm:-14,ghost:-8,hat:-20,tom:-6,rimshot:-16,swoop:-14}[name]??-10;
+        for(const [name,voice] of Object.entries(v))if(voice.volume)voice.volume.value={pad:-5,strings:-16,stab:-17,sting:-6,shaker:-1,snare:-15,ostinato:-11,bass:-1,melody:7,heart:-4,kick:-7,pluck:-4,bell:-9,flute:-6,arp:-14,rim:-12,boom:-4,alarm:-14,ghost:-8,hat:-20,tom:-6,rimshot:-16,swoop:-14,choir:-7,pizz:-3,marimba:-1,pah:-15,celesta:-9,harp:-7,steel:-8,accordion:-15,sleigh:-14,conga:-6,stomp:-6,clap:-11,bird:-18}[name]??-10;
         this.ready=true;
       }catch(_){this.ready=false;}
       return this.ready;

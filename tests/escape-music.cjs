@@ -93,3 +93,7 @@ test('long runs vary: an answering tune every other sixteen bars, and a breath w
   for(const bar of [28,29,30,31]){assert.equal(lead(bar).length,0,'bar '+bar+' rests the lead');assert.ok([...Array(16)].some((_,s)=>events('meadow',bar*16+s).some(e=>e.voice==='arp')),'the arpeggio carries the breath');}
   assert.ok(lead(27).length>0);
 });
+test('each season plays on its own band: sleigh bells, harp and birds, steel drum and congas, accordion and stomp',()=>{const M=require('../public/escape-music.js'),EM=M.EscapeMusic||M,voices=theme=>{const style=EM.styleFor(theme,0),set=new Set();for(let step=0;step<16*8;step++)for(const e of EM.events(style.mood,step,style))set.add(e.voice);return set;};
+ const winter=voices('winter-village'),spring=voices('spring-garden'),summer=voices('summer-dunes'),autumn=voices('autumn-festival');
+ for(const v of ['sleigh','celesta','choir','pizz'])assert.ok(winter.has(v),'winter '+v);for(const v of ['harp','bird','choir'])assert.ok(spring.has(v),'spring '+v);for(const v of ['steel','marimba','conga'])assert.ok(summer.has(v),'summer '+v);for(const v of ['accordion','stomp','clap','pah'])assert.ok(autumn.has(v),'autumn '+v);
+ assert.ok(!voices('meadow').has('sleigh')&&!voices('meadow').has('steel'),'the campaign keeps its own sound');});
