@@ -61,7 +61,41 @@ const ESCAPE_STORY_LANDS={
   home:['#f6c890','#fdf0d8','#b8c88e','#94ac6e','#6e8a52','#ffd27a'],flood:['#3c4a5c','#6c7a88','#4e5c6a','#3e4a56','#2e3a44','#bcd6ee']
 };
 const ESCAPE_STORY_NIGHT=new Set(['glow','lantern','grotto','flood','storm','autumn-night']);
-function escapeStoryLand(theme,tall){
+// Sally, side on: a curled tail, four little legs, a spotted back, a pale belly and a bright eye.
+function escapeStorySally(x,y=247,s=1,flip=false){
+  const ink='#2f6a34',skin='#5fae5a';
+  return '<g transform="translate('+x+' '+y+') scale('+(flip?-s:s)+' '+s+')"><g class="story-sally"><ellipse cx="0" cy="7" rx="30" ry="3.2" fill="#000" opacity=".16"/>'
+    +'<path d="M-13 1c-10 3-21 1-27-5c-4-5-1-11 4-9c-3 2-2 6 2 7c6 3 14 2 20 0z" fill="'+skin+'" stroke="'+ink+'" stroke-width="1.2"/>'
+    +'<path d="M-9 3l-6 6h-4M7 3l5 6h4M-6 0l-3 6M10 0l2 6" stroke="#3f8a44" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<ellipse cx="0" cy="-1" rx="16" ry="6.6" fill="'+skin+'" stroke="'+ink+'" stroke-width="1.2"/><ellipse cx="0" cy="2" rx="12" ry="2.4" fill="#a8dc8c" opacity=".75"/>'
+    +'<circle cx="-7" cy="-4" r="1.6" fill="#3f8a44"/><circle cx="-1" cy="-5.5" r="1.4" fill="#3f8a44"/><circle cx="5" cy="-4.5" r="1.5" fill="#3f8a44"/>'
+    +'<ellipse cx="19" cy="-3.5" rx="8.5" ry="5.6" fill="'+skin+'" stroke="'+ink+'" stroke-width="1.2"/><circle cx="21" cy="-5.6" r="2.5" fill="#fff"/><circle cx="21.8" cy="-5.5" r="1.4" fill="#1c2a1a"/><circle cx="21.1" cy="-6.3" r=".55" fill="#fff"/>'
+    +'<path d="M23.5-1.2q2.6 1 4.8-.8" stroke="'+ink+'" stroke-width=".9" fill="none" stroke-linecap="round"/></g></g>';
+}
+// The thing a card is about, drawn in the middle of its picture, with a pool of light behind it.
+function escapeStoryFocus(id,acc){
+  const pool=(x,y,r,c)=>'<circle class="story-glow" cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+c+'" opacity=".28"/>';
+  const lamp=(x,y,lit)=>'<path d="M'+x+' '+y+'V'+(y-58)+'h18" stroke="#3a3026" stroke-width="3" fill="none"/><rect x="'+(x+11)+'" y="'+(y-54)+'" width="14" height="18" rx="3" fill="'+(lit?'#ffd36a':'#4a4a44')+'" stroke="#3a3026" stroke-width="2"/>'+(lit?pool(x+18,y-45,30,'#ffd36a')+'<ellipse cx="'+(x+18)+'" cy="'+(y-45)+'" rx="3" ry="5" fill="#fffbe6"/>':'');
+  const snail=(x,y,s)=>'<g transform="translate('+x+' '+y+') scale('+s+')"><path d="M-12 0h22q6 0 6-5" stroke="#8a7a68" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="-3" cy="-8" r="8" fill="#d8a066" stroke="#8a5a32" stroke-width="1.2"/><path d="M-3-8m-4 0a4 4 0 1 0 4-4" stroke="#8a5a32" stroke-width="1.2" fill="none"/><path d="M14-5l3-7M16-5l5-5" stroke="#8a7a68" stroke-width="1.4"/></g>';
+  const F={
+    opening:'<g class="story-cloud"><path d="M170 236q30-16 64 0q-30 8-64 0z" fill="#7aa060" stroke="#4e6a3a" stroke-width="1.2"/><path d="M174 236q28-6 56 0" stroke="#4e6a3a" stroke-width="1" fill="none"/>'+escapeStorySally(202,226,.8)+'</g>',
+    'milestone:small-kindness':'<path d="M150 250h76" stroke="#4a7a8a" stroke-width="10" stroke-linecap="round" opacity=".7"/><path d="M146 244l86 10" stroke="#7a5432" stroke-width="5" stroke-linecap="round"/><path d="M190 249l8-8" stroke="#7a5432" stroke-width="3"/>'+snail(250,252,.8)+snail(270,253,.5)+'<path d="M232 254q8 2 14 0" stroke="#dfe8f0" stroke-width="2" opacity=".8" fill="none"/>',
+    'area:glow':pool(200,226,46,acc)+'<ellipse cx="200" cy="244" rx="34" ry="9" fill="#24405e"/><path d="M170 244q-4-30 30-36q34 6 30 36z" fill="#3a5470" stroke="#1d3350" stroke-width="2"/><path class="story-glow" d="M186 232c4-8 10-10 14-10s10 2 12 8M200 222v-6M190 228l-6-4M210 228l6-4" stroke="'+acc+'" stroke-width="2.4" fill="none" stroke-linecap="round"/><path class="story-glow" d="M200 248h-90M200 248l70 12M200 248l60-14" stroke="'+acc+'" stroke-width="1.6" stroke-dasharray="3 5" opacity=".8"/>',
+    'milestone:carry-the-light':'<path d="M60 252q140-12 300 0" stroke="#e8d6a0" stroke-width="10" fill="none" opacity=".7" stroke-linecap="round"/>'+lamp(244,250,true)+snail(162,252,.8)+snail(140,253,.55),
+    'area:lantern':lamp(196,252,false),
+    'milestone:one-lantern':lamp(196,254,true)+[150,136,124].map((x,i)=>'<ellipse class="story-glow" cx="'+x+'" cy="'+(256-i)+'" rx="7" ry="3" fill="#ffd36a" opacity="'+(.9-i*.3)+'"/>').join('')+'<g transform="translate(172 250)"><ellipse cx="0" cy="0" rx="9" ry="6" fill="#4a3a6a" stroke="#2a1e40" stroke-width="1.2"/><circle cx="7" cy="-2" r="4" fill="#5a4a7a"/><circle cx="8.5" cy="-3" r="1.2" fill="#fff"/></g>',
+    'area:frost':'',
+    'milestone:the-wait':pool(200,226,40,'#bfe6ff')+'<rect x="186" y="204" width="28" height="50" rx="10" fill="#9ab8d6" stroke="#6a8aac" stroke-width="1.6"/><circle cx="204" cy="202" r="11" fill="#b4cce4" stroke="#6a8aac" stroke-width="1.6"/><path d="M200 204h8" stroke="#2a4a6a" stroke-width="2" stroke-linecap="round"/><path class="story-glow" d="M214 256h62" stroke="#bfe6ff" stroke-width="2.4" stroke-linecap="round"/>',
+    finale:'<path d="M226 254v-70M272 254v-70M226 190h46M226 208h46M226 226h46" stroke="#6a4e34" stroke-width="6"/><path d="M238 254q11-16 22 0z" fill="#3a2a1a"/>'+pool(172,240,40,'#ffd27a')+'<ellipse cx="172" cy="250" rx="38" ry="11" fill="#b8a080" stroke="#8a7458" stroke-width="1.4"/><ellipse cx="164" cy="245" rx="18" ry="4" fill="#fff" opacity=".25"/>'+[140,182,262].map((x,i)=>'<circle class="story-glow" cx="'+x+'" cy="'+(140+i*10)+'" r="4" fill="#ffd36a" style="animation-delay:'+(-i*.6)+'s"/>').join(''),
+    after:'<path d="M250 160l14-22l2 22z" fill="#f6f0e0" stroke="#7a6a50" stroke-width="1"/><path d="M244 162h28l-4 5h-20z" fill="#6a4e34"/><path d="M130 254h76l6-8h-88z" fill="#e8dcb8" stroke="#a89470" stroke-width="1.4"/><path d="M138 250h60M152 246l18-9l12 7" stroke="#8a6a4a" stroke-width="1.2" fill="none" stroke-dasharray="3 3"/>',
+    'burrow:tomorrows-work':'<path d="M222 256q25-44 50 0z" fill="#5a4030"/><path d="M235 256q12-20 24 0z" fill="#2a1a10"/><rect x="128" y="244" width="60" height="10" rx="2" fill="#e8dcb8" stroke="#a89470" stroke-width="1.2"/><path d="M136 249h44" stroke="#8a6a4a" stroke-width="1.2" stroke-dasharray="4 3"/>'
+  };
+  if(F[id]!==undefined)return F[id];
+  // A lost Wayfinder's note: a folded paper under a lit lantern.
+  if(id.startsWith('note:'))return lamp(232,254,true)+'<path d="M170 250l26-6l12 8l-26 6z" fill="#f4ead2" stroke="#a89470" stroke-width="1.2"/><path d="M184 247l14 5" stroke="#a89470" stroke-width="1"/>';
+  return null;
+}
+function escapeStoryLand(theme,tall,card=''){
   const [sky1,sky2,far,mid,near,acc]=ESCAPE_STORY_LANDS[theme]||ESCAPE_STORY_LANDS.meadow,night=ESCAPE_STORY_NIGHT.has(theme),id='sk'+theme;
   const tuft=(x,y,c)=>'<path d="M'+x+' '+y+'q-3-14-8-18M'+x+' '+y+'q1-16 2-22M'+x+' '+y+'q4-12 9-16" stroke="'+c+'" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
   const rock=(x,y,s,c)=>'<ellipse cx="'+x+'" cy="'+y+'" rx="'+(16*s)+'" ry="'+(9*s)+'" fill="'+c+'"/><ellipse cx="'+(x-4*s)+'" cy="'+(y-3*s)+'" rx="'+(7*s)+'" ry="'+(3*s)+'" fill="#fff" opacity=".18"/>';
@@ -71,7 +105,8 @@ function escapeStoryLand(theme,tall){
   const pillar=(x,y,h)=>'<rect x="'+(x-8)+'" y="'+(y-h)+'" width="16" height="'+h+'" fill="#d8d2bc"/><path d="M'+(x-8)+' '+(y-h)+'l5-6l4 4l7-5v7z" fill="#d8d2bc"/><path d="M'+(x-3)+' '+(y-h+6)+'v'+(h-8)+'M'+(x+3)+' '+(y-h+6)+'v'+(h-8)+'" stroke="#b8b09a" stroke-width="1.5"/>';
   const reeds=x=>[0,6,12].map(d=>'<path d="M'+(x+d)+' 262q-2-30 2-48" stroke="#5a7a44" stroke-width="2" fill="none"/><ellipse cx="'+(x+d+1)+'" cy="214" rx="2.6" ry="7" fill="#6a4a2a"/>').join('');
   const cloud=(x,y,s,c)=>'<g class="story-cloud" opacity=".85"><ellipse cx="'+x+'" cy="'+y+'" rx="'+(30*s)+'" ry="'+(10*s)+'" fill="'+c+'"/><circle cx="'+(x-10*s)+'" cy="'+(y-6*s)+'" r="'+(11*s)+'" fill="'+c+'"/><circle cx="'+(x+8*s)+'" cy="'+(y-9*s)+'" r="'+(14*s)+'" fill="'+c+'"/></g>';
-  const sally='<g class="story-sally" transform="translate(196 247)"><path d="M0 0c6-3 14-3 20 0c4 2 9 1 12-1c-2 4-7 6-12 5c-6 3-14 3-20 0z" fill="#5fae5a"/><path d="M-1 1c-8 1-16 4-24 2" stroke="#5fae5a" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="27" cy="-1" r="1.4" fill="#1c2a1a"/><path d="M6 3l-3 5M14 3l2 5M8-2l-2-5M16-2l3-5" stroke="#4e9a4a" stroke-width="2" stroke-linecap="round"/></g>';
+  // Where Sally stands: in the middle, or beside what the card is about.
+  const focus=escapeStoryFocus(card,acc),placed={'finale':[172,236,.8],'milestone:small-kindness':[196,242,.75],'milestone:carry-the-light':[210,252,.75],'milestone:one-lantern':[234,258,.75,true],'after':[228,250,.75],'burrow:tomorrows-work':[190,252,.75]}[card]||(focus?[162,258,.75]:[196,247,1]),sally=escapeStorySally(...placed);
   const props={
     autumn:tree(75,250,1.2,'#c48142')+tree(335,250,1,'#b9613e')+lantern(290,250,true),'autumn-dusk':tree(65,250,1,'#c48142')+lantern(320,250,true),'autumn-night':tree(55,250,1,'#9b7152')+lantern(315,250,true),'autumn-mill':tree(60,250,1,'#b67b44')+lantern(320,250,true),'autumn-festival':lantern(70,250,true)+lantern(320,250,true)+tree(285,250,.8,'#bc8144'),
     meadow:tuft(60,262,near)+tuft(330,258,near)+'<circle cx="92" cy="246" r="4" fill="#fff"/><circle cx="92" cy="246" r="1.6" fill="'+acc+'"/><circle cx="300" cy="240" r="4" fill="#f7a6c2"/>'+tree(350,224,.9,mid),
@@ -103,9 +138,14 @@ function escapeStoryLand(theme,tall){
   return '<svg class="story-land" viewBox="'+(tall?'80 36 240 232':'0 0 400 268')+'" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+sky1+'"/><stop offset="1" stop-color="'+sky2+'"/></linearGradient></defs>'
     +'<rect width="400" height="268" fill="url(#'+id+')"/>'+stars+orb+birds
     +'<path d="M0 170q70-40 140-14t140-20t120 10v122H0z" fill="'+far+'"/><path d="M0 206q90-30 180-6t220-14v82H0z" fill="'+mid+'"/>'
-    +'<path d="M0 238q120-16 240 0t160-4v34H0z" fill="'+near+'"/>'
+    +'<path d="M0 238q120-16 240 0t160-4v34H0z" fill="'+near+'"/>'+[...Array(18)].map((_,i)=>'<ellipse cx="'+((i*71)%400)+'" cy="'+(246+(i*13)%20)+'" rx="'+(2+i%3)+'" ry="1.2" fill="#000" opacity=".1"/>').join('')
     // The things in the scene gather towards the middle, so a tall picture beside the page keeps them all.
-    +(tall?'<g transform="translate(200 262) scale(.72) translate(-200 -262)">'+(props[theme]||'')+'</g>':props[theme]||'')+(theme==='flood'?'':sally)+'</svg>';
+    +(tall?'<g transform="translate(200 262) scale(.72) translate(-200 -262)">':'')+(focus&&theme==='home'?'':props[theme]||'')+(tall&&focus?'</g>':'')
+    // What the card is about stands in the middle, larger in a tall picture, with Sally in front of it.
+    +(focus?(tall?'<g transform="translate(200 256) scale(1.15) translate(-200 -256)">':'')+focus+(card==='opening'?'':sally)+(tall?'</g>':''):sally+(tall?'</g>':''))
+    // Dark grass and stones in the near corners frame the scene, and the edges fall softly into shadow.
+    +'<g opacity=".9"><path d="M0 268v-34q14-14 28-6q8-16 22-6q10 10 8 46z" fill="'+near+'"/><path d="M0 268v-34q14-14 28-6q8-16 22-6q10 10 8 46z" fill="#000" opacity=".28"/><path d="M400 268v-30q-16-12-30-2q-10-14-24-2q-6 14-2 34z" fill="'+near+'"/><path d="M400 268v-30q-16-12-30-2q-10-14-24-2q-6 14-2 34z" fill="#000" opacity=".28"/></g>'
+    +'<defs><radialGradient id="v'+card.replace(/[^a-z0-9]/gi,'')+theme+'" cx=".5" cy=".55" r=".75"><stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="'+(night?.42:.22)+'"/></radialGradient></defs><rect width="400" height="268" fill="url(#v'+card.replace(/[^a-z0-9]/gi,'')+theme+')"/></svg>';
 }
 function escapeStoryTheme(c){if(c.kind==='kids-sign'||c.kind==='season-sign')return c.theme?.startsWith('winter')?'frost':c.theme||'garden';return c.id==='opening'?'flood':c.id==='after'?'coast':c.id==='finale'||c.later?'home':c.kind==='note'?'lantern':c.kind==='moment'?EscapeWorld.chapters[c.opens-1]?.theme:EscapeWorld.chapters[c.area]?.theme||'meadow';}
 // A page of a card, as markup: short paragraphs, spoken lines set apart. A page in *italics* is
@@ -130,7 +170,7 @@ function showEscapeStory(entry,fresh,onDone){
     page.style.display='flex';escapeSound('glimmer');const next=document.getElementById('story-next');next.focus?.();next.onclick=finish;return;}
   const c=entry.card,last=c.body.length-1,doneLabel=fresh&&escapeStoryQueue.length?'Next':fresh?'Continue':'Close',area=c.area!==undefined?EscapeWorld.chapters[c.area]?.name:c.kind==='moment'?EscapeWorld.chapters[c.opens-1]?.name:null;
   page.className='story-overlay story-'+c.kind+(reduced?' story-still':'');
-  page.innerHTML='<article class="story-card"><div class="story-picture">'+escapeStoryLand(escapeStoryTheme(c),window.innerWidth>560)+'</div><div class="story-paper">'
+  page.innerHTML='<article class="story-card"><div class="story-picture">'+escapeStoryLand(escapeStoryTheme(c),window.innerWidth>560,c.id)+'</div><div class="story-paper">'
     +'<span class="story-eyebrow">'+escapeText(kindLabel[c.kind]||'')+(area?' · '+escapeText(area):'')+'</span><h2>'+escapeText(c.title)+'</h2>'
     +'<div class="story-pages" aria-live="polite"></div><div class="story-foot"><button type="button" class="story-back" id="story-back" aria-label="Previous page">‹</button><span class="story-count"></span><button type="button" class="escape-primary" id="story-next"></button></div></div></article>';
   page.style.display='flex';escapeSound('chest');

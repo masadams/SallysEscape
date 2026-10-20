@@ -708,7 +708,7 @@ body.pad-nav #touch-controls{display:none!important}
 @keyframes story-twinkle { 50% { opacity:.25; } }
 @keyframes story-pulse { 50% { opacity:.55; transform:scale(1.12); } }
 @keyframes story-rain { from { transform:translateY(-10px); } to { transform:translateY(14px); } }
-@keyframes story-walk { from { transform:translate(178px,247px); } to { transform:translate(212px,245px); } }
+@keyframes story-walk { from { transform:translate(-12px,0); } to { transform:translate(12px,-1px); } }
 .story-still .story-card, .story-still .story-page, .story-still .story-cloud, .story-still .story-star, .story-still .story-glow, .story-still .story-rain, .story-still .story-sally, .story-still .story-letter, .story-still .story-part-inner { animation:none; }
 @media (prefers-reduced-motion: reduce) { .story-card, .story-page, .story-cloud, .story-star, .story-glow, .story-rain, .story-sally, .story-letter, .story-part-inner { animation:none; } .story-page p { transition:none; } }
 @media (max-width:560px) {

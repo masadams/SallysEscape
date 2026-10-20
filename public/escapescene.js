@@ -1010,56 +1010,75 @@ function drawEscapeVault(){
 }
 // A snow fox: white, with a bushy tail and big ears. It flattens for a blink before it pounces,
 // stretches long in the air, and noses the snow while it sniffs. No warning mark over its head.
+// A creature's eye: a pale ball, a dark (or angry red) pupil looking forward and a glint.
+function escapeCreatureEye(x,y,r,hot=false,iris=null){noStroke();fill(...(iris||[250,246,228]));ellipse(x,y,r,r);fill(...(hot?[190,40,30]:[22,20,26]));ellipse(x+r*.14,y,r*.58,r*.58);fill(255,255,255,230);ellipse(x-r*.06,y-r*.2,r*.26,r*.26);}
 function drawEscapeFox(h,cell,clock){
-  push();translate(h.x*cell,h.y*cell);rotate(h.facing);const crouch=h.state==='crouch',air=h.state==='pounce',sniff=h.state==='sniff',stretch=air?1.35:crouch?.85:1,lift=air?-cell*.05:0;
-  noStroke();fill(0,0,0,air?25:45);ellipse(0,cell*.08,cell*.75*stretch,cell*.3);
-  const wag=Math.sin(clock*5+h.x)*.25;push();translate(-cell*.3*stretch,0);rotate(Math.PI+wag*(air?.2:1));fill(240,244,250);ellipse(cell*.18,0,cell*.38,cell*.2);fill(255);ellipse(cell*.32,0,cell*.12,cell*.1);pop();
-  fill(236,240,248);ellipse(0,lift,cell*.55*stretch,cell*(crouch?.26:.32));
-  push();translate(cell*.27*stretch,lift+(sniff?cell*.04:0));fill(244,246,252);ellipse(0,0,cell*.26,cell*.22);
-  fill(232,236,246);triangle(-cell*.05,-cell*.08,cell*.02,-cell*.2,cell*.07,-cell*.07);triangle(-cell*.05,cell*.08,cell*.02,cell*.2,cell*.07,cell*.07);
-  fill(40,40,48);ellipse(cell*.14,0,cell*.05,cell*.05);ellipse(cell*.05,-cell*.05,cell*.035,cell*.035);ellipse(cell*.05,cell*.05,cell*.035,cell*.035);pop();
+  push();translate(h.x*cell,h.y*cell);rotate(h.facing);const crouch=h.state==='crouch',air=h.state==='pounce',sniff=h.state==='sniff',stretch=air?1.3:crouch?.86:1,lift=air?-cell*.05:0,trot=h.distanceMoved*13;
+  noStroke();fill(0,0,0,air?25:50);ellipse(-cell*.05,cell*.09,cell*.95*stretch,cell*.42);
+  // Legs: four slim dark-socked legs at a trot, tucked under when crouched, stretched in a pounce.
+  if(!crouch){stroke(150,158,176);strokeWeight(cell*.07);for(const [px,side,ph] of [[.15,-1,0],[.15,1,PI],[-.2,-1,PI],[-.2,1,0]]){const s=air?(px>0?.16:-.16):Math.sin(trot+ph)*.08;line(cell*px*stretch,side*cell*.1,cell*(px+s)*stretch,side*cell*.23);}noStroke();fill(70,74,88);for(const [px,side,ph] of [[.15,-1,0],[.15,1,PI],[-.2,-1,PI],[-.2,1,0]]){const s=air?(px>0?.16:-.16):Math.sin(trot+ph)*.08;ellipse(cell*(px+s)*stretch,side*cell*.24,cell*.07,cell*.06);}}
+  // A big brush of a tail, swishing, its tip white.
+  const wag=Math.sin(clock*5+h.x)*.25;push();translate(-cell*.27*stretch,0);rotate(Math.PI+wag*(air?.2:1));stroke(150,160,182);strokeWeight(cell*.025);fill(222,228,240);ellipse(cell*.2,0,cell*.44,cell*.24);noStroke();fill(255);ellipse(cell*.36,0,cell*.16,cell*.15);pop();
+  // Body with a soft grey saddle, then the head: ears, a pointed snout, black nose, bright eyes.
+  stroke(150,160,182);strokeWeight(cell*.025);fill(238,242,250);ellipse(0,lift,cell*.58*stretch,cell*(crouch?.3:.34));noStroke();fill(206,214,230);ellipse(-cell*.05*stretch,lift,cell*.34*stretch,cell*(crouch?.14:.16));
+  push();translate(cell*.29*stretch,lift+(sniff?cell*.03:0));stroke(150,160,182);strokeWeight(cell*.022);fill(246,248,252);ellipse(0,0,cell*.27,cell*.25);
+  fill(232,236,246);triangle(-cell*.07,-cell*.07,-cell*.02,-cell*.22,cell*.06,-cell*.08);triangle(-cell*.07,cell*.07,-cell*.02,cell*.22,cell*.06,cell*.08);noStroke();fill(120,128,150);triangle(-cell*.04,-cell*.09,-cell*.02,-cell*.18,cell*.03,-cell*.09);triangle(-cell*.04,cell*.09,-cell*.02,cell*.18,cell*.03,cell*.09);
+  fill(246,248,252);triangle(cell*.08,-cell*.07,cell*.08,cell*.07,cell*.22,0);fill(30,30,38);ellipse(cell*.21,0,cell*.06,cell*.055);
+  const hot=air||crouch;escapeCreatureEye(cell*.06,-cell*.065,cell*.07,hot,[210,224,120]);escapeCreatureEye(cell*.06,cell*.065,cell*.07,hot,[210,224,120]);pop();
   pop();
 }
 // A hermit crab: a spiral shell that looks like any other on the beach. Peeking, it shows eyes
-// on stalks and raised claws; out of its shell it scuttles on six legs.
+// on stalks and raised claws (one big crusher); out of its shell it scuttles on six legs.
 function drawEscapeCrab(h,cell,clock){
   push();translate(h.x*cell,h.y*cell);const out=['peek','scuttle','tired','return'].includes(h.state),shake=h.state==='hide'?Math.sin(clock*40)*cell*.02:0;
-  noStroke();fill(0,0,0,40);ellipse(0,cell*.12,cell*.6,cell*.22);
-  if(out){stroke(200,90,60);strokeWeight(Math.max(1,cell*.035));const walk=h.state==='scuttle'?Math.sin(h.distanceMoved*14)*cell*.06:0;
-    for(const side of [-1,1])for(let k=0;k<3;k++){const y=(k-1)*cell*.1;line(side*cell*.12,y,side*cell*.32,y+(k%2?walk:-walk)+cell*.06);}
-    noStroke();fill(220,100,70);for(const side of [-1,1]){ellipse(side*cell*.22,-cell*.2,cell*.16,cell*.12);}
-    stroke(220,100,70);line(-cell*.05,-cell*.12,-cell*.07,-cell*.26);line(cell*.05,-cell*.12,cell*.07,-cell*.26);noStroke();fill(20);ellipse(-cell*.07,-cell*.27,cell*.05,cell*.05);ellipse(cell*.07,-cell*.27,cell*.05,cell*.05);}
-  translate(shake,0);fill(232,206,160);ellipse(0,0,cell*.42,cell*.36);noFill();stroke(170,120,80);strokeWeight(Math.max(1,cell*.03));
-  for(let k=0;k<3;k++)arc(-cell*.02,0,cell*(.32-k*.09),cell*(.28-k*.08),k*.8,PI+k*.8);
+  noStroke();fill(0,0,0,45);ellipse(cell*.02,cell*.13,cell*.66,cell*.26);
+  if(out){const walk=h.state==='scuttle'?Math.sin(h.distanceMoved*14)*cell*.06:0;stroke(150,58,40);strokeWeight(Math.max(1,cell*.04));
+    for(const side of [-1,1])for(let k=0;k<3;k++){const y=(k-1)*cell*.1,w=k%2?walk:-walk;line(side*cell*.14,y,side*cell*.3,y+w+cell*.02);line(side*cell*.3,y+w+cell*.02,side*cell*.38,y+w+cell*.1);}
+    const up=h.state==='peek'?-cell*.04:0;stroke(150,58,40);strokeWeight(cell*.03);
+    for(const side of [-1,1]){const big=side>0,s=big?1.3:1;line(side*cell*.1,-cell*.12,side*cell*.2,-cell*.2+up);fill(226,104,72);ellipse(side*cell*.24,-cell*.24+up,cell*.17*s,cell*.13*s);noStroke();fill(250,170,140);ellipse(side*cell*.21,-cell*.27+up,cell*.06*s,cell*.04*s);stroke(150,58,40);line(side*cell*.24,-cell*.3*s+up,side*cell*.24,-cell*.22+up);}
+    line(-cell*.05,-cell*.12,-cell*.08,-cell*.27);line(cell*.05,-cell*.12,cell*.08,-cell*.27);escapeCreatureEye(-cell*.08,-cell*.29,cell*.07,h.state==='peek');escapeCreatureEye(cell*.08,-cell*.29,cell*.07,h.state==='peek');}
+  // The shell: a whorl with a lip, banded and shaded, a little sheen on top.
+  translate(shake,0);stroke(160,112,72);strokeWeight(Math.max(1,cell*.03));fill(234,208,162);ellipse(0,0,cell*.46,cell*.4);noStroke();fill(214,180,132);ellipse(cell*.04,cell*.05,cell*.34,cell*.26);fill(250,232,196);ellipse(-cell*.09,-cell*.09,cell*.14,cell*.08);
+  noFill();stroke(160,112,72);strokeWeight(Math.max(1,cell*.03));for(let k=0;k<3;k++)arc(-cell*.02,0,cell*(.34-k*.1),cell*(.3-k*.09),k*.8,PI+k*.8);
+  fill(200,150,110);noStroke();ellipse(cell*.18,cell*.04,cell*.1,cell*.16);
   pop();
 }
-// A bog heron standing in the reeds: a grey body, a long neck and a dagger beak along its
-// facing, with its beak line marked faintly on the ground. It draws its neck back on the tell
-// and thrusts the beak out on the stab.
+// A bog heron standing in the reeds: a grey body with folded wing feathers, a long neck, a black
+// crest stripe and a dagger beak along its facing, with its beak line marked faintly on the ground.
+// It draws its neck back on the tell and thrusts the beak out on the stab.
 function drawEscapeHeron(h,cell,clock){
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);
   noStroke();fill(220,120,90,h.state==='aim'?110:h.state==='stab'?30:45);rect(cell*.2,-cell*.55,cell*(h.reach-.2),cell*1.1,cell*.2);
-  const neck=h.state==='aim'?.12:h.state==='stab'?.62:.34,bob=h.state==='still'?Math.sin(clock*1.4+h.x)*.02:0;
-  fill(70,80,90);ellipse(-cell*.12,cell*.18,cell*.3,cell*.12);ellipse(-cell*.12,-cell*.18,cell*.3,cell*.12);
-  fill(150,165,180);ellipse(-cell*.08,0,cell*.62,cell*.44);fill(120,135,150);ellipse(-cell*.26,0,cell*.3,cell*.36);
-  stroke(185,198,210);strokeWeight(cell*.09);line(cell*.12,0,cell*(neck+bob+.12),0);noStroke();
-  fill(225,232,238);ellipse(cell*(neck+bob+.14),0,cell*.2,cell*.18);fill(30,30,34);ellipse(cell*(neck+bob+.17),-cell*.05,cell*.04,cell*.04);
-  fill(232,190,70);triangle(cell*(neck+bob+.2),-cell*.05,cell*(neck+bob+.2),cell*.05,cell*(neck+bob+(h.state==='stab'?.62:.48)),0);
+  const neck=h.state==='aim'?.12:h.state==='stab'?.62:.34,bob=h.state==='still'?Math.sin(clock*1.4+h.x)*.02:0,hx=neck+bob+.14;
+  fill(0,0,0,55);ellipse(-cell*.06,cell*.08,cell*.78,cell*.5);
+  // Body and the folded wings, layered like feathers, dark flight tips at the back.
+  stroke(92,104,120);strokeWeight(cell*.02);fill(160,174,190);ellipse(-cell*.06,0,cell*.66,cell*.46);
+  for(const side of [-1,1]){fill(132,146,164);beginShape();vertex(cell*.14,side*cell*.06);vertex(-cell*.1,side*cell*.23);vertex(-cell*.42,side*cell*.12);vertex(-cell*.3,side*cell*.02);endShape(CLOSE);fill(64,72,86);triangle(-cell*.3,side*cell*.04,-cell*.46,side*cell*.1,-cell*.4,side*cell*.01);}
+  noStroke();fill(196,206,218);ellipse(cell*.04,0,cell*.24,cell*.2);
+  // The neck, the white head with its black crest and yellow eye, and the beak.
+  stroke(205,214,224);strokeWeight(cell*.1);line(cell*.1,0,cell*hx,0);noStroke();
+  fill(236,240,244);ellipse(cell*hx,0,cell*.21,cell*.18);stroke(30,32,40);strokeWeight(cell*.035);line(cell*(hx-.02),-cell*.05,cell*(hx-.22),-cell*.08);noStroke();
+  escapeCreatureEye(cell*(hx+.03),-cell*.045,cell*.055,h.state==='aim',[248,214,90]);escapeCreatureEye(cell*(hx+.03),cell*.045,cell*.055,h.state==='aim',[248,214,90]);
+  fill(232,190,70);stroke(170,120,40);strokeWeight(cell*.015);triangle(cell*(hx+.06),-cell*.045,cell*(hx+.06),cell*.045,cell*(hx+(h.state==='stab'?.48:.36)),0);
   pop();
 }
 // A praying mantis: from a distance only a faint twig with a kink in it. Close up (or once it
-// strikes) it shows a slim green body, a triangular head and folded forelegs, with its reach
-// marked as a short cone. The forelegs rise on the tell and shoot out on the strike.
+// strikes) it shows a slim segmented body, folded wings, a triangular head with big eyes and
+// spiked forelegs, with its reach marked as a short cone. The forelegs rise on the tell and
+// shoot out on the strike.
 function drawEscapeMantis(h,cell,clock,shown){
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);const sway=h.state==='still'?Math.sin(clock*1.1+h.y)*.03:0;rotate(sway);
   if(!shown){scale(1.45);stroke(120,104,70,70);strokeWeight(Math.max(1,cell*.05));line(-cell*.32,0,cell*.1,0);line(cell*.1,0,cell*.26,-cell*.08);strokeWeight(Math.max(1,cell*.025));line(-cell*.1,0,-cell*.18,cell*.14);pop();return;}
   if(!escapeAidsHidden()){noStroke();fill(220,150,60,h.state==='raise'?105:h.state==='strike'?30:42);const r=h.reach;beginShape();vertex(cell*.15,-cell*.42);vertex(cell*r,-cell*(.42+r*.3));vertex(cell*r,cell*(.42+r*.3));vertex(cell*.15,cell*.42);endShape(CLOSE);}
-  scale(1.45);
-  stroke(96,150,70);strokeWeight(Math.max(1,cell*.03));for(const side of [-1,1])for(const o of [-.18,.02]){line(cell*o,0,cell*(o-.12),side*cell*.26);}
-  noStroke();fill(118,176,84);ellipse(-cell*.14,0,cell*.5,cell*.16);fill(140,196,96);ellipse(cell*.12,0,cell*.24,cell*.1);
-  fill(150,206,104);triangle(cell*.22,-cell*.09,cell*.22,cell*.09,cell*.36,0);fill(30,40,20);ellipse(cell*.25,-cell*.06,cell*.05,cell*.05);ellipse(cell*.25,cell*.06,cell*.05,cell*.05);
-  const reach=h.state==='raise'?.08:h.state==='strike'?.62:.18,lift=h.state==='raise'?.2:.06;stroke(126,186,88);strokeWeight(Math.max(1,cell*.04));
-  for(const side of [-1,1]){line(cell*.16,side*cell*.04,cell*(.2+reach*.5),side*cell*lift);line(cell*(.2+reach*.5),side*cell*lift,cell*(.24+reach),side*cell*.03);}
+  scale(1.45);noStroke();fill(0,0,0,45);ellipse(-cell*.06,cell*.04,cell*.62,cell*.2);
+  stroke(80,128,58);strokeWeight(Math.max(1,cell*.028));for(const side of [-1,1])for(const o of [-.2,-.02]){line(cell*o,0,cell*(o-.06),side*cell*.16);line(cell*(o-.06),side*cell*.16,cell*(o-.16),side*cell*.28);}
+  // Abdomen with segment lines, folded wings over it, the long thorax.
+  stroke(80,128,58);strokeWeight(cell*.015);fill(118,176,84);ellipse(-cell*.17,0,cell*.48,cell*.17);for(let k=0;k<4;k++)line(-cell*(.05+k*.08),-cell*.07,-cell*(.05+k*.08),cell*.07);
+  fill(170,212,128,200);ellipse(-cell*.14,0,cell*.44,cell*.11);noStroke();fill(142,196,98);ellipse(cell*.12,0,cell*.28,cell*.08);
+  stroke(80,128,58);strokeWeight(cell*.015);fill(156,210,108);triangle(cell*.22,-cell*.1,cell*.22,cell*.1,cell*.38,0);
+  const hot=h.state==='raise'||h.state==='strike';escapeCreatureEye(cell*.24,-cell*.075,cell*.075,hot,[212,232,140]);escapeCreatureEye(cell*.24,cell*.075,cell*.075,hot,[212,232,140]);
+  const reach=h.state==='raise'?.08:h.state==='strike'?.62:.18,lift=h.state==='raise'?.2:.06;stroke(126,186,88);strokeWeight(Math.max(1,cell*.045));
+  for(const side of [-1,1]){const ex=cell*(.2+reach*.5),ey=side*cell*lift,tx=cell*(.24+reach),ty=side*cell*.03;line(cell*.16,side*cell*.04,ex,ey);line(ex,ey,tx,ty);stroke(70,110,50);strokeWeight(Math.max(1,cell*.015));for(const f of [.35,.65])line(ex+(tx-ex)*f,ey+(ty-ey)*f,ex+(tx-ex)*f-side*cell*.0,ey+(ty-ey)*f-side*cell*.04);stroke(126,186,88);strokeWeight(Math.max(1,cell*.045));}
   pop();
 }
 // A wasp nest: a grey paper teardrop with a dark mouth, a few wasps idling around it. On the
@@ -1334,27 +1353,45 @@ function drawEscapeCricket(h,cell,clock){
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);
   if(['dig','buried','rise'].includes(h.state)){
     const pulse=h.state==='rise'?1+Math.sin(clock*22)*.12:1;
-    noStroke();fill(115,89,54);ellipse(0,0,cell*.65*pulse,cell*.5*pulse);
+    noStroke();fill(115,89,54);ellipse(0,0,cell*.65*pulse,cell*.5*pulse);fill(140,110,70);ellipse(-cell*.06,-cell*.05,cell*.36*pulse,cell*.24*pulse);
     stroke(194,155,95);strokeWeight(cell*.03);for(const side of [-1,1])line(-cell*.2,side*cell*.08,cell*.18,side*cell*.16);
     if(h.state==='rise'){noFill();stroke(245,190,98);ellipse(0,0,cell*1.35,cell*1.35);}pop();return;
   }
-  const stride=h.distanceMoved*12;stroke(128,81,40);strokeWeight(cell*.06);
-  for(const side of [-1,1]){const s=Math.sin(stride+side)*.08;line(-cell*.18,side*cell*.12,-cell*.4,side*cell*.36);line(-cell*.4,side*cell*.36,-cell*(.2+s),side*cell*.42);line(0,side*cell*.14,-cell*.04,side*cell*.32);line(cell*.16,side*cell*.1,cell*.36,side*cell*.24);}
-  noStroke();fill(120,80,42);ellipse(-cell*.12,0,cell*.63,cell*.32);fill(172,119,62);ellipse(cell*.16,0,cell*.32,cell*.3);
-  fill(224,177,99);for(const side of [-1,1]){ellipse(cell*.34,side*cell*.2,cell*.2,cell*.13);stroke(212,170,111);strokeWeight(cell*.02);line(cell*.25,side*cell*.08,cell*.53,side*cell*.17);}pop();
+  const stride=h.distanceMoved*12,chirp=h.state==='chirp',buzz=chirp?Math.sin(clock*60)*.04:0;noStroke();fill(0,0,0,55);ellipse(-cell*.06,cell*.06,cell*.8,cell*.42);
+  // Big folded jumping legs at the back, with spurs; four small legs in front.
+  stroke(96,60,28);strokeWeight(cell*.075);for(const side of [-1,1]){const s=Math.sin(stride+side)*.06;line(-cell*.1,side*cell*.12,-cell*.38,side*cell*.3);strokeWeight(cell*.04);line(-cell*.38,side*cell*.3,-cell*(.12+s),side*cell*.36);strokeWeight(cell*.075);}
+  strokeWeight(cell*.035);for(const side of [-1,1]){const s=Math.sin(stride*1.3+side)*.05;line(0,side*cell*.12,-cell*(.02+s),side*cell*.28);line(cell*.14,side*cell*.1,cell*(.3+s),side*cell*.24);}
+  // Body: a dark abdomen with lighter bands, wings that buzz when it chirps, a round glossy head.
+  stroke(70,44,20);strokeWeight(cell*.02);fill(110,72,36);ellipse(-cell*.14,0,cell*.6,cell*.3);
+  push();rotate(buzz);fill(164,116,62,230);ellipse(-cell*.1,-cell*.05,cell*.5,cell*.16);ellipse(-cell*.1,cell*.05,cell*.5,cell*.16);pop();
+  for(let k=0;k<3;k++)line(-cell*(.22+k*.08),-cell*.1,-cell*(.22+k*.08),cell*.1);
+  fill(150,100,50);ellipse(cell*.1,0,cell*.2,cell*.26);fill(176,124,64);ellipse(cell*.22,0,cell*.24,cell*.24);noStroke();fill(214,168,104,180);ellipse(cell*.18,-cell*.06,cell*.08,cell*.05);
+  escapeCreatureEye(cell*.27,-cell*.08,cell*.07,chirp);escapeCreatureEye(cell*.27,cell*.08,cell*.07,chirp);
+  stroke(212,170,111);strokeWeight(cell*.018);noFill();for(const side of [-1,1])bezier(cell*.3,side*cell*.05,cell*.5,side*cell*.08,cell*.58,side*cell*.3,cell*.48,side*cell*.42);pop();
 }
 function drawEscapeNestMonster(h,cell,clock){
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);
   const stride=h.distanceMoved*11,hot=h.state==='windup';
   if(h.kind==='spider'){
-    stroke(114,93,157);strokeWeight(cell*.045);
-    for(const side of [-1,1])for(let i=0;i<4;i++){const root=(i-1.5)*.11,step=Math.sin(stride+i*PI+side)*.04;line(root*cell,side*cell*.1,(root-.13+step)*cell,side*cell*.28);line((root-.13+step)*cell,side*cell*.28,(root+.06+step)*cell,side*cell*.46);}
-    noStroke();fill(103,68,141);ellipse(-cell*.14,0,cell*.5,cell*.4);fill(hot?222:159,hot?159:112,hot?249:191);ellipse(cell*.17,0,cell*.28,cell*.28);fill(246,218,255);for(const side of [-1,1])ellipse(cell*.24,side*cell*.06,cell*.055,cell*.055);
+    noStroke();fill(0,0,0,60);ellipse(-cell*.02,cell*.05,cell*.8,cell*.64);
+    // Eight jointed legs, thick at the knee, then the round patterned abdomen, the head with fangs
+    // and a cluster of eyes (two big ones) that redden as it takes aim.
+    for(const side of [-1,1])for(let i=0;i<4;i++){const root=(i-1.5)*.1,step=Math.sin(stride+i*PI+side)*.04,kx=(root-.12+step+(i-1.5)*.05)*cell,ky=side*cell*.3,fx=(root+.08+step+(i-1.5)*.16)*cell,fy=side*cell*.5;
+      stroke(70,50,104);strokeWeight(cell*.06);line(root*cell+cell*.04,side*cell*.08,kx,ky);strokeWeight(cell*.04);line(kx,ky,fx,fy);noStroke();fill(140,112,184);ellipse(kx,ky,cell*.06,cell*.06);}
+    stroke(60,40,92);strokeWeight(cell*.02);fill(96,62,136);ellipse(-cell*.16,0,cell*.5,cell*.42);noStroke();fill(hot?232:196,hot?120:150,hot?220:226);beginShape();vertex(-cell*.3,0);vertex(-cell*.18,-cell*.07);vertex(-cell*.06,0);vertex(-cell*.18,cell*.07);endShape(CLOSE);fill(140,104,180,150);ellipse(-cell*.2,-cell*.1,cell*.14,cell*.07);
+    stroke(60,40,92);strokeWeight(cell*.02);fill(hot?210:150,hot?150:108,hot?240:188);ellipse(cell*.12,0,cell*.28,cell*.27);noStroke();fill(60,30,60);for(const side of [-1,1])ellipse(cell*.27,side*cell*.04,cell*.06,cell*.04);
+    escapeCreatureEye(cell*.18,-cell*.05,cell*.07,hot);escapeCreatureEye(cell*.18,cell*.05,cell*.07,hot);fill(hot?255:240,hot?120:220,hot?120:255);for(const [x,y] of [[.11,-.09],[.11,.09],[.08,-.04],[.08,.04]])ellipse(cell*x,cell*y,cell*.035,cell*.035);
   }else{
     const lift=h.state==='leap'?Math.sin(Math.max(0,Math.min(1,1-(h.phaseUntil-clock)/.5))*PI)*cell*.2:0;
-    noStroke();fill(8,19,16,120);ellipse(0,cell*.06,cell*.85,cell*.6);translate(0,-lift);
-    stroke(58,103,66);strokeWeight(cell*.11);for(const side of [-1,1]){const step=Math.sin(stride+side)*.06;line(-cell*.12,side*cell*.16,-cell*.37,side*cell*.31);line(-cell*.37,side*cell*.31,-cell*(.2+step),side*cell*.42);line(cell*.15,side*cell*.14,cell*.29,side*cell*.31);}
-    noStroke();fill(hot?148:107,hot?171:139,hot?70:76);ellipse(-cell*.07,0,cell*.66,cell*.47);fill(149,164,87);ellipse(cell*.22,0,cell*.4,cell*.38);for(const side of [-1,1]){fill(218,220,147);ellipse(cell*.3,side*cell*.14,cell*.18,cell*.15);fill(32,39,21);ellipse(cell*.34,side*cell*.14,cell*.07,cell*.09);}stroke(70,83,47);strokeWeight(cell*.025);line(cell*.34,-cell*.07,cell*.35,cell*.07);
+    noStroke();fill(8,19,16,120);ellipse(0,cell*.06,cell*.9,cell*.64);translate(0,-lift);
+    // Folded back legs with webbed feet, short front legs, a warty back and a wide pale throat.
+    stroke(52,90,58);strokeWeight(cell*.12);for(const side of [-1,1]){const step=Math.sin(stride+side)*.06;line(-cell*.12,side*cell*.18,-cell*.36,side*cell*.32);strokeWeight(cell*.08);line(-cell*.36,side*cell*.32,-cell*(.18+step),side*cell*.42);strokeWeight(cell*.07);line(cell*.14,side*cell*.15,cell*.28,side*cell*.32);strokeWeight(cell*.12);}
+    noStroke();fill(76,124,74);for(const side of [-1,1]){for(const a of [-.4,0,.4])ellipse(-cell*(.18+.06*Math.cos(a))+cell*.0,side*cell*(.44+.04*Math.sin(a)),cell*.07,cell*.05);ellipse(cell*.3,side*cell*.34,cell*.07,cell*.06);}
+    stroke(50,84,50);strokeWeight(cell*.022);fill(hot?148:104,hot?171:136,hot?70:74);ellipse(-cell*.06,0,cell*.7,cell*.52);noStroke();fill(hot?170:128,hot?190:160,hot?90:90);ellipse(-cell*.1,0,cell*.4,cell*.26);
+    fill(80,108,56);for(const [x,y,r] of [[-.26,-.12,.07],[-.16,.14,.06],[-.02,-.16,.05],[-.3,.06,.05],[.04,.1,.05]])ellipse(cell*x,cell*y,cell*r,cell*r);
+    stroke(50,84,50);strokeWeight(cell*.02);fill(140,160,86);ellipse(cell*.2,0,cell*.42,cell*.42);noStroke();fill(206,214,150);ellipse(cell*.28,0,cell*.2,cell*.28);
+    for(const side of [-1,1]){fill(110,138,70);ellipse(cell*.22,side*cell*.15,cell*.2,cell*.17);escapeCreatureEye(cell*.24,side*cell*.15,cell*.14,hot,[226,196,90]);}
+    stroke(50,70,40);strokeWeight(cell*.025);noFill();arc(cell*.3,0,cell*.18,cell*.26,-HALF_PI*.8,HALF_PI*.8);
   }
   if(h.state==='emerge'){noFill();stroke(240,178,121,160);strokeWeight(cell*.04);ellipse(0,0,cell,cell*.7);}pop();
 }
@@ -1381,16 +1418,20 @@ function drawEscapeScorpion(h,cell,clock){
 function drawEscapeBeetle(h,cell){
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);
   const stride=h.distanceMoved*12,hot=['windup','charge'].includes(h.state);
-  stroke(62,51,33);strokeWeight(cell*.07);
+  stroke(48,38,24);strokeWeight(cell*.07);
   for(const side of [-1,1])for(let i=0;i<3;i++){
     const root=(i-1)*.18,step=Math.sin(stride+i*Math.PI+side)*.055;
-    line(root*cell,side*cell*.19,(root-.11+step)*cell,side*cell*.32);line((root-.11+step)*cell,side*cell*.32,(root+.04+step)*cell,side*cell*.43);
+    line(root*cell,side*cell*.19,(root-.11+step)*cell,side*cell*.32);strokeWeight(cell*.05);line((root-.11+step)*cell,side*cell*.32,(root+.04+step)*cell,side*cell*.44);strokeWeight(cell*.07);
   }
-  noStroke();fill(8,14,18,150);ellipse(-cell*.07,cell*.03,cell*.8,cell*.6);
-  stroke(67,48,29);strokeWeight(cell*.035);fill(hot?243:176,hot?155:132,hot?64:69);ellipse(-cell*.08,0,cell*.7,cell*.49);
-  stroke(241,205,109);strokeWeight(cell*.025);line(-cell*.38,0,cell*.18,0);
-  noStroke();fill(90,85,53);ellipse(cell*.24,0,cell*.32,cell*.34);fill(hot?255:224,hot?96:211,hot?65:133);ellipse(cell*.3,-cell*.09,cell*.07,cell*.07);ellipse(cell*.3,cell*.09,cell*.07,cell*.07);
-  stroke(178,166,102);strokeWeight(cell*.025);line(cell*.33,-cell*.11,cell*.48,-cell*.22);line(cell*.33,cell*.11,cell*.48,cell*.22);pop();
+  noStroke();fill(8,14,18,150);ellipse(-cell*.07,cell*.04,cell*.84,cell*.64);
+  // Two shining wing cases split down the back, a darker shield behind the head, and a head with
+  // curved horns that glow hot on the charge.
+  const base=hot?[243,155,64]:[176,132,69],dark=hot?[190,96,40]:[122,88,44];
+  stroke(58,40,22);strokeWeight(cell*.03);fill(...base);for(const side of [-1,1]){beginShape();vertex(cell*.06,0);bezierVertex(cell*.06,side*cell*.26,-cell*.36,side*cell*.3,-cell*.44,side*cell*.02);vertex(-cell*.44,0);endShape(CLOSE);}
+  noStroke();fill(255,240,190,hot?120:90);for(const side of [-1,1])ellipse(-cell*.14,side*cell*.12,cell*.3,cell*.06);fill(...dark,120);for(const side of [-1,1])ellipse(-cell*.3,side*cell*.12,cell*.12,cell*.1);
+  stroke(58,40,22);strokeWeight(cell*.03);fill(...dark);ellipse(cell*.1,0,cell*.22,cell*.36);fill(80,72,46);ellipse(cell*.26,0,cell*.2,cell*.24);
+  escapeCreatureEye(cell*.3,-cell*.09,cell*.07,hot);escapeCreatureEye(cell*.3,cell*.09,cell*.07,hot);
+  noFill();stroke(hot?255:200,hot?190:176,hot?110:110);strokeWeight(cell*.035);for(const side of [-1,1])bezier(cell*.34,side*cell*.04,cell*.46,side*cell*.06,cell*.5,side*cell*.18,cell*.46,side*cell*.24);pop();
 }
 function escapeBodyShape(model,cell){
   const points=[],j=model.joints,a=model.angles,w=model.widths;
