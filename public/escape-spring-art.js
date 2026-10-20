@@ -21,6 +21,8 @@ function drawSpringScenery(g,c){
   // Flower lanterns glow softly; petals drift with Full lighting (fewer on TV boxes), and stop for reduced motion.
   for(const p of g.level.props||[])if(p.kind==='flowerlantern'){noStroke();fill(255,214,190,46);ellipse((p.at[0]+.5)*c,(p.at[1]+.3)*c,c*1.3,c*1.3);}
   springMotionQuery??=window.matchMedia?.('(prefers-reduced-motion: reduce)')||{matches:false};
+  // The waterwheel turns slowly (still for reduced motion), like the autumn mill's.
+  if(g.level.millWheel){const still=springMotionQuery.matches;push();translate((g.level.millWheel[0]+.5)*c,(g.level.millWheel[1]+.5)*c);rotate(still?0:g.elapsed*.4);stroke(120,90,58);strokeWeight(c*.13);noFill();ellipse(0,0,c*1.7,c*1.7);for(let i=0;i<8;i++){const a=i*Math.PI/4;line(0,0,Math.cos(a)*c*.85,Math.sin(a)*c*.85);}pop();}
   if(escapeLightingFull()&&!springMotionQuery.matches){const n=typeof isTvDevice==='function'&&isTvDevice()?8:20;for(let i=0;i<n;i++){const x=((i*5.73+g.elapsed*.22)%g.width),y=((i*3.17+g.elapsed*.3)%g.height);if(!g.floor(Math.floor(x),Math.floor(y)))continue;push();translate(x*c,y*c);rotate(Math.sin(g.elapsed*.8+i)*1.2);noStroke();fill(246,190+i%3*14,210,150);ellipse(0,0,c*.11,c*.07);pop();}}
 }
 function clearSpringScenery(){springSceneryCache?.image.remove?.();springSceneryCache=null;}
