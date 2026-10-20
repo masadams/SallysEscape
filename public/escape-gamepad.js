@@ -94,11 +94,13 @@ function escapePadMenu(){
   if(gameState==='start')return $('start-menu-container');
   if(gameState==='kids')return $('escape-builder');
   if(gameState==='seasonalHub'&&seasonPanelOpen)return $('season-panel');
+  if(gameState==='seasonalHub'&&seasonOverview)return $('season-hub');
   if(gameState==='escapeSelect'&&!escapeLibraryOpen&&typeof escapeWorldPanelOpen!=='undefined'&&escapeWorldPanelOpen)return $('escape-world-ui');
   return null;
 }
 function escapePadFocusables(root){
-  return [...root.querySelectorAll('button, [href], input, select, textarea, [tabindex]')].filter(el=>!el.disabled&&el.tabIndex>=0&&el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden');
+  const items=[...root.querySelectorAll('button, [href], input, select, textarea, [tabindex]')].filter(el=>!el.disabled&&el.tabIndex>=0&&el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden');
+  if(root.id==='season-hub'&&seasonOverview)return items.filter(el=>el.id.startsWith('season-gate-')||el.id==='season-overview').sort((a,b)=>(a.id==='season-gate-'+seasonPack?-1:a.id==='season-overview'?1:0)-(b.id==='season-gate-'+seasonPack?-1:b.id==='season-overview'?1:0));return items;
 }
 // The stick or d-pad steps to the nearest button that way (a slider takes left and right itself);
 // held, it repeats. A presses the button in focus; B goes back, as Escape does.
@@ -106,6 +108,7 @@ function escapePadNavigate(menu,ax,ay,pressed,ready){
   const items=escapePadFocusables(menu),active=document.activeElement;
   if(!items.includes(active)&&items.length){items[0].focus();escapePad.nav.dir=null;}
   if(!ready)return;
+  if(menu.id==='season-hub'&&seasonOverview&&pressed(ESCAPE_PAD.VIEW)){seasonToggleOverview();return;}
   const dir=Math.abs(ax)>.55||Math.abs(ay)>.55?(Math.abs(ax)>Math.abs(ay)?(ax>0?'right':'left'):(ay>0?'down':'up')):null,t=millis(),nav=escapePad.nav;
   if(dir&&(dir!==nav.dir||t-nav.at>(nav.repeat?140:380))){nav.repeat=dir===nav.dir;nav.dir=dir;nav.at=t;escapePadStep(items,document.activeElement,dir);}
   else if(!dir)nav.dir=null;
