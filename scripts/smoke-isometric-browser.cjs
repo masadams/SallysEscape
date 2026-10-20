@@ -27,6 +27,8 @@ async function smoke(){
   await run('IsometricExample.state.game.paused=false');
   await send('Input.dispatchKeyEvent',{type:'keyDown',key:'ArrowRight',code:'ArrowRight'});await wait(160);await send('Input.dispatchKeyEvent',{type:'keyUp',key:'ArrowRight',code:'ArrowRight'});
   const moved=await run('({x:IsometricExample.state.game.player.x,y:IsometricExample.state.game.player.y})');assert.ok(moved.x>initial.x&&moved.y<initial.y,'keyboard right moves to screen right');
+  const clickTarget=await run('IsometricExample.project(5.5,10.5)');
+  await send('Input.dispatchMouseEvent',{type:'mousePressed',x:clickTarget[0],y:clickTarget[1],button:'left',clickCount:1});await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:clickTarget[0],y:clickTarget[1],button:'left',clickCount:1});assert.ok(await run('IsometricExample.state.path.length')>0,'mouse inverse projection picks a legal walking target');
   await run('IsometricExample.pause()');const pausedTime=await run('IsometricExample.state.game.elapsed');await wait(100);assert.equal(await run('IsometricExample.state.game.elapsed'),pausedTime);
   // Replay verified real input frames into this exact browser engine and renderer.
   const {solve}=require('./isometric-tour.cjs'),tour=solve(true);
@@ -47,7 +49,8 @@ async function smoke(){
   await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...pebble,id:2}]});await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});assert.equal(await run('IsometricExample.state.game.decoys'),2,'touch throw spends one finite pebble');
   await run('IsometricExample.state.game.paused=true;IsometricExample.render()');await screenshot('iso-phone-touch');
   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await run('document.getElementById("walls").click();IsometricExample.render()');await screenshot('iso-phone-low-walls');
-  await run('window.__isoPad={connected:true,axes:[0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0})),mapping:"standard",index:0,id:"Test pad"};Object.defineProperty(navigator,"getGamepads",{configurable:true,value:()=>[__isoPad]});IsometricExample.state.game.paused=false;__isoPad.axes=[.8,0]');await wait(150);assert.equal(await run('IsometricExample.state.mode'),'pad');
+  const beforePad=await run('IsometricExample.state.game.player.x');
+  await run('window.__isoPad={connected:true,axes:[0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0})),mapping:"standard",index:0,id:"Test pad"};Object.defineProperty(navigator,"getGamepads",{configurable:true,value:()=>[__isoPad]});IsometricExample.state.game.paused=false;__isoPad.axes=[.8,0]');await wait(150);assert.equal(await run('IsometricExample.state.mode'),'pad');assert.ok(await run('IsometricExample.state.game.player.x')>beforePad,'controller right moves Sally');
   // A still connected pad must not win against a fresh real touch.
   await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:b.x,y:b.y,id:3}]});await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await wait(100);assert.equal(await run('IsometricExample.state.mode'),'touch');
   await run('IsometricExample.state.game.paused=true');
