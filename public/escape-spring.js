@@ -65,7 +65,7 @@
   ]
  },
  {
-  id:'spring-pond',name:'Across the Lily Pond',index:2,revision:1,difficulty:'Easy–medium',seasonalTheme:'spring-pond',cunning:0,
+  id:'spring-pond',name:'Across the Lily Pond',index:2,revision:1,difficulty:'Easy–medium',seasonalTheme:'spring-pond',cunning:1,
   pebbles:2,tongues:1,
   brief:'Two mill streams, a toad on the island and a lily pad that throws you home.',
   hint:'Swim the first stream (it pulls south) to the island and stand on the switch: a footbridge crosses the second. Take the key, then step on the big lily pad to land back by the gate. The toad watches straight up the island; keep the stone pot between you.',
@@ -98,10 +98,10 @@
   ]
  },
  {
-  id:'spring-glasshouse',name:'The Glasshouse Lookout',index:3,revision:1,difficulty:'Easy–medium',seasonalTheme:'spring-glass',cunning:0,
+  id:'spring-glasshouse',name:'The Glasshouse Lookout',index:3,revision:1,difficulty:'Medium',seasonalTheme:'spring-glass',cunning:2,
   pebbles:2,tongues:1,spores:1,
-  brief:'Four greenhouse bays, a ladybird lookout and a mantis by the last switch.',
-  hint:'The ladybird plays dead when you come near on your feet: walk on calmly, or crawl, and do not rush past it or it buzzes the serpent over. Open the bays with their switches. Come at the mantis from behind.',
+  brief:'Four greenhouse bays, a ladybird lookout, two serpents and a mantis by the last switch.',
+  hint:'The ladybird plays dead when you come near on your feet: walk on calmly, or crawl, and do not rush past it or it buzzes the serpent over. Open the bays with their switches. Come at the mantis from behind. A second serpent slides up and down the key bay: take the key, wait until it turns back north at the bottom, then slip home behind it.',
   gates:[
    {id:'bay-door',name:'bay door',tiles:[[10,3]],switch:[8,5],color:[150,206,120]},
    {id:'key-bay',name:'key bay',tiles:[[17,7]],switch:[21,2],color:[236,170,196]},
@@ -110,7 +110,8 @@
   guards:[
    {kind:'ladybird',spawn:[6,3],patrol:[[5,3],[7,3]]},
    {kind:'snake',spawn:[16,6],patrol:[[12,6],[20,6]],facing:0},
-   {kind:'mantis',spawn:[19,2],patrol:[[19,2]],facing:Math.PI}
+   {kind:'mantis',spawn:[19,2],patrol:[[19,2]],facing:Math.PI},
+   {kind:'snake',spawn:[14,8],patrol:[[14,8],[14,13]],facing:Math.PI/2}
   ],
   reactions:[{id:'glass-key',when:'key',open:['home-bay'],message:'The home bay opens. Back to the start without the mantis.'}],
   fieldNotes:[
@@ -137,16 +138,19 @@
   ]
  },
  {
-  id:'spring-mill',name:'The Sleeping Waterwheel',index:4,revision:1,difficulty:'Easy–medium',seasonalTheme:'spring-garden',cunning:0,
+  id:'spring-mill',name:'The Sleeping Waterwheel',index:4,revision:1,difficulty:'Medium',seasonalTheme:'spring-garden',cunning:2,
   pebbles:2,tongues:2,millWheel:[21,8],
-  brief:'A deep millrace, three bridges and a switch you can only reach with your tongue.',
-  hint:'The near switch lowers the first bridge. From the lower bank, stand opposite the far switch and flick it with your tongue: the second bridge comes down. The key lowers the middle bridge home. The toad sits in the walled bay on the lower right; creep along the leaves and take its treasure with your tongue, or leave it.',
+  brief:'A deep millrace, three bridges, a switch you can only reach with your tongue and a serpent pacing the lower yard.',
+  hint:'The near switch lowers the first bridge. From the lower bank, stand opposite the far switch and flick it with your tongue: the second bridge comes down. The key lowers the middle bridge home. A serpent paces up and down the lower yard by the gate: wait above the water until it turns south, then cross behind it, both going and coming back. The toad sits in the walled bay on the lower right; creep along the leaves and take its treasure with your tongue, or leave it.',
   gates:[
    {id:'near-bridge',name:'near bridge',bridge:true,tiles:[[3,7],[3,8]],switch:[3,5],color:[176,214,120]},
    {id:'far-bridge',name:'far bridge',bridge:true,tiles:[[19,7],[19,8]],switch:[18,6],color:[236,170,196]},
    {id:'mill-bridge',name:'mill bridge',bridge:true,tiles:[[10,7],[10,8]],color:[196,150,96]}
   ],
-  guards:[{kind:'toad',spawn:[21,12],patrol:[[21,12]],facing:Math.PI}],
+  guards:[
+   {kind:'toad',spawn:[21,12],patrol:[[21,12]],facing:Math.PI},
+   {kind:'snake',spawn:[6,13],patrol:[[6,13],[6,9]],facing:-Math.PI/2}
+  ],
   reactions:[{id:'mill-key',when:'key',open:['mill-bridge'],message:'The middle bridge drops into place. Straight home.'}],
   fieldNotes:[
    {id:'spring-mill-note-0',at:[1,3],title:'The millrace',body:'The race is too fast and deep to swim. Every bridge has its own switch. One switch is across the water: get within three tiles and flick it with your tongue. - Clover'}
