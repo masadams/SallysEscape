@@ -11,7 +11,8 @@ async function smoke(){
  let browserError='',spawnError=null,ws;browser.stderr.on('data',d=>{browserError=(browserError+d).slice(-3000);});browser.on('error',e=>{spawnError=e;});
  const pending=new Map();let id=0;
  try{
-  let port;for(let i=0;i<150;i++){if(spawnError)throw spawnError;if(browser.exitCode!==null)throw Error('Chrome exited: '+browserError);try{port=fs.readFileSync(path.join(profile,'DevToolsActivePort'),'utf8').split('\n')[0];}catch(_){}if(port)break;await wait(100);}assert.ok(port,'Chrome debugging port did not start: '+browserError);
+  // A cold CI runner can take a while to start Chrome; allow 45 seconds.
+  let port;for(let i=0;i<450;i++){if(spawnError)throw spawnError;if(browser.exitCode!==null)throw Error('Chrome exited: '+browserError);try{port=fs.readFileSync(path.join(profile,'DevToolsActivePort'),'utf8').split('\n')[0];}catch(_){}if(port)break;await wait(100);}assert.ok(port,'Chrome debugging port did not start: '+browserError);
   const tabs=await(await fetch('http://127.0.0.1:'+port+'/json/list',{signal:AbortSignal.timeout(5000)})).json(),tab=tabs.find(t=>t.type==='page');assert.ok(tab,'Chrome page missing');
   ws=new WebSocket(tab.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
   const errors=[];ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);if(!p)return;pending.delete(m.id);clearTimeout(p.timer);m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);}else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails.exception?.description||m.params.exceptionDetails.text);};
