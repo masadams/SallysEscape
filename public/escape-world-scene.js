@@ -188,7 +188,7 @@ function renderEscapeWorldHUD(){
   document.getElementById('world-route-best').textContent=saved?escapeRecordSummary(level,saved):node&&!unlocked?escapeUnlockHint(level):node?'A new escape awaits.':'';
   const challengeLine=document.getElementById('world-route-challenge'),challengeButton=document.getElementById('world-challenge'),challengeOpen=challenge&&escapeProgress.challengeUnlocked(challenge.id);
   challengeLine.textContent=challenge?'⚑ Challenge · '+challenge.name+' — '+(challengeSaved?escapeRecordSummary(level,challengeSaved,true):challengeOpen?challenge.brief:escapeChallengeLock(challenge)):'';challengeLine.classList.toggle('world-challenge-new',Boolean(challengeOpen&&!challengeSaved));
-  challengeButton.style.display=challengeOpen?'':'none';challengeButton.innerHTML=(challengeSaved?'Replay challenge':'Try challenge')+(escapeInputMode()==='pad'?' <span class="key-hint">[X]</span>':'');challengeButton.onclick=challengeOpen?()=>startEscape({challengeId:challenge.id}):null;
+  challengeButton.style.display=challengeOpen?'':'none';challengeButton.innerHTML=(challengeSaved?'Replay challenge':'Try challenge')+escapeControlHint('C','X');challengeButton.onclick=challengeOpen?()=>startEscape({challengeId:challenge.id}):null;
   // Away from an entrance there is nothing to enter, so the card steps aside and the map shows.
   document.getElementById('world-route')?.classList.toggle('world-route-idle',!node);
   const enter=document.getElementById('world-enter');enter.disabled=!unlocked;enter.innerHTML=unlocked?(saved?'Play again':'Enter escape')+escapeControlHint('Enter','A'):node?'Trail locked':'Find an entrance';

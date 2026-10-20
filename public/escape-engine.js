@@ -297,7 +297,8 @@
     route(from,to,actor=null,maxSteps=Infinity,avoidGlow=false){
       const sx=Math.floor(from.x),sy=Math.floor(from.y),tx=Math.floor(to.x),ty=Math.floor(to.y);
       if(!this.actorFloor(tx,ty,actor)||!this.actorFloor(sx,sy,actor)||avoidGlow&&this.inLight(centre(tx,ty),.35))return [];
-      const queue=[[sx,sy,0]],previous=new Map([[sx+','+sy,null]]);
+      // A lit tile is refused, and refused again from each neighbour, so each answer is kept for this search.
+      const queue=[[sx,sy,0]],previous=new Map([[sx+','+sy,null]]),lit=new Map(),dark=(x,y,id)=>{let v=lit.get(id);if(v===undefined){v=!this.inLight(centre(x,y),.35);lit.set(id,v);}return v;};
       for(let i=0;i<queue.length;i++){
         const [x,y,depth]=queue[i];
         if(x===tx&&y===ty){
@@ -308,7 +309,7 @@
         }
         if(depth>=maxSteps)continue;
         for(const [dx,dy] of directions){const nx=x+dx,ny=y+dy,id=nx+','+ny;
-          if(this.actorFloor(nx,ny,actor)&&!previous.has(id)&&(!avoidGlow||!this.inLight(centre(nx,ny),.35))){previous.set(id,[x,y]);queue.push([nx,ny,depth+1]);}
+          if(this.actorFloor(nx,ny,actor)&&!previous.has(id)&&(!avoidGlow||dark(nx,ny,id))){previous.set(id,[x,y]);queue.push([nx,ny,depth+1]);}
         }
       }
       return [];
