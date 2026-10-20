@@ -18,7 +18,7 @@ async function smoke(){
   const send=(method,params={})=>new Promise((resolve,reject)=>{const n=++id,timer=setTimeout(()=>{pending.delete(n);reject(Error('Chrome timed out: '+method));},15000);pending.set(n,{resolve,reject,timer});ws.send(JSON.stringify({id:n,method,params}));});
   const run=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text);return r.result.value;};
   const frame=()=>run('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');
-  const screenshot=async name=>{if(!process.env.SEASON_SCREENSHOTS)return;const r=await send('Page.captureScreenshot',{format:'jpeg',quality:64,captureBeyondViewport:false});console.log('SEASON_SCREENSHOT '+name+' '+r.data);};
+  const screenshot=async name=>{if(!process.env.SEASON_SCREENSHOTS)return;const r=await send('Page.captureScreenshot',{format:'jpeg',quality:82,captureBeyondViewport:false});console.log('SEASON_SCREENSHOT '+name+' '+r.data);};
 
   await send('Runtime.enable');await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:1440,height:960,deviceScaleFactor:1,mobile:false});await send('Page.navigate',{url:base+'/isometric.html'});
   let ready=false;for(let i=0;i<100;i++){if(await run('!!window.IsometricExample')){ready=true;break;}await wait(100);}assert.ok(ready,'isometric scene initialised');
@@ -39,6 +39,8 @@ async function smoke(){
   await run('document.getElementById("view").click();IsometricExample.render()');await frame();await screenshot('iso-close-desktop');
   await run('(()=>{const g=IsometricExample.state.game;g.paused=false;for(const f of '+JSON.stringify(tour.frames.slice(half))+')g.advance(1/120,f);IsometricExample.render();})()');
   assert.equal(await run('IsometricExample.state.game.status'),'won');assert.equal(await run('IsometricExample.state.game.treasure'),10);await frame();await screenshot('iso-completed');
+  // Reach a detail pose by replay and real movement, never by teleporting the rig.
+  await run('IsometricExample.reset();(()=>{const g=IsometricExample.state.game;for(const f of '+JSON.stringify(tour.frames.slice(0,half))+')g.advance(1/120,f);for(let i=0;i<36;i++)g.advance(1/120,{x:1,y:1});g.paused=true;IsometricExample.state.close=true;IsometricExample.render();})()');await frame();await screenshot('iso-creature-detail');
   // Actual touch drag, released/cancelled holds, tool tap, and no hidden hit-blocking layer.
   await send('Emulation.setDeviceMetricsOverride',{width:844,height:390,deviceScaleFactor:1,mobile:true});await send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:5});
   await run('IsometricExample.reset();IsometricExample.mode("touch");IsometricExample.state.close=true;dispatchEvent(new Event("resize"))');await frame();

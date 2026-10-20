@@ -6,7 +6,7 @@ A review-only 2.5D rendering experiment for Sally’s Escape. Open **/isometric.
 
 A compact 17×13 mill garden: step on the amber switch to lower the north bridge, cross the river, find the key beyond the mill, then take the newly lowered south bridge to the green exit. Ten optional treasures are distributed along small detours. A real serpent patrols the walled southeast garden; entering its enclosure is an optional risk and is not required for treasure.
 
-The scene includes raised stone walls, a visible island foundation, bridge thickness/rails, layered trees, a roofed mill, moving river highlights, lantern halos, ground shadows and depth-sorted articulated creatures. Sally and the serpent use the existing creature rig, not replacement sprite assets. Near foreground walls become translucent; Walls: Low lets reviewers compare visibility. View switches between a whole-diorama composition and a closer following camera.
+The scene includes bevelled/weathered stone walls and paving, a visible island foundation, timber grain and nails on bridges, rounded tree canopies, a shingled timber mill, depth-coloured river water, framed lanterns, soft ground shadows and depth-sorted articulated creatures. Sally and the serpent are drawn as lit world-space meshes: elliptical body sections follow the native spine, with rounded heads, raised eye sockets, shaded sides/bellies and articulated solid limbs. This is procedural geometry projected into Canvas 2D, not flat replacement sprites. Sally and the serpent use the existing creature rig, not replacement sprite assets. Near foreground walls become translucent; Walls: Low lets reviewers compare visibility. View switches between a whole-diorama composition and a closer following camera.
 
 **This is a flat collision map viewed in isometric projection.** Raised scenery is visual; there is no staircase, jumping, multi-storey navigation or Z-axis physics. The purpose is to assess readability, movement and the game’s art in this view before committing to a wider conversion.
 
@@ -32,13 +32,16 @@ Only the example page loads its model/renderer/CSS. Campaign renderers, controls
 
 `node scripts/smoke-isometric-browser.cjs` runs real Chrome against the standalone server: desktop/mobile screenshots, real keyboard/touch input, finite tool spending, Gamepad API switching, pause, reduced motion and replay of the all-treasure win in the browser engine. CI also retains the complete game test/browser and image checks.
 
-Screenshots below are actual Chrome captures of the playable page at gameplay commit `dbe00c4`, including the all-treasure replay. They are not concept illustrations. Desktop captures are 1440×960; the touch capture is 844×390. The page is paused during still captures to keep the positions reproducible.
+Screenshots below are actual Chrome captures of the playable page from the refined creature/material build, including the all-treasure replay. They are not concept illustrations. Desktop captures are 1440×960; the touch capture is 844×390. The page is paused during still captures to keep the positions reproducible.
 
 ### Whole level
 ![Isometric mill garden, river and closed bridges](screenshots/isometric/iso-whole-desktop.jpg)
 
 ### Close view
 ![Sally beside the open north bridge and raised mill walls](screenshots/isometric/iso-close-desktop.jpg)
+
+### Creature detail
+![Rounded, lit Sally and serpent geometry in the close view](screenshots/isometric/iso-creature-detail.jpg)
 
 ### Phone touch controls
 ![Landscape phone view with joystick and tool buttons](screenshots/isometric/iso-phone-touch.jpg)
