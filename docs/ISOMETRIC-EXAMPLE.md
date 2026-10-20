@@ -32,7 +32,19 @@ Only the example page loads its model/renderer/CSS. Campaign renderers, controls
 
 `node scripts/smoke-isometric-browser.cjs` runs real Chrome against the standalone server: desktop/mobile screenshots, real keyboard/touch input, finite tool spending, Gamepad API switching, pause, reduced motion and replay of the all-treasure win in the browser engine. CI also retains the complete game test/browser and image checks.
 
-Screenshots are captured from the playable page by that browser script. The PR will include the actual captured desktop and phone images after visual review, rather than concept mockups.
+Screenshots below are actual Chrome captures of the playable page at gameplay commit `dbe00c4`, including the all-treasure replay. They are not concept illustrations. Desktop captures are 1440×960; the touch capture is 844×390. The page is paused during still captures to keep the positions reproducible.
+
+### Whole level
+![Isometric mill garden, river and closed bridges](screenshots/isometric/iso-whole-desktop.jpg)
+
+### Close view
+![Sally beside the open north bridge and raised mill walls](screenshots/isometric/iso-close-desktop.jpg)
+
+### Phone touch controls
+![Landscape phone view with joystick and tool buttons](screenshots/isometric/iso-phone-touch.jpg)
+
+### Completed route
+![Actual all-treasure completion result](screenshots/isometric/iso-completed.jpg)
 
 ## Files
 
