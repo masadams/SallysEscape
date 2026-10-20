@@ -32,7 +32,7 @@ Only the example page loads its model/renderer/CSS. Campaign renderers, controls
 
 `node scripts/smoke-isometric-browser.cjs` runs real Chrome against the standalone server: desktop/mobile screenshots, real keyboard/touch input, finite tool spending, Gamepad API switching, pause, reduced motion and replay of the all-treasure win in the browser engine. CI also retains the complete game test/browser and image checks.
 
-Screenshots below are actual Chrome captures of the playable page from the refined creature/material build, including the all-treasure replay. They are not concept illustrations. Desktop captures are 1440×960; the touch capture is 844×390. The page is paused during still captures to keep the positions reproducible.
+Screenshots below are actual Chrome captures of the playable page at refined creature/material commit `f981421`, including the all-treasure replay. They are not concept illustrations. Desktop captures are 1440×960; the touch capture is 844×390. The page is paused during still captures to keep the positions reproducible.
 
 ### Whole level
 ![Isometric mill garden, river and closed bridges](screenshots/isometric/iso-whole-desktop.jpg)
