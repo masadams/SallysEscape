@@ -85,7 +85,7 @@ function pollEscapePad(){
   for(const [name,action] of Object.entries(ESCAPE_PAD_ACTIONS)){const i=ESCAPE_PAD[name];
     if(['pebble','glow','spore'].includes(action)){if(pressed(i))startEscapeCharge(action,'pad');else if(released(i)&&escapeCharge?.source==='pad'&&escapeCharge.kind===action)releaseEscapeCharge(action);continue;}
     if(!pressed(i))continue;
-    ({look:useEscapeLook,burrow:useEscapeBurrow,tongue:useEscapeTongue,camo:useEscapeCamo,seed:useEscapeSeed})[action]?.();
+    ({look:useEscapeLook,burrow:useEscapeBurrow,tongue:useEscapeTongue,camo:useEscapeCamo,seed:()=>escapeGame?.level.diggers&&!escapeGame.level.seeds?useEscapeDig():useEscapeSeed()})[action]?.();
   }
 }
 function escapePadForget(){escapePad.index=null;escapePad.active=false;if(escapeLastInput==='pad')escapeLastInput='auto';escapePad.x=0;escapePad.y=0;escapePad.sprint=false;escapePad.crawl=false;escapePad.prev=[];escapePad.lastAx=0;escapePad.lastAy=0;document.body?.classList?.remove('pad-nav');if(escapeCharge?.source==='pad')releaseEscapeCharge();}

@@ -181,7 +181,7 @@ function startEscape(options={}){
     <div class="escape-inventory"><span id="escape-key">◇ Find the key</span><span id="escape-treasure">Treasure 0 / 10</span></div>
     <div class="escape-kit" role="group" aria-label="Sally’s abilities and breath"><div class="escape-breath"><span>Breath <kbd>Shift</kbd></span><div id="escape-stamina" role="progressbar" aria-label="Stamina" aria-valuemin="0" aria-valuemax="100"><i id="escape-stamina-fill"></i></div><div id="escape-warmth-row" style="display:none"><span>Warmth</span><div id="escape-warmth" role="progressbar" aria-label="Warmth" aria-valuemin="0" aria-valuemax="100"><i id="escape-warmth-fill"></i></div></div></div>
     <div id="escape-tail" class="escape-tail-status" style="display:none" role="img"></div><div class="escape-actions"><button id="escape-burrow-action">Burrow <kbd>E</kbd></button><button id="escape-decoy-action">Toss pebble <kbd>Q</kbd></button><button id="escape-glow-action">Glow mushroom <kbd>L</kbd></button><button id="escape-spore-action">Spore pouch <kbd>Z</kbd></button><button id="escape-tongue-action" title="Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.">Tongue <kbd>R</kbd></button>
-    <button id="escape-seed-action" title="Plant on bare ground for cover, face an open doorway to brace it, or use a marked vine bank.">Seed <kbd>F</kbd></button><button id="escape-camo-action" title="Blend into the ground. You stay hidden while you keep still.">Camo <kbd>X</kbd></button><button id="escape-look-action" title="Turn your gaze behind you briefly, even while moving.">Look back <kbd>Space</kbd></button></div></div><p id="escape-objective">Find the golden key. Treasure is optional.</p><p id="escape-warning" role="status" aria-live="polite"></p>`;
+    <button id="escape-seed-action" title="Plant on bare ground for cover, face an open doorway to brace it, or use a marked vine bank.">Seed <kbd>F</kbd></button><button id="escape-dig-action" title="Dig a tunnel entrance, then dig its way out somewhere else; Burrow on either mound to use it.">Dig <kbd>T</kbd></button><button id="escape-camo-action" title="Blend into the ground. You stay hidden while you keep still.">Camo <kbd>X</kbd></button><button id="escape-look-action" title="Turn your gaze behind you briefly, even while moving.">Look back <kbd>Space</kbd></button></div></div><p id="escape-objective">Find the golden key. Treasure is optional.</p><p id="escape-warning" role="status" aria-live="polite"></p>`;
   // p5 redraws synchronously on resize; the new HUD must exist first.
   const size=canvasDimensions();resizeCanvas(size.width,size.height,true);
   document.getElementById('escape-burrow-action').onclick=useEscapeBurrow;
@@ -189,7 +189,7 @@ function startEscape(options={}){
   escapeBindCharge(document.getElementById('escape-decoy-action'),'pebble');escapeBindCharge(document.getElementById('escape-glow-action'),'glow');escapeBindCharge(document.getElementById('escape-spore-action'),'spore');
   document.getElementById('escape-tongue-action').onclick=useEscapeTongue;
   document.getElementById('escape-look-action').onclick=useEscapeLook;
-  document.getElementById('escape-seed-action').onclick=useEscapeSeed;
+  document.getElementById('escape-seed-action').onclick=useEscapeSeed;document.getElementById('escape-dig-action').onclick=useEscapeDig;
   document.getElementById('escape-camo-action').onclick=useEscapeCamo;
   document.getElementById('escape-map-button').onclick=toggleEscapeMap;
   clearTouchInput();suppressHeldKeys();unlockAudio();renderEscapeHUD();updateToolbar();
@@ -257,6 +257,7 @@ function drawEscapeHawk(k,cell,clock){
   if(k.lastStrike&&clock-k.lastStrike.at<.5){noFill();stroke(...(k.lastStrike.hit?[255,90,70]:[200,230,200]),255*(1-(clock-k.lastStrike.at)/.5));strokeWeight(cell*.08);ellipse(k.lastStrike.x*cell,k.lastStrike.y*cell,k.radius*cell*2*(1+(clock-k.lastStrike.at)),k.radius*cell*1.6*(1+(clock-k.lastStrike.at)));}
 }
 function useEscapeLook(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.lookBack();renderEscapeHUD(true);}}
+function useEscapeDig(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.digTunnel();renderEscapeHUD(true);}}
 function useEscapeSeed(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.plantSeed();renderEscapeHUD(true);}}
 function escapeKeyPressed(k=String(key).toLowerCase(),code=keyCode){
   if(gameState==='escape'&&escapeMoment&&!escapeResultShown){skipEscapeMoment(k);return;}
@@ -279,6 +280,7 @@ function escapeKeyPressed(k=String(key).toLowerCase(),code=keyCode){
   if(k==='r'||k==='t')useEscapeTongue();
   if(k==='v'||k===' '&&document.activeElement?.tagName!=='BUTTON')useEscapeLook();
   if(k==='f')useEscapeSeed();
+  if(k==='t')useEscapeDig();
 }
 function toggleEscapeMap(){
   if(gameState!=='escape'||!escapeGame?.level.explore)return;
@@ -360,6 +362,7 @@ function renderEscapeHUD(force=false){
     [document.getElementById('escape-spore-action'),'spore','Spores','Z',g.spores,g.level.spores||0,g.elapsed>=g.decoyReadyAt,escapeCharge?.kind==='spore'],
     [tongue,'tongue','Tongue','R',g.tongues,g.level.tongues,!g.tongue&&g.elapsed>=g.tongueReadyAt,Boolean(g.tongue)],
     [document.getElementById('escape-seed-action'),'seed','Seed','F',g.seeds,g.level.seeds,g.elapsed>=g.seedReadyAt,false],
+    [document.getElementById('escape-dig-action'),'dig',g.pendingDig?'Dig way out':'Dig tunnel','T',g.diggers+(g.pendingDig?1:0),g.level.diggers||0,true,Boolean(g.pendingDig)],
     [document.getElementById('escape-camo-action'),'camo','Camo','X',g.camos,g.level.camos,g.camoUntil<=g.elapsed,g.camoUntil>g.elapsed],
     [document.getElementById('escape-look-action'),'look','Look back','Space',1,g.level.gaze?null:0,true,g.lookUntil>g.elapsed]
   ];
@@ -774,6 +777,7 @@ function drawEscapeTricks(g,cell,view){
   for(const c of g.currents){stroke(200,240,250,90);strokeWeight(Math.max(1,cell*.04));const [dx,dy]=c.dir,phase=(g.elapsed*c.speed*.8)%1;
     for(let y=c.y1;y<=c.y2;y++)for(let x=c.x1;x<=c.x2;x++){if(!seen(x,y)||(c.surface==='ground'?!g.floor(x,y):g.grid[y][x]!=='U'))continue;for(let k=0;k<2;k++){const t=(phase+k*.5)%1,cx=x+.5+dx*(t-.5)*.8+(dy?(k?.22:-.22):0),cy=y+.5+dy*(t-.5)*.8+(dx?(k?.22:-.22):0);line(cx*cell,cy*cell,(cx-dx*.22)*cell,(cy-dy*.22)*cell);}}}
   for(const h of g.hunters)if(h.kind==='cloudray'){noStroke();fill(6,14,24,70);ellipse(h.x*cell,h.y*cell,h.shadowR*2*cell,h.shadowR*1.6*cell);fill(6,14,24,40);ellipse(h.x*cell,h.y*cell,h.shadowR*2.4*cell,h.shadowR*1.9*cell);}
+  if(g.pendingDig){const m=g.pendingDig,pulse=.5+.5*Math.sin(g.elapsed*4);noStroke();fill(96,72,46);ellipse(m.x*cell,m.y*cell+cell*.06,cell*.6,cell*.42);fill(40,28,18);ellipse(m.x*cell,m.y*cell+cell*.04,cell*.24,cell*.15);noFill();stroke(236,200,120,120+100*pulse);strokeWeight(Math.max(1,cell*.04));ellipse(m.x*cell,m.y*cell,cell*(.85+pulse*.2),cell*(.85+pulse*.2));}
   for(const t of g.tunnels)for(const m of [t.a,t.b]){if(!seen(Math.floor(m.x),Math.floor(m.y)))continue;noStroke();fill(96,72,46);ellipse(m.x*cell,m.y*cell+cell*.06,cell*.72,cell*.5);fill(40,28,18);ellipse(m.x*cell,m.y*cell+cell*.04,cell*.34,cell*.22);fill(150,118,80);for(const [dx,dy] of [[-.28,-.08],[.3,-.02],[.05,-.2]])ellipse((m.x+dx)*cell,(m.y+dy)*cell,cell*.09,cell*.07);}
 }
 // Sunlight rippling across water, in Full lighting.

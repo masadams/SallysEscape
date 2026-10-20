@@ -66,7 +66,7 @@
       this.treasure=0;this.totalTreasure=this.loot.reduce((n,p)=>n+p.value,0);
       this.burrows=this.level.burrows;this.decoys=this.level.pebbles;this.decoy=null;this.decoyReadyAt=0;this.glows=this.level.glows||0;this.glowsUsed=0;this.flights=[];this.lights=[];this.dug=[];
       this.glowVersion=0;
-      this.seeds=this.level.seeds||0;this.seedGrowth=[];this.seedReadyAt=0;this.seedsUsed=0;
+      this.seeds=this.level.seeds||0;this.diggers=this.level.diggers||0;this.pendingDig=null;this.tunnelsDug=0;this.seedGrowth=[];this.seedReadyAt=0;this.seedsUsed=0;
       this.tongues=this.level.tongues||0;this.tongueRange=3;this.tongue=null;this.tongueReadyAt=0;this.tonguesUsed=0;this.keyByTongue=false;
       this.elapsed=0;this.accumulator=0;this.status='playing';this.paused=false;this.result=null;
       this.invulnerableUntil=0;this.exitHold=0;this.closeCalls=0;this.alarms=0;this.events=[];
@@ -355,6 +355,21 @@
       this.updateVisibility(true);
       this.spend('burrows');this.dug.push({x:wx,y:wy});this.invulnerableUntil=this.elapsed+0.35;
       this.notice('Under the wall. Keep moving!','burrow');return true;
+    }
+    // The tunnel kit: dig an entrance on open ground, then an exit somewhere else (at least three
+    // tiles away), and the two become a burrow pair like any other. Digging again by an unfinished
+    // entrance fills it back in. Water, ice, gates, switches and other mounds cannot be dug.
+    digTunnel(){
+      if(!this.active()||this.player.underground||this.player.flight)return false;
+      const p=this.player,x=Math.floor(p.x),y=Math.floor(p.y),here=centre(x,y),tile=this.grid[y]?.[x];
+      if(this.pendingDig&&distance(here,this.pendingDig)<1.1){this.pendingDig=null;this.notice('You fill the hole back in.','rustle');return true;}
+      if(!this.pendingDig&&this.diggers===0){this.notice('No tunnels left to dig.');return false;}
+      const mound=this.tunnels.some(t=>distance(here,t.a)<1.1||distance(here,t.b)<1.1);
+      if(!['.','M','L','N'].includes(tile)||this.slippery.has(x+','+y)||mound||here.x===this.exit.x&&here.y===this.exit.y){this.notice('Dig on open ground, away from water, ice, gates and other mounds.');return false;}
+      if(!this.pendingDig){this.pendingDig=here;this.notice('Entrance dug. Now dig the way out somewhere else.','burrow');return true;}
+      if(distance(here,this.pendingDig)<3){this.notice('Dig the way out at least three tiles from the entrance.');return false;}
+      this.tunnels.push({a:this.pendingDig,b:here,dug:true});this.pendingDig=null;this.spend('diggers');this.tunnelsDug++;this.tunnelReadyAt=this.elapsed+.4;
+      this.notice('Tunnel finished! Stand on either mound and Burrow to use it.','tunnel');return true;
     }
     // A burrow pair: standing on a mound, Sally digs in and comes up out of its partner a moment
     // later. Nothing can catch her while she is underground, and nothing can follow.
