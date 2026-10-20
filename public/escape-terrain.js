@@ -8,6 +8,7 @@
 const ESCAPE_TERRAIN_HASH=(x,y,s=0)=>{let h=(Math.imul(x|0,374761393)+Math.imul(y|0,668265263)+Math.imul(s|0,982451653))|0;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967296;};
 // What each place is made of: its walls and its ground.
 const ESCAPE_TERRAIN_SETS={
+  'winter-village':['ice','snow'],'winter-ice':['ice','snow'],'winter-workshop':['wood','snow'],'winter-night':['ice','snow'],'winter-finale':['ice','snow'],
   autumn:['autumn-hedge','fallen-leaves'],'autumn-dusk':['autumn-hedge','fallen-leaves'],'autumn-night':['autumn-hedge','fallen-leaves'],'autumn-mill':['wood','fallen-leaves'],'autumn-festival':['autumn-hedge','fallen-leaves'],
   meadow:['hedge','grass'],garden:['hedge','grass'],orchard:['hedge','grass'],jungle:['hedge','grass'],hollow:['hedge','grass'],home:['hedge','grass'],finale:['hedge','grass'],
   river:['hedge','earth'],marsh:['hedge','earth'],lantern:['hedge','earth'],

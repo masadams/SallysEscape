@@ -2,6 +2,7 @@
 (function(root){
   const CreatureMotion=typeof module!=='undefined'&&module.exports?require('./creature-rig.js').EscapeCreatureMotion:root.EscapeCreatureMotion;
   const catalog=typeof module!=='undefined'&&module.exports?require('./escape-levels.js'):{EscapeCatalog:root.EscapeCatalog,escapeGridFor:root.escapeGridFor};
+  const Ice=typeof module!=='undefined'&&module.exports?require('./escape-ice.js'):root.EscapeIce;
   const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   const copy=p=>({x:p.x,y:p.y});
   // How heavy hunters handle in a chase (see glideHunter): turning speed in radians a second, the share of
@@ -81,6 +82,7 @@
       this.antTrails=(this.level.antTrails||[]).map(t=>({tiles:expandTrail(t.path),groups:t.groups||3,size:t.size||4,gap:t.gap||5,speed:t.speed||1.6,offset:t.offset||0}));
       this.carried=[];this.thefts=0;this.recoveries=0;this.stolen=0;
       // Frost Hollow: only marked rooms are cold; warm stones thaw Sally quickly.
+      this.slippery=new Set((this.level.slippery||[]).map(p=>p.join(',')));this.slideVelocity={x:0,y:0};
       this.cold=new Set();for(const [x1,y1,x2,y2] of this.level.cold||[])for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)this.cold.add(x+','+y);
       this.warm=new Set((this.level.warm||[]).map(([x,y])=>x+','+y));
       // Steam Vents: wall vents fire jets down a lane on a fixed rhythm.
@@ -107,7 +109,7 @@
       // Ice walls are walls that a frost sentinel's gaze glances off.
       this.ice=new Set((this.level.ice||[]).map(([x,y])=>x+','+y));
       this.echoes=(this.level.echoes||[]).map(([x1,y1,x2,y2])=>({x1,y1,x2,y2}));
-      this.currents=(this.level.currents||[]).map(c=>{const [x1,y1,x2,y2]=c.area;return {x1,y1,x2,y2,dir:c.dir,speed:c.speed||1.2};});
+      this.currents=(this.level.currents||[]).map(c=>{const [x1,y1,x2,y2]=c.area;return {x1,y1,x2,y2,dir:c.dir,speed:c.speed||1.2,...(c.surface==='ground'?{surface:'ground'}:{})};});
       this.tunnels=(this.level.tunnels||[]).map(([a,b])=>({a:centre(...a),b:centre(...b)}));this.tunnelReadyAt=0;
       this.spores=this.level.spores||0;this.sporesUsed=0;this.tunnelsUsed=0;
       this.caps=(this.level.caps||[]).map(c=>({at:c.at.slice(),to:c.to.slice(),key:c.at.join(','),readyAt:0}));
@@ -332,7 +334,7 @@
       if(this.hawk?.shadow)this.met.add('hawk');
       if(this.antTrails.length&&!this.met.has('ants')&&this.antAt(p,6))this.met.add('ants');
     }
-    notice(message,event){this.message=message;this.messageUntil=this.elapsed+2.5;if(event)this.events.push(event);}
+    notice(message,event){if(this.level.seasonal==='winter')message=this.winterMessage(message);this.message=message;this.messageUntil=this.elapsed+2.5;if(event)this.events.push(event);}
     active(){return this.status==='playing'&&!this.paused;}
     burrow(){
       if(!this.active())return false;
@@ -698,7 +700,7 @@
       if(input.aiming){const l=Math.hypot(input.x||0,input.y||0);if(l){this.player.throwAim={x:input.x/l,y:input.y/l};this.player.facing=Math.abs(input.x)>=Math.abs(input.y)?{x:Math.sign(input.x),y:0}:{x:0,y:Math.sign(input.y)};}input={};}
       // In the air off a bounce cap Sally follows her arc and cannot steer.
       if(this.player.underground){const u=this.player.underground;input={};if(this.elapsed-u.start>=u.dur){this.player.x=u.to.x;this.player.y=u.to.y;this.player.underground=null;this.motion.resetPlayer?.(this.player);this.events.push('tunnel');this.updateVisibility(true);}}
-      if(this.player.flight){const f=this.player.flight,t=Math.min(1,(this.elapsed-f.start)/f.dur);this.player.x=f.from.x+(f.to.x-f.from.x)*t;this.player.y=f.from.y+(f.to.y-f.from.y)*t;input={};if(t>=1){this.player.flight=null;this.events.push('hop');}}
+      if(this.player.flight){this.slideVelocity.x=0;this.slideVelocity.y=0;const f=this.player.flight,t=Math.min(1,(this.elapsed-f.start)/f.dur);this.player.x=f.from.x+(f.to.x-f.from.x)*t;this.player.y=f.from.y+(f.to.y-f.from.y)*t;input={};if(t>=1){this.player.flight=null;this.events.push('hop');}}
       // Digging in: held on a soft dirt patch, Sally scrabbles for 0.75 s (noisy, dust flying), then
       // lies buried, hidden from everything and safe, until the button is let go.
       if(this.soil.size){const q=this.player;
@@ -716,13 +718,17 @@
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
       if(this.cold.size)this.updateWarmth(dt);
       const crawl=Boolean(input.crawl&&!this.water(p)),sprint=!crawl&&Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',speed=(sprint?4:crawl?1.25:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72:1)*(this.water(p)?.55:1);
-      for(const [axis,direction] of [['x',dx],['y',dy]]){
-        const next={...p,[axis]:p[axis]+direction*speed*dt};if(this.fits(next)&&!(this.vents.length&&this.inJet(next)&&!this.inJet(p)))p[axis]=next[axis];
-      }
+      const onIce=this.slippery.has(this.tileKey(p)),special=p.flight||p.underground||p.dig||this.heldBy;
+      if(special){this.slideVelocity.x=0;this.slideVelocity.y=0;}
+      const skating=!special&&(onIce||Math.hypot(this.slideVelocity.x,this.slideVelocity.y)>.018);
+      const travel=skating?Ice.steer(this.slideVelocity,{x:dx,y:dy},speed,dt,{ice:onIce,brake:crawl}):{x:dx*speed*dt,y:dy*speed*dt};
+      for(const axis of ['x','y']){const next={...p,[axis]:p[axis]+travel[axis]};if(this.fits(next)&&!(this.vents.length&&this.inJet(next)&&!this.inJet(p)))p[axis]=next[axis];else this.slideVelocity[axis]=0;}
+      p.sliding=onIce&&Math.hypot(this.slideVelocity.x,this.slideVelocity.y)>.12;
+      if(!onIce&&Math.hypot(this.slideVelocity.x-dx*speed,this.slideVelocity.y-dy*speed)<.04){this.slideVelocity.x=0;this.slideVelocity.y=0;}
       if(this.wind.length&&!p.flight){const gust=this.wind.find(w=>this.gustPhase(w).active&&w.keys.has(this.tileKey(p)));if(gust)for(const [axis,d] of [['x',gust.dir[0]],['y',gust.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*2.3*dt};if(this.fits(next))p[axis]=next[axis];
         // A gust that shoves Sally against a ledge over a gap blows her off it.
         else if(this.grid[Math.floor(next.y+d*(axis==='y'?.3:0))]?.[Math.floor(next.x+d*(axis==='x'?.3:0))]==='P'&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(null)){this.finish('caught','A gust blew Sally off the ledge. Watch the streaks: when they thicken, get out of the lane or brace against a wall.');return;}}}
-      if(this.currents.length&&this.water(p)&&!p.underground){const c=this.currents.find(c=>p.x>=c.x1&&p.x<c.x2+1&&p.y>=c.y1&&p.y<c.y2+1);
+      if(this.currents.length&&!p.underground&&!p.flight){const c=Ice.currentAt(this.currents,p,this.water(p));
         if(c)for(const [axis,d] of [['x',c.dir[0]],['y',c.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*c.speed*dt};if(this.fits(next))p[axis]=next[axis];}}
       p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);if(p.swimming&&!this.water(old))this.events.push('splash');p.moving=distance(old,p)>0.0001;p.sprinting=sprint&&p.moving;p.crawling=crawl&&!p.swimming;this.playerVelocity={x:(p.x-old.x)/dt,y:(p.y-old.y)/dt};this.trackSally(dt);
       p.stamina=Math.max(0,Math.min(100,p.stamina+(p.sprinting?-24:18)*dt));
@@ -923,7 +929,7 @@
       if((heard||lure)&&this.elapsed>=(h.calmUntil||0)){
         const target=lure&&!heard?copy(this.decoy):this.lead(.2*this.cunning.aim);if(lure)h.lastLure=this.decoy.expires;
         const d=Math.min(distance(h,target)+.4,4.5),a=Math.atan2(target.y-h.y,target.x-h.x);
-        h.aim={x:h.x+Math.cos(a)*d,y:h.y+Math.sin(a)*d};h.facing=a;h.state='crouch';h.phaseUntil=this.elapsed+(this.level.foxWarn??.22)*this.cunning.warn;if(this.level.seasonal)this.cue('gobble',h);h.reason='heard';h.calmUntil=this.elapsed+2.2;this.alarms++;return;
+        h.aim={x:h.x+Math.cos(a)*d,y:h.y+Math.sin(a)*d};h.facing=a;h.state='crouch';h.phaseUntil=this.elapsed+(this.level.foxWarn??.22)*this.cunning.warn;if(this.level.seasonal==='autumn-hollow')this.cue('gobble',h);h.reason='heard';h.calmUntil=this.elapsed+2.2;this.alarms++;return;
       }
       if(h.state==='sniff'){if(this.elapsed<h.phaseUntil)return;h.state='patrol';}
       const target=h.patrol[h.routeIndex];if(distance(h,target)<.1){h.routeIndex=(h.routeIndex+1)%h.patrol.length;return;}
@@ -1559,6 +1565,7 @@
       const m=MOMENTUM[h.kind];
       if(m&&h.state==='chase'&&this.hunterDt>0)return this.glideHunter(target,budget,h,m);
       h.heading=undefined;
+      if(this.slippery.has(this.tileKey(h))&&this.hunterDt>0&&!['owl','fox','beetle'].includes(h.kind)){const point=this.route(h,target,h)[0];if(point){const d=distance(h,point),v=h.iceVelocity||(h.iceVelocity={x:0,y:0}),dt=this.hunterDt,q=Ice.steer(v,{x:(point.x-h.x)/(d||1),y:(point.y-h.y)/(d||1)},budget/dt,dt,{ice:true,brake:true,grip:1.25});for(const axis of ['x','y']){const next={x:h.x,y:h.y,[axis]:h[axis]+q[axis]};if(this.fits(next,.22,h)&&(!this.lights.length||fleeGlow||!LIGHT_SHY.has(h.kind)||!this.inLight(next,.35))){h[axis]=next[axis];h.distanceMoved+=Math.abs(q[axis]);}else v[axis]=0;}h.facing=Math.atan2(v.y,v.x);return;}}else h.iceVelocity=null;
       if(this.grid[Math.floor(h.y)]?.[Math.floor(h.x)]==='M')budget*=.72;
       if(h.kind==='sea-snake')budget*=this.water(h)?1.05:.65;
       // Cold-blooded hunters crawl in the frozen rooms; owls and moths do not mind.
@@ -1639,10 +1646,11 @@
     noteCatch(by,tail){const p=this.player;if(this.catches.length<12)this.catches.push({x:Math.floor(p.x),y:Math.floor(p.y),t:+this.elapsed.toFixed(1),by:by||'?',...(tail?{tail:true}:{})});}
     // What caught Sally when no creature did: the sky, the wind, a trap.
     static causeOf(message){return [['hawk',/hawk/i],['wind',/gust/i],['ants',/ant column/i],['log',/log/i],['thorns',/thorns/i],['vine',/vine/i],['scorpion',/scorpion/i],['toad',/toad/i]].find(([,re])=>re.test(message||''))?.[0]||'?';}
+    winterMessage(message){if(typeof message!=='string')return message;return message.replace(/pebbles/gi,'snowballs').replace(/pebble/gi,'snowball').replace(/snow fox/gi,'Gift Snatcher').replace(/beetle/gi,'Yeti').replace(/lowers its horn/gi,'raises its arms').replace(/spider/gi,'Krampus').replace(/toad/gi,'snowman').replace(/owl/gi,'wisp').replace(/sentinel/gi,'Nutcracker').replace(/rolling log/gi,'rolling snowball').replace(/thorns/gi,'icicles').replace(/silk/gi,'tangled ribbon');}
     finish(status,message){
       if(this.status!=='playing')return;
       if(status==='caught')this.noteCatch(this.lastCaptor?.at===this.elapsed&&this.lastCaptor.by||EscapeAdventure.causeOf(message));
-      this.status=status;this.notice(message,status);
+      if(this.level.seasonal==='winter')message=this.winterMessage(message);this.status=status;this.notice(message,status);
       this.tongue=null;
       const stars=status==='won'?1+Number(this.treasure>=Math.ceil(this.totalTreasure*.6))+Number(this.alarms===0&&this.hasTail):0;
       this.result=Object.freeze({status,levelId:this.level.id,hidden:Boolean(this.level.hidden),kids:Boolean(this.level.kids),seasonal:this.level.seasonal||null,oopses:this.oopses,draft:Boolean(this.level.draft),routeRevision:this.level.revision||1,levelName:this.level.name,challengeId:this.challenge?.id||null,stars,alarms:this.alarms,treasure:this.treasure,totalTreasure:this.totalTreasure,time:this.elapsed,closeCalls:this.closeCalls,tonguesUsed:this.tonguesUsed,keyByTongue:this.keyByTongue,reactionsFired:this.reactionsFired.size,tailsDropped:this.tailsDropped,hasTail:this.hasTail,camosUsed:this.camosUsed,thefts:this.thefts,lowestWarmth:Math.round(this.lowestWarmth),blasts:this.blasts,steamed:this.steamed,recoveries:this.recoveries,stolen:this.stolen,hawkDodges:this.hawk?.dodges||0,glowbugs:this.glowbugsCaught,catches:this.catches.slice(),tools:this.toolsUsed(),digs:this.digs,message});

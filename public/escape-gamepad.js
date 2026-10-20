@@ -11,7 +11,25 @@ const ESCAPE_PAD_ACTIONS={A:'look',B:'burrow',X:'pebble',Y:'tongue',LB:'glow',RB
 const ESCAPE_PAD_LABELS={Space:'A',E:'B',Q:'X',R:'Y',L:'LB',Z:'RB',X:'L3',F:'R3'};
 const ESCAPE_PAD_DEAD=.22;
 const escapePad={exitAt:0,holdY:null,index:null,active:false,x:0,y:0,sprint:false,crawl:false,prev:[],nav:{dir:null,at:0,repeat:false}};
+let escapeLastInput='auto';
+const escapeInputMode=()=>escapeLastInput==='auto'?(typeof mobile!=='undefined'&&mobile?'touch':'keyboard'):escapeLastInput;
 const escapePadActive=()=>escapePad.active;
+function escapeControlHint(key,pad){const mode=escapeInputMode();return mode==='touch'?'':' <span class="key-hint">['+(mode==='pad'?pad:key)+']</span>';}
+function escapeUseInput(mode){
+ if(!['keyboard','touch','pad'].includes(mode)||escapeLastInput===mode&&escapePad.active===(mode==='pad'))return;
+ escapeLastInput=mode;if(typeof escapeCharge!=='undefined')escapeCharge=null;escapePad.active=mode==='pad';for(const m of ['keyboard','touch','pad'])document.body?.classList?.toggle(m==='pad'?'pad-nav':m+'-nav',m===mode);
+ if(mode!=='pad'){escapePad.x=0;escapePad.y=0;escapePad.sprint=false;escapePad.crawl=false;escapePad.dig=false;if(typeof escapeCharge!=='undefined'&&escapeCharge?.source==='pad')escapeCharge=null;}
+ if(typeof clearTouchInput==='function')clearTouchInput();
+ if(typeof escapeWorldHudSignature!=='undefined')escapeWorldHudSignature='';
+ if(typeof updateToolbar==='function')updateToolbar();
+ if(typeof renderEscapeHUD==='function'&&typeof escapeGame!=='undefined'&&escapeGame)renderEscapeHUD(true);
+ if(typeof gameState!=='undefined'&&gameState==='seasonalHub'&&typeof renderSeasonHUD==='function')renderSeasonHUD(true);
+}
+// A connected controller must not permanently hide a phone's controls after a touch.
+if(typeof window!=='undefined'){
+ window.addEventListener('pointerdown',e=>escapeUseInput(e.pointerType==='touch'||e.pointerType==='pen'?'touch':'keyboard'),true);
+ window.addEventListener('keydown',e=>{if(e.isTrusted)escapeUseInput('keyboard');},true);
+}
 function escapePadLabel(key){return escapePad.active?ESCAPE_PAD_LABELS[key]||key:key;}
 
 function pollEscapePad(){
@@ -26,18 +44,20 @@ function pollEscapePad(){
   if(m<ESCAPE_PAD_DEAD){ax=0;ay=0;}else{const k=Math.min(1,(m-ESCAPE_PAD_DEAD)/(1-ESCAPE_PAD_DEAD))/m;ax*=k;ay*=k;}
   ax+=Number(down(ESCAPE_PAD.RIGHT))-Number(down(ESCAPE_PAD.LEFT));ay+=Number(down(ESCAPE_PAD.DOWN))-Number(down(ESCAPE_PAD.UP));
   const any=now.some(Boolean)||ax||ay;
-  if(any&&!escapePad.active){escapePad.active=true;document.body?.classList?.add('pad-nav');if(typeof unlockAudio==='function')unlockAudio();if(typeof renderEscapeHUD==='function'&&escapeGame)renderEscapeHUD(true);}
+  const changed=now.some((b,i)=>b&&!was[i])||Math.hypot(ax-(escapePad.lastAx||0),ay-(escapePad.lastAy||0))>.08;escapePad.lastAx=ax;escapePad.lastAy=ay;
+  if(any&&changed&&!escapePad.active){escapeUseInput('pad');if(typeof unlockAudio==='function')unlockAudio();if(typeof renderEscapeHUD==='function'&&escapeGame)renderEscapeHUD(true);}
   // A pad press does not unlock sound everywhere, so each new press tries again until it plays.
   if(now.some((b,i)=>b&&!was[i])&&typeof unlockAudio==='function'&&typeof escapeAudio!=='undefined'&&escapeAudio?.state!=='running')unlockAudio();
+  if(!escapePad.active){escapePad.x=0;escapePad.y=0;escapePad.sprint=false;escapePad.crawl=false;return;}
   const menu=escapePadMenu();
   if(menu){escapePad.x=0;escapePad.y=0;escapePad.sprint=false;escapePad.crawl=false;escapePad.dig=false;escapePad.peekX=0;escapePad.peekY=0;if(escapePad.active)escapePadNavigate(menu,ax,ay,pressed,was.length>0);return;}
   escapePad.nav.dir=null;
   escapePad.x=Math.max(-1,Math.min(1,ax));escapePad.y=Math.max(-1,Math.min(1,ay));escapePad.sprint=down(ESCAPE_PAD.RT);escapePad.crawl=down(ESCAPE_PAD.LT);escapePad.dig=down(ESCAPE_PAD.B);
   if(!was.length)return;
   if(pressed(ESCAPE_PAD.START)){if(gameState==='escape')togglePause();else document.getElementById('menu-button')?.click();return;}
-  if(gameState==='seasonalHub'){if(pressed(ESCAPE_PAD.A))seasonEnter();if(pressed(ESCAPE_PAD.B))escapeGoBack();if(pressed(ESCAPE_PAD.VIEW)||pressed(ESCAPE_PAD.X))seasonTogglePanel(true);if(pressed(ESCAPE_PAD.Y))seasonToggleOverview();if(pressed(ESCAPE_PAD.LB)||pressed(ESCAPE_PAD.RB))seasonTravelStep(pressed(ESCAPE_PAD.RB)?1:-1);return;}
+  if(gameState==='seasonalHub'){if(pressed(ESCAPE_PAD.A))seasonEnter();if(pressed(ESCAPE_PAD.B))escapeGoBack();if(pressed(ESCAPE_PAD.X))seasonTogglePanel(true);if(pressed(ESCAPE_PAD.VIEW)||pressed(ESCAPE_PAD.Y))seasonToggleOverview();if(pressed(ESCAPE_PAD.LB)||pressed(ESCAPE_PAD.RB))seasonTravelStep(pressed(ESCAPE_PAD.RB)?1:-1);return;}
   if(gameState==='escapeSelect'){
-    if(pressed(ESCAPE_PAD.A))escapeKeyPressed('enter',13);
+    if(pressed(ESCAPE_PAD.A))enterEscapeWorld();
     if(pressed(ESCAPE_PAD.B)&&typeof escapeGoBack==='function'){escapeGoBack();return;}
     // Y: a tap grabs a golden fly; held, it opens the panel (travel, Journal, Main menu) for the stick.
     if(pressed(ESCAPE_PAD.Y))escapePad.holdY=millis();
@@ -62,7 +82,7 @@ function pollEscapePad(){
     ({look:useEscapeLook,burrow:useEscapeBurrow,tongue:useEscapeTongue,camo:useEscapeCamo,seed:useEscapeSeed})[action]?.();
   }
 }
-function escapePadForget(){escapePad.index=null;escapePad.active=false;escapePad.x=0;escapePad.y=0;escapePad.sprint=false;escapePad.crawl=false;escapePad.prev=[];document.body?.classList?.remove('pad-nav');if(escapeCharge?.source==='pad')releaseEscapeCharge();}
+function escapePadForget(){escapePad.index=null;escapePad.active=false;if(escapeLastInput==='pad')escapeLastInput='auto';escapePad.x=0;escapePad.y=0;escapePad.sprint=false;escapePad.crawl=false;escapePad.prev=[];escapePad.lastAx=0;escapePad.lastAy=0;document.body?.classList?.remove('pad-nav');if(escapeCharge?.source==='pad')releaseEscapeCharge();}
 
 // The menu or card on top, if any: its buttons are what the pad moves between.
 function escapePadMenu(){
@@ -76,11 +96,13 @@ function escapePadMenu(){
   if(gameState==='start')return $('start-menu-container');
   if(gameState==='kids')return $('escape-builder');
   if(gameState==='seasonalHub'&&seasonPanelOpen)return $('season-panel');
+  if(gameState==='seasonalHub'&&seasonOverview)return $('season-hub');
   if(gameState==='escapeSelect'&&!escapeLibraryOpen&&typeof escapeWorldPanelOpen!=='undefined'&&escapeWorldPanelOpen)return $('escape-world-ui');
   return null;
 }
 function escapePadFocusables(root){
-  return [...root.querySelectorAll('button, [href], input, select, textarea, [tabindex]')].filter(el=>!el.disabled&&el.tabIndex>=0&&el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden');
+  const items=[...root.querySelectorAll('button, [href], input, select, textarea, [tabindex]')].filter(el=>!el.disabled&&el.tabIndex>=0&&el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden');
+  if(root.id==='season-hub'&&seasonOverview)return items.filter(el=>el.id.startsWith('season-gate-')||el.id==='season-overview').sort((a,b)=>(a.id==='season-gate-'+seasonPack?-1:a.id==='season-overview'?1:0)-(b.id==='season-gate-'+seasonPack?-1:b.id==='season-overview'?1:0));return items;
 }
 // The stick or d-pad steps to the nearest button that way (a slider takes left and right itself);
 // held, it repeats. A presses the button in focus; B goes back, as Escape does.
@@ -88,6 +110,7 @@ function escapePadNavigate(menu,ax,ay,pressed,ready){
   const items=escapePadFocusables(menu),active=document.activeElement;
   if(!items.includes(active)&&items.length){items[0].focus();escapePad.nav.dir=null;}
   if(!ready)return;
+  if(menu.id==='season-hub'&&seasonOverview&&pressed(ESCAPE_PAD.VIEW)){seasonToggleOverview();return;}
   const dir=Math.abs(ax)>.55||Math.abs(ay)>.55?(Math.abs(ax)>Math.abs(ay)?(ax>0?'right':'left'):(ay>0?'down':'up')):null,t=millis(),nav=escapePad.nav;
   if(dir&&(dir!==nav.dir||t-nav.at>(nav.repeat?140:380))){nav.repeat=dir===nav.dir;nav.dir=dir;nav.at=t;escapePadStep(items,document.activeElement,dir);}
   else if(!dir)nav.dir=null;

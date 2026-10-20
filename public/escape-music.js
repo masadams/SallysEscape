@@ -8,6 +8,9 @@
   const hz=note=>440*2**((note-69)/12);
   // Every mood shares one structure: a four-bar progression, bass roots and fifths, and a melody scale.
   const MOODS={
+    winterlight:{chords:[['C3','E3','G3','B3'],['F3','A3','C4'],['D3','F3','A3'],['G2','B2','D3']],bass:['C2','F2','D2','G1'],fifth:['G2','C3','A2','D2'],scale:['C5','D5','E5','G5','A5','B5'],seed:149},
+    snowfall:{chords:[['D3','F#3','A3'],['B2','D3','F#3'],['G2','B2','D3'],['A2','C#3','E3']],bass:['D2','B1','G1','A1'],fifth:['A2','F#2','D2','E2'],scale:['D5','E5','F#5','A5','B5','D6'],seed:151},
+    winterbells:{chords:[['D3','F3','A3'],['Bb2','D3','F3'],['G2','Bb2','D3'],['A2','C#3','E3']],bass:['D2','Bb1','G1','A1'],fifth:['A2','F2','D2','E2'],scale:['D4','E4','F4','A4','Bb4','C#5'],seed:157},
     harvest:{chords:[['D3','F3','A3','E4'],['G3','B3','D4'],['C3','E3','G3'],['A2','C3','E3','G3']],bass:['D2','G2','C2','A1'],fifth:['A2','D3','G2','E2'],scale:['D4','E4','F4','A4','B4','D5'],seed:127},
     lanternfair:{chords:[['A3','C4','E4','B4'],['D3','F#3','A3'],['F3','A3','C4'],['E3','G#3','B3']],bass:['A2','D2','F2','E2'],fifth:['E3','A2','C3','B2'],scale:['A4','B4','C5','D5','E5','G#5'],seed:131},
     festival:{chords:[['D3','F#3','A3'],['G3','B3','D4','E4'],['B2','D3','F#3'],['A2','C#3','E3']],bass:['D2','G2','B1','A1'],fifth:['A2','D3','F#2','E2'],scale:['D4','E4','F#4','A4','B4','D5'],seed:137},
@@ -50,6 +53,11 @@
   };
   // Each region has its own style: a mood, a lead instrument, a tempo and a groove.
   const STYLES={
+    'winter-village':{mood:'winterlight',lead:'bell',bpm:88,groove:2},
+    'winter-ice':{mood:'snowfall',lead:'bell',bpm:78,groove:1},
+    'winter-workshop':{mood:'winterlight',lead:'pluck',bpm:102,groove:0},
+    'winter-night':{mood:'winterbells',lead:'flute',bpm:76,groove:3},
+    'winter-finale':{mood:'snowfall',lead:'bell',bpm:92,groove:2},
     autumn:{mood:'harvest',lead:'pluck',bpm:86,groove:2},
     'autumn-dusk':{mood:'lanternfair',lead:'pluck',bpm:82,groove:1},
     'autumn-night':{mood:'lanternfair',lead:'bell',bpm:76,groove:3},

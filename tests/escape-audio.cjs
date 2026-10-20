@@ -10,7 +10,7 @@ test('every sound event the engine emits has its own synthesised recipe',()=>{
   for(const e of events)assert.ok(EscapeAudio.recipes.includes(e),'missing sound for '+e);
 });
 test('recipes build real voices, and silence or unknown names play nothing',()=>{
-  const ctx=fakeContext();for(const r of EscapeAudio.recipes)assert.equal(EscapeAudio.play(ctx,r,.25,{}),true,r);assert.ok(ctx.calls.includes('osc')&&ctx.calls.includes('noise'));
+  const ctx=fakeContext();for(const r of EscapeAudio.recipes){ctx.currentTime+=1;assert.equal(EscapeAudio.play(ctx,r,.25,{}),true,r);}assert.ok(ctx.calls.includes('osc')&&ctx.calls.includes('noise'));
   assert.equal(EscapeAudio.play(ctx,'nope',.25),false);assert.equal(EscapeAudio.play(ctx,'key',0),false);assert.equal(EscapeAudio.play(null,'key',.25),false);
 });
 test('each sound renders once offline, then replays from its buffer; rapid repeats and voice floods are trimmed',async()=>{
@@ -29,3 +29,4 @@ test('each sound renders once offline, then replays from its buffer; rapid repea
     for(let i=0;i<20;i++){ctx.currentTime=2+i*.05;EscapeAudio.play(ctx,'key',.3);}ctx.currentTime=3.01;assert.equal(EscapeAudio.play(ctx,'step',.3,{}),false,'footsteps give way when voices are full');
   }finally{delete globalThis.OfflineAudioContext;delete globalThis.AudioBuffer;EscapeAudio.reset();}
 });
+

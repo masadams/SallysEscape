@@ -6,7 +6,7 @@
   // The ground under Sally decides her footstep. Gravel is loud (hunters hear it), moss is silent.
   function surface(g,x=g.player.x,y=g.player.y){
     const tx=Math.floor(x),ty=Math.floor(y),tile=g.grid?.[ty]?.[tx],k=tx+','+ty;
-    if(tile==='N')return 'gravel';if(tile==='L')return 'leaves';if(tile==='m'||g.moss?.has?.(k))return 'moss';if(tile==='M')return 'mud';const marks=g.feelMarks||(g.feelMarks={vines:new Set((g.level?.vines||[]).map(String)),flats:new Set((g.level?.tideFlats||[]).map(String))});
+    if(g.slippery?.has?.(k))return 'ice';if(g.level?.seasonal==='winter'&&tile!=='L')return 'snow';if(tile==='N')return 'gravel';if(tile==='L')return 'leaves';if(tile==='m'||g.moss?.has?.(k))return 'moss';if(tile==='M')return 'mud';const marks=g.feelMarks||(g.feelMarks={vines:new Set((g.level?.vines||[]).map(String)),flats:new Set((g.level?.tideFlats||[]).map(String))});
     if(tile==='T'||marks.vines.has(k))return 'tangle';if(tile==='t'||marks.flats.has(k))return 'wet';
     if(g.cold?.has?.(k))return 'snow';if(g.level?.biome==='desert')return 'sand';return 'floor';
   }
@@ -79,3 +79,4 @@
   root.EscapeFeel=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
+

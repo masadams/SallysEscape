@@ -734,7 +734,7 @@ body.pad-nav #touch-controls{display:none!important}
 .escape-note-btn { display:block; margin:10px auto 0; }
 /* Controller glyphs: shown only while a pad is in use, in place of keyboard hints. */
 .pad-glyph { display:none; font-style:normal; width:1.45em; height:1.45em; margin-right:.45em; border-radius:50%; font:700 .78em/1.45em system-ui,sans-serif; text-align:center; color:#fff; vertical-align:.08em; box-shadow:inset 0 -2px 0 #0003; }
-body.pad-nav .pad-glyph { display:inline-block; } body.pad-nav .key-hint { display:none; }
+body.pad-nav .pad-glyph { display:inline-block; }
 .pad-a { background:#3f9a4a; } .pad-b { background:#c8463e; } .pad-x { background:#3a6fc4; } .pad-y { background:#d6a62a; color:#2a2008; }
 .world-pad-bar { display:none; } body.pad-nav .world-pad-bar { display:flex; }
 .world-pad-bar { position:absolute; left:50%; top:16px; transform:translateX(-50%); gap:16px; align-items:center; padding:7px 16px; border-radius:999px; background:#0b1f1acc; border:1px solid #ffffff1c; color:#e8efd8; font-size:.86rem; white-space:nowrap; pointer-events:none; z-index:5; }
@@ -744,3 +744,9 @@ body.pad-nav .pad-glyph { display:inline-block; } body.pad-nav .key-hint { displ
 .kids-section-title { margin:26px 0 16px; color:#ffe58a; font-size:1.35rem; }
 .kids-guide-note { margin:10px 0 16px; opacity:.9; }
 .builder-inspector textarea { display:block; width:100%; box-sizing:border-box; margin-top:4px; }
+
+/* All worlds use the active input device for shortcut hints. */
+.touch-nav .key-hint{display:none!important}.keyboard-nav .key-hint,.pad-nav .key-hint{display:inline}
+/* The empty space between touch controls must never intercept world-card taps. */
+#escape-stage-ui #touch-controls{pointer-events:none}
+#escape-stage-ui #touch-controls button,#escape-stage-ui #movement-stick{pointer-events:auto}

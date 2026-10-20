@@ -59,3 +59,5 @@ test('the map puts Sally back where she was: an escape, a bonus grove, or the fi
 });
 test('sealed spots wait off the trail for later: unreachable clearings with markers',()=>{const w=new EscapeWorld(()=>true);assert.ok(w.height>=131);
   for(const s of w.secrets){assert.equal(w.grid[s.y][s.x],'.',s.id);const inside=w.chapters.some(c=>Math.abs(s.x-c.x)<=8&&Math.abs(s.y-c.y)<=7);if(!inside)assert.equal(w.route({x:s.x+.5,y:s.y+.5}),null,s.id+' is sealed');}});
+
+test('a stale or seasonal campaign focus falls back safely while the world is still constructing',()=>{for(const id of ['winter-welcome','autumn-orchard','removed-level']){const w=new EscapeWorld(()=>true,id);assert.equal(w.nearby().id,'quiet-vault');assert.ok(w.floor(w.player.x,w.player.y));}});
