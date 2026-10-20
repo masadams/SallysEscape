@@ -47,7 +47,7 @@ function paintSeasonWorldDetails(d,w,c,x1,x2,y1,y2){
   for(let k=0;k<4;k++){d.push();d.translate((x+.2+k*.16)*c,(y+.55+Math.sin(k*3+x)*.12)*c);d.rotate(k*1.3);d.fill(...[[169,76,43],[222,153,61],[190,102,41]][k%3]);d.ellipse(0,0,c*.13,c*.06);d.pop();}
   if((x+y)%2===0){d.fill(227,203,153);d.rect((x+.7)*c,(y+.44)*c,c*.045,c*.15);d.fill(161,65,43);d.ellipse((x+.72)*c,(y+.43)*c,c*.2,c*.1);}
  }
- paintWinterWorldDetails(d,w,c,x1,x2,y1,y2);
+ paintWinterWorldDetails(d,w,c,x1,x2,y1,y2);if(typeof paintSpringWorldDetails==='function')paintSpringWorldDetails(d,w,c,x1,x2,y1,y2);
  // Distinct silhouettes peek out from the future regions' veils.
  for(const [x,y,theme]of [[44,11,'frost'],[65,28,'frost'],[65,46,'garden'],[45,64,'garden'],[9,46,'coast'],[30,64,'coast']])if(inside(x,y)){
   d.noStroke();if(theme==='frost'){d.fill(72,113,112);d.triangle(x*c,(y-1.4)*c,(x-.8)*c,(y+.6)*c,(x+.8)*c,(y+.6)*c);d.fill(241,250,252);d.triangle(x*c,(y-1.4)*c,(x-.55)*c,(y-.2)*c,(x+.55)*c,(y-.2)*c);}
@@ -160,8 +160,9 @@ function drawSeasonWorld(){
   if(!w.regionOpen(i)&&near(a.x,a.y,20))drawSeasonWorldVeil(a,cell,w.elapsed);
   const g=a.gate;if(!w.regionOpen(i)&&near(g.x,g.y)){stroke(171,164,143);strokeWeight(cell*.12);for(const d of[-1.1,-.55,0,.55,1.1])g.axis==='y'?line((g.x+d)*cell,(g.y-.25)*cell,(g.x+d)*cell,(g.y+.25)*cell):line((g.x-.25)*cell,(g.y+d)*cell,(g.x+.25)*cell,(g.y+d)*cell);}
  }
- if(!seasonOverview)for(const npc of w.npcs)if(near(npc.x,npc.y))drawEscapeWorldNpc(npc,cell,w.elapsed);
- drawWinterWorld(w,cell,near,save);
+ // A local appears once their area is open, never through a closed area's veil.
+ if(!seasonOverview)for(const npc of w.npcs)if(w.regionOpen(npc.chapter)&&near(npc.x,npc.y))drawEscapeWorldNpc(npc,cell,w.elapsed);
+ drawWinterWorld(w,cell,near,save);if(typeof drawSpringWorld==='function')drawSpringWorld(w,cell,near,save);
  drawSeasonWorldAtmosphere(w,cell,near,save);drawEscapeLizard(w.motion.lizard,cell,w.motion.clock);pop();
  positionSeasonEntrances();
 }

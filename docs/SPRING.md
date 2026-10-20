@@ -34,11 +34,29 @@ win after opening the level in the builder and building it again.
 a glowing flower lantern, and the turning waterwheel. Petals drift with Full lighting (fewer on TV boxes) and stop for reduced
 motion. Creatures keep their campaign drawings and tells for now; spring costumes come later.
 
+## Costumes
+
+`drawSpringCreature` in `public/escape-spring-art.js`: the **Ribbon Grass Snake** is the campaign
+serpent in leaf green with blossom bands (the same body, eyes and tongue, through a colour scheme for
+`drawEscapeSnake`); the **Stag Gardener** (beetle) gets twig antlers and a leaf apron, the **Mud Mole** a
+root tuft and soil specks, the **Lily Toad** a lily-leaf cap, the **Garden Weaver** dew beads, the
+**Blossom Mantis** petal forelegs. The **Ladybird Lookout** and **Lantern Moth** keep their campaign
+drawings. Every tell, red-eye warning and collision shape is the campaign's own. Names are
+`EscapeSeasons.springCreatures`.
+
+## World garden
+
+On the seasonal world map (`paintSpringWorldDetails`, `drawSpringWorld`): little blossom trees and
+flower beds baked into the terrain; a central blossom tree that flowers one cluster per flower token
+home; eight flower lanterns round it, one lit per token; a waterwheel by the pond that turns once all
+eight are home; drifting petals (fewer on TV, none with reduced motion). **Clover**, a garden snail,
+stands by the entrance. Locals are drawn only once their area is open.
+
 ## Builder
 
 The Look setting has the five Blossom Hollow looks, and the Extras prop tool has the four spring props.
 
 ## Still to do
 
-Creature costumes, the world-map garden (Clover, the blossom tree, restoration), spring music
+Spring music
 and ambience, the Blossom Sally skin and keepsakes, the result and collection text, then opening.

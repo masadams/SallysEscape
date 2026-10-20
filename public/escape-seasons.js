@@ -24,7 +24,8 @@
  const winterCreatures=Object.freeze({snake:'Candy Cane Serpent',beetle:'Yeti',fox:'Gift Snatcher',spider:'Krampus',toad:'Grouchy Snowman',mimic:'Suspicious Present',owl:'Winter Wisp',sentinel:'Nutcracker Watchman'});
  const winterberry=Object.freeze({id:'winterberry',pack:'winter',name:'Winterberry',body:[149,48,54],light:[232,189,117],belly:[247,231,194],spots:[43,91,71],crest:[37,94,73],tail:[113,36,48],dark:[83,32,46],spot:[43,91,71]});
  const skins=[{...copper,pack:'autumn-hollow'},winterberry];
- const creaturesFor=id=>id==='winter'?winterCreatures:creatures;
+ const springCreatures=Object.freeze({snake:'Ribbon Grass Snake',beetle:'Stag Gardener',mole:'Mud Mole',toad:'Lily Toad',mantis:'Blossom Mantis',ladybird:'Ladybird Lookout',moth:'Lantern Moth',spider:'Garden Weaver'});
+ const creaturesFor=id=>id==='winter'?winterCreatures:id==='spring'?springCreatures:creatures;
  function fresh(){return {version:1,records:{},legacy:{},outfit:null,guide:false,display:true,skin:false};}
  class Progress{
   constructor(storage,levels){this.storage=storage;this.levels=levels;this.persistent=true;this.read();}
@@ -51,6 +52,6 @@
   wear(id){if(id!==null&&!this.ownedSkins().some(k=>k.id===id))return false;this.data.outfit=id;this.data.skin=id==='copper-lantern';this.save();return true;}
   set(key,value){if(!['guide','display','skin'].includes(key)||typeof value!=='boolean'||key==='skin'&&value&&!this.complete())return false;if(key==='skin')return this.wear(value?'copper-lantern':null);this.data[key]=value;this.save();return true;}
  }
- const api={KEY,packs,creatures,winterCreatures,creaturesFor,copper,winterberry,skins,release,Progress};root.EscapeSeasons=api;
+ const api={KEY,packs,creatures,winterCreatures,springCreatures,creaturesFor,copper,winterberry,skins,release,Progress};root.EscapeSeasons=api;
  if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

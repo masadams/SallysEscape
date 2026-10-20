@@ -1447,24 +1447,25 @@ function escapeBodyShape(model,cell){
 function escapeBodyShadow(model,cell){
   push();translate(cell*.035,cell*.05);noStroke();fill(2,9,13,175);escapeBodyShape(model,cell);pop();
 }
-function drawEscapeSnake(model,cell,state,sea=false,cobra=false){
+function drawEscapeSnake(model,cell,state,sea=false,cobra=false,skin=null){
   const hot=state==='alert'||state==='chase';
   escapeBodyShadow(model,cell);
   // The king cobra is near-black with pale bands, and flares its hood when it rears or hunts.
   if(cobra){const head=model.joints[0],up=['rear','strike','chase','alert'].includes(state);if(up){push();translate(head.x*cell,head.y*cell);rotate(model.headAngle);noStroke();fill(40,36,28);ellipse(-cell*.12,0,cell*.42,cell*(state==='rear'?.86:.66));fill(214,190,96,170);ellipse(-cell*.14,0,cell*.16,cell*(state==='rear'?.5:.36));pop();}
     stroke(18,16,12);strokeWeight(cell*.035);fill(hot||up?58:44,hot||up?52:40,hot||up?36:30);escapeBodyShape(model,cell);noStroke();
     for(let i=2;i<model.joints.length-1;i+=2){const p=model.joints[i];push();translate(p.x*cell,p.y*cell);rotate(model.angles[i]);fill(222,204,140,150);ellipse(0,0,cell*.05,model.widths[i]*cell*2);pop();}
-  }else{stroke(66,46,36);strokeWeight(cell*.035);fill(sea?65:hot?224:188,sea?171:hot?126:152,sea?187:hot?94:102);escapeBodyShape(model,cell);}
+  }else if(skin){stroke(...skin.edge);strokeWeight(cell*.035);fill(...(hot?skin.hot:skin.body));escapeBodyShape(model,cell);}
+  else{stroke(66,46,36);strokeWeight(cell*.035);fill(sea?65:hot?224:188,sea?171:hot?126:152,sea?187:hot?94:102);escapeBodyShape(model,cell);}
   // Small dorsal saddles and a light edge suggest scales without losing the
   // silhouette at phone size. The body narrows all the way to the tail tip.
   noStroke();
   for(let i=2;i<model.joints.length-2&&!cobra;i+=2){
     const p=model.joints[i];push();translate(p.x*cell,p.y*cell);rotate(model.angles[i]);
-    fill(hot?157:122,hot?78:98,hot?57:66,135);ellipse(0,0,cell*.095,model.widths[i]*cell*1.4);
+    fill(...(skin?(i%4===0?skin.band:hot?skin.hotSaddle:skin.saddle):[hot?157:122,hot?78:98,hot?57:66]),135);ellipse(0,0,cell*.095,model.widths[i]*cell*1.4);
     fill(236,207,157,120);ellipse(-cell*.025,-model.widths[i]*cell*.55,cell*.06,cell*.04);pop();
   }
   const head=model.joints[0];push();translate(head.x*cell,head.y*cell);rotate(model.headAngle);
-  noStroke();if(cobra)fill(62,56,40);else fill(sea?104:hot?236:210,sea?213:hot?143:174,sea?215:hot?105:122);ellipse(cell*.045,0,cell*.49,cell*.36);
+  noStroke();if(cobra)fill(62,56,40);else if(skin)fill(...(hot?skin.hotHead:skin.head));else fill(sea?104:hot?236:210,sea?213:hot?143:174,sea?215:hot?105:122);ellipse(cell*.045,0,cell*.49,cell*.36);
   for(const side of [-1,1]){
     fill(233,205,133);ellipse(cell*.08,side*cell*.125,cell*.11,cell*.082);
     fill(31,27,20);ellipse(cell*.09,side*cell*.125,cell*.027,cell*.07);
