@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#163b32">
+<title>The Lantern Mill · Sally’s Escape</title><link rel="icon" href="icon.svg"><link rel="stylesheet" href="isometric.css">
+<script defer src="creature-rig.js"></script><script defer src="escape-rebuilt.js"></script><script defer src="escape-hidden.js"></script><script defer src="escape-kids.js"></script><script defer src="escape-autumn.js"></script><script defer src="escape-winter.js"></script><script defer src="escape-spring.js"></script><script defer src="escape-summer.js"></script><script defer src="escape-levels.js"></script><script defer src="escape-ice.js"></script><script defer src="escape-engine.js"></script><script defer src="isometric-model.js"></script><script defer src="isometric.js"></script>
+</head><body>
+<canvas id="iso-canvas" tabindex="0" aria-label="The Lantern Mill isometric playfield. Use arrows or WASD to move."></canvas>
+<header><div><p class="eyebrow">SALLY’S ESCAPE · ISOMETRIC STUDY</p><h1>The Lantern Mill</h1><p id="objective">Lower the north bridge · Find the key · Return home</p></div>
+<nav aria-label="Example controls"><button id="view">View: Whole</button><button id="walls" aria-pressed="true">Walls: Solid</button><button id="pause" aria-pressed="false">Pause</button><button id="retry">Restart</button><a href="/">Main game</a></nav></header>
+<aside id="legend"><span class="dot amber"></span> Amber switch <span class="dot gold"></span> Key <span class="dot green"></span> Exit</aside>
+<footer><div id="stats">Treasure 0 / 10</div><p id="message" role="status">A little mill, a river, and another way to see Sally’s world.</p><p id="help">WASD / arrows move on screen · Click a path to walk · Shift sprint · C crawl · Q pebble · L glow · R tongue · Esc pause</p></footer>
+<div id="touch" hidden><div id="stick" role="group" aria-label="Movement joystick"><span id="knob"></span></div><div class="actions"><button data-hold="sprint">Sprint</button><button data-hold="crawl">Crawl</button><button data-tool="pebble">Pebble</button><button data-tool="glow">Glow</button><button data-tool="tongue">Tongue</button></div></div>
+<section id="result" hidden role="dialog" aria-modal="true" aria-labelledby="result-title"><div><p class="eyebrow">THE LANTERN MILL</p><h2 id="result-title"></h2><p id="result-copy"></p><button id="again">Play again</button><a href="/">Main game</a></div></section>
+</body></html>

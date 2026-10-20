@@ -26,6 +26,12 @@ jobs:
           package-manager-cache: false
       - run: npm ci
       - run: npm run prepare:static
+      - name: Check and photograph isometric example
+        run: |
+          node --test tests/isometric.cjs
+          node scripts/smoke-isometric-browser.cjs
+        env:
+          SEASON_SCREENSHOTS: '1'
       - name: Render seasonal game in a real browser
         run: node scripts/smoke-seasons-browser.cjs
         env:
