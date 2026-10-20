@@ -9,7 +9,7 @@ function drawSeasonGhost(h,c,g){if((g.level.seasonal||g.level.costume)==='spring
  fill(45,68,88);ellipse(-.12,-.16,.075,warn?.16:.1);ellipse(.12,-.16,.075,warn?.16:.1);ellipse(0,.02,.08,warn?.13:.045);
  stroke(132,191,199);strokeWeight(.035);noFill();line(.26,0,.48,.08);arc(.49,.14,.19,.25,Math.PI,Math.PI*2);fill(warn?255:174,warn?200:230,236);rect(.39,.14,.21,.27,.04);line(.39,.15,.6,.15);pop();
 }
-function drawSeasonCreature(h,model,c,g){if((g.level.seasonal||g.level.costume)==='spring')return false;if((g.level.seasonal||g.level.costume)==='winter')return drawWinterCreature(h,model,c,g);
+function drawSeasonCreature(h,model,c,g){if((g.level.seasonal||g.level.costume)==='spring')return drawSpringCreature(h,model,c,g);if((g.level.seasonal||g.level.costume)==='winter')return drawWinterCreature(h,model,c,g);
  if(!EscapeSeasons.creatures[h.kind]||h.kind==='owl')return false;
  if(h.kind==='snake'){drawSeasonBones(h,model,c,g.elapsed);return true;}
  push();translate(h.x*c,h.y*c);rotate(h.facing+Math.PI/2);scale(c);const t=g.elapsed,hot=['windup','reveal','crouch','charge','lunge','pounce'].includes(h.state),stride=Math.sin(h.distanceMoved*10);
