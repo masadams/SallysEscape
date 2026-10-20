@@ -55,11 +55,12 @@ function drawEscapeSway(g,cell,view){
   for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){
     if(g.grid[y][x]!=='L'||view.follow&&!g.visibleTile(x,y))continue;const key=x+','+y,flat=tr.has(key)?Math.max(0,1-(t-tr.get(key))/4):0;
     if(flat===0)tr.delete(key);
-    for(let i=0;i<4;i++){
-      const bx=(x+.18+.64*ESCAPE_ATMO_HASH(x,y,i))*cell,by=(y+.6+.32*ESCAPE_ATMO_HASH(x,y,i+20))*cell,len=cell*(.3+.18*ESCAPE_ATMO_HASH(x,y,i+40));
+    // A full clump: blades in two greens, the taller ones at the back.
+    for(let i=0;i<8;i++){
+      const bx=(x+.14+.72*ESCAPE_ATMO_HASH(x,y,i))*cell,by=(y+.5+.4*ESCAPE_ATMO_HASH(x,y,i+20))*cell,len=cell*(.34+.24*ESCAPE_ATMO_HASH(x,y,i+40));
       const breeze=Math.sin(t*1.3+x*.6+y*.45+i*.9)*.12,dx=bx-p.x*cell,dist=Math.hypot(dx,by-p.y*cell)/cell,push=dist<1.1?(1.1-dist)/1.1*.7:0;
       const lean=breeze+push*Math.sign(dx||1)+flat*(ESCAPE_ATMO_HASH(x,y,i+60)<.5?-1.2:1.2),reach=len*(1-flat*.45);
-      stroke(70,140,90,110);strokeWeight(Math.max(1,cell*.04));line(bx,by,bx+Math.sin(lean)*reach,by-Math.cos(lean)*reach);}
+      stroke(...(i%2?[96,168,96]:[64,132,84]),200);strokeWeight(Math.max(1,cell*.045));line(bx,by,bx+Math.sin(lean)*reach,by-Math.cos(lean)*reach);}
   }
 }
 // Motes drifting in the air, tinted to the area, very faint.

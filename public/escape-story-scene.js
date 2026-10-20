@@ -3,7 +3,7 @@
 // and show on the world map, each once; the Journal's Story page lists every card found, lets
 // them be read again, and draws the Great Map joining up as the garden recovers. While a card is open the world map holds still and the
 // reading music plays (escapescene.js tickEscapeMusic).
-let escapeStoryQueue=[],escapeStoryOpen=null;
+let escapeStoryQueue=[],escapeStoryOpen=null,escapeStoryOpenedAt=0;
 // Queue a card the first time it comes up; a part's title goes in front of its first card.
 function queueEscapeStory(id){
   if(typeof EscapeStory==='undefined')return false;const card=EscapeStory.byId(id);
@@ -121,7 +121,7 @@ function escapeStoryPageHtml(text){
 function showEscapeStory(entry,fresh,onDone){
   const page=escapeStoryPage();if(!page)return;const kindLabel={'season-sign':(entry.card?.theme?.startsWith('winter')?'Winterlight Hollow':'Autumn Hollow')+' - trail note','kids-sign':'Little Explorers — trail note',journal:'From Old Moss’s journal',map:'A field sheet of the Great Map',moment:'Along the way',note:'A note, left behind',found:entry.card?.what||'A page, found'};
   const reduced=Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
-  escapeStoryOpen=entry;
+  escapeStoryOpen=entry;escapeStoryOpenedAt=Date.now();
   const finish=()=>{if(fresh)escapeProgress.markStory(entry.id);page.style.display='none';escapeStoryOpen=null;
     if(onDone){onDone();return;}
     if(fresh&&escapeStoryQueue.length)showEscapeStory(escapeStoryQueue.shift(),true);else if(!fresh)openEscapeStoryBook();else renderEscapeWorldTotals?.();};
@@ -140,53 +140,68 @@ function showEscapeStory(entry,fresh,onDone){
   const show=(i,dir=1)=>{settle();at=i;pages.innerHTML='<div class="story-page'+(dir<0?' story-from-left':'')+'">'+escapeStoryPageHtml(c.body[i])+'</div>';
     const page1=i===0&&!/^\*/.test(c.body[0]);pages.firstChild.classList.toggle('story-first',page1);
     count.textContent=c.body.length>1?(i+1)+' / '+c.body.length:'';back.hidden=i===0;next.textContent=i<last?'Next ›':doneLabel;
-    if(pages.querySelector('.story-letter-slip'))escapeSound('flutter');
+    escapeStoryFit(pages);if(pages.querySelector('.story-letter-slip'))escapeSound('flutter');
     if(!reduced){const parts=[...pages.querySelectorAll('.story-page > p, .story-letter-slip p')];parts.forEach((el,k)=>{if(!k)return;el.classList.add('story-wait');timers.push(setTimeout(()=>el.classList.remove('story-wait'),k*650));});}};
   const waiting=()=>pages.querySelector('.story-wait');
   next.onclick=()=>{if(waiting()){settle();return;}if(at<last){show(at+1);escapeSound('ping');return;}settle();finish();};
   back.onclick=()=>{if(at>0){show(at-1,-1);escapeSound('ping');next.focus?.();}};
   show(0);next.focus?.();
 }
+// A page's words shrink a little, down to a floor, until they fit without scrolling.
+function escapeStoryFit(pages){
+  pages.style.fontSize='';if(!pages.clientHeight)return;let size=parseFloat(getComputedStyle(pages).fontSize)||17;
+  for(let i=0;i<10&&pages.scrollHeight>pages.clientHeight+1&&size>13.5;i++){size-=.75;pages.style.fontSize=size+'px';}
+}
 // Enter or Space turn the page (as A does), the left arrow turns back; Escape (or B) skips to the end
-// of the card and closes it.
-if(typeof document!=='undefined')document.addEventListener('keydown',e=>{if(!escapeStoryOpen||!['Enter',' ','Escape','ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();e.stopPropagation();const next=document.getElementById('story-next');if(!next)return;
+// of the card and closes it. A key still held from walking (a repeat, or one in the first moment a card
+// is open) does nothing, so running into a card on the world map never flicks it shut.
+if(typeof document!=='undefined')document.addEventListener('keydown',e=>{if(!escapeStoryOpen||!['Enter',' ','Escape','ArrowLeft'].includes(e.key))return;e.preventDefault();e.stopPropagation();const next=document.getElementById('story-next');if(!next)return;
+  if(e.repeat||Date.now()-escapeStoryOpenedAt<450)return;
   if(e.key==='ArrowLeft'){document.getElementById('story-back')?.click();return;}
   if(e.key==='Escape'){for(let i=0;i<40&&escapeStoryOpen&&document.getElementById('story-next')===next;i++)next.click();return;}
   next.click();},true);
-// Notes hidden in levels (escape-notes.js): one may lie on a floor tile of an ordinary escape. Walking
-// onto it picks it up and saves it at once (being caught afterwards keeps it); a small banner says so
-// and the page waits to be read, from the results or the Journal, never during the run.
-let escapeNoteRun={game:null,note:null,fresh:false};
-function escapeNoteFor(g){
-  if(escapeNoteRun.game!==g){let note=typeof EscapeNotes==='undefined'?null:EscapeNotes.forLevel(g.level);
+// Notes hidden in levels: the story page of an ordinary escape (escape-notes.js), or the pages a
+// level carries itself (a builder or community level, or an official escape being edited). Walking
+// onto one picks it up; a story page is saved at once (being caught afterwards keeps it), a level's
+// own page is kept for this run. A small banner says so and the page waits to be read, from the
+// results or the Journal, never during the run.
+let escapeNoteRun={game:null,notes:[],found:new Set()};
+function escapeNotesFor(g){
+  if(escapeNoteRun.game!==g){
+    const own=Array.isArray(g.level.pages)&&g.level.pages.length?g.level.pages.map((pg,i)=>({id:pg.id||'page:'+i,own:!pg.id,at:pg.at,title:pg.title||'A note',body:pg.body||'',author:pg.author||'',area:typeof EscapeNotes!=='undefined'&&pg.id?EscapeNotes.byId(pg.id)?.area:undefined})):null;
+    const story=typeof EscapeNotes==='undefined'?null:EscapeNotes.forLevel(g.level);
     // An anchor that is no longer open floor (a changed layout) shows nothing rather than a page in a wall.
-    if(note&&!g.floor(note.at[0],note.at[1]))note=null;escapeNoteRun={game:g,note,fresh:false};}
-  return escapeNoteRun.note;
+    const notes=(own||(story?[story]:[])).filter(n=>Array.isArray(n.at)&&n.body&&g.floor(n.at[0],n.at[1]));
+    escapeNoteRun={game:g,notes,found:new Set()};}
+  return escapeNoteRun.notes;
 }
+function escapeNoteFor(g){return escapeNotesFor(g)[0]||null;}
+const escapeNoteFound=n=>n.own?escapeNoteRun.found.has(n.id):escapeProgress.noteFound(n.id);
+const escapeNoteRead=n=>n.own?Boolean(n.read):escapeProgress.noteRead(n.id);
 function tickEscapeNote(g){
-  const n=escapeNoteFor(g);if(!n||g.status!=='playing'||g.player.underground||g.player.dig?.buried||escapeProgress.noteFound(n.id))return;
-  if(Math.hypot(g.player.x-(n.at[0]+.5),g.player.y-(n.at[1]+.5))>.6)return;
-  if(escapeProgress.findNote(n.id)){escapeNoteRun.fresh=true;escapeBestiaryNote={text:'📜 You found a page: '+n.title,until:millis()+3800};escapeSound('flutter');}
+  if(g.status!=='playing'||g.player.underground||g.player.dig?.buried)return;
+  for(const n of escapeNotesFor(g)){if(escapeNoteFound(n)||Math.hypot(g.player.x-(n.at[0]+.5),g.player.y-(n.at[1]+.5))>.6)continue;
+    if(n.own)escapeNoteRun.found.add(n.id);else if(!escapeProgress.findNote(n.id))continue;
+    escapeBestiaryNote={text:'📜 You found a page: '+n.title,until:millis()+3800};escapeSound('flutter');}
 }
 // A page on the floor: a folded scrap with two lines of ink and a little glint; once found, faded.
 function drawEscapeNote(g,cell){
-  const n=escapeNoteFor(g);if(!n)return;const found=escapeProgress.noteFound(n.id),x=(n.at[0]+.5)*cell,y=(n.at[1]+.55)*cell,bob=Math.sin(g.elapsed*2.2)*cell*.02;
-  push();translate(x,y+bob);rotate(-.18);noStroke();if(found)drawingContext.globalAlpha=.35;
-  fill(0,0,0,50);ellipse(cell*.03,cell*.16,cell*.5,cell*.12);fill(246,236,210);rect(-cell*.22,-cell*.16,cell*.44,cell*.32,cell*.03);
-  fill(214,196,158);triangle(cell*.22,-cell*.16,cell*.08,-cell*.16,cell*.22,-cell*.02);stroke(120,92,58,190);strokeWeight(cell*.025);line(-cell*.14,-cell*.04,cell*.08,-cell*.04);line(-cell*.14,cell*.05,cell*.12,cell*.05);
-  noStroke();if(!found){const glint=Math.max(0,Math.sin(g.elapsed*1.7))**10;fill(255,250,220,200*glint);ellipse(-cell*.12,-cell*.1,cell*.12,cell*.12);}
-  drawingContext.globalAlpha=1;pop();
+  for(const n of escapeNotesFor(g)){const found=escapeNoteFound(n),x=(n.at[0]+.5)*cell,y=(n.at[1]+.55)*cell,bob=Math.sin(g.elapsed*2.2+n.at[0])*cell*.02;
+    push();translate(x,y+bob);rotate(-.18);noStroke();if(found)drawingContext.globalAlpha=.35;
+    fill(0,0,0,50);ellipse(cell*.03,cell*.16,cell*.5,cell*.12);fill(246,236,210);rect(-cell*.22,-cell*.16,cell*.44,cell*.32,cell*.03);
+    fill(214,196,158);triangle(cell*.22,-cell*.16,cell*.08,-cell*.16,cell*.22,-cell*.02);stroke(120,92,58,190);strokeWeight(cell*.025);line(-cell*.14,-cell*.04,cell*.08,-cell*.04);line(-cell*.14,cell*.05,cell*.12,cell*.05);
+    noStroke();if(!found){const glint=Math.max(0,Math.sin(g.elapsed*1.7+n.at[1]))**10;fill(255,250,220,200*glint);ellipse(-cell*.12,-cell*.1,cell*.12,cell*.12);}
+    drawingContext.globalAlpha=1;pop();}
 }
 // A found note as a card to read.
-function escapeNoteCard(n){const {who,what}=EscapeNotes.signed(n);return {id:n.id,kind:'found',title:n.title,what:what?what[0].toUpperCase()+what.slice(1):'A page',area:n.area,body:['*'+n.body+'*'+(who&&!/^Unsigned/.test(who)?'\n— '+who:'')]};}
-function showEscapeNote(n,onDone){escapeProgress.readNote(n.id);showEscapeStory({id:n.id,card:escapeNoteCard(n)},false,onDone);}
-// The results offer the page found in this level when it has not been read yet.
+function escapeNoteCard(n){const [who,what]=String(n.author||'').split(' — ');return {id:n.id,kind:'found',title:n.title,what:what?what[0].toUpperCase()+what.slice(1):'A page',...(n.area!==undefined?{area:n.area}:{}),body:['*'+n.body+'*'+(who&&!/^Unsigned/.test(who)?'\n— '+who:'')]};}
+function showEscapeNote(n,onDone){if(n.own)n.read=true;else escapeProgress.readNote(n.id);showEscapeStory({id:n.id,card:escapeNoteCard(n)},false,onDone);}
+// The results offer each page found in this level that has not been read yet.
 function escapeNoteResultButton(){
-  document.getElementById('escape-note-btn')?.remove?.();
-  const n=escapeGame&&escapeNoteFor(escapeGame);if(!n||!escapeProgress.noteFound(n.id)||escapeProgress.noteRead(n.id))return;
-  const b=document.createElement('button');b.id='escape-note-btn';b.type='button';b.className='escape-secondary escape-note-btn';b.textContent='📜 Read the page you found: '+n.title;
-  b.onclick=()=>showEscapeNote(n,()=>{b.remove();document.getElementById('escape-next-btn')?.focus?.();});
-  document.getElementById('escape-result-challenge')?.after?.(b);
+  for(const old of document.querySelectorAll?.('.escape-note-btn')||[])old.remove?.();
+  const waiting=escapeGame?escapeNotesFor(escapeGame).filter(n=>escapeNoteFound(n)&&!escapeNoteRead(n)):[];let after=document.getElementById('escape-result-challenge');
+  for(const n of waiting){const b=document.createElement('button');b.type='button';b.className='escape-secondary escape-note-btn';b.textContent='📜 Read the page you found: '+n.title;
+    b.onclick=()=>showEscapeNote(n,()=>{b.remove?.();document.getElementById('escape-next-btn')?.focus?.();});after?.after?.(b);after=b;}
 }
 // Pages found along the way, by area: two to an area, whose little sketch is whole once both are
 // found; the journal's border gains a leaf, a lantern and a path at 14, 28 and 42 pages.

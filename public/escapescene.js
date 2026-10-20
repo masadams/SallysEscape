@@ -609,8 +609,10 @@ function drawEscapeStillTiles(g,cell,palette,index){
     if(tile==='B'){
       stroke(93,151,160);strokeWeight(1.3);line((x+0.3)*cell,(y+0.2)*cell,(x+0.6)*cell,(y+0.55)*cell);line((x+0.6)*cell,(y+0.55)*cell,(x+0.35)*cell,(y+0.8)*cell);
     }
+    // Leaf cover: a bush in Simple; with Full lighting a soft bed for the swaying grass clump drawn over it.
     if(tile==='L'){
-      noStroke();fill(49,109,77);for(const [dx,dy] of [[.3,.4],[.65,.3],[.5,.65]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.45,cell*.4);
+      noStroke();if(terrain){fill(38,84,56,150);ellipse((x+.5)*cell,(y+.62)*cell,cell*.95,cell*.62);fill(52,110,70,170);ellipse((x+.5)*cell,(y+.58)*cell,cell*.7,cell*.42);}
+      else{fill(49,109,77);for(const [dx,dy] of [[.3,.4],[.65,.3],[.5,.65]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.45,cell*.4);}
     }
     if(tile==='N'){
       noStroke();fill(135,118,92);for(const [dx,dy] of [[.3,.3],[.7,.45],[.4,.7]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.13,cell*.1);
@@ -627,6 +629,17 @@ function drawEscapeStillTiles(g,cell,palette,index){
     }
   }
   if(escapeLightingFull())drawEscapeAtmoGround(g,cell,palette,index);
+  // Cracks again on top of the wall textures: the slit with a pale broken-stone rim and a little
+  // rubble at its foot, so a way through always reads at a glance.
+  for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.grid[y][x]==='Y'){const pts=[[.42,0],[.56,.22],[.48,.45],[.6,.7],[.52,1],[.42,1],[.46,.7],[.36,.45],[.46,.22],[.36,0]];
+    noStroke();fill(222,206,170,170);beginShape();for(const [dx,dy] of pts)vertex((x+.5+(dx-.47)*1.7)*cell,(y+dy)*cell);endShape(CLOSE);
+    fill(6,10,12);beginShape();for(const [dx,dy] of pts)vertex((x+dx)*cell,(y+dy)*cell);endShape(CLOSE);
+    fill(170,156,128,220);for(const [dx,dy,r] of [[.22,.9,.12],[.74,.86,.1],[.62,.95,.07],[.3,.97,.07]])ellipse((x+dx)*cell,(y+dy)*cell,cell*r,cell*r*.75);}
+  // A thin wall Sally can burrow through: a dark forked crack with a pale edge, over any texture.
+  for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.grid[y][x]==='B'){const P=(dx,dy)=>[(x+dx)*cell,(y+dy)*cell],path=[[.3,.14],[.52,.38],[.4,.56],[.6,.86]],fork=[[.52,.38],[.74,.46]];
+    for(const [col,w] of [[[236,224,196,150],.11],[[24,20,16,235],.055]]){stroke(...col);strokeWeight(Math.max(1.5,cell*w));noFill();strokeJoin?.(ROUND);
+      beginShape();for(const [dx,dy] of path)vertex(...P(dx,dy));endShape();line(...P(...fork[0]),...P(...fork[1]));}
+    noStroke();fill(150,138,112,200);ellipse(...P(.62,.94),cell*.1,cell*.07);ellipse(...P(.44,.96),cell*.07,cell*.05);}
   if(terrain&&g.ice?.size)drawEscapeZone(g.ice,cell,()=>true,[143,196,220],255,0);
   for(const key of g.ice||[]){const [x,y]=key.split(',').map(Number);noStroke();if(!terrain){fill(143,196,220);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*.12);}fill(205,235,248,200);triangle(x*cell+cell*.18,y*cell+cell*.2,x*cell+cell*.55,y*cell+cell*.16,x*cell+cell*.2,y*cell+cell*.55);stroke(230,248,255,160);strokeWeight(Math.max(1,cell*.03));line(x*cell+cell*.62,y*cell+cell*.3,x*cell+cell*.8,y*cell+cell*.72);}
   // Full lighting: soft shadows where floor meets a wall above or to the left, so mazes read in depth.
