@@ -65,9 +65,10 @@ function showEscapeSelect(){
   escapeAbandonRun();
   // Sally comes out on the map where she just was (the escape she played, or the last one she
   // played before this visit), never jumped ahead to the next open escape across the map.
-  const played=escapeGame&&!escapeGame.level.custom?escapeGame.level.id:null;
+  const played=escapeGame&&!escapeGame.level.custom&&!escapeGame.level.seasonal&&!escapeGame.level.kids?escapeGame.level.id:null;
   if(played)try{escapeStore.setItem(ESCAPE_LAST_PLAYED_KEY,played);}catch(_){}
   let focus=played;if(!focus)try{focus=escapeStore.getItem(ESCAPE_LAST_PLAYED_KEY)||undefined;}catch(_){}
+  if(!EscapeCatalog.levels.some(l=>l.id===focus)&&!EscapeCatalog.hidden.some(l=>l.id===focus))focus=undefined;
   escapeProgress.read();
   resetGameState();gameState='escapeSelect';
   for(const id of ['start-menu-container','game-container'])document.getElementById(id).style.display='none';

@@ -80,7 +80,7 @@ function pollEscapePad(){
     ({look:useEscapeLook,burrow:useEscapeBurrow,tongue:useEscapeTongue,camo:useEscapeCamo,seed:useEscapeSeed})[action]?.();
   }
 }
-function escapePadForget(){escapePad.index=null;escapePad.active=false;escapeLastInput='auto';escapePad.x=0;escapePad.y=0;escapePad.sprint=false;escapePad.crawl=false;escapePad.prev=[];escapePad.lastAx=0;escapePad.lastAy=0;document.body?.classList?.remove('pad-nav');if(escapeCharge?.source==='pad')releaseEscapeCharge();}
+function escapePadForget(){escapePad.index=null;escapePad.active=false;if(escapeLastInput==='pad')escapeLastInput='auto';escapePad.x=0;escapePad.y=0;escapePad.sprint=false;escapePad.crawl=false;escapePad.prev=[];escapePad.lastAx=0;escapePad.lastAy=0;document.body?.classList?.remove('pad-nav');if(escapeCharge?.source==='pad')releaseEscapeCharge();}
 
 // The menu or card on top, if any: its buttons are what the pad moves between.
 function escapePadMenu(){
