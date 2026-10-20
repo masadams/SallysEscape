@@ -48,7 +48,7 @@ function drawSeasonBones(h,model,c,t){if(!model?.joints)return;const j=model.joi
  const head=j[0];translate(head.x*c,head.y*c);rotate(model.headAngle);noStroke();fill(239,231,191);ellipse(c*.04,0,c*.47,c*.3);rect(c*.15,-c*.12,c*.2,c*.24,c*.04);fill(49,52,44);ellipse(c*.13,-c*.07,c*.1,c*.08);ellipse(c*.13,c*.07,c*.1,c*.08);fill(136,72,69);for(let i=0;i<3;i++)rect(c*(.22+i*.035),-c*.06,c*.013,c*.12);pop();
 }
 let seasonSceneryCache=null,seasonSceneryMotionQuery;
-function clearSeasonScenery(){if(typeof clearSpringScenery==='function')clearSpringScenery();if(typeof clearSummerScenery==='function')clearSummerScenery();seasonSceneryCache?.image.remove?.();seasonSceneryCache=null;}
+function clearSeasonScenery(){if(typeof clearSpringScenery==='function')clearSpringScenery();if(typeof clearSummerScenery==='function')clearSummerScenery();seasonSceneryCache?.image.remove?.();seasonSceneryCache=null;if(typeof campaignIceCache!=="undefined"&&campaignIceCache){campaignIceCache.image.remove?.();campaignIceCache=null;}}
 function drawSeasonScenery(g,c){if((g.level.seasonal||g.level.costume)==='summer')return drawSummerScenery(g,c);if((g.level.seasonal||g.level.costume)==='spring')return drawSpringScenery(g,c);if((g.level.seasonal||g.level.costume)==='winter')return drawWinterScenery(g,c);
  // Static decorations are painted once per run/cell size, never per tile per frame.
  let cached=seasonSceneryCache;if(!cached||cached.game!==g||cached.cell!==c){cached?.image.remove?.();const art=createGraphics(Math.ceil(g.width*c),Math.ceil(g.height*c));art.pixelDensity(1);art.clear();

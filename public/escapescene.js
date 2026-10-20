@@ -850,6 +850,7 @@ function drawEscapeVault(){
   drawEscapeWaterSurface(g,cell,view,index);drawEscapeLightningShadows(g,cell);
   drawEscapeWet(g,cell,view);drawEscapeSway(g,cell,view);drawEscapeDapple(g,cell);
   tickEscapeCritters(g);drawEscapeTricks(g,cell,view);drawEscapePrints(g,cell);drawEscapeCritters(g,cell,view,'ground');drawEscapeReeds(g,cell,view);
+  if(g.slippery?.size&&(g.level.seasonal||g.level.costume)!=='winter'&&typeof drawCampaignIce==='function')drawCampaignIce(g,cell);
   if((g.level.seasonal||g.level.costume))drawSeasonScenery(g,cell);
   if((g.level.kids||g.level.seasonal)&&typeof drawEscapeKidsGuide==='function')drawEscapeKidsGuide(g,cell);
   if(g.level.rootWheel){const [x,y]=g.level.rootWheel,angle=g.wheelAngle;push();translate((x+.5)*cell,(y+.5)*cell);rotate(angle);noFill();stroke(106,147,76,95);strokeWeight(cell*.11);ellipse(0,0,cell*2.7,cell*2.7);for(let a=0;a<TWO_PI;a+=PI/2)line(0,0,Math.cos(a)*cell*1.35,Math.sin(a)*cell*1.35);pop();}

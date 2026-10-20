@@ -88,8 +88,8 @@ Living Labyrinth keeps its living garden (seeds, root doors, vine crossings) and
 - The Heartwood: a king cobra watching the richest chest, a heart door that shuts behind the key, and a crack as the only way out.
 
 Sun and Sea brings in the hermit crab:
-- The Sunken Caravan: a canyon yard where the snake and the scorpion fight if they meet. Taking the key collapses the arch, so Sally runs home along the rim and slips through a crack only she fits.
-- Tideglass Lagoon: three islands where fish rule the channels, a sea snake takes both water and land, and hermit crabs guard the beaches.
+- The Sunken Caravan: a canyon yard where the snake and the scorpion fight if they meet. Taking the key collapses the arch, so Sally runs home along the rim and slips through a crack only she fits. Soft sand drifts slow her and keep her tracks.
+- Tideglass Lagoon: three islands where fish rule the channels, a sea snake takes both water and land, and hermit crabs guard the beaches. Bounce caps on the beaches fling Sally over the west channel and back.
 
 The Shedding Hollow lets Sally spare a tail and regrow it by eating a glowing bug:
 - Shedskin Gully: a beetle's charging lane between two shelves, with cracks to shake off a chase.
@@ -119,12 +119,12 @@ Sunbaked Rooftops keeps the hawk, awnings and camouflage, and adds crumbling roo
 Ant Kingdom keeps its marching columns and gecko thieves:
 - Anthill Gate: a ring of ants circles the key mound; cross in the gaps.
 - Sugar Store: shelves of treasure and two geckos that steal the last thing Sally picked up.
-- Marching Tunnels: two columns loop the same hall in opposite directions.
+- Marching Tunnels: two columns loop the same hall in opposite directions. Sally has one tunnel kit: dig an entrance, dig the way out, then burrow under the columns.
 - Thieves' Gallery: a vault bridge that rises once, and a low bridge back that the key raises.
 - The Queen's Chamber: a column loops the outer hall, the queen's guard (a king cobra) coils in the great hall, and a crack is the way out of the sealed throne room.
 
 Frost Hollow keeps its cold rooms and warm stones and brings in the snow fox, which hunts by ear:
-- Frostbite Steps: a freezing hall with warm stones and a fox circling a patch of crunchy snow.
+- Frostbite Steps: a freezing hall with warm stones and a fox circling a patch of crunchy snow. The lanes either side of the snow are glide ice: Sally keeps her speed going on, then slides faster, and Crawl brakes.
 - Icicle Gallery: a frost owl sweeps the gallery; the crunchy middle walk carries every step.
 - Frozen Plates: three ice doors, each with a plate on both sides, in a freezing yard.
 - Snowdrift Vault: the vault door freezes shut behind the key; a crack leads out into the coldest passage, where a fox listens.

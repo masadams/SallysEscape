@@ -5,7 +5,7 @@ const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'..'),{EscapeAdventure}=require(path.join(root,'public/escape-engine.js'));
 const ACT={pebble:'throwDecoy',glow:'throwGlow',spore:'throwSpore',tongue:'useTongue',burrow:'burrow',seed:'plantSeed',camo:'camouflage'};
 function make(id,delay=0){
- const g=new EscapeAdventure({seasonalId:id}),commands=[];let events=new Set();
+ const g=new EscapeAdventure(typeof id==='object'?id:{seasonalId:id}),commands=[];let events=new Set();
  const frame=input=>{g.advance(1/120,input);for(const e of g.drainEvents())events.add(e);const c={kind:'move',frames:1,x:input.x||0,y:input.y||0,sprint:!!input.sprint,crawl:!!input.crawl,aiming:!!input.aiming};const last=commands.at(-1);if(last?.kind==='move'&&last.x===c.x&&last.y===c.y&&last.sprint===c.sprint&&last.crawl===c.crawl&&last.aiming===c.aiming)last.frames++;else commands.push(c);if(g.status==='caught')throw Error('Caught '+g.message);if(g.oopses)throw Error('Oops '+g.elapsed.toFixed(2)+' '+g.player.x.toFixed(1)+','+g.player.y.toFixed(1));};
  const wait=n=>{for(let i=0;i<Math.round(n*120)&&g.status==='playing';i++)frame({});};
  function go(tx,ty,sprint=false,crawl=false){

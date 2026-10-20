@@ -10,7 +10,7 @@ const ESCAPE_BUILDER_ENEMY={snake:'🐍',ladybird:'🐞',beetle:'🪲',scorpion:
 const ESCAPE_BUILDER_TRIGGER={plate:'◉',heavy:'⬛',lever:'⚲',switch:'▣'},ESCAPE_BUILDER_HAZARD={vent:'♨',thorns:'⋀',log:'●'};
 const ESCAPE_BUILDER_ARROW=['→','↓','←','↑'];
 // The extras placed on top of the map: what each tool is called and how it looks on the grid.
-const ESCAPE_BUILDER_EXTRAS={'layer:shade':['⛱','Awning: shade where the hawk cannot dive'],'layer:glowPlants':['✺','Glow plant: light in a dark level'],'layer:regrowth':['✿','Regrowth bug: grows back a lost tail'],
+const ESCAPE_BUILDER_EXTRAS={'layer:shade':['⛱','Awning: shade where the hawk cannot dive'],'layer:glowPlants':['✺','Glow plant: light in a dark level'],'layer:regrowth':['✿','Regrowth bug: grows back a lost tail'],'layer:slippery':['❄','Glide ice: Sally keeps her speed, then slides faster; Crawl brakes'],
   cap:['🍄','Bounce cap: click the cap, then where it throws Sally'],wind:['≋','Wind lane: click two opposite corners'],current:['⇶','Current or slope: click two corners; choose Water or Ground in the inspector'],echo:['◎','Echo hall: click two corners; sound carries further inside'],tunnel:['⛏','Burrow pair: click one mound, then its partner'],area:['▢','Trigger area: click two corners; walking in can open doors or wake enemies'],
   ants:['🐜','Ant column: click the points of its loop in order'],seedbed:['🌱','Seed bed: click the two banks either side of a gap; a planted seed grows a crossing'],wheel:['✣','Root wheel'],rival:['⚔','Rivals: click two enemies who fight when they meet'],page:['📜','Page: a note lying on the floor for players to find and read after the run (up to 3)'],
   sign:['🪧','Trail sign: a short note read the moment Sally steps on it (up to 4)'],checkpoint:['⚐','Checkpoint: in a gentle level a catch sends Sally back to the last one reached'],
@@ -212,7 +212,7 @@ function escapeBuilderCell(x,y,ch,linked){
   if(cold)cls+=' builder-cold';
   // Extras: layers, caps, wind, areas, ant trails, seed beds, the root wheel.
   const hasAt=list=>(list||[]).some(q=>q[0]===x&&q[1]===y),inRect=a=>x>=a[0]&&x<=a[2]&&y>=a[1]&&y<=a[3];let shadow='';
-  if(hasAt(m.shade))shadow+='inset 0 -5px 0 #c96a48aa,';if(hasAt(m.glowPlants)&&!glyph)glyph='✺';if(hasAt(m.regrowth)&&!glyph)glyph='✿';
+  if(hasAt(m.shade))shadow+='inset 0 -5px 0 #c96a48aa,';if(hasAt(m.slippery))bg='linear-gradient(#8fd0eccc,#bfe6f5aa),'+bg;if(hasAt(m.glowPlants)&&!glyph)glyph='✺';if(hasAt(m.regrowth)&&!glyph)glyph='✿';
   const wind=(m.wind||[]).find(z=>inRect(z.area));if(wind){bg='linear-gradient(#9ec4e033,#9ec4e033),'+bg;if(!glyph)glyph='<span style="opacity:.55">'+ESCAPE_BUILDER_ARROW[EscapeBuilder.DIRS.findIndex(([dx,dy])=>dx===wind.dir[0]&&dy===wind.dir[1])]+'</span>';}
   const current=(m.currents||[]).find(z=>inRect(z.area));if(current){bg='linear-gradient(#5ac8e044,#5ac8e044),'+bg;if(!glyph)glyph='<span style="opacity:.7">'+['⇒','⇓','⇐','⇑'][EscapeBuilder.DIRS.findIndex(([dx,dy])=>dx===current.dir[0]&&dy===current.dir[1])]+'</span>';}
   if((m.echoes||[]).some(a=>inRect(a)))shadow+='inset 0 0 0 2px #b9a6e888,';
