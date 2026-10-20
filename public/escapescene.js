@@ -437,7 +437,7 @@ function tickEscapeMusic(){
   if(!escapeMusic)return;
   escapeMusic.setVolume((paused?.35:1)*.6*musicVolume,isMuted||!musicOn||musicVolume===0);
   const screen=gameState==='start'?'menu':gameState==='escapeSelect'||gameState==='seasonalHub'?'world':'game';
-  const seasonTheme=gameState==='seasonalHub'?(seasonPack==='winter'?'winter-village':'autumn-festival'):screen==='game'&&escapeGame?.level.seasonal?escapeGame.level.seasonalTheme:null;
+  const seasonTheme=gameState==='seasonalHub'?({winter:'winter-village',spring:'spring-garden',summer:'summer-harbour'}[seasonWorld?.areaAt?.()?.id||seasonPack]||'autumn-festival'):screen==='game'&&escapeGame?.level.seasonal?escapeGame.level.seasonalTheme:null;
   // A story card being read has music of its own: a music box, warmer once Sally knows she is a Wayfinder.
   if(typeof escapeStoryOpen!=='undefined'&&escapeStoryOpen){const part=escapeStoryOpen.part?.n||escapeStoryOpen.card?.part||1;escapeMusic.setState('story',millis()/1000);escapeMusic.setStyle(EscapeMusic.styleFor(escapeStoryOpen.card?.kind==='season-sign'?escapeStoryOpen.card.theme:part>=2?'wayfinder':'tale'));escapeAmbience?.setVolume(0);return;}
   escapeMusic.setState(EscapeMusic.stateFor({screen,game:screen==='game'?escapeGame:null}),millis()/1000);

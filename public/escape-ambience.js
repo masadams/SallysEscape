@@ -7,11 +7,28 @@
 (function(root){
   // beds: [kind, level]; calls: [kind, [min s, max s] between, level].
   const SCAPES={
-    'winter-village':{beds:[['breeze',.2]],calls:[['jingle',[8,15],.18],['creak',[12,22],.13]]},
-    'winter-ice':{beds:[['icewind',.18]],calls:[['tinkle',[7,13],.13],['creak',[12,20],.16]]},
-    'winter-workshop':{beds:[['breeze',.1]],calls:[['clank',[9,16],.12],['jingle',[12,20],.14]]},
-    'winter-night':{beds:[['icewind',.24]],calls:[['jingle',[12,21],.12],['owl',[15,24],.1]]},
-    'winter-finale':{beds:[['breeze',.17]],calls:[['jingle',[7,15],.18],['tinkle',[12,22],.1]]},
+    // Winter keeps a hush of falling snow even inside an escape, with the village's own sounds:
+    // fires crackling, snow sliding off branches, a sleigh passing, a carol far away, the pond's ice.
+    'winter-village':{beds:[['breeze',.2],['snowhush',.32],['hearth',.18]],calls:[['jingle',[8,15],.18],['crackle',[4,8],.16],['snowslide',[9,16],.2],['carol',[22,36],.14],['sleighpass',[26,40],.16]]},
+    'winter-ice':{beds:[['icewind',.18],['snowhush',.3]],calls:[['tinkle',[6,11],.14],['icegroan',[9,16],.24],['creak',[12,20],.16],['windchime',[14,24],.12]]},
+    'winter-workshop':{beds:[['breeze',.1],['hearth',.3]],calls:[['clank',[6,11],.14],['crackle',[3,6],.18],['jingle',[12,20],.14],['carol',[24,38],.12]]},
+    'winter-night':{beds:[['icewind',.24],['snowhush',.36]],calls:[['owl',[12,20],.14],['snowslide',[8,14],.18],['jingle',[16,26],.1],['windchime',[12,22],.12]]},
+    'winter-finale':{beds:[['breeze',.17],['snowhush',.3],['hearth',.12]],calls:[['jingle',[6,12],.18],['tinkle',[10,18],.1],['carol',[16,26],.16],['sleighpass',[20,32],.16],['crackle',[5,9],.12]]},
+    // Spring: rain on the glass, birds and bees in the garden, frogs at the pond, a cuckoo at dusk.
+    'spring-garden':{beds:[['breeze',.3],['drizzle',.12]],calls:[['bird',[3,6],.4],['bee',[8,14],.26],['cuckoo',[16,26],.16],['drip',[6,11],.18]]},
+    'spring-shed':{beds:[['drizzle',.26]],calls:[['drip',[3,6],.3],['creak',[9,16],.16],['bird',[8,14],.24],['clank',[18,28],.08]]},
+    'spring-pond':{beds:[['stream',.35],['drizzle',.1]],calls:[['frog',[3,7],.4],['bird',[6,11],.3],['plip',[4,8],.24]]},
+    'spring-glass':{beds:[['drizzle',.32]],calls:[['drip',[2,5],.3],['windchime',[10,18],.12],['bird',[9,15],.2]]},
+    'spring-dusk':{beds:[['insects',.18],['drizzle',.14]],calls:[['cuckoo',[10,18],.18],['owl',[14,22],.14],['frog',[6,11],.24],['drip',[5,9],.2]]},
+    // Summer: the shore never quite stops, gulls, a buoy bell, rigging, splashes, cicadas in the dunes.
+    'summer-dunes':{beds:[['hotwind',.28],['shore',.28],['cicada',.14]],calls:[['gull',[6,12],.26],['bird',[8,14],.2]]},
+    'summer-pools':{beds:[['shore',.34]],calls:[['plip',[3,6],.26],['gull',[7,13],.24],['click',[6,11],.18]]},
+    'summer-tide':{beds:[['surf',.4],['shore',.3]],calls:[['gull',[6,12],.26],['plip',[4,8],.22],['buoy',[12,20],.16]]},
+    'summer-harbour':{beds:[['breeze',.25],['shore',.26]],calls:[['buoy',[8,14],.2],['rigging',[6,11],.18],['gull',[5,10],.26],['clank',[14,22],.1]]},
+    'summer-lagoon':{beds:[['stream',.28],['cicada',.16]],calls:[['frog',[5,9],.3],['bird',[5,10],.3],['plip',[6,10],.2]]},
+    'summer-boatshed':{beds:[['shore',.22]],calls:[['rigging',[5,9],.2],['creak',[8,14],.16],['clank',[10,16],.12],['gull',[12,20],.16]]},
+    'summer-sunset':{beds:[['shore',.3],['insects',.12]],calls:[['gull',[10,18],.18],['buoy',[10,18],.16],['cricket',[6,11],.18]]},
+    'summer-lighthouse':{beds:[['surf',.35],['shore',.3]],calls:[['buoy',[7,13],.2],['gull',[5,10],.26],['rigging',[9,15],.14]]},
     autumn:{beds:[['breeze',.4]],calls:[['crow',[12,20],.18],['creak',[8,15],.16]]},
     'autumn-dusk':{beds:[['breeze',.25],['insects',.14]],calls:[['creak',[10,17],.18],['chime',[14,22],.14]]},
     'autumn-night':{beds:[['wind',.2],['insects',.15]],calls:[['owl',[12,20],.17],['chime',[13,21],.15]]},
@@ -63,7 +80,13 @@
     cave:{filter:'lowpass',freq:240,q:.7,rate:.06,depth:.3,gain:1.2},
     hiss:{filter:'highpass',freq:4200,q:.5,rate:.3,depth:.5,gain:.25},
     scuttle:{filter:'bandpass',freq:3000,q:3,rate:11,depth:.6,gain:.35},
-    hum:{tone:[55,110],gain:.25}
+    hum:{tone:[55,110],gain:.25},
+    // Beds that stay on inside an escape: the hush of snow, a hearth's flicker, light rain, soft waves, cicadas.
+    snowhush:{filter:'lowpass',freq:900,q:.4,rate:.05,depth:.4,gain:.35},
+    hearth:{filter:'bandpass',freq:1300,q:.6,rate:9,depth:.7,gain:.12},
+    drizzle:{filter:'highpass',freq:4500,q:.4,rate:.2,depth:.3,gain:.2},
+    shore:{filter:'lowpass',freq:520,q:.5,rate:.11,depth:.85,gain:.5},
+    cicada:{filter:'bandpass',freq:4200,q:9,rate:14,depth:.5,gain:.22}
   };
   // Weather beds: heard on the world map (at under half their full level), never inside an escape.
   const WEATHER=new Set(['breeze','wind','hotwind','icewind','rain','surf']),WEATHER_TRIM=.44;
@@ -136,6 +159,16 @@
         case 'thunder':hush(300,0,2.6,{filter:'lowpass',to:70,gain:.6,attack:.12});hush(900,.05,.4,{filter:'lowpass',to:200,gain:.25});break;
         case 'bee':tone(220,240,0,.7,{type:'sawtooth',gain:.03,vib:30,attack:.08});break;
         case 'jingle':for(let i=0;i<6;i++){tone(1900+i%3*370,null,i*.065,.12,{gain:.035});hush(6200,i*.065,.055,{gain:.025});}break;
+        case 'crackle':for(let i=0;i<3+Math.floor(R()*4);i++)hush(rand(1800,4200),i*rand(.04,.14),.02,{q:4,gain:rand(.08,.18)});break;
+        case 'icegroan':tone(rand(140,190),rand(48,60),0,1.4,{type:'sawtooth',gain:.05,attack:.2});tone(rand(900,1300),rand(300,400),.05,.5,{gain:.03});hush(300,0,1.2,{filter:'lowpass',to:90,gain:.12,attack:.1});break;
+        case 'snowslide':hush(1200,0,.7,{filter:'lowpass',to:220,gain:.22,attack:.04});hush(3000,.02,.25,{q:1,gain:.05});break;
+        case 'windchime':{const pent=[1568,1760,2093,2349,2637];for(let i=0;i<3+Math.floor(R()*3);i++)tone(pent[Math.floor(R()*pent.length)],null,i*rand(.12,.3),1.4,{gain:.04,attack:.005});break;}
+        case 'carol':{const chord=R()<.5?[392,494,587]:[349,440,523];for(const [i,f] of chord.entries())tone(f,f*1.003,i*.04,2.6,{gain:.025,attack:.6,vib:4.5});break;}
+        case 'sleighpass':for(let i=0;i<14;i++){const g=Math.sin(i/13*Math.PI)*.04+.005;tone(1900+i%3*370,null,i*.12,.12,{gain:g});hush(6200,i*.12,.05,{gain:g*.7});}break;
+        case 'cuckoo':tone(660,640,0,.28,{gain:.08,attack:.03});tone(550,530,.36,.38,{gain:.07,attack:.03});break;
+        case 'plip':tone(rand(500,800),rand(1200,1700),0,.07,{gain:.1});break;
+        case 'buoy':tone(rand(420,470),null,0,2.4,{gain:.06,attack:.005});tone(rand(1100,1200),null,0,1.2,{gain:.02});break;
+        case 'rigging':tone(rand(150,200),rand(170,230),0,.5,{type:'triangle',gain:.04,attack:.08});hush(2600,.1,.12,{q:6,gain:.05});break;
         case 'chime':tone(880,null,0,2.2,{gain:.08,attack:.01});tone(1320,null,.02,1.8,{gain:.05});tone(1760,null,.04,1.2,{gain:.03});break;
       }
       setTimeout(()=>{try{out.disconnect();panner?.disconnect();}catch(_){}},4000);
