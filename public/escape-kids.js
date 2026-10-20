@@ -1060,6 +1060,162 @@
     "#.................1.................#",
     "#####################################"
   ]
+},
+{
+  "id": "glow-garden",
+  "fieldNotes": [
+    {
+      "id": "glow-garden-sign-1",
+      "at": [7,16],
+      "title": "A garden at night",
+      "body": "In the dark Sally only sees what is near. Glowing mushrooms light the way. Throw one to peek round a corner."
+    },
+    {
+      "id": "glow-garden-sign-2",
+      "at": [17,2],
+      "title": "The lily rock",
+      "body": "The amber switch sits on a rock in the pond. Face it from the bank and use Tongue, or swim out to it."
+    }
+  ],
+  "name": "The Glow-Worm Garden",
+  "sticker": "🍄",
+  "adventure": true,
+  "kidsTheme": "lantern",
+  "gentle": 0.68,
+  "brief": "Night has fallen on the garden. Glowing mushrooms light the paths. Two switches open the way to the moon garden.",
+  "hint": "The blue switch is in the rose garden; the amber one is on a rock in the pond. Snakes see only nearby. Moths follow glowing footprints. The key opens the garden gate home.",
+  "pebbles": 3,
+  "tongues": 2,
+  "glows": 2,
+  "spores": 2,
+  "explore": true,
+  "dark": true,
+  "sightRadius": 5,
+  "glowPlants": [
+    [2,16],
+    [8,20],
+    [3,12],
+    [14,10],
+    [16,3],
+    [26,11],
+    [28,3],
+    [37,6],
+    [29,12],
+    [36,16],
+    [26,16],
+    [12,19]
+  ],
+  "checkpoints": [
+    [5,12],
+    [16,2],
+    [28,2],
+    [29,12],
+    [26,19]
+  ],
+  "gates": [
+    {
+      "id": "glow-blue",
+      "name": "Orchard",
+      "color": [106,195,236],
+      "switch": [13,1],
+      "tiles": [
+        [27,1],
+        [27,2]
+      ]
+    },
+    {
+      "id": "glow-amber",
+      "name": "Moon garden",
+      "color": [244,192,93],
+      "switch": [21,5],
+      "tiles": [
+        [28,10],
+        [29,10]
+      ]
+    },
+    {
+      "id": "glow-home",
+      "name": "Garden gate",
+      "color": [191,154,230],
+      "tiles": [
+        [10,18],
+        [10,19]
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "glow-key",
+      "when": "key",
+      "open": [
+        "glow-home"
+      ],
+      "message": "Click! The little garden gate opens. Home is close.",
+      "objective": "Follow the south garden back to the green door."
+    }
+  ],
+  "guards": [
+    {
+      "spawn": [4,9],
+      "patrol": [
+        [4,3],
+        [11,3],
+        [11,9],
+        [4,9]
+      ],
+      "facing": -1.5707963267948966
+    },
+    {
+      "spawn": [36,13],
+      "patrol": [
+        [36,20],
+        [36,12]
+      ],
+      "facing": 1.5707963267948966
+    },
+    {
+      "spawn": [33,5],
+      "patrol": [
+        [28,5],
+        [37,5]
+      ],
+      "facing": 3.141592653589793
+    },
+    {
+      "kind": "moth",
+      "spawn": [19,15],
+      "patrol": [
+        [13,15],
+        [25,15]
+      ],
+      "facing": 0
+    }
+  ],
+  "map": [
+    "#######################################",
+    "#1..........L.....L............o.....1#",
+    "#...................................L.#",
+    "#..............#..........L#..#....#..#",
+    "#....######....#.~~~~~~~~~.#..#....#..#",
+    "#....######....#.~~~~.~~~~.#.o........#",
+    "#.L..######....#.~~~~~~~~~.#..........#",
+    "#....######....#.~~~~~~~~~.#.......#..#",
+    "#....######....#.~~~~~~~~~.#...L......#",
+    "#............L.#.~~~~~~~~~.#..........#",
+    "#..............#.~~~~~~~~~.#..#########",
+    "#.1............#...........#..........#",
+    "#..L...........#....2..L...#..........#",
+    "####...#####################...L......#",
+    "####...#####################...##.....#",
+    "#.........#................#...##.....#",
+    "#.........#...LLLLLLLLLL...#..........#",
+    "#.........#............2...#......K...#",
+    "#...@.................................#",
+    "#...X...............................L.#",
+    "#......L..#.............L..#..........#",
+    "#.........#.1...L..........#.........2#",
+    "#######################################"
+  ]
 }
   ];
   root.EscapeKids=routes;
