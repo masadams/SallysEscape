@@ -9,8 +9,8 @@
  const AREAS=Object.freeze([
   {id:'autumn-hollow',name:'Autumn Hollow',theme:'autumn',x:20,y:20,rx:12,ry:10,entry:{x:20,y:30},gate:{x:20,y:33,axis:'y'}},
   {id:'winter',name:'Winterlight Hollow',theme:'frost',x:55,y:20,rx:12,ry:10,entry:{x:55,y:35},gate:{x:55,y:33,axis:'y'}},
-  {id:'spring',name:'A blossom path',theme:'garden',x:55,y:55,rx:12,ry:10,entry:{x:40,y:55},gate:{x:42,y:55,axis:'x'}},
-  {id:'summer',name:'A sunlit path',theme:'coast',x:20,y:55,rx:12,ry:10,entry:{x:20,y:40},gate:{x:20,y:42,axis:'y'}}
+  {id:'spring',name:'Blossom Hollow',theme:'garden',x:55,y:55,rx:12,ry:10,entry:{x:40,y:55},gate:{x:42,y:55,axis:'x'}},
+  {id:'summer',name:'Sunshore Cove',theme:'coast',x:20,y:55,rx:12,ry:10,entry:{x:20,y:40},gate:{x:20,y:42,axis:'y'}}
  ].map(a=>Object.freeze({...a,entry:Object.freeze(a.entry),gate:Object.freeze(a.gate)})));
  const Ice=node?require('./escape-ice.js'):root.EscapeIce;
  const SPOTS=[[-8,3],[-8,-3],[-3,-6],[3,-6],[8,-3],[8,3],[3,7],[-3,7]];

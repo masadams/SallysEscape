@@ -32,7 +32,10 @@ async function smoke(){
   await send('Emulation.setEmulatedMedia',{features:[]});
   await require('./smoke-winter-browser.cjs').checkWinterBrowser({run,frame,screenshot,send});
   for(const area of ['spring','summer']){
-   await run('seasonVisit('+JSON.stringify(area)+');for(let i=0;i<120*60&&seasonWorld.target;i++)seasonWorld.advance(1/120);renderSeasonHUD(true);drawSeasonWorld()');await frame();assert.equal(await run('seasonWorld.nearbyGate()?.id'),area);await screenshot(area+'-gate');
+   await run('seasonVisit('+JSON.stringify(area)+');for(let i=0;i<120*60&&seasonWorld.target;i++)seasonWorld.advance(1/120);renderSeasonHUD(true);drawSeasonWorld()');await frame();
+   // An area open early (or after its date) is walked into; a closed one shows its weather gate.
+   if(await run('seasonWorld.areaOpen('+JSON.stringify(area)+')')){assert.equal(await run('seasonPack'),area);await screenshot(area+'-area');}
+   else{assert.equal(await run('seasonWorld.nearbyGate()?.id'),area);await screenshot(area+'-gate');}
   }
   await run('seasonVisit("autumn-hollow");seasonEnter()');assert.equal(await run('gameState'),'escape');assert.equal(await run('escapeGame.level.id'),'autumn-orchard');await run('escapeLeaveRun()');assert.equal(await run('gameState'),'seasonalHub');
   await require('./smoke-season-input-browser.cjs').checkSeasonInputs({run,frame,screenshot,send});

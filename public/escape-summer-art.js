@@ -68,7 +68,7 @@ function drawSummerGull(h,c,g){
 // a lantern line along the harbour, and a little sailboat once all eight are home.
 function paintSummerWorldDetails(d,w,c,x1,x2,y1,y2){
  const busy=escapeWorldBusy(w);for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++){if(w.areaAt({x,y}).id!=='summer'||w.grid[y]?.[x]!=='.'||busy.has(x+','+y))continue;const hash=(x*29+y*13)%31,px=(x+.5)*c,py=(y+.5)*c;d.noStroke();
-  if(hash===0){d.push();d.translate(px,py);drawSummerProp(d,'parasol',c);d.pop();}
+  if(hash===0&&(x+y)%3===0){d.push();d.translate(px,py);drawSummerProp(d,'parasol',c);d.pop();}
   else if(hash===7||hash===19){d.fill(236,214,170);for(const [dx,dy]of[[-.12,.05],[.1,-.04],[.02,.12]])d.ellipse(px+dx*c,py+dy*c,c*.1,c*.08);}
   else if(hash===11){d.fill(120,150,90,150);for(const a of[-.4,0,.4])d.ellipse(px+Math.sin(a)*c*.12,py-c*.08,c*.06,c*.3);}}
 }
@@ -77,11 +77,11 @@ function drawSummerWorld(w,c,near,save){
  summerMotionQuery??=window.matchMedia?.('(prefers-reduced-motion: reduce)')||{matches:false};
  const moving=escapeLightingFull()&&!summerMotionQuery.matches,t=moving?w.elapsed:0,count=save.cleared('summer');
  // The lighthouse: its lamp brightens with each lens piece; the beam sweeps slowly once all eight are home.
- if(near(18.5,55,5)){push();translate(18.5*c,55.6*c);drawSummerProp(window,'lighthouse',c*2.4);pop();
+ if(near(18.5,55,5)){push();translate(18.5*c,55.6*c);drawSummerProp(globalThis,'lighthouse',c*2.4);pop();
   noStroke();fill(...(count?[255,226,140]:[120,112,108]),count?120+count*16:200);ellipse(18.5*c,54.15*c,c*.42,c*.3);
   if(count===8){seasonLightPool(18.5*c,54.2*c,c*3,'255,226,150',.22);if(moving){const a=t*.5;fill(255,236,180,34);triangle(18.5*c,54.2*c,(18.5+Math.cos(a-.12)*5)*c,(54.2+Math.sin(a-.12)*5)*c,(18.5+Math.cos(a+.12)*5)*c,(54.2+Math.sin(a+.12)*5)*c);}}}
  // Harbour lanterns along the shore, one lit per lens piece.
  for(let i=0;i<8;i++){const x=13+i*2,y=64.6;if(!near(x,y))continue;const on=i<count;stroke(84,66,48);strokeWeight(c*.06);line(x*c,(y+.3)*c,x*c,(y-.4)*c);noStroke();fill(...(on?[250,214,150]:[120,112,108]));rect((x-.15)*c,(y-.7)*c,c*.3,c*.32,c*.06);if(on&&escapeLightingFull())seasonLightPool(x*c,(y-.55)*c,c*1.4,'255,214,150',.2);}
  // The little sailboat, moored once every escape is done; it bobs unless motion is reduced.
- if(count===8&&near(23,57)){push();translate(23*c,(57+Math.sin(t*1.2)*.05)*c);drawSummerProp(window,'rowboat',c*1.3);stroke(120,96,70);strokeWeight(c*.05);line(0,-c*.05,0,-c*.9);noStroke();fill(250,246,232);triangle(c*.03,-c*.88,c*.03,-c*.15,c*.5,-c*.2);pop();}
+ if(count===8&&near(23,57)){push();translate(23*c,(57+Math.sin(t*1.2)*.05)*c);drawSummerProp(globalThis,'rowboat',c*1.3);stroke(120,96,70);strokeWeight(c*.05);line(0,-c*.05,0,-c*.9);noStroke();fill(250,246,232);triangle(c*.03,-c*.88,c*.03,-c*.15,c*.5,-c*.2);pop();}
 }

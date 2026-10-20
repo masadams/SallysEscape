@@ -6,8 +6,8 @@
  const packs=Object.freeze([
   Object.freeze({id:'autumn-hollow',name:'Autumn Hollow',subtitle:'The Lantern Festival',theme:'autumn-festival',ready:true,opensAt:'2026-10-01T00:00:00-04:00',zone:'America/Toronto',motif:'autumn',levels:8}),
   Object.freeze({id:'winter',name:'Winterlight Hollow',subtitle:'The Missing Christmas Star',theme:'winter-village',ready:true,access:'open',opensAt:'2026-12-01T00:00:00-05:00',zone:'America/Toronto',motif:'snow',levels:8}),
-  Object.freeze({id:'spring',name:'Blossom Hollow',subtitle:'The First Blossom Festival',theme:'garden',ready:true,opensAt:'2027-03-20T00:00:00-04:00',zone:'America/Toronto',motif:'blossom',levels:8}),
-  Object.freeze({id:'summer',name:'Sunshore Cove',subtitle:'The Last Light of Summer',theme:'coast',ready:true,opensAt:'2027-06-01T00:00:00-04:00',zone:'America/Toronto',motif:'sun',levels:8})
+  Object.freeze({id:'spring',name:'Blossom Hollow',subtitle:'The First Blossom Festival',theme:'garden',ready:true,access:'open',opensAt:'2027-03-20T00:00:00-04:00',zone:'America/Toronto',motif:'blossom',levels:8}),
+  Object.freeze({id:'summer',name:'Sunshore Cove',subtitle:'The Last Light of Summer',theme:'coast',ready:true,access:'open',opensAt:'2027-06-01T00:00:00-04:00',zone:'America/Toronto',motif:'sun',levels:8})
  ]);
  const creatures=Object.freeze({snake:'Skeletal serpent',beetle:'Zombie gardener',owl:'Ghost lantern keeper',toad:'Jack-o\u2019-lantern',mimic:'Haunted treat basket',fox:'Roast turkey'});
  const copper=Object.freeze({id:'copper-lantern',name:'Copper Lantern',body:[184,91,49],light:[242,164,89],belly:[255,218,145],spots:[115,45,63],crest:[130,46,67],tail:[149,66,50],dark:[111,48,48],spot:[115,45,63]});
