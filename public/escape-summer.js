@@ -120,5 +120,135 @@
    '#.X.......#.#...1.....#',
    '#######################'
   ]
+ },
+ {
+  id:'summer-lagoon',name:'The Reed Lagoon',index:4,revision:1,difficulty:'Easy\u2013medium',seasonalTheme:'summer-lagoon',cunning:0,
+  pebbles:2,tongues:1,
+  brief:'A reed lagoon with a lazy current, a heron on the bank and a Sunskimmer over the meadow.',
+  hint:'The heron stabs straight along its beak. Step onto the bank while it looks out over the water, then swim: it never strikes a swimmer. The lagoon drifts south. The Sunskimmer flies a square round the key; cross just behind it. The switch past the reeds lowers the footbridge home.',
+  currents:[{area:[9,1,13,13],dir:[0,1],speed:.45}],
+  gates:[{id:'reed-bridge',name:'reed footbridge',bridge:true,tiles:[[9,12],[10,12],[11,12],[12,12],[13,12]],switch:[21,11],color:[236,196,98]}],
+  guards:[{kind:'heron',spawn:[8,8],patrol:[[8,8]],facing:-Math.PI/2,looks:[-Math.PI/2,0],every:3},{kind:'dragonfly',spawn:[15,4],patrol:[[15,4],[21,4],[21,10],[15,10]],facing:0,speed:1.6}],
+  reactions:[],
+  fieldNotes:[
+   {id:'summer-lagoon-note-0',at:[5,7],title:'The reed heron',body:'The heron looks up the bank, then out over the water, then up the bank again. Its beak only reaches straight ahead. It never strikes at a swimmer. - Marina'},
+   {id:'summer-lagoon-note-1',at:[16,12],title:'The Sunskimmer',body:'It flies the same square all day. Count it round, then cross just behind it. Reeds hide you only where they grow, and only while you keep still.'}
+  ],
+  props:[{at:[1,1],kind:'parasol'},{at:[6,13],kind:'crate'},{at:[21,1],kind:'bunting'},{at:[14,1],kind:'rowboat'},{at:[1,6],kind:'buoy'},{at:[20,13],kind:'sandcastle'}],
+  map:[
+   '#######################',
+   '#...1..#1~~~~~........#',
+   '#.@....#.~~~~~........#',
+   '#......#L~~2~~........#',
+   '#......#.~~~~~......1.#',
+   '#...L..#.~~~~~........#',
+   '#........~~~~~..1.#...#',
+   '#......#.~~~~~....K...#',
+   '#.1....#.~~~~~....#...#',
+   '#......#.~~~~~........#',
+   '#..L...#.~~~~~...1....#',
+   '#......#.~~~~~........#',
+   '#.X......~~~~~.....L..#',
+   '#......#1~~~~~.L.....1#',
+   '#######################'
+  ]
+ },
+ {
+  id:'summer-boatshed',name:'Beneath the Boatshed',index:5,revision:1,difficulty:'Medium',seasonalTheme:'summer-boatshed',cunning:0,
+  pebbles:2,tongues:2,
+  brief:'A cargo lane where barrels roll, a deep slipway and a bridge switch across the water.',
+  hint:'A barrel rolls down the cargo lane every few seconds; the rumble warns you. Cross just after one goes by. In the store, stand opposite the bridge switch across the slipway and flick it with your tongue. The key is in the loft. The scorpion in the yard only stings when its tail is up.',
+  logs:[{from:[7,1],to:[7,13],period:6,offset:0,speed:6}],
+  gates:[{id:'slip-bridge',name:'slipway bridge',bridge:true,tiles:[[14,6],[15,6]],switch:[16,3],color:[236,196,98]}],
+  guards:[{kind:'scorpion',spawn:[19,12],patrol:[[19,12]],facing:Math.PI}],
+  reactions:[],
+  fieldNotes:[
+   {id:'summer-boatshed-note-0',at:[4,3],title:'The cargo lane',body:'Barrels roll down the cargo lane from the loading door, one after another. Listen for the rumble, watch one go by, then cross. Never stop in the lane. - Marina'},
+   {id:'summer-boatshed-note-1',at:[12,5],title:'The slipway',body:'The slipway is too deep to swim. Its bridge switch is on the far side: stand right opposite it and flick it with your tongue.'}
+  ],
+  props:[{at:[1,1],kind:'crate'},{at:[5,13],kind:'rowboat'},{at:[12,1],kind:'crate'},{at:[21,1],kind:'harbourlantern'},{at:[16,13],kind:'buoy'},{at:[9,7],kind:'harbourlantern'}],
+  map:[
+   '#######################',
+   '#...1.#1#....1__......#',
+   '#.@...#.#.NN..__....K.#',
+   '#.....#.#..#..__..L...#',
+   '#.............__......#',
+   '#..L..#.#.....__.#...1#',
+   '#.....#.#.L...__......#',
+   '#1....#.#.....__.....2#',
+   '#.....#.#.#...__......#',
+   '#.....#.#....1__##.####',
+   '#.............__......#',
+   '#.....#.#...#.__1.....#',
+   '#.X...#.#1....__......#',
+   '#.....#.#..L..__......#',
+   '#######################'
+  ]
+ },
+ {
+  id:'summer-inlet',name:'The Sunset Inlet',index:6,revision:1,difficulty:'Medium',seasonalTheme:'summer-sunset',cunning:0,
+  pebbles:2,tongues:1,
+  brief:'Three sandbanks, two deep pools with a Sailfin in each, and a fast channel home.',
+  hint:'A Sailfin only hunts swimmers it can see, and it is quicker than you in the water. Wait until it is at the far end of its pool, then swim straight across; it can never follow you onto sand. The switch on the middle bank opens the lens vault. The bottom channel runs fast to the west: drop into it from the far pool for a quick ride home.',
+  currents:[{area:[6,13,16,13],dir:[-1,0],speed:.9}],
+  gates:[{id:'lens-vault',name:'lens vault',tiles:[[19,7]],switch:[11,2],color:[236,196,98]}],
+  guards:[{kind:'fish',spawn:[7,9],patrol:[[7,2],[7,11]],facing:-Math.PI/2},{kind:'fish',spawn:[14,3],patrol:[[15,11],[14,2]],facing:Math.PI/2}],
+  reactions:[],
+  fieldNotes:[
+   {id:'summer-inlet-note-0',at:[4,6],title:'Sailfins',body:'A Sailfin patrols each pool. It only chases swimmers it can see, and it cannot follow you onto the sand. Watch it turn at the far end, then swim straight across. - Marina'},
+   {id:'summer-inlet-note-1',at:[11,10],title:'The sunset channel',body:'The channel along the bottom runs fast to the west. You can ride it home from the far pool, and the little sandbar in the middle is a safe place to stop.'}
+  ],
+  props:[{at:[1,1],kind:'parasol'},{at:[5,10],kind:'harbourlantern'},{at:[12,1],kind:'buoy'},{at:[18,13],kind:'rowboat'},{at:[21,10],kind:'harbourlantern'},{at:[10,11],kind:'crate'}],
+  map:[
+   '#######################',
+   '#.....~~~~...~~~~.....#',
+   '#.@...~~~~...~~~~1...1#',
+   '#.....~~~~...~~~~.....#',
+   '#..1..~~~~...~~~~.....#',
+   '#.....~~~~1..~~~~..####',
+   '#.....~~#~...~~~~..#..#',
+   '#.....~~~~...~~~~...K.#',
+   '#.....~~~~...~#~~..#..#',
+   '#1....~~~~..1~~~~..####',
+   '#.....~~~~...~~~~.....#',
+   '#.....~~~~...~~~~.....#',
+   '#.X...####.1.###~....1#',
+   '#.....~~~~~2~~~~~#....#',
+   '#######################'
+  ]
+ },
+ {
+  id:'summer-lighthouse',name:'The Lighthouse Lantern',index:7,revision:1,difficulty:'Medium',seasonalTheme:'summer-lighthouse',cunning:0,
+  pebbles:3,tongues:1,
+  brief:'The last lens: a tidal causeway, the gull\\u2019s stores, a crab under the lighthouse and the bridge home.',
+  hint:'Cross the flats while the tide is out. In the stores the gull turns to watch each wall; slip along the top while it looks away, or toss it a pebble. Under the lighthouse a crab guards the lane: wake it, step back, and pass while it rests. From the lighthouse step, flick the bridge switch with your tongue and walk home along the harbour wall.',
+  tide:{period:16,high:7,offset:9},
+  gates:[{id:'harbour-bridge',name:'harbour bridge',bridge:true,tiles:[[7,14],[8,14],[9,14],[10,14],[11,14],[12,14],[13,14],[14,14],[15,14],[16,14],[17,14]],switch:[15,12],color:[236,196,98]}],
+  guards:[{kind:'magpie',spawn:[13,4],patrol:[[13,1],[16,4],[13,7],[10,4]],facing:-Math.PI/2},{kind:'crab',spawn:[21,9],patrol:[[21,9]],facing:0,axis:'x',range:2},{kind:'dragonfly',spawn:[10,9],patrol:[[10,9],[16,9],[16,10],[10,10]],facing:0,speed:1.4}],
+  reactions:[{id:'lighthouse-key',when:'key',message:'The last sun lens! Flick the bridge switch from the lighthouse step and walk home along the harbour wall.'}],
+  fieldNotes:[
+   {id:'summer-lighthouse-note-0',at:[4,6],title:'The last lens',body:'The final sun lens is on the lighthouse step. The tide, the gull and the crab are all between here and there. Take your time; every one of them has a rhythm. - Marina'},
+   {id:'summer-lighthouse-note-1',at:[11,9],title:'The sunset annex',body:'A Sunskimmer loops the sunset annex all evening. Wait by the door, watch it go round, and fetch each shell just behind it.'}
+  ],
+  props:[{at:[1,1],kind:'parasol'},{at:[23,12],kind:'lighthouse'},{at:[5,13],kind:'harbourlantern'},{at:[18,1],kind:'bunting'},{at:[12,3],kind:'crate'},{at:[1,15],kind:'buoy'},{at:[20,15],kind:'harbourlantern'}],
+  map:[
+   '#########################',
+   '#......ttt......1#.....1#',
+   '#.@....ttt.#...#.#......#',
+   '#......ttt.......#......#',
+   '#...1..ttt..............#',
+   '#......ttt.......#......#',
+   '#......ttt.#...#.#......#',
+   '#......ttt1......#......#',
+   '#......######.#####.#####',
+   '#......###.......#......#',
+   '#1.....###1.....2######.#',
+   '#......###########......#',
+   '#......________.__......#',
+   '#......___________....K.#',
+   '#.X....___________......#',
+   '#......___________.1...1#',
+   '#########################'
+  ]
  }
 ];root.EscapeSummer=routes;if(typeof module!=='undefined'&&module.exports)module.exports=routes;})(typeof globalThis!=='undefined'?globalThis:this);
