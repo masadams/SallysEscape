@@ -750,3 +750,6 @@ body.pad-nav .pad-glyph { display:inline-block; }
 /* The empty space between touch controls must never intercept world-card taps. */
 #escape-stage-ui #touch-controls{pointer-events:none}
 #escape-stage-ui #touch-controls button,#escape-stage-ui #movement-stick{pointer-events:auto}
+
+/* Keyboard-only shortcuts in labels hide while a controller or touch is in use. */
+.pad-nav .key-only, .touch-nav .key-only { display:none; }
