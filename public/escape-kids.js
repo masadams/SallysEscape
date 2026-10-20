@@ -921,6 +921,145 @@
     "#..............................L..#",
     "###################################"
   ]
+},
+{
+  "id": "snowy-hilltop",
+  "fieldNotes": [
+    {
+      "id": "snowy-hilltop-sign-1",
+      "at": [33,16],
+      "title": "Behind the snowy rocks",
+      "body": "The snake slides along the top of this slope. Walk along the bottom, behind the rocks, and wait in a bush when it comes back."
+    },
+    {
+      "id": "snowy-hilltop-sign-2",
+      "at": [9,12],
+      "title": "An icy gap",
+      "body": "The blue switch is across the icy gap. Stand here, face the switch and use Tongue to flick it."
+    }
+  ],
+  "name": "The Snowy Hilltop",
+  "sticker": "⛄",
+  "adventure": true,
+  "kidsTheme": "frost",
+  "gentle": 0.66,
+  "brief": "Snow on the hill! Sally's key is in the hut at the very top. Climb the slopes past a snake and a beetle.",
+  "hint": "Tongue the blue switch across the icy gap. Step out of the beetle's lane. The amber button opens the hut. The key opens a sled run home. Wheee!",
+  "tongues": 2,
+  "pebbles": 3,
+  "checkpoints": [
+    [33,17],
+    [4,13],
+    [27,8],
+    [25,5]
+  ],
+  "tunnels": [
+    [
+      [12,22],
+      [16,20]
+    ]
+  ],
+  "caps": [
+    {
+      "at": [35,1],
+      "to": [6,22]
+    }
+  ],
+  "gates": [
+    {
+      "id": "snow-blue",
+      "name": "Upper slope",
+      "color": [106,195,236],
+      "switch": [7,9],
+      "tiles": [
+        [1,11],
+        [2,11],
+        [3,11]
+      ]
+    },
+    {
+      "id": "snow-amber",
+      "name": "Hut door",
+      "color": [244,192,93],
+      "switch": [2,2],
+      "tiles": [
+        [17,3]
+      ]
+    },
+    {
+      "id": "snow-sled",
+      "name": "Sled run",
+      "color": [191,154,230],
+      "tiles": [
+        [34,1]
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "snow-key",
+      "when": "key",
+      "open": [
+        "snow-sled"
+      ],
+      "message": "The sled run is open! A quick way home.",
+      "objective": "Ride the sled run, or walk down, to the green door."
+    }
+  ],
+  "guards": [
+    {
+      "spawn": [18,13],
+      "patrol": [
+        [4,13],
+        [33,13]
+      ],
+      "facing": 3.141592653589793
+    },
+    {
+      "kind": "beetle",
+      "spawn": [17,10],
+      "facing": 0,
+      "patrol": [
+        [24,10],
+        [11,10]
+      ]
+    },
+    {
+      "spawn": [7,3],
+      "patrol": [
+        [7,1],
+        [7,5]
+      ],
+      "facing": -1.5707963267948966
+    }
+  ],
+  "map": [
+    "#####################################",
+    "#.........L..#...K..2#..............#",
+    "#............#.......#........L...###",
+    "#............####.####..............#",
+    "#..L................................#",
+    "#...........L.......................#",
+    "##########################...########",
+    "#....L.......L........L.......#...2.#",
+    "#.......##......##............#.....#",
+    "#.......##......##............S.....#",
+    "#......_............L.........#..1..#",
+    "#...###_#############################",
+    "#..................2................#",
+    "#.................................L.#",
+    "#.....###....###....###....###......#",
+    "#...L.###....###....###....###......#",
+    "#...................................#",
+    "#.........L......L......L......L....#",
+    "################################....#",
+    "#..........L...#####................#",
+    "#..............#.2.#.....L..........#",
+    "#..@..L........#####................#",
+    "#..X................................#",
+    "#.................1.................#",
+    "#####################################"
+  ]
 }
   ];
   root.EscapeKids=routes;
