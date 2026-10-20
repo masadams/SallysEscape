@@ -764,6 +764,9 @@ function drawEscapeTricks(g,cell,view){
   for(const k of g.soil){const [x,y]=k.split(',').map(Number);if(!seen(x,y))continue;
     stroke(196,160,104,150);strokeWeight(cell*.04);fill(74,50,28,235);ellipse((x+.5)*cell,(y+.5)*cell,cell*.9,cell*.8);noStroke();
     fill(150,112,70,230);for(const [a,b,r] of [[.3,.36,.14],[.64,.34,.11],[.46,.62,.16],[.72,.66,.1],[.3,.7,.08]])ellipse((x+a)*cell,(y+b)*cell,cell*r,cell*r*.75);}
+  // Soft sand: a pale, deep drift with wind ripples. It slows Sally and keeps her tracks.
+  const sandSheet=escapeLightingFull()&&typeof drawEscapeZone==='function';if(sandSheet&&g.softSand.size)drawEscapeZone(g.softSand,cell,seen,[230,206,156],150,0);
+  for(const key of g.softSand){const [x,y]=key.split(',').map(Number);if(!seen(x,y))continue;if(!sandSheet){noStroke();fill(230,206,156,150);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*.18);}noFill();stroke(196,164,110,120);strokeWeight(Math.max(1,cell*.025));const o=((x*7+y*3)%5)*.06;for(const ry of [.3,.62])arc((x+.5)*cell,(y+ry+o)*cell,cell*.8,cell*.22,PI*1.1,PI*1.9);}
   const mossSheet=escapeLightingFull()&&typeof drawEscapeZone==='function';if(mossSheet&&g.moss.size)drawEscapeZone(g.moss,cell,seen,[78,128,70],130,0);
   for(const key of g.moss){const [x,y]=key.split(',').map(Number);if(!seen(x,y))continue;noStroke();if(!mossSheet){fill(78,128,70,150);rect(x*cell+2,y*cell+2,cell-4,cell-4,cell*.2);}fill(118,170,92,170);for(const [dx,dy] of [[.25,.3],[.6,.25],[.4,.6],[.75,.7],[.2,.78]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.16,cell*.12);}
   for(const e of g.echoes){noFill();stroke(185,166,232,40);strokeWeight(Math.max(1,cell*.03));for(let y=e.y1;y<=e.y2;y++)for(let x=e.x1;x<=e.x2;x++){if(!seen(x,y)||!g.floor(x,y))continue;arc((x+.5)*cell,(y+.85)*cell,cell*.55,cell*.4,PI*1.15,PI*1.85);}}

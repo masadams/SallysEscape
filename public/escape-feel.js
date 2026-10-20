@@ -6,12 +6,12 @@
   // The ground under Sally decides her footstep. Gravel is loud (hunters hear it), moss is silent.
   function surface(g,x=g.player.x,y=g.player.y){
     const tx=Math.floor(x),ty=Math.floor(y),tile=g.grid?.[ty]?.[tx],k=tx+','+ty;
-    if(g.slippery?.has?.(k))return 'ice';if(g.level?.seasonal==='winter'&&tile!=='L')return 'snow';if(tile==='N')return 'gravel';if(tile==='L')return 'leaves';if(tile==='m'||g.moss?.has?.(k))return 'moss';if(tile==='M')return 'mud';const marks=g.feelMarks||(g.feelMarks={vines:new Set((g.level?.vines||[]).map(String)),flats:new Set((g.level?.tideFlats||[]).map(String))});
+    if(g.slippery?.has?.(k))return 'ice';if(g.softSand?.has?.(k))return 'softsand';if(g.level?.seasonal==='winter'&&tile!=='L')return 'snow';if(tile==='N')return 'gravel';if(tile==='L')return 'leaves';if(tile==='m'||g.moss?.has?.(k))return 'moss';if(tile==='M')return 'mud';const marks=g.feelMarks||(g.feelMarks={vines:new Set((g.level?.vines||[]).map(String)),flats:new Set((g.level?.tideFlats||[]).map(String))});
     if(tile==='T'||marks.vines.has(k))return 'tangle';if(tile==='t'||marks.flats.has(k))return 'wet';
     if(g.cold?.has?.(k))return 'snow';if(g.level?.biome==='desert')return 'sand';return 'floor';
   }
   // Grounds that keep a footprint for a few seconds.
-  const PRINTS={snow:[236,246,255],sand:[120,84,44],mud:[52,38,26]};
+  const PRINTS={snow:[236,246,255],sand:[120,84,44],softsand:[112,82,44],mud:[52,38,26]};
   // How much each place echoes: caves and wells ring, halls a little, the open air not at all.
   const SPACES={glow:'cave',grotto:'cave',ants:'cave',hollow:'cave',gilded:'cave','secret:mossy-well':'cave','secret:ice-cave':'cave',
     ruins:'hall',quarry:'hall',vents:'hall','secret:sunken-wreck':'hall','secret:challenge-shrine':'hall'};
@@ -59,7 +59,9 @@
   // a leaf or two kicked up from leaves, a noise ring when the step is loud enough to hear.
   function step(fx,g,{t,sprint,alt,rand=Math.random}){
     const p=g.player,ground=surface(g),out=[],side=alt?1:-1,fx0=p.facing?.x??0,fy0=p.facing?.y??-1,heading=Math.atan2(fy0,fx0);
-    if(PRINTS[ground])out.push(fx.add('print',p.x-fy0*.12*side,p.y+fx0*.12*side,{t,life:ground==='mud'?5:4,size:.14,color:PRINTS[ground],angle:heading}));
+    // Soft sand also keeps the wavy line of her tail dragging behind.
+    if(ground==='softsand'&&!p.swimming)out.push(fx.add('print',p.x-fx0*.42,p.y-fy0*.42,{t,life:8,size:.07,color:[132,100,60],angle:heading+(alt?.35:-.35)}));
+    if(PRINTS[ground])out.push(fx.add('print',p.x-fy0*.12*side,p.y+fx0*.12*side,{t,life:ground==='mud'?5:ground==='softsand'?8:4,size:ground==='softsand'?.2:.14,color:PRINTS[ground],angle:heading}));
     if(sprint&&!p.swimming&&!['moss','wet','mud'].includes(ground))for(let i=0;i<2;i++)out.push(fx.add('dust',p.x-fx0*.25,p.y-fy0*.25+.2,{t,life:.45,size:.16+rand()*.1,vx:(rand()-.5)*1.2-fx0*.6,vy:(rand()-.5)*.8-fy0*.6-.3,color:ground==='snow'?[236,246,255]:ground==='sand'?[214,178,120]:[176,164,138]}));
     if(ground==='leaves'||ground==='tangle')for(let i=0;i<(sprint?3:1);i++)out.push(fx.add('leaf',p.x,p.y,{t,life:.8,size:.1,vx:(rand()-.5)*1.6,vy:-.6-rand()*.8,angle:rand()*6,spin:(rand()-.5)*8,color:ground==='tangle'?[96,140,70]:[140,170,80]}));
     const r=p.loud?RINGS.sprint:p.noisy?RINGS.gravel:0,made=r&&ring(fx,g,p.x,p.y,r,t,{gap:RING_GAP,life:1.1,color:p.loud?[255,226,180]:[230,212,176]});if(made)out.push(made);

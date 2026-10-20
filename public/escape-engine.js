@@ -82,7 +82,7 @@
       this.antTrails=(this.level.antTrails||[]).map(t=>({tiles:expandTrail(t.path),groups:t.groups||3,size:t.size||4,gap:t.gap||5,speed:t.speed||1.6,offset:t.offset||0}));
       this.carried=[];this.thefts=0;this.recoveries=0;this.stolen=0;
       // Frost Hollow: only marked rooms are cold; warm stones thaw Sally quickly.
-      this.slippery=new Set((this.level.slippery||[]).map(p=>p.join(',')));this.slideVelocity={x:0,y:0};
+      this.slippery=new Set((this.level.slippery||[]).map(p=>p.join(',')));this.softSand=new Set((this.level.softSand||[]).map(p=>p.join(',')));this.slideVelocity={x:0,y:0};
       this.cold=new Set();for(const [x1,y1,x2,y2] of this.level.cold||[])for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)this.cold.add(x+','+y);
       this.warm=new Set((this.level.warm||[]).map(([x,y])=>x+','+y));
       // Steam Vents: wall vents fire jets down a lane on a fixed rhythm.
@@ -718,7 +718,7 @@
       if(p.exhausted&&p.stamina>=25)p.exhausted=false;
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
       if(this.cold.size)this.updateWarmth(dt);
-      const crawl=Boolean(input.crawl&&!this.water(p)),sprint=!crawl&&Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',speed=(sprint?4:crawl?1.25:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72:1)*(this.water(p)?.55:1);
+      const crawl=Boolean(input.crawl&&!this.water(p)),sprint=!crawl&&Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',sand=!p.swimming&&this.softSand.has(this.tileKey(p)),speed=(sprint?4:crawl?1.25:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72:sand?.7:1)*(this.water(p)?.55:1);
       const onIce=this.slippery.has(this.tileKey(p)),special=p.flight||p.underground||p.dig||this.heldBy;
       if(special){this.slideVelocity.x=0;this.slideVelocity.y=0;}
       // Stepping onto ice keeps the speed Sally arrived with; from there the glide builds past a

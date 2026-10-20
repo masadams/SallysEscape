@@ -55,6 +55,7 @@
       case 'moss':noise(v,{dur:.05,gain:.035*s,filter:'lowpass',freq:260});break;
       case 'mud':noise(v,{dur:.16,gain:.12*s,filter:'lowpass',freq:520*f,to:180,q:2,attack:.02});tone(v,{freq:150*f,to:90,dur:.12,type:'sine',gain:.05*s});break;
       case 'sand':noise(v,{dur:.08,gain:.07*s,filter:'highpass',freq:3400*f,attack:.01});break;
+      case 'softsand':noise(v,{dur:.18,gain:.09*s,filter:'bandpass',freq:1100*f,to:600,q:.8,attack:.03});noise(v,{dur:.1,delay:.05,gain:.04*s,filter:'highpass',freq:3000});break;
       case 'ice':noise(v,{dur:.2,gain:.07*s,filter:'bandpass',freq:3200*f,to:2100,q:2,attack:.025});break;
       case 'snow':noise(v,{dur:.09,gain:.13*s,filter:'bandpass',freq:1500*f,to:900,q:1.6,attack:.01});noise(v,{dur:.02,delay:.03,gain:.06*s,filter:'highpass',freq:4200});break;
       case 'wet':noise(v,{dur:.07,gain:.12*s,filter:'bandpass',freq:1700*f,to:1100,q:1.2});break;
