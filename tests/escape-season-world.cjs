@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {EscapeSeasonWorld}=require('../public/escape-season-world.js'),{EscapeWorld}=require('../public/escape-world.js'),{EscapeCatalog}=require('../public/escape-levels.js'),Seasons=require('../public/escape-seasons.js');
 const NOW=()=>Date.parse('2026-10-19T10:00:00-04:00');
-const gated=Seasons.packs.map(p=>p.id==='winter'?{...p,access:'scheduled'}:p);
+const gated=Seasons.packs.map(p=>p.id!=='autumn-hollow'?{...p,access:'scheduled'}:p);
 const make=options=>new EscapeSeasonWorld({now:NOW,packs:gated,...options});
 function walk(w){for(let n=0;n<120*90&&w.target;n++){w.advance(1/120);assert.ok(w.floor(w.player.x,w.player.y),'Sally stays on walkable ground');}assert.equal(w.target,null,'route finishes');}
 test('the seasonal world has four themed regions and eight autumn entrances in one continuous landscape',()=>{const w=make();assert.deepEqual(w.chapters.map(a=>a.theme),['autumn','frost','garden','coast']);assert.equal(w.nodes.length,EscapeCatalog.seasonal.length);assert.deepEqual(w.nodes.map(n=>n.id),EscapeCatalog.seasonal.map(l=>l.id));for(const n of w.nodes.filter(n=>n.chapter===0)){assert.ok(w.floor(n.x,n.y));assert.ok(w.floor(n.x,n.y+1));}assert.equal(w.regionOpen(0),true);for(let i=1;i<4;i++)assert.equal(w.regionOpen(i),false);});
