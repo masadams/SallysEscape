@@ -175,15 +175,20 @@
   ]
  },
  {
-  id:'spring-wall',name:'The Gardener’s Shortcut',index:5,revision:1,difficulty:'Medium',seasonalTheme:'spring-shed',cunning:0,
+  id:'spring-wall',name:'The Gardener’s Shortcut',index:5,revision:1,difficulty:'Medium–hard',seasonalTheme:'spring-shed',cunning:2,
   pebbles:3,tongues:1,
-  brief:'A stag beetle in an apron, a cracked shed wall and a back path home.',
-  hint:'Stand in front of the cracked wall where the beetle can see you down the long row. When it lowers its head, step aside: it charges through the wall. The shed switch opens the back path home, so the wall is never your only way out.',
+  brief:'A stag beetle in an apron, a cracked shed wall, serpents in the shed and a back path home.',
+  hint:'Stand in front of the cracked wall where the beetle can see you down the long row. When it lowers its head, step aside: it charges through the wall. The shed switch opens the back path home, so the wall is never your only way out. A serpent sweeps the middle of the shed, and taking the key wakes a second one by the switch: cross behind the first to the leaf by the switch, hide, and go when the lower one heads away east.',
   gates:[{id:'back-path',name:'back path',tiles:[[17,14]],switch:[17,12],color:[196,150,96]}],
-  guards:[{kind:'beetle',spawn:[4,7],patrol:[[4,7],[10,7]],facing:0}],
-  reactions:[],
+  guards:[
+   {kind:'beetle',spawn:[4,7],patrol:[[4,7],[10,7]],facing:0},
+   {kind:'snake',spawn:[21,10],patrol:[[21,10],[15,10]],facing:Math.PI}
+  ],
+  reinforcements:[{id:'shed-snake',kind:'snake',spawn:[21,13],patrol:[[21,13],[15,13]],facing:Math.PI}],
+  reactions:[{id:'wall-key',when:'key',spawn:['shed-snake'],message:'A second serpent slides out from under the potting bench. Two of them now guard the way to the switch.'}],
   fieldNotes:[
-   {id:'spring-wall-note-0',at:[10,12],title:'The gardener',body:'It cannot stop once it charges, and it breaks whatever it hits. A cracked wall is only a wall until something heavy runs into it. Let it see you in front of the crack, then step aside. - Clover'}
+   {id:'spring-wall-note-0',at:[10,12],title:'The gardener',body:'It cannot stop once it charges, and it breaks whatever it hits. A cracked wall is only a wall until something heavy runs into it. Let it see you in front of the crack, then step aside. - Clover'},
+   {id:'spring-wall-note-1',at:[21,6],title:'The shed',body:'Two serpents keep this shed once the key is gone: one across the middle, one along the bottom by the switch. Neither looks behind itself. The leaf by the switch is the place to wait.'}
   ],
   props:[{at:[1,1],kind:'wateringcan'},{at:[13,13],kind:'flowerpot'},{at:[21,1],kind:'flowerlantern'},{at:[21,8],kind:'flowerpot'},{at:[11,15],kind:'blossom'}],
   map:[
@@ -199,7 +204,7 @@
    '#########.....#....1..#',
    '#########..L..#.......#',
    '#............1#.......#',
-   '#.@......1....#.......#',
+   '#.@......1....#.L.....#',
    '#.............#.......#',
    '#################.#####',
    '#.X..1...1.......2....#',
