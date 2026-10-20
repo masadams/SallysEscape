@@ -32,7 +32,8 @@ const main={
  'lily-pond':r=>{r.go(7,7);r.wait(.7);r.go(20,13);r.wait(.7);r.go(30,4);r.go(27,15);r.wait(.7);r.go(3,18);},
  'lantern-house':r=>{r.go(12,4);r.face(1,0);r.act('tongue');r.wait(.8);r.face(0,1);r.act('glow',0);r.wait(1);r.go(11,17);r.go(20,11);r.go(24,5);r.go(28,3);r.go(24,5);r.go(20,11);r.go(11,17);r.go(4,20);},
  'sleepy-steamworks':r=>{r.go(11,14);r.go(12,3);r.go(16,3);r.go(18,9);r.go(22,17);r.go(23,5);r.go(31,3);r.go(23,5);r.go(18,9);r.go(16,3);r.go(11,3);r.go(11,14);r.go(3,18);},
- 'sallys-way-home':r=>{r.go(7,4);r.go(14,3);r.go(23,3);r.go(28,5);r.go(34,3);r.go(28,16);r.go(23,18);r.wait(.7);r.go(6,18);r.go(3,19);}
+ 'sallys-way-home':r=>{r.go(7,4);r.go(14,3);r.go(23,3);r.go(28,5);r.go(34,3);r.go(28,16);r.go(23,18);r.wait(.7);r.go(6,18);r.go(3,19);},
+ 'seashell-beach':r=>{r.wait(9);r.go(8,5);r.go(9,10);r.go(21,10);r.go(22,11);r.go(22,9);r.wait(6);r.go(24,5);r.go(28,5);r.go(31,6);r.go(29,11);r.go(27,13);r.wait(2);r.go(24,15);r.go(9,17);r.go(8,18);r.go(3,18);}
 };
 function execute(id,variant,fn,delay=0){const r=make(id,delay);try{fn(r);r.wait(1);if(r.g.status!=='won')throw Error('Not won '+r.g.message);if(variant==='treasure'&&r.g.treasure!==r.g.totalTreasure)throw Error('Missing treasure '+r.g.treasure+'/'+r.g.totalTreasure+' '+r.g.loot.filter(l=>!l.taken).map(l=>[l.x,l.y]));const out={id,variant,options:{kidsId:id},commands:r.commands,time:+r.g.elapsed.toFixed(2),treasure:r.g.treasure,events:[...r.events]};console.log(id,variant,r.g.status,out.time,out.treasure+'/'+r.g.totalTreasure,'alarms',r.g.alarms,out.events.join(','));return out;}catch(e){console.log('FAIL',id,variant,e.message,'catch',r.g.catches.at(-1));return null;}}
 const treasure={
@@ -41,13 +42,14 @@ const treasure={
  'lily-pond':r=>{r.go(8,18);r.go(2,3);r.go(7,10);r.go(7,7);r.wait(.7);r.go(14,13);r.go(20,8);r.go(20,5);r.face(0,-1);r.act('tongue');r.wait(.7);r.go(20,13);r.wait(.7);r.go(32,9);r.go(31,17);r.go(30,4);r.go(27,15);r.wait(.7);r.go(3,18);},
  'lantern-house':r=>{r.go(2,15);r.go(2,2);r.go(11,10);r.go(12,4);r.face(1,0);r.act('tongue');r.wait(.8);r.face(0,1);r.act('glow',0);r.wait(1);r.go(11,17);r.go(15,10);r.go(20,20);r.go(20,11);r.go(25,3);r.go(28,3);r.go(30,11);r.go(30,15);r.face(-1,0);r.act('pebble',1);r.wait(1.5);r.go(30,20,true);r.go(29,14,true);r.go(20,11);r.go(11,17);r.go(4,20);},
  'sleepy-steamworks':r=>{r.go(6,14);r.go(16,17);r.go(11,2);r.go(12,3);r.go(16,3);r.go(16,9);r.go(18,9);r.go(21,3);r.go(22,17);r.go(28,13);r.go(28,16);r.face(1,0);r.act('seed');r.go(32,15);r.go(32,16);r.go(23,5);r.go(32,8);r.go(31,3);r.go(23,5);r.go(18,9);r.go(16,3);r.go(11,3);r.go(11,14);r.go(3,18);},
- 'sallys-way-home':r=>{r.go(2,8);r.go(3,19);r.go(9,19);r.face(0,-1);r.act('spore',0);r.wait(.7);r.go(9,16);r.go(9,19);r.go(7,4);r.go(14,3);r.face(0,1);r.act('spore',1);r.wait(.8);r.go(15,8);r.go(14,3);r.go(22,2);r.go(29,3);r.go(34,3);r.go(36,15);r.face(0,1);r.act('spore',0);r.wait(.7);r.go(36,19);r.go(36,15);r.go(28,16);r.go(24,20);r.go(22,20);r.go(23,18);r.wait(.7);r.go(14,14);r.wait(.7);r.go(23,18);r.wait(.7);r.go(3,19);}
+ 'sallys-way-home':r=>{r.go(2,8);r.go(3,19);r.go(9,19);r.face(0,-1);r.act('spore',0);r.wait(.7);r.go(9,16);r.go(9,19);r.go(7,4);r.go(14,3);r.face(0,1);r.act('spore',1);r.wait(.8);r.go(15,8);r.go(14,3);r.go(22,2);r.go(29,3);r.go(34,3);r.go(36,15);r.face(0,1);r.act('spore',0);r.wait(.7);r.go(36,19);r.go(36,15);r.go(28,16);r.go(24,20);r.go(22,20);r.go(23,18);r.wait(.7);r.go(14,14);r.wait(.7);r.go(23,18);r.wait(.7);r.go(3,19);},
+ 'seashell-beach':r=>{r.go(2,2);r.go(8,3);r.go(19,1);r.go(10,10);r.go(10,11);r.go(12,12);r.go(16,15);r.go(17,16);r.go(22,11);r.go(22,9);r.wait(4);r.go(24,5);r.go(28,5);r.go(31,3);r.go(31,6);r.go(29,11);r.go(27,13);r.wait(1);r.go(29,16);r.face(1,0);r.act('pebble',0);r.wait(.4);r.go(32,17,true);r.go(28,18,true);r.go(24,15);r.go(9,17);r.go(8,18);r.go(3,18);}
 };
 if(require.main===module){
  const delayAt=process.argv.indexOf('--delay'),delay=delayAt<0?0:Number(process.argv[delayAt+1]);
  if(!Number.isFinite(delay)||delay<0||delay>30)throw Error('--delay must be 0 to 30 seconds');
  const result=[];for(const [variant,specs]of [['main',main],['treasure',treasure]])for(const [id,fn]of Object.entries(specs)){const r=execute(id,variant,fn,delay);if(r)result.push(r);}
- if(result.length!==12)process.exitCode=1;
+ if(result.length!==Object.keys(main).length+Object.keys(treasure).length)process.exitCode=1;
  else if(process.argv.includes('--write')){const text='[\n'+result.map(({commands,...r})=>'  '+JSON.stringify(r).slice(0,-1)+',"commands":[\n'+commands.map(c=>'    '+JSON.stringify(c)).join(',\n')+'\n  ]}').join(',\n')+'\n]\n';fs.writeFileSync(path.join(root,'tests/fixtures/escape-kids-adventures.json'),text);}
 }
 module.exports={make,execute,main,treasure};

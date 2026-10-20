@@ -797,6 +797,130 @@
     "#...........#............##...........#",
     "#######################################"
   ]
+},
+// Part four: five braver adventures. Each is a step harder: more creatures, longer trails, a second area.
+{
+  "id": "seashell-beach",
+  "fieldNotes": [
+    {
+      "id": "seashell-beach-sign-1",
+      "at": [5,3],
+      "title": "Sandy feet",
+      "body": "Soft sand is slow to walk on. Snakes are slow on it too. Wait in the beach grass until the snake slides away."
+    },
+    {
+      "id": "seashell-beach-sign-2",
+      "at": [25,12],
+      "title": "Snakes cannot swim",
+      "body": "The lagoon is safe for Sally. Swim home, or follow the boardwalk. The crab only pinches near its rock pool."
+    }
+  ],
+  "name": "Seashell Beach",
+  "sticker": "🐚",
+  "adventure": true,
+  "kidsTheme": "coast",
+  "gentle": 0.64,
+  "brief": "A sunny beach day! Sally's key is in the sandcastle. A button by the lagoon opens its door.",
+  "hint": "Press the blue button by the water, then slip into the sandcastle. The key opens its back door. Swim home: snakes cannot swim! Treasure is just for fun.",
+  "pebbles": 3,
+  "spores": 2,
+  "checkpoints": [
+    [10,4],
+    [26,5],
+    [28,12]
+  ],
+  "caps": [
+    {
+      "at": [12,12],
+      "to": [16,14]
+    },
+    {
+      "at": [17,16],
+      "to": [20,12]
+    }
+  ],
+  "gates": [
+    {
+      "id": "beach-blue",
+      "name": "Sandcastle",
+      "color": [106,195,236],
+      "switch": [22,11],
+      "tiles": [
+        [24,4],
+        [24,5]
+      ]
+    },
+    {
+      "id": "beach-back",
+      "name": "Back door",
+      "color": [244,192,93],
+      "tiles": [
+        [29,11]
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "beach-key",
+      "when": "key",
+      "open": [
+        "beach-back"
+      ],
+      "message": "The sandcastle's back door opens onto the beach!",
+      "objective": "Swim or walk the boardwalk back to the green door."
+    }
+  ],
+  "guards": [
+    {
+      "spawn": [14,6],
+      "patrol": [
+        [10,6],
+        [23,6]
+      ],
+      "facing": 0
+    },
+    {
+      "spawn": [30,14],
+      "patrol": [
+        [26,14],
+        [32,14]
+      ],
+      "facing": 3.141592653589793
+    },
+    {
+      "kind": "crab",
+      "spawn": [32,16],
+      "axis": "y",
+      "range": 2,
+      "patrol": [
+        [32,16]
+      ],
+      "facing": 3.141592653589793
+    }
+  ],
+  "map": [
+    "###################################",
+    "#.......#..........1....###########",
+    "#.1.....#..............L#...#....##",
+    "#..............L........#.L.#..2.##",
+    "#...........ss..............#....##",
+    "#.........L.ss......L............##",
+    "#...L...#.......o.......#...#..K.##",
+    "#.......#..##....ss.....#...#....##",
+    "#.......#..##....ss.....#........##",
+    "#..ss...#.......##....L.#.L....L.##",
+    "#..ss...#.....L.##......#........##",
+    "#.......#.1.............#####.#####",
+    "#.......#.........................#",
+    "#.L.....#~~~~~~~~~~~~~~~~..L......#",
+    "#.......#~~~~~~...~~~~~~~.........#",
+    "#.......#~~~~~~.3.~~~~~~~.........#",
+    "#.......#~~~~~~...~~~~~~~..o......#",
+    "#..@....#~~~~~~~~~~~~~~~~.......2.#",
+    "#..X........L......L.sss..L.......#",
+    "#..............................L..#",
+    "###################################"
+  ]
 }
   ];
   root.EscapeKids=routes;
