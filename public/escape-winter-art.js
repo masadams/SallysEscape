@@ -33,16 +33,29 @@ let winterMotionQuery;
 function winterMoving(){winterMotionQuery??=window.matchMedia?.('(prefers-reduced-motion: reduce)')||{matches:false};return escapeLightingFull()&&!winterMotionQuery.matches;}
 function drawWinterScenery(g,c){
  let cached=seasonSceneryCache;if(!cached||cached.game!==g||cached.cell!==c){cached?.image.remove?.();const d=createGraphics(Math.ceil(g.width*c),Math.ceil(g.height*c));d.pixelDensity(1);d.clear();
-  for(const [x,y]of g.level.slippery||[])if(g.floor(x,y)&&g.grid[y][x]!=='c'){d.noStroke();d.fill(134,191,210,210);d.rect(x*c,y*c,c+.4,c+.4);d.fill(197,229,234,70);d.triangle(x*c,y*c,(x+1)*c,y*c,x*c,(y+1)*c);d.stroke(236,250,246,100);d.strokeWeight(c*.018);d.line((x+.12)*c,(y+.75)*c,(x+.6)*c,(y+.27)*c);}
+  // The ice is one glassy sheet: deep blue with a frosted rim where it meets snow, and scratches and
+  // frozen bubbles scattered by hash (not per tile) so no grid shows through.
+  const ice=new Set((g.level.slippery||[]).map(k=>k.join(','))),h=(x,y,s)=>{const v=Math.sin(x*127.1+y*311.7+s*74.7)*43758.5453;return v-Math.floor(v);};
+  for(const [x,y]of g.level.slippery||[])if(g.floor(x,y)&&g.grid[y][x]!=='c'){d.noStroke();d.fill(118,178,204,225);d.rect(x*c,y*c,c+.5,c+.5);d.fill(150,204,224,90);d.ellipse((x+h(x,y,1))*c,(y+h(x,y,2))*c,c*1.4,c*.9);
+   for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])if(!ice.has((x+dx)+','+(y+dy))){d.fill(226,242,246,120);d.rect((x+(dx>0?.86:0))*c,(y+(dy>0?.86:0))*c,dx?c*.14:c+.5,dy?c*.14:c+.5);}}
+  for(const [x,y]of g.level.slippery||[])if(g.floor(x,y)&&g.grid[y][x]!=='c'){if(h(x,y,3)<.55){const a=h(x,y,4)*Math.PI,l=.3+h(x,y,5)*.7,sx=x+h(x,y,6),sy=y+h(x,y,7);d.stroke(238,250,252,90);d.strokeWeight(c*.016);d.line(sx*c,sy*c,(sx+Math.cos(a)*l)*c,(sy+Math.sin(a)*l)*c);if(h(x,y,8)<.4)d.line((sx+Math.cos(a)*l*.5)*c,(sy+Math.sin(a)*l*.5)*c,(sx+Math.cos(a)*l*.5+Math.cos(a+.7)*.25)*c,(sy+Math.sin(a)*l*.5+Math.sin(a+.7)*.25)*c);}
+   if(h(x,y,9)<.3){d.noStroke();d.fill(236,248,252,110);for(let i=0;i<3;i++)d.ellipse((x+h(x,y,10+i))*c,(y+h(x,y,20+i))*c,c*.05,c*.05);}}
   for(const p of g.level.props||[]){const x=(p.at[0]+.5)*c,y=(p.at[1]+.5)*c;if(p.kind==='pine')winterPine(d,x,y,c*.7,true);else if(p.kind==='brazier')winterBrazier(d,x,y,c*.7);else if(p.kind==='lantern'){d.noStroke();d.fill(71,88,101);d.rect(x-c*.07,y-c*.4,c*.14,c*.6);d.fill(255,219,143);d.rect(x-c*.13,y-c*.5,c*.26,c*.25,c*.035);}else{d.noStroke();d.fill(160,67,83);d.rect(x-c*.22,y-c*.16,c*.44,c*.34,c*.04);d.fill(239,205,122);d.rect(x-c*.03,y-c*.16,c*.06,c*.34);d.rect(x-c*.22,y-c*.04,c*.44,c*.06);}}
   seasonSceneryCache={game:g,cell:c,image:d};cached=seasonSceneryCache;
  }image(cached.image,0,0);
  for(const [x,y]of g.level.slippery||[])if(g.grid[y][x]==='c'){noStroke();fill(155,205,222);rect(x*c,y*c,c,c);stroke(246,252,250);strokeWeight(c*.025);line(x*c,(y+.7)*c,(x+.7)*c,(y+.2)*c);}
  for(const flow of g.currents.filter(c=>c.surface==='ground'))drawWinterFlow(flow,c);
  const moving=winterMoving(),t=moving?g.elapsed:0;
+ // A slow glint travels across the ice, and Sally shows a faint reflection while she is on it.
+ if(moving&&g.slippery.size){noStroke();for(const k of g.slippery){const [x,y]=k.split(',').map(Number),s=((x+y-t*1.3)%16+16)%16;if(s>1.6)continue;fill(255,255,255,46*(1-Math.abs(s-.8)/.8));quad((x+s*.3)*c,y*c,(x+s*.3+.35)*c,y*c,(x+s*.3-.05)*c,(y+1)*c,(x+s*.3-.4)*c,(y+1)*c);}}
+ if(g.slippery.has(g.tileKey(g.player))){noStroke();fill(214,240,250,70);ellipse(g.player.x*c,(g.player.y+.32)*c,c*.7,c*.26);}
  if(moving)for(let i=0;i<36;i++){const x=((i*5.73+t*.19)%g.width),y=((i*3.17+t*.36)%g.height);if(!g.floor(Math.floor(x),Math.floor(y)))continue;noStroke();fill(245,251,250,140);ellipse(x*c,y*c,c*(i%4===0?.055:.025),c*(i%4===0?.055:.025));}
  if(g.level.millWheel){push();translate((g.level.millWheel[0]+.5)*c,(g.level.millWheel[1]+.5)*c);rotate(t*.22);noFill();stroke(133,115,83);strokeWeight(c*.12);ellipse(0,0,c*1.65,c*1.65);for(let i=0;i<8;i++){const a=i*Math.PI/4;line(0,0,Math.cos(a)*c*.82,Math.sin(a)*c*.82);}pop();}
- if(g.player.sliding){const p=g.player,v=g.slideVelocity;noFill();stroke(237,252,251,100);strokeWeight(c*.02);for(const k of[-.12,.12])line((p.x+k-v.x*.15)*c,(p.y-v.y*.15)*c,(p.x+k)*c,p.y*c);}
+ if(g.player.sliding){const p=g.player,v=g.slideVelocity,sp=Math.hypot(v.x,v.y),ux=v.x/(sp||1),uy=v.y/(sp||1);noFill();stroke(237,252,251,110);strokeWeight(c*.025);for(const k of[-.14,.14])line((p.x-uy*k-v.x*.28)*c,(p.y+ux*k-v.y*.28)*c,(p.x-uy*k)*c,(p.y+ux*k)*c);
+  // Ice spray kicks up from the claws, more the faster she goes (fewer flecks on TV boxes).
+  noStroke();const n=typeof isTvDevice==='function'&&isTvDevice()?3:7;for(let i=0;i<n;i++){const f=(g.elapsed*3.7+i/n)%1,side=i%2?1:-1,d=f*(.25+sp*.08);fill(240,252,255,(1-f)*170);ellipse((p.x-ux*d-uy*side*(.15+f*.25))*c,(p.y-uy*d+ux*side*(.15+f*.25))*c,c*.06*(1-f*.5),c*.06*(1-f*.5));}}
+ // A hard knock off a wall on the ice: a brief white flash where she hit.
+ if(g.iceBumpAt!==undefined&&g.elapsed-g.iceBumpAt<.25){const a=1-(g.elapsed-g.iceBumpAt)/.25;noFill();stroke(250,255,255,200*a);strokeWeight(c*.05);ellipse(g.player.x*c,g.player.y*c,c*(.7+.6*(1-a)),c*(.7+.6*(1-a)));}
 }
 function drawWinterSnowball(log,c,g){
  stroke(161,214,235,log.warning?170+70*Math.sin(g.elapsed*12):55);strokeWeight(c*.045);drawingContext.setLineDash([c*.13,c*.15]);line(log.from.x*c,log.from.y*c,log.to.x*c,log.to.y*c);drawingContext.setLineDash([]);if(!log.pos)return;push();translate(log.pos.x*c,log.pos.y*c);rotate(winterMoving()?g.elapsed*5:0);noStroke();fill(16,43,62,70);ellipse(c*.07,c*.12,c*1.1,c*.8);fill(199,224,233);ellipse(0,0,c,c);fill(245,250,244);ellipse(-c*.12,-c*.15,c*.69,c*.65);stroke(132,184,206,110);strokeWeight(c*.035);noFill();arc(0,0,c*.6,c*.55,.2,Math.PI*1.25);pop();
