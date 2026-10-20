@@ -22,6 +22,8 @@ function drawWinterCreature(h,model,c,g){
   stroke(54,47,63);strokeWeight(.1);for(const side of[-1,1]){line(side*.15,.12,side*.26,.38+stride*.04);line(side*.22,-.12,side*.45,.07);}noStroke();fill(93,58,69);ellipse(0,.03,.59,.66);fill(123,91,79);ellipse(0,-.35,.44,.4);stroke(223,208,172);strokeWeight(.06);noFill();for(const side of[-1,1])bezier(side*.14,-.48,side*.4,-.7,side*.26,-.9,side*.12,-.76);noStroke();fill(238,205,110);ellipse(-.17,.08,.095,.11);ellipse(.17,.08,.095,.11);fill(231,225,194);triangle(-.18,-.2,0,.03,.18,-.2);fill(h.glowFear?123:248,h.glowFear?199:197,125);ellipse(-.08,-.36,.07,.08);ellipse(.08,-.36,.07,.08);fill(53,43,55);ellipse(0,-.27,.1,.07);
  }else if(h.kind==='toad'){
   fill(213,231,233);ellipse(0,.13,.84,.64);fill(249,247,233);ellipse(-.05,.04,.68,.57);fill(227,240,239);ellipse(0,-.32,.52,.5);fill(38,59,67);rect(-.32,-.53,.64,.08,.02);rect(-.2,-.79,.4,.27,.025);fill(191,66,75);rect(-.2,-.56,.4,.07);fill(235,140,65);triangle(0,-.35,.29,-.29,0,-.23);fill(33,59,68);ellipse(-.09,-.36,.055,hot?.1:.06);ellipse(.09,-.36,.055,hot?.1:.06);ellipse(0,.08,.065,.065);ellipse(0,.24,.065,.065);fill(167,49,66);rect(-.26,-.12,.52,.1,.02);rect(.13,-.09,.1,.3,.02);
+  // A twig arm; on the wind-up it rises with a snowball ready to throw.
+  stroke(104,74,52);strokeWeight(.05);const up=h.state==='windup';line(.36,.02,up?.5:.62,up?-.38:-.06);noStroke();if(up){fill(250,253,255);stroke(176,214,232);strokeWeight(.03);ellipse(.52,-.46,.24,.24);noStroke();}
  }else if(h.kind==='mimic'){
   const open=h.state!=='rooted';fill(40,91,78);rect(-.38,-.18,.76,.57,.04);fill(69,130,113);rect(-.32,-.13,.32,.47);fill(225,73,82);rect(-.055,-.19,.11,.58);rect(-.4,open?-.48:-.26,.8,.11,.02);stroke(229,189,109);strokeWeight(.045);noFill();ellipse(-.14,open?-.55:-.33,.29,.17);ellipse(.14,open?-.55:-.33,.29,.17);if(open){noStroke();fill(31,48,61);rect(-.3,-.06,.6,.21);fill(255,228,156);ellipse(-.15,-.01,.075,.075);ellipse(.15,-.01,.075,.075);for(let i=-2;i<=2;i++)triangle(i*.1,.1,i*.1+.07,.1,i*.1+.035,.17);}
  }else if(h.kind==='sentinel'){
@@ -40,6 +42,12 @@ function drawWinterScenery(g,c){
    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])if(!ice.has((x+dx)+','+(y+dy))){d.fill(226,242,246,120);d.rect((x+(dx>0?.86:0))*c,(y+(dy>0?.86:0))*c,dx?c*.14:c+.5,dy?c*.14:c+.5);}}
   for(const [x,y]of g.level.slippery||[])if(g.floor(x,y)&&g.grid[y][x]!=='c'){if(h(x,y,3)<.55){const a=h(x,y,4)*Math.PI,l=.3+h(x,y,5)*.7,sx=x+h(x,y,6),sy=y+h(x,y,7);d.stroke(238,250,252,90);d.strokeWeight(c*.016);d.line(sx*c,sy*c,(sx+Math.cos(a)*l)*c,(sy+Math.sin(a)*l)*c);if(h(x,y,8)<.4)d.line((sx+Math.cos(a)*l*.5)*c,(sy+Math.sin(a)*l*.5)*c,(sx+Math.cos(a)*l*.5+Math.cos(a+.7)*.25)*c,(sy+Math.sin(a)*l*.5+Math.sin(a+.7)*.25)*c);}
    if(h(x,y,9)<.3){d.noStroke();d.fill(236,248,252,110);for(let i=0;i<3;i++)d.ellipse((x+h(x,y,10+i))*c,(y+h(x,y,20+i))*c,c*.05,c*.05);}}
+  // Snow heaped against the foot of every wall (and a little on the sides), painted once.
+  const wall=(x,y)=>g.grid[y]?.[x]==='#';d.noStroke();
+  for(let y=1;y<g.height-1;y++)for(let x=1;x<g.width-1;x++){if(!g.floor(x,y)||ice.has(x+','+y))continue;const r=h(x,y,30);
+   if(wall(x,y-1)){d.fill(246,251,255,170);d.rect(x*c-1,y*c,c+2,c*(.16+r*.06),0,0,c*.1,c*.1);d.fill(250,253,255,90);d.ellipse((x+.3+r*.4)*c,(y+.14)*c,c*.6,c*.16);}
+   if(wall(x-1,y)){d.fill(246,251,255,110);d.rect(x*c,y*c-1,c*.1,c+2,0,c*.06,c*.06,0);}
+   if(wall(x+1,y)){d.fill(246,251,255,110);d.rect((x+.9)*c,y*c-1,c*.1,c+2,c*.06,0,0,c*.06);}}
   for(const p of g.level.props||[]){const x=(p.at[0]+.5)*c,y=(p.at[1]+.5)*c;if(p.kind==='pine')winterPine(d,x,y,c*.7,true);else if(p.kind==='brazier')winterBrazier(d,x,y,c*.7);else if(p.kind==='lantern'){d.noStroke();d.fill(71,88,101);d.rect(x-c*.07,y-c*.4,c*.14,c*.6);d.fill(255,219,143);d.rect(x-c*.13,y-c*.5,c*.26,c*.25,c*.035);}else{d.noStroke();d.fill(160,67,83);d.rect(x-c*.22,y-c*.16,c*.44,c*.34,c*.04);d.fill(239,205,122);d.rect(x-c*.03,y-c*.16,c*.06,c*.34);d.rect(x-c*.22,y-c*.04,c*.44,c*.06);}}
   seasonSceneryCache={game:g,cell:c,image:d};cached=seasonSceneryCache;
  }image(cached.image,0,0);
@@ -49,7 +57,12 @@ function drawWinterScenery(g,c){
  // A slow glint travels across the ice, and Sally shows a faint reflection while she is on it.
  if(moving&&g.slippery.size){noStroke();for(const k of g.slippery){const [x,y]=k.split(',').map(Number),s=((x+y-t*1.3)%16+16)%16;if(s>1.6)continue;fill(255,255,255,46*(1-Math.abs(s-.8)/.8));quad((x+s*.3)*c,y*c,(x+s*.3+.35)*c,y*c,(x+s*.3-.05)*c,(y+1)*c,(x+s*.3-.4)*c,(y+1)*c);}}
  if(g.slippery.has(g.tileKey(g.player))){noStroke();fill(214,240,250,70);ellipse(g.player.x*c,(g.player.y+.32)*c,c*.7,c*.26);}
- if(moving)for(let i=0;i<36;i++){const x=((i*5.73+t*.19)%g.width),y=((i*3.17+t*.36)%g.height);if(!g.floor(Math.floor(x),Math.floor(y)))continue;noStroke();fill(245,251,250,140);ellipse(x*c,y*c,c*(i%4===0?.055:.025),c*(i%4===0?.055:.025));}
+ // Snowfall in two layers: many small far flakes drifting slowly, a few big near ones falling faster,
+ // all swaying in slow gusts (fewer flakes on TV boxes). Glints wink on the snow now and then.
+ if(moving){const tv=typeof isTvDevice==='function'&&isTvDevice(),gust=Math.sin(t*.23)*.5+Math.sin(t*.61)*.25;noStroke();
+  for(let i=0,n=tv?20:44;i<n;i++){const x=((i*5.73+t*(.12+gust*.1)+Math.sin(t*.9+i)*.3)%g.width+g.width)%g.width,y=((i*3.17+t*.3)%g.height);fill(245,251,250,120);ellipse(x*c,y*c,c*.028,c*.028);}
+  for(let i=0,n=tv?6:14;i<n;i++){const x=((i*7.31+t*(.22+gust*.25)+Math.sin(t*1.3+i*2)*.45)%g.width+g.width)%g.width,y=((i*4.91+t*.85)%g.height);fill(255,255,255,190);ellipse(x*c,y*c,c*.075,c*.075);}
+  if(!tv)for(let i=0;i<8;i++){const k=Math.floor(t*.7+i*13.7),x=(k*7919)%g.width,y=(k*104729)%g.height,a=Math.max(0,Math.sin((t*.7+i*13.7)%1*Math.PI));if(!g.floor(x,y))continue;fill(255,255,255,200*a);const gx=(x+.3+(k%5)*.1)*c,gy=(y+.3+(k%3)*.15)*c;ellipse(gx,gy,c*.05*a,c*.05*a);stroke(255,255,255,140*a);strokeWeight(c*.012);line(gx-c*.08*a,gy,gx+c*.08*a,gy);line(gx,gy-c*.08*a,gx,gy+c*.08*a);noStroke();}}
  if(g.level.millWheel){push();translate((g.level.millWheel[0]+.5)*c,(g.level.millWheel[1]+.5)*c);rotate(t*.22);noFill();stroke(133,115,83);strokeWeight(c*.12);ellipse(0,0,c*1.65,c*1.65);for(let i=0;i<8;i++){const a=i*Math.PI/4;line(0,0,Math.cos(a)*c*.82,Math.sin(a)*c*.82);}pop();}
  if(g.player.sliding){const p=g.player,v=g.slideVelocity,sp=Math.hypot(v.x,v.y),ux=v.x/(sp||1),uy=v.y/(sp||1);noFill();stroke(237,252,251,110);strokeWeight(c*.025);for(const k of[-.14,.14])line((p.x-uy*k-v.x*.28)*c,(p.y+ux*k-v.y*.28)*c,(p.x-uy*k)*c,(p.y+ux*k)*c);
   // Ice spray kicks up from the claws, more the faster she goes (fewer flecks on TV boxes).

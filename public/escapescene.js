@@ -181,7 +181,7 @@ function startEscape(options={}){
     <div class="escape-inventory"><span id="escape-key">◇ Find the key</span><span id="escape-treasure">Treasure 0 / 10</span></div>
     <div class="escape-kit" role="group" aria-label="Sally’s abilities and breath"><div class="escape-breath"><span>Breath <kbd>Shift</kbd></span><div id="escape-stamina" role="progressbar" aria-label="Stamina" aria-valuemin="0" aria-valuemax="100"><i id="escape-stamina-fill"></i></div><div id="escape-warmth-row" style="display:none"><span>Warmth</span><div id="escape-warmth" role="progressbar" aria-label="Warmth" aria-valuemin="0" aria-valuemax="100"><i id="escape-warmth-fill"></i></div></div></div>
     <div id="escape-tail" class="escape-tail-status" style="display:none" role="img"></div><div class="escape-actions"><button id="escape-burrow-action">Burrow <kbd>E</kbd></button><button id="escape-decoy-action">Toss pebble <kbd>Q</kbd></button><button id="escape-glow-action">Glow mushroom <kbd>L</kbd></button><button id="escape-spore-action">Spore pouch <kbd>Z</kbd></button><button id="escape-tongue-action" title="Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.">Tongue <kbd>R</kbd></button>
-    <button id="escape-seed-action" title="Plant on bare ground for cover, face an open doorway to brace it, or use a marked vine bank.">Seed <kbd>F</kbd></button><button id="escape-camo-action" title="Blend into the ground. You stay hidden while you keep still.">Camo <kbd>X</kbd></button><button id="escape-look-action" title="Turn your gaze behind you briefly, even while moving.">Look back <kbd>Space</kbd></button></div></div><p id="escape-objective">Find the golden key. Treasure is optional.</p><p id="escape-warning" role="status" aria-live="polite"></p>`;
+    <button id="escape-seed-action" title="Plant on bare ground for cover, face an open doorway to brace it, or use a marked vine bank.">Seed <kbd>F</kbd></button><button id="escape-dig-action" title="Dig a tunnel entrance, then dig its way out somewhere else; Burrow on either mound to use it.">Dig <kbd>T</kbd></button><button id="escape-camo-action" title="Blend into the ground. You stay hidden while you keep still.">Camo <kbd>X</kbd></button><button id="escape-look-action" title="Turn your gaze behind you briefly, even while moving.">Look back <kbd>Space</kbd></button></div></div><p id="escape-objective">Find the golden key. Treasure is optional.</p><p id="escape-warning" role="status" aria-live="polite"></p>`;
   // p5 redraws synchronously on resize; the new HUD must exist first.
   const size=canvasDimensions();resizeCanvas(size.width,size.height,true);
   document.getElementById('escape-burrow-action').onclick=useEscapeBurrow;
@@ -189,7 +189,7 @@ function startEscape(options={}){
   escapeBindCharge(document.getElementById('escape-decoy-action'),'pebble');escapeBindCharge(document.getElementById('escape-glow-action'),'glow');escapeBindCharge(document.getElementById('escape-spore-action'),'spore');
   document.getElementById('escape-tongue-action').onclick=useEscapeTongue;
   document.getElementById('escape-look-action').onclick=useEscapeLook;
-  document.getElementById('escape-seed-action').onclick=useEscapeSeed;
+  document.getElementById('escape-seed-action').onclick=useEscapeSeed;document.getElementById('escape-dig-action').onclick=useEscapeDig;
   document.getElementById('escape-camo-action').onclick=useEscapeCamo;
   document.getElementById('escape-map-button').onclick=toggleEscapeMap;
   clearTouchInput();suppressHeldKeys();unlockAudio();renderEscapeHUD();updateToolbar();
@@ -257,6 +257,7 @@ function drawEscapeHawk(k,cell,clock){
   if(k.lastStrike&&clock-k.lastStrike.at<.5){noFill();stroke(...(k.lastStrike.hit?[255,90,70]:[200,230,200]),255*(1-(clock-k.lastStrike.at)/.5));strokeWeight(cell*.08);ellipse(k.lastStrike.x*cell,k.lastStrike.y*cell,k.radius*cell*2*(1+(clock-k.lastStrike.at)),k.radius*cell*1.6*(1+(clock-k.lastStrike.at)));}
 }
 function useEscapeLook(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.lookBack();renderEscapeHUD(true);}}
+function useEscapeDig(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.digTunnel();renderEscapeHUD(true);}}
 function useEscapeSeed(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.plantSeed();renderEscapeHUD(true);}}
 function escapeKeyPressed(k=String(key).toLowerCase(),code=keyCode){
   if(gameState==='escape'&&escapeMoment&&!escapeResultShown){skipEscapeMoment(k);return;}
@@ -279,6 +280,7 @@ function escapeKeyPressed(k=String(key).toLowerCase(),code=keyCode){
   if(k==='r'||k==='t')useEscapeTongue();
   if(k==='v'||k===' '&&document.activeElement?.tagName!=='BUTTON')useEscapeLook();
   if(k==='f')useEscapeSeed();
+  if(k==='t')useEscapeDig();
 }
 function toggleEscapeMap(){
   if(gameState!=='escape'||!escapeGame?.level.explore)return;
@@ -360,6 +362,7 @@ function renderEscapeHUD(force=false){
     [document.getElementById('escape-spore-action'),'spore','Spores','Z',g.spores,g.level.spores||0,g.elapsed>=g.decoyReadyAt,escapeCharge?.kind==='spore'],
     [tongue,'tongue','Tongue','R',g.tongues,g.level.tongues,!g.tongue&&g.elapsed>=g.tongueReadyAt,Boolean(g.tongue)],
     [document.getElementById('escape-seed-action'),'seed','Seed','F',g.seeds,g.level.seeds,g.elapsed>=g.seedReadyAt,false],
+    [document.getElementById('escape-dig-action'),'dig',g.pendingDig?'Dig way out':'Dig tunnel','T',g.diggers+(g.pendingDig?1:0),g.level.diggers||0,true,Boolean(g.pendingDig)],
     [document.getElementById('escape-camo-action'),'camo','Camo','X',g.camos,g.level.camos,g.camoUntil<=g.elapsed,g.camoUntil>g.elapsed],
     [document.getElementById('escape-look-action'),'look','Look back','Space',1,g.level.gaze?null:0,true,g.lookUntil>g.elapsed]
   ];
@@ -437,7 +440,7 @@ function tickEscapeMusic(){
   if(!escapeMusic)return;
   escapeMusic.setVolume((paused?.35:1)*.6*musicVolume,isMuted||!musicOn||musicVolume===0);
   const screen=gameState==='start'?'menu':gameState==='escapeSelect'||gameState==='seasonalHub'?'world':'game';
-  const seasonTheme=gameState==='seasonalHub'?(seasonPack==='winter'?'winter-village':'autumn-festival'):screen==='game'&&escapeGame?.level.seasonal?escapeGame.level.seasonalTheme:null;
+  const seasonTheme=gameState==='seasonalHub'?({winter:'winter-village',spring:'spring-garden',summer:'summer-harbour'}[seasonWorld?.areaAt?.()?.id||seasonPack]||'autumn-festival'):screen==='game'&&escapeGame?.level.seasonal?escapeGame.level.seasonalTheme:null;
   // A story card being read has music of its own: a music box, warmer once Sally knows she is a Wayfinder.
   if(typeof escapeStoryOpen!=='undefined'&&escapeStoryOpen){const part=escapeStoryOpen.part?.n||escapeStoryOpen.card?.part||1;escapeMusic.setState('story',millis()/1000);escapeMusic.setStyle(EscapeMusic.styleFor(escapeStoryOpen.card?.kind==='season-sign'?escapeStoryOpen.card.theme:part>=2?'wayfinder':'tale'));escapeAmbience?.setVolume(0);return;}
   escapeMusic.setState(EscapeMusic.stateFor({screen,game:screen==='game'?escapeGame:null}),millis()/1000);
@@ -764,6 +767,9 @@ function drawEscapeTricks(g,cell,view){
   for(const k of g.soil){const [x,y]=k.split(',').map(Number);if(!seen(x,y))continue;
     stroke(196,160,104,150);strokeWeight(cell*.04);fill(74,50,28,235);ellipse((x+.5)*cell,(y+.5)*cell,cell*.9,cell*.8);noStroke();
     fill(150,112,70,230);for(const [a,b,r] of [[.3,.36,.14],[.64,.34,.11],[.46,.62,.16],[.72,.66,.1],[.3,.7,.08]])ellipse((x+a)*cell,(y+b)*cell,cell*r,cell*r*.75);}
+  // Soft sand: a pale, deep drift with wind ripples. It slows Sally and keeps her tracks.
+  const sandSheet=escapeLightingFull()&&typeof drawEscapeZone==='function';if(sandSheet&&g.softSand.size)drawEscapeZone(g.softSand,cell,seen,[230,206,156],150,0);
+  for(const key of g.softSand){const [x,y]=key.split(',').map(Number);if(!seen(x,y))continue;if(!sandSheet){noStroke();fill(230,206,156,150);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*.18);}noFill();stroke(196,164,110,120);strokeWeight(Math.max(1,cell*.025));const o=((x*7+y*3)%5)*.06;for(const ry of [.3,.62])arc((x+.5)*cell,(y+ry+o)*cell,cell*.8,cell*.22,PI*1.1,PI*1.9);}
   const mossSheet=escapeLightingFull()&&typeof drawEscapeZone==='function';if(mossSheet&&g.moss.size)drawEscapeZone(g.moss,cell,seen,[78,128,70],130,0);
   for(const key of g.moss){const [x,y]=key.split(',').map(Number);if(!seen(x,y))continue;noStroke();if(!mossSheet){fill(78,128,70,150);rect(x*cell+2,y*cell+2,cell-4,cell-4,cell*.2);}fill(118,170,92,170);for(const [dx,dy] of [[.25,.3],[.6,.25],[.4,.6],[.75,.7],[.2,.78]])ellipse((x+dx)*cell,(y+dy)*cell,cell*.16,cell*.12);}
   for(const e of g.echoes){noFill();stroke(185,166,232,40);strokeWeight(Math.max(1,cell*.03));for(let y=e.y1;y<=e.y2;y++)for(let x=e.x1;x<=e.x2;x++){if(!seen(x,y)||!g.floor(x,y))continue;arc((x+.5)*cell,(y+.85)*cell,cell*.55,cell*.4,PI*1.15,PI*1.85);}}
@@ -771,6 +777,7 @@ function drawEscapeTricks(g,cell,view){
   for(const c of g.currents){stroke(200,240,250,90);strokeWeight(Math.max(1,cell*.04));const [dx,dy]=c.dir,phase=(g.elapsed*c.speed*.8)%1;
     for(let y=c.y1;y<=c.y2;y++)for(let x=c.x1;x<=c.x2;x++){if(!seen(x,y)||(c.surface==='ground'?!g.floor(x,y):g.grid[y][x]!=='U'))continue;for(let k=0;k<2;k++){const t=(phase+k*.5)%1,cx=x+.5+dx*(t-.5)*.8+(dy?(k?.22:-.22):0),cy=y+.5+dy*(t-.5)*.8+(dx?(k?.22:-.22):0);line(cx*cell,cy*cell,(cx-dx*.22)*cell,(cy-dy*.22)*cell);}}}
   for(const h of g.hunters)if(h.kind==='cloudray'){noStroke();fill(6,14,24,70);ellipse(h.x*cell,h.y*cell,h.shadowR*2*cell,h.shadowR*1.6*cell);fill(6,14,24,40);ellipse(h.x*cell,h.y*cell,h.shadowR*2.4*cell,h.shadowR*1.9*cell);}
+  if(g.pendingDig){const m=g.pendingDig,pulse=.5+.5*Math.sin(g.elapsed*4);noStroke();fill(96,72,46);ellipse(m.x*cell,m.y*cell+cell*.06,cell*.6,cell*.42);fill(40,28,18);ellipse(m.x*cell,m.y*cell+cell*.04,cell*.24,cell*.15);noFill();stroke(236,200,120,120+100*pulse);strokeWeight(Math.max(1,cell*.04));ellipse(m.x*cell,m.y*cell,cell*(.85+pulse*.2),cell*(.85+pulse*.2));}
   for(const t of g.tunnels)for(const m of [t.a,t.b]){if(!seen(Math.floor(m.x),Math.floor(m.y)))continue;noStroke();fill(96,72,46);ellipse(m.x*cell,m.y*cell+cell*.06,cell*.72,cell*.5);fill(40,28,18);ellipse(m.x*cell,m.y*cell+cell*.04,cell*.34,cell*.22);fill(150,118,80);for(const [dx,dy] of [[-.28,-.08],[.3,-.02],[.05,-.2]])ellipse((m.x+dx)*cell,(m.y+dy)*cell,cell*.09,cell*.07);}
 }
 // Sunlight rippling across water, in Full lighting.
@@ -937,7 +944,10 @@ function drawEscapeVault(){
     for(let a=-cone;a<=cone+.001;a+=cone/24){let reach=0,from=h;for(let d=step;d<=range;d+=step){const to={x:h.x+Math.cos(ang+a)*d,y:h.y+Math.sin(ang+a)*d};if(!g.clear(from,to,true))break;reach=d;from=to;}vertex((h.x+Math.cos(ang+a)*reach)*cell,(h.y+Math.sin(ang+a)*reach)*cell);}endShape(CLOSE);
   }
   if(aids&&h.kind==='toad'&&h.state==='windup'){let d=0;const dx=Math.cos(h.facing),dy=Math.sin(h.facing);while(d<5.5&&g.sightFloor(Math.floor(h.x+dx*(d+.1)),Math.floor(h.y+dy*(d+.1))))d+=.1;stroke(240,120,140,90+70*Math.sin(g.elapsed*22));strokeWeight(cell*.06);drawingContext.setLineDash([cell*.12,cell*.12]);line(h.x*cell,h.y*cell,(h.x+dx*d)*cell,(h.y+dy*d)*cell);drawingContext.setLineDash([]);}
-  if(h.kind==='toad'&&h.state==='tongue'&&h.tongueLength>0){stroke(...((g.level.seasonal||g.level.costume)==='winter'?[188,234,248]:(g.level.seasonal||g.level.costume)?[112,157,65]:[232,110,140]));strokeWeight(cell*.12);line(h.x*cell,h.y*cell,(h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell);noStroke();fill(250,150,170);ellipse((h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell,cell*.22,cell*.22);}
+  // The winter snowman throws a snowball down the same line its tongue would take: a shadow on the
+  // ground where it can hit, the ball arcing a little above it, and a trail of powder behind.
+  if(h.kind==='toad'&&h.state==='tongue'&&h.tongueLength>0&&(g.level.seasonal||g.level.costume)==='winter'){const dx=Math.cos(h.facing),dy=Math.sin(h.facing),L=h.tongueLength,tx=h.x+dx*L,ty=h.y+dy*L,lift=Math.sin(Math.min(1,L/5)*Math.PI)*.35;noStroke();for(let i=1;i<=5;i++){const d=L*(1-i*.12);if(d<=0)break;fill(240,250,255,150-i*25);ellipse((h.x+dx*d)*cell,(h.y+dy*d-lift*(1-i*.12))*cell,cell*(.16-i*.015),cell*(.16-i*.015));}fill(30,60,80,60);ellipse(tx*cell,(ty+.1)*cell,cell*.32,cell*.14);fill(248,252,255);stroke(176,214,232);strokeWeight(cell*.03);ellipse(tx*cell,(ty-lift)*cell,cell*.4,cell*.4);noStroke();fill(214,236,246);ellipse((tx+.06)*cell,(ty-lift+.06)*cell,cell*.16,cell*.13);}
+  else if(h.kind==='toad'&&h.state==='tongue'&&h.tongueLength>0){stroke(...((g.level.seasonal||g.level.costume)==='winter'?[188,234,248]:(g.level.seasonal||g.level.costume)?[112,157,65]:[232,110,140]));strokeWeight(cell*.12);line(h.x*cell,h.y*cell,(h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell);noStroke();fill(250,150,170);ellipse((h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell,cell*.22,cell*.22);}
   if(aids&&h.kind==='cricket'&&h.state==='chirp'){noFill();for(let k=0;k<3;k++){const r=((g.elapsed*3+k/3)%1);stroke(255,230,140,200*(1-r));strokeWeight(cell*.04);ellipse(h.x*cell,h.y*cell,cell*(.5+r*2.5),cell*(.5+r*2.5));}}
   // A scorpion's strike ring is always shown: bright while the tail is up, faint while it rests.
   if(aids&&h.kind==='scorpion'&&h.state!=='buried'){const up=h.tailUp||['raise','windup','sting'].includes(h.state),r=(h.reach||1.8)*2*cell;noStroke();fill(255,140,70,up?34:12);ellipse(h.x*cell,h.y*cell,r,r);noFill();stroke(255,up?150:200,up?70:150,up?200:70);strokeWeight(cell*(up?.06:.035));drawingContext.setLineDash(up?[]:[cell*.18,cell*.14]);ellipse(h.x*cell,h.y*cell,r,r);drawingContext.setLineDash([]);}

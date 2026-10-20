@@ -66,7 +66,7 @@
       this.treasure=0;this.totalTreasure=this.loot.reduce((n,p)=>n+p.value,0);
       this.burrows=this.level.burrows;this.decoys=this.level.pebbles;this.decoy=null;this.decoyReadyAt=0;this.glows=this.level.glows||0;this.glowsUsed=0;this.flights=[];this.lights=[];this.dug=[];
       this.glowVersion=0;
-      this.seeds=this.level.seeds||0;this.seedGrowth=[];this.seedReadyAt=0;this.seedsUsed=0;
+      this.seeds=this.level.seeds||0;this.diggers=this.level.diggers||0;this.pendingDig=null;this.tunnelsDug=0;this.seedGrowth=[];this.seedReadyAt=0;this.seedsUsed=0;
       this.tongues=this.level.tongues||0;this.tongueRange=3;this.tongue=null;this.tongueReadyAt=0;this.tonguesUsed=0;this.keyByTongue=false;
       this.elapsed=0;this.accumulator=0;this.status='playing';this.paused=false;this.result=null;
       this.invulnerableUntil=0;this.exitHold=0;this.closeCalls=0;this.alarms=0;this.events=[];
@@ -82,7 +82,7 @@
       this.antTrails=(this.level.antTrails||[]).map(t=>({tiles:expandTrail(t.path),groups:t.groups||3,size:t.size||4,gap:t.gap||5,speed:t.speed||1.6,offset:t.offset||0}));
       this.carried=[];this.thefts=0;this.recoveries=0;this.stolen=0;
       // Frost Hollow: only marked rooms are cold; warm stones thaw Sally quickly.
-      this.slippery=new Set((this.level.slippery||[]).map(p=>p.join(',')));this.slideVelocity={x:0,y:0};
+      this.slippery=new Set((this.level.slippery||[]).map(p=>p.join(',')));this.softSand=new Set((this.level.softSand||[]).map(p=>p.join(',')));this.slideVelocity={x:0,y:0};
       this.cold=new Set();for(const [x1,y1,x2,y2] of this.level.cold||[])for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)this.cold.add(x+','+y);
       this.warm=new Set((this.level.warm||[]).map(([x,y])=>x+','+y));
       // Steam Vents: wall vents fire jets down a lane on a fixed rhythm.
@@ -355,6 +355,21 @@
       this.updateVisibility(true);
       this.spend('burrows');this.dug.push({x:wx,y:wy});this.invulnerableUntil=this.elapsed+0.35;
       this.notice('Under the wall. Keep moving!','burrow');return true;
+    }
+    // The tunnel kit: dig an entrance on open ground, then an exit somewhere else (at least three
+    // tiles away), and the two become a burrow pair like any other. Digging again by an unfinished
+    // entrance fills it back in. Water, ice, gates, switches and other mounds cannot be dug.
+    digTunnel(){
+      if(!this.active()||this.player.underground||this.player.flight)return false;
+      const p=this.player,x=Math.floor(p.x),y=Math.floor(p.y),here=centre(x,y),tile=this.grid[y]?.[x];
+      if(this.pendingDig&&distance(here,this.pendingDig)<1.1){this.pendingDig=null;this.notice('You fill the hole back in.','rustle');return true;}
+      if(!this.pendingDig&&this.diggers===0){this.notice('No tunnels left to dig.');return false;}
+      const mound=this.tunnels.some(t=>distance(here,t.a)<1.1||distance(here,t.b)<1.1);
+      if(!['.','M','L','N'].includes(tile)||this.slippery.has(x+','+y)||mound||here.x===this.exit.x&&here.y===this.exit.y){this.notice('Dig on open ground, away from water, ice, gates and other mounds.');return false;}
+      if(!this.pendingDig){this.pendingDig=here;this.notice('Entrance dug. Now dig the way out somewhere else.','burrow');return true;}
+      if(distance(here,this.pendingDig)<3){this.notice('Dig the way out at least three tiles from the entrance.');return false;}
+      this.tunnels.push({a:this.pendingDig,b:here,dug:true});this.pendingDig=null;this.spend('diggers');this.tunnelsDug++;this.tunnelReadyAt=this.elapsed+.4;
+      this.notice('Tunnel finished! Stand on either mound and Burrow to use it.','tunnel');return true;
     }
     // A burrow pair: standing on a mound, Sally digs in and comes up out of its partner a moment
     // later. Nothing can catch her while she is underground, and nothing can follow.
@@ -718,7 +733,7 @@
       if(p.exhausted&&p.stamina>=25)p.exhausted=false;
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
       if(this.cold.size)this.updateWarmth(dt);
-      const crawl=Boolean(input.crawl&&!this.water(p)),sprint=!crawl&&Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',speed=(sprint?4:crawl?1.25:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72:1)*(this.water(p)?.55:1);
+      const crawl=Boolean(input.crawl&&!this.water(p)),sprint=!crawl&&Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',sand=!p.swimming&&this.softSand.has(this.tileKey(p)),speed=(sprint?4:crawl?1.25:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72:sand?.7:1)*(this.water(p)?.55:1);
       const onIce=this.slippery.has(this.tileKey(p)),special=p.flight||p.underground||p.dig||this.heldBy;
       if(special){this.slideVelocity.x=0;this.slideVelocity.y=0;}
       // Stepping onto ice keeps the speed Sally arrived with; from there the glide builds past a
@@ -1674,7 +1689,7 @@
     noteCatch(by,tail){const p=this.player;if(this.catches.length<12)this.catches.push({x:Math.floor(p.x),y:Math.floor(p.y),t:+this.elapsed.toFixed(1),by:by||'?',...(tail?{tail:true}:{})});}
     // What caught Sally when no creature did: the sky, the wind, a trap.
     static causeOf(message){return [['hawk',/hawk/i],['wind',/gust/i],['ants',/ant column/i],['log',/log/i],['thorns',/thorns/i],['vine',/vine/i],['scorpion',/scorpion/i],['toad',/toad/i]].find(([,re])=>re.test(message||''))?.[0]||'?';}
-    winterMessage(message){if(typeof message!=='string')return message;return message.replace(/pebbles/gi,'snowballs').replace(/pebble/gi,'snowball').replace(/snow fox/gi,'Gift Snatcher').replace(/beetle/gi,'Yeti').replace(/lowers its horn/gi,'raises its arms').replace(/spider/gi,'Krampus').replace(/toad/gi,'snowman').replace(/owl/gi,'wisp').replace(/sentinel/gi,'Nutcracker').replace(/rolling log/gi,'rolling snowball').replace(/thorns/gi,'icicles').replace(/silk/gi,'tangled ribbon');}
+    winterMessage(message){if(typeof message!=='string')return message;return message.replace(/pebbles/gi,'snowballs').replace(/pebble/gi,'snowball').replace(/snow fox/gi,'Gift Snatcher').replace(/beetle/gi,'Yeti').replace(/lowers its horn/gi,'raises its arms').replace(/spider/gi,'Krampus').replace(/The toad's tongue snapped Sally up/g,'A snowball from the snowman knocked Sally flat').replace(/toad/gi,'snowman').replace(/owl/gi,'wisp').replace(/sentinel/gi,'Nutcracker').replace(/rolling log/gi,'rolling snowball').replace(/thorns/gi,'icicles').replace(/silk/gi,'tangled ribbon');}
     finish(status,message){
       if(this.status!=='playing')return;
       if(status==='caught')this.noteCatch(this.lastCaptor?.at===this.elapsed&&this.lastCaptor.by||EscapeAdventure.causeOf(message));
