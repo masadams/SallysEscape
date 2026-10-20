@@ -57,7 +57,7 @@ function pollEscapePad(){
   if(pressed(ESCAPE_PAD.START)){if(gameState==='escape')togglePause();else document.getElementById('menu-button')?.click();return;}
   if(gameState==='seasonalHub'){if(pressed(ESCAPE_PAD.A))seasonEnter();if(pressed(ESCAPE_PAD.B))escapeGoBack();if(pressed(ESCAPE_PAD.X))seasonTogglePanel(true);if(pressed(ESCAPE_PAD.VIEW)||pressed(ESCAPE_PAD.Y))seasonToggleOverview();if(pressed(ESCAPE_PAD.LB)||pressed(ESCAPE_PAD.RB))seasonTravelStep(pressed(ESCAPE_PAD.RB)?1:-1);return;}
   if(gameState==='escapeSelect'){
-    if(pressed(ESCAPE_PAD.A))escapeKeyPressed('enter',13);
+    if(pressed(ESCAPE_PAD.A))enterEscapeWorld();
     if(pressed(ESCAPE_PAD.B)&&typeof escapeGoBack==='function'){escapeGoBack();return;}
     if(pressed(ESCAPE_PAD.Y))escapeKeyPressed('t',84);
     // X opens the panel (travel, Journal, the escape card, Main menu) for the stick; LB and RB step
