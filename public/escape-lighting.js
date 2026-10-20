@@ -8,6 +8,11 @@
   // night: light sources glow brighter, as they do in the dark levels; shafts: [r,g,b] light
   // shafts slanting down through a canopy or cave roof.
   const MOODS={
+    'winter-village':{grade:[185,221,247,.12],wash:{from:'top',color:[240,229,194],alpha:.1},vignette:.17},
+    'winter-ice':{grade:[175,223,245,.12],vignette:.17},
+    'winter-workshop':{grade:[249,208,159,.11],vignette:.2},
+    'winter-night':{grade:[120,167,221,.15],vignette:.22,night:true},
+    'winter-finale':{grade:[206,215,242,.1],wash:{from:'top',color:[255,226,151],alpha:.1},vignette:.17},
     autumn:{grade:[255,194,120,.14],wash:{from:'left',color:[255,222,164],alpha:.1},vignette:.18},
     'autumn-dusk':{grade:[216,148,140,.12],vignette:.22},
     'autumn-night':{grade:[154,175,225,.13],vignette:.25},
@@ -57,7 +62,7 @@
     const out=[],seen=(x,y)=>!g.level.explore||g.visibleTile(Math.floor(x),Math.floor(y)),add=(x,y,r,color,alpha)=>{if(seen(x,y))out.push({x,y,r,color,alpha});};
     const flicker=(seed,amount=.05)=>1+Math.sin(clock*2.3+seed*1.7)*amount+Math.sin(clock*5.1+seed)*amount*.5;
     for(const [x,y] of g.level.glowPlants||[])add(x+.5,y+.5,1.9*flicker(x+y),[64,229,206],.24);
-    if(g.level.seasonal==='autumn-hollow')for(const p of g.level.props||[])if(p.kind==='lantern')add(p.at[0]+.5,p.at[1]+.5,2.2*flicker(p.at[0]+p.at[1],.025),[255,185,99],.2);
+    if(g.level.seasonal)for(const p of g.level.props||[])if(p.kind==='lantern'||p.kind==='brazier')add(p.at[0]+.5,p.at[1]+.5,2.2*flicker(p.at[0]+p.at[1],.025),[255,185,99],.2);
     for(const l of g.lights||[]){const fade=Math.max(0,Math.min(1,(l.until-clock)/3,(clock-l.born)*4));add(l.x,l.y,l.r*1.15*flicker(l.x),[120,236,214],.3*fade);}
     for(const h of g.hunters||[]){
       if(h.kind==='moth')add(h.x,h.y,2.7*flicker(h.x,.08),[255,214,140],.26);

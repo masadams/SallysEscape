@@ -11,7 +11,7 @@ const ESCAPE_BUILDER_TRIGGER={plate:'◉',heavy:'⬛',lever:'⚲',switch:'▣'},
 const ESCAPE_BUILDER_ARROW=['→','↓','←','↑'];
 // The extras placed on top of the map: what each tool is called and how it looks on the grid.
 const ESCAPE_BUILDER_EXTRAS={'layer:shade':['⛱','Awning: shade where the hawk cannot dive'],'layer:glowPlants':['✺','Glow plant: light in a dark level'],'layer:regrowth':['✿','Regrowth bug: grows back a lost tail'],
-  cap:['🍄','Bounce cap: click the cap, then where it throws Sally'],wind:['≋','Wind lane: click two opposite corners'],current:['⇶','Water current: click two corners over water; it pushes a swimmer along'],echo:['◎','Echo hall: click two corners; sound carries further inside'],tunnel:['⛏','Burrow pair: click one mound, then its partner'],area:['▢','Trigger area: click two corners; walking in can open doors or wake enemies'],
+  cap:['🍄','Bounce cap: click the cap, then where it throws Sally'],wind:['≋','Wind lane: click two opposite corners'],current:['⇶','Current or slope: click two corners; choose Water or Ground in the inspector'],echo:['◎','Echo hall: click two corners; sound carries further inside'],tunnel:['⛏','Burrow pair: click one mound, then its partner'],area:['▢','Trigger area: click two corners; walking in can open doors or wake enemies'],
   ants:['🐜','Ant column: click the points of its loop in order'],seedbed:['🌱','Seed bed: click the two banks either side of a gap; a planted seed grows a crossing'],wheel:['✣','Root wheel'],rival:['⚔','Rivals: click two enemies who fight when they meet']};
 
 function escapeBuilderApi(path,options={}){return fetch('/api/'+path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});}
@@ -275,8 +275,8 @@ function escapeBuilderInspector(){
     html='<b>≋ Wind lane</b> '+z.area.slice(0,2).join(',')+'–'+z.area.slice(2).join(',')+' blows <select data-insp="wdir">'+ESCAPE_BUILDER_ARROW.map((a,i)=>'<option value="'+i+'"'+(i===dir?' selected':'')+'>'+a+'</option>').join('')+'</select>'+
       '<label>gust every <input type="number" step="0.1" data-insp="wperiod" value="'+z.period+'"></label><label>lasting <input type="number" step="0.1" data-insp="won" value="'+z.on+'"></label><label>delay <input type="number" step="0.1" data-insp="woffset" value="'+z.offset+'"></label>';}
   else if(p.kind==='current'){const z=m.currents[p.index];if(!z)return '';const dir=B.DIRS.findIndex(([dx,dy])=>dx===z.dir[0]&&dy===z.dir[1]);
-    html='<b>⇶ Water current</b> '+z.area.slice(0,2).join(',')+'–'+z.area.slice(2).join(',')+' flows <select data-insp="cdir">'+ESCAPE_BUILDER_ARROW.map((a,i)=>'<option value="'+i+'"'+(i===dir?' selected':'')+'>'+a+'</option>').join('')+'</select>'+
-      '<label>strength <input type="number" step="0.1" min="0.4" max="3" data-insp="cspeed" value="'+z.speed+'"></label> (a swimmer moves about 1.3 tiles a second: stronger than that, nobody swims against it)';}
+    html='<b>Current / slope</b> '+z.area.slice(0,2).join(',')+'–'+z.area.slice(2).join(',')+' flows <select data-insp="cdir">'+ESCAPE_BUILDER_ARROW.map((a,i)=>'<option value="'+i+'"'+(i===dir?' selected':'')+'>'+a+'</option>').join('')+'</select>'+
+      '<label>surface <select data-insp="csurface"><option value="water"'+(z.surface!=='ground'?' selected':'')+'>Water stream</option><option value="ground"'+(z.surface==='ground'?' selected':'')+'>Ground slope</option></select></label><label>strength <input type="number" step="0.1" min="0.4" max="3" data-insp="cspeed" value="'+z.speed+'"></label> Keeps carrying Sally until she steps out or reaches a wall. Water affects swimmers; ground affects walkers.';}
   else if(p.kind==='ants'){const t=m.antTrails[p.index];if(!t)return '';
     html='<b>🐜 Ant column</b> marching '+t.path.length+' points <label>groups <input type="number" min="1" max="8" data-insp="agroups" value="'+t.groups+'"></label><label>ants per group <input type="number" min="1" max="8" data-insp="asize" value="'+t.size+'"></label><label>speed <input type="number" step="0.1" min="0.3" max="4" data-insp="aspeed" value="'+t.speed+'"></label> <button data-insp="anew">Start a new column</button>';}
   else if(p.kind==='cap'){const c=m.caps[p.index];if(!c)return '';html='<b>🍄 Bounce cap</b> at '+c.at.join(',')+' · '+(c.to?'throws Sally to '+c.to.join(','):'<b>click where it throws Sally</b>');}
@@ -506,6 +506,7 @@ function wireEscapeBuilder(){
   for(const el of document.querySelectorAll('[data-ginsp]'))el.onchange=e=>{const k=el.dataset.ginsp;B.setGuard(m,p.id,{[k]:k==='buried'?e.target.checked:k==='axis'?e.target.value:val(e)});rerender();};
   const looks=document.querySelectorAll('[data-look]');for(const el of looks)el.onchange=()=>{B.setGuard(m,p.id,{looks:[...looks].filter(q=>q.checked).map(q=>Number(q.dataset.look)*Math.PI/2)});rerender();};
   for(const [k,f] of [['wdir','dir'],['wperiod','period'],['won','on'],['woffset','offset']])if(insp(k))insp(k).onchange=e=>{B.setWind(m,p.index,{[f]:Number(e.target.value)});rerender();};
+  if(insp('csurface'))insp('csurface').onchange=e=>{B.setCurrent(m,p.index,{surface:e.target.value});rerender();};
   for(const [k,f] of [['cdir','dir'],['cspeed','speed']])if(insp(k))insp(k).onchange=e=>{B.setCurrent(m,p.index,{[f]:Number(e.target.value)});rerender();};
   for(const [k,f] of [['agroups','groups'],['asize','size'],['aspeed','speed']])if(insp(k))insp(k).onchange=e=>{B.setAnts(m,p.index,{[f]:Number(e.target.value)});rerender();};
   if(insp('anew'))insp('anew').onclick=()=>{escapeBuilderTool='ants';escapeBuilderAnchor='new';escapeBuilderNote='Click the first point of the new column.';rerender();};
@@ -593,3 +594,4 @@ async function openEscapeCommunity(){
   for(const b of document.querySelectorAll('[data-cremove]'))b.onclick=async()=>{if(!confirm('Take this level off the community shelf for everyone?'))return;
     try{await escapeBuilderApi('levels/'+encodeURIComponent(b.dataset.cremove),{method:'DELETE'});}catch(_){}openEscapeCommunity();};
 }
+

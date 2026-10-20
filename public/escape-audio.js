@@ -36,6 +36,15 @@
     'season-pumpkin':v=>{noise(v,{dur:.23,gain:.1,filter:'bandpass',freq:700,to:1700,q:2});tone(v,{freq:210,to:280,dur:.2,type:'triangle',gain:.07});},
     'season-basket':v=>{notes(v,[[410,0,.08],[520,.09,.08],[440,.18,.13]],{type:'triangle',gain:.13});noise(v,{dur:.12,gain:.05,filter:'bandpass',freq:1900});},
     'season-turkey':v=>{for(let i=0;i<4;i++)tone(v,{freq:i%2?340:220,to:180,dur:.085,delay:i*.075,type:'triangle',gain:.13,wobble:12,wobbleRate:18});},
+    'winter-snowball':v=>{noise(v,{dur:.11,gain:.16,filter:'lowpass',freq:1900,to:650,q:.8});tone(v,{freq:155,to:75,dur:.075,gain:.05});},
+    'winter-yeti':v=>{tone(v,{freq:120,to:72,dur:.46,type:'triangle',gain:.19,wobble:7,wobbleRate:5});noise(v,{dur:.15,gain:.09,filter:'lowpass',freq:400});},
+    'winter-wisp':v=>notes(v,[[1047,0,.2],[1568,.1,.35]],{type:'sine',gain:.12}),
+    'winter-cane':v=>{noise(v,{dur:.08,gain:.08,freq:3500,q:4});tone(v,{freq:2200,to:1800,dur:.13,gain:.07});},
+    'winter-snowman':v=>noise(v,{dur:.2,gain:.16,freq:1800,to:3600,q:2}),
+    'winter-present':v=>notes(v,[[587,0,.09],[740,.09,.09],[659,.18,.14]],{gain:.12}),
+    'winter-snatcher':v=>{tone(v,{freq:240,to:420,dur:.2,gain:.12,wobble:17,wobbleRate:9});noise(v,{dur:.12,gain:.08,freq:1800});},
+    'winter-krampus':v=>{for(let i=0;i<3;i++){tone(v,{freq:620+i*170,to:500,dur:.12,delay:i*.09,gain:.1});noise(v,{dur:.06,delay:i*.09,gain:.07,freq:2400,q:4});}},
+    'winter-watchman':v=>notes(v,[[392,0,.08],[523,.1,.17]],{type:'square',gain:.1}),
     gobble:v=>{for(let i=0;i<3;i++)tone(v,{freq:i%2?330:240,to:170,dur:.085,delay:i*.075,type:'triangle',gain:.12});},
     // Footsteps sound like the ground: a soft pad on plain floor, a crunch of gravel (loud: hunters
     // hear it), a rustle of leaves, next to nothing on moss, a squelch of mud, a hiss of sand, the
@@ -46,6 +55,7 @@
       case 'moss':noise(v,{dur:.05,gain:.035*s,filter:'lowpass',freq:260});break;
       case 'mud':noise(v,{dur:.16,gain:.12*s,filter:'lowpass',freq:520*f,to:180,q:2,attack:.02});tone(v,{freq:150*f,to:90,dur:.12,type:'sine',gain:.05*s});break;
       case 'sand':noise(v,{dur:.08,gain:.07*s,filter:'highpass',freq:3400*f,attack:.01});break;
+      case 'ice':noise(v,{dur:.2,gain:.07*s,filter:'bandpass',freq:3200*f,to:2100,q:2,attack:.025});break;
       case 'snow':noise(v,{dur:.09,gain:.13*s,filter:'bandpass',freq:1500*f,to:900,q:1.6,attack:.01});noise(v,{dur:.02,delay:.03,gain:.06*s,filter:'highpass',freq:4200});break;
       case 'wet':noise(v,{dur:.07,gain:.12*s,filter:'bandpass',freq:1700*f,to:1100,q:1.2});break;
       default:noise(v,{dur:.05,gain:o.sprint?.22:.13,filter:'lowpass',freq:o.alt?520:420,q:.7});}},

@@ -195,7 +195,7 @@
   // Echo halls (sound carries further), water currents (push a swimmer) and burrow pairs (two mounds).
   function addEcho(model,x1,y1,x2,y2){model.echoes=model.echoes||[];if(model.echoes.length>=8)return false;model.echoes.push(rect(x1,y1,x2,y2));return true;}
   function addCurrent(model,x1,y1,x2,y2){model.currents=model.currents||[];if(model.currents.length>=12)return false;model.currents.push({area:rect(x1,y1,x2,y2),dir:[1,0],speed:1.2});return true;}
-  function setCurrent(model,i,changes){const z=(model.currents||[])[i];if(!z)return false;if(changes.dir!==undefined)z.dir=DIRS[clampInt(changes.dir,0,3)].slice();if(changes.speed!==undefined)z.speed=clampNum(changes.speed,.4,3,1.2);return true;}
+  function setCurrent(model,i,changes){const z=(model.currents||[])[i];if(!z)return false;if(changes.dir!==undefined)z.dir=DIRS[clampInt(changes.dir,0,3)].slice();if(changes.speed!==undefined)z.speed=clampNum(changes.speed,.4,3,1.2);if(changes.surface!==undefined){if(changes.surface==='ground')z.surface='ground';else delete z.surface;}return true;}
   function addTunnel(model,a,b){model.tunnels=model.tunnels||[];if(model.tunnels.length>=6||same(a,b))return false;const ok=([x,y])=>{const c=model.map[y]?.[x];return c&&!['#','B','_','~','S'].includes(c);};if(!ok(a)||!ok(b))return false;model.tunnels.push([a.slice(),b.slice()]);return true;}
   function addWind(model,x1,y1,x2,y2){if((model.wind||[]).length>=12)return false;model.wind=model.wind||[];model.wind.push({area:rect(x1,y1,x2,y2),dir:[1,0],period:5,on:1.6,offset:0});return true;}
   function addRegion(model,x1,y1,x2,y2){if((model.regions||[]).length>=12)return false;model.regions=model.regions||[];const id='r'+(model.nextId=(model.nextId||1)+1);model.regions.push({id,area:rect(x1,y1,x2,y2),requiresKey:false});return id;}
@@ -408,7 +408,7 @@
     model.caps=list(r.caps,12).map(c=>({at:point(c?.at,w,h),to:point(c?.to,w,h)})).filter(c=>c.at);
     model.wind=list(r.wind,12).map(z=>({area:area(z?.area),dir:DIRS.find(([dx,dy])=>dx===z?.dir?.[0]&&dy===z?.dir?.[1])?.slice()||[1,0],period:clampNum(z?.period,1,30,5),on:clampNum(z?.on,.2,30,1.6),offset:clampNum(z?.offset,0,30,0)})).filter(z=>z.area);
     model.echoes=list(r.echoes,8).map(area).filter(Boolean);
-    model.currents=list(r.currents,12).map(z=>({area:area(z?.area),dir:DIRS.find(([dx,dy])=>dx===z?.dir?.[0]&&dy===z?.dir?.[1])?.slice()||[1,0],speed:clampNum(z?.speed,.4,3,1.2)})).filter(z=>z.area);
+    model.currents=list(r.currents,12).map(z=>({area:area(z?.area),dir:DIRS.find(([dx,dy])=>dx===z?.dir?.[0]&&dy===z?.dir?.[1])?.slice()||[1,0],speed:clampNum(z?.speed,.4,3,1.2),...(z?.surface==='ground'?{surface:'ground'}:{})})).filter(z=>z.area);
     model.tunnels=list(r.tunnels,6).map(t=>Array.isArray(t)?[point(t[0],w,h),point(t[1],w,h)]:[]).filter(t=>t[0]&&t[1]);
     model.antTrails=list(r.antTrails,6).map(t=>({path:pts(t?.path,16),groups:clampNum(t?.groups,1,8,3),size:clampNum(t?.size,1,8,3),speed:clampNum(t?.speed,.3,4,1.5)})).filter(t=>t.path.length);
     model.seedCrossings=list(r.seedCrossings,8).map(c=>({id:safeId(c?.id,/^[a-z0-9-]{1,30}$/)||fresh('seed-'),banks:pts(c?.banks,4),tiles:pts(c?.tiles,12)})).filter(c=>c.banks.length&&c.tiles.length);
@@ -432,3 +432,4 @@
   root.EscapeBuilder=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
+
