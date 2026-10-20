@@ -6,7 +6,7 @@
  const packs=Object.freeze([
   Object.freeze({id:'autumn-hollow',name:'Autumn Hollow',subtitle:'The Lantern Festival',theme:'autumn-festival',ready:true,opensAt:'2026-10-01T00:00:00-04:00',zone:'America/Toronto',motif:'autumn',levels:8}),
   Object.freeze({id:'winter',name:'Winterlight Hollow',subtitle:'The Missing Christmas Star',theme:'winter-village',ready:true,access:'open',opensAt:'2026-12-01T00:00:00-05:00',zone:'America/Toronto',motif:'snow',levels:8}),
-  Object.freeze({id:'spring',name:'A blossom path',subtitle:'Beyond the sleeping garden',theme:'garden',ready:false,opensAt:'2027-03-20T00:00:00-04:00',zone:'America/Toronto',motif:'blossom',levels:0}),
+  Object.freeze({id:'spring',name:'Blossom Hollow',subtitle:'The First Blossom Festival',theme:'garden',ready:true,opensAt:'2027-03-20T00:00:00-04:00',zone:'America/Toronto',motif:'blossom',levels:8}),
   Object.freeze({id:'summer',name:'A sunlit path',subtitle:'Beyond the tall grasses',theme:'coast',ready:false,opensAt:'2027-06-01T00:00:00-04:00',zone:'America/Toronto',motif:'sun',levels:0})
  ]);
  const creatures=Object.freeze({snake:'Skeletal serpent',beetle:'Zombie gardener',owl:'Ghost lantern keeper',toad:'Jack-o\u2019-lantern',mimic:'Haunted treat basket',fox:'Roast turkey'});
@@ -23,7 +23,9 @@
  }
  const winterCreatures=Object.freeze({snake:'Candy Cane Serpent',beetle:'Yeti',fox:'Gift Snatcher',spider:'Krampus',toad:'Grouchy Snowman',mimic:'Suspicious Present',owl:'Winter Wisp',sentinel:'Nutcracker Watchman'});
  const winterberry=Object.freeze({id:'winterberry',pack:'winter',name:'Winterberry',body:[149,48,54],light:[232,189,117],belly:[247,231,194],spots:[43,91,71],crest:[37,94,73],tail:[113,36,48],dark:[83,32,46],spot:[43,91,71]});
- const skins=[{...copper,pack:'autumn-hollow'},winterberry];
+ const blossom=Object.freeze({id:'blossom',pack:'spring',name:'Blossom Sally',body:[136,176,118],light:[204,228,176],belly:[250,240,214],spots:[236,150,170],crest:[232,128,150],tail:[118,160,104],dark:[78,112,72],spot:[236,150,170]});
+ const sunshore=Object.freeze({id:'sunshore',pack:'summer',name:'Sunshore Sally',body:[84,178,170],light:[176,226,212],belly:[246,224,176],spots:[226,184,82],crest:[236,124,96],tail:[70,156,150],dark:[44,104,104],spot:[226,184,82]});
+ const skins=[{...copper,pack:'autumn-hollow'},winterberry,blossom,sunshore];
  const springCreatures=Object.freeze({snake:'Ribbon Grass Snake',beetle:'Stag Gardener',mole:'Mud Mole',toad:'Lily Toad',mantis:'Blossom Mantis',ladybird:'Ladybird Lookout',moth:'Lantern Moth',spider:'Garden Weaver'});
  const creaturesFor=id=>id==='winter'?winterCreatures:id==='spring'?springCreatures:creatures;
  function fresh(){return {version:1,records:{},legacy:{},outfit:null,guide:false,display:true,skin:false};}
@@ -52,6 +54,6 @@
   wear(id){if(id!==null&&!this.ownedSkins().some(k=>k.id===id))return false;this.data.outfit=id;this.data.skin=id==='copper-lantern';this.save();return true;}
   set(key,value){if(!['guide','display','skin'].includes(key)||typeof value!=='boolean'||key==='skin'&&value&&!this.complete())return false;if(key==='skin')return this.wear(value?'copper-lantern':null);this.data[key]=value;this.save();return true;}
  }
- const api={KEY,packs,creatures,winterCreatures,springCreatures,creaturesFor,copper,winterberry,skins,release,Progress};root.EscapeSeasons=api;
+ const api={KEY,packs,creatures,winterCreatures,springCreatures,creaturesFor,copper,winterberry,blossom,sunshore,skins,release,Progress};root.EscapeSeasons=api;
  if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
