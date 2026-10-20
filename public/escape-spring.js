@@ -248,21 +248,27 @@
   ]
  },
  {
-  id:'spring-festival',name:'The First Blossom',index:7,revision:1,difficulty:'Medium',seasonalTheme:'spring-garden',cunning:0,
-  pebbles:3,tongues:2,millWheel:[12,10],
-  brief:'Three garden courts and the last flower token: a mole, a millrace bridge and the gardener.',
-  hint:'Crawl the moss round the mole court. Flick the bridge switch with your tongue from the near bank. In the last court let the gardener charge the cracked wall, then the key garden switch opens the path home along the bottom.',
+  id:'spring-festival',name:'The First Blossom',index:7,revision:1,difficulty:'Hard',seasonalTheme:'spring-garden',cunning:3,
+  pebbles:2,tongues:2,millWheel:[12,10],
+  brief:'Three garden courts and the last flower token: a mole, a serpent at the court door, a millrace bridge, the gardener, and a garden that wakes when you take the key.',
+  hint:'Crawl the moss round the mole court. A serpent sweeps the middle court along its doorway row: wait beside the door, out of its line, and go when it heads away east. Flick the bridge switch with your tongue from the near bank. In the last court stand still in front of the cracked wall and let the gardener charge it; it aims where you are heading. The key wakes a weaver by the switch and a mole under the bottom path: leave the key garden at once, wait by the path gate until the ripple is far off, walk onto the moss, and cross the rest once it has gone back east.',
   gates:[
    {id:'race-bridge',name:'race bridge',bridge:true,tiles:[[12,6],[12,7]],switch:[12,5],color:[176,214,120]},
    {id:'festival-path',name:'festival path',tiles:[[18,14]],switch:[19,12],color:[236,170,196]}
   ],
   guards:[
    {kind:'mole',spawn:[4,6],patrol:[[4,6],[5,9]],facing:0},
-   {kind:'beetle',spawn:[20,2],patrol:[[20,2],[20,5]],facing:Math.PI/2}
+   {kind:'beetle',spawn:[20,2],patrol:[[20,2],[20,5]],facing:Math.PI/2},
+   {kind:'snake',spawn:[15,12],patrol:[[15,12],[9,12]],facing:Math.PI}
   ],
-  reactions:[],
+  reinforcements:[
+   {id:'garden-weaver',kind:'spider',spawn:[17,10],patrol:[[17,10],[23,10]],facing:0},
+   {id:'path-mole',kind:'mole',spawn:[14,15],patrol:[[4,15],[15,15]],facing:Math.PI}
+  ],
+  reactions:[{id:'festival-key',when:'key',spawn:['garden-weaver','path-mole'],message:'The last token wakes the garden: a weaver drops into the key garden and something stirs under the bottom path. Keep to the moss.'}],
   fieldNotes:[
-   {id:'spring-festival-note-0',at:[3,2],title:'The last token',body:'You know everything this garden can do now. Moss is quiet, the race needs its bridge, and the gardener breaks what it runs into. The path home along the bottom opens from the key garden. - Clover'}
+   {id:'spring-festival-note-0',at:[3,2],title:'The last token',body:'You know everything this garden can do now. Moss is quiet, the race needs its bridge, and the gardener breaks what it runs into. The path home along the bottom opens from the key garden. - Clover'},
+   {id:'spring-festival-note-1',at:[22,15],title:'The bottom path',body:'A mole lives under this path and the last token always wakes it. The moss in the middle is quiet; the bare ends are not. Stand still on the moss and let it pass under you. - Clover'}
   ],
   props:[{at:[7,1],kind:'flowerlantern'},{at:[15,1],kind:'flowerlantern'},{at:[23,1],kind:'flowerlantern'},{at:[11,13],kind:'blossom'},{at:[23,10],kind:'flowerpot'},{at:[23,15],kind:'wateringcan'}],
   map:[
@@ -281,7 +287,7 @@
    '#mmmmmmm........#.....K.#',
    '#.....1.#....1..#.......#',
    '##################.######',
-   '#.X...1.........2.......#',
+   '#.X...1mmmmmm...2.......#',
    '#########################'
   ]
  }
