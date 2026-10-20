@@ -721,9 +721,14 @@
       const crawl=Boolean(input.crawl&&!this.water(p)),sprint=!crawl&&Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',speed=(sprint?4:crawl?1.25:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72:1)*(this.water(p)?.55:1);
       const onIce=this.slippery.has(this.tileKey(p)),special=p.flight||p.underground||p.dig||this.heldBy;
       if(special){this.slideVelocity.x=0;this.slideVelocity.y=0;}
+      // Stepping onto ice keeps the speed Sally arrived with; from there the glide builds past a
+      // walk and steering is weak, so a run onto the ice feels like losing control, not stalling.
+      if(onIce&&!special&&!this.wasOnIce&&Math.hypot(this.slideVelocity.x,this.slideVelocity.y)<.05&&this.playerVelocity){this.slideVelocity.x=this.playerVelocity.x;this.slideVelocity.y=this.playerVelocity.y;}
+      this.wasOnIce=onIce&&!special;
       const skating=!special&&(onIce||Math.hypot(this.slideVelocity.x,this.slideVelocity.y)>.018);
-      const travel=skating?Ice.steer(this.slideVelocity,{x:dx,y:dy},speed,dt,{ice:onIce,brake:crawl}):{x:dx*speed*dt,y:dy*speed*dt};
-      for(const axis of ['x','y']){const next={...p,[axis]:p[axis]+travel[axis]};if(this.fits(next)&&!(this.vents.length&&this.inJet(next)&&!this.inJet(p)))p[axis]=next[axis];else this.slideVelocity[axis]=0;}
+      const travel=skating?Ice.steer(this.slideVelocity,{x:dx,y:dy},speed,dt,{ice:onIce,brake:crawl,glide:onIce}):{x:dx*speed*dt,y:dy*speed*dt};
+      // On ice a wall knocks Sally back a little instead of stopping her dead.
+      for(const axis of ['x','y']){const next={...p,[axis]:p[axis]+travel[axis]};if(this.fits(next)&&!(this.vents.length&&this.inJet(next)&&!this.inJet(p)))p[axis]=next[axis];else{const hit=this.slideVelocity[axis];this.slideVelocity[axis]=onIce?-hit*.35:0;if(onIce&&Math.abs(hit)>1.6){this.events.push('scrape');this.iceBumpAt=this.elapsed;}}}
       p.sliding=onIce&&Math.hypot(this.slideVelocity.x,this.slideVelocity.y)>.12;
       if(!onIce&&Math.hypot(this.slideVelocity.x-dx*speed,this.slideVelocity.y-dy*speed)<.04){this.slideVelocity.x=0;this.slideVelocity.y=0;}
       if(this.wind.length&&!p.flight){const gust=this.wind.find(w=>this.gustPhase(w).active&&w.keys.has(this.tileKey(p)));if(gust)for(const [axis,d] of [['x',gust.dir[0]],['y',gust.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*2.3*dt};if(this.fits(next))p[axis]=next[axis];

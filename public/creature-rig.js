@@ -87,7 +87,7 @@
     }
     update(dt,game){
       if(!Number.isFinite(dt)||dt<=0)return;
-      this.clock+=dt;
+      this.clock+=dt;this.sliding=Boolean(game.player?.sliding);
       if(distance(this.lizard.head,game.player)>.65)this.resetPlayer(game.player);
       const hunters=game.hunters||[game.hunter];
       hunters.forEach((h,i)=>{if(distance(this.snakes[i].head,h)>.65)this.resetHunter(h,i);});
@@ -96,7 +96,8 @@
         if(actor.kind==='millipede'&&travelled<1e-7)continue;
         if(kind==='lizard'){
           const target=travelled>1e-7?Math.atan2(actor.y-model.head.y,actor.x-model.head.x):Math.atan2(actor.facing.y,actor.facing.x);
-          model.headAngle+=clamp(difference(target,model.headAngle),-9*dt,9*dt);
+          // On ice the body lags the slide and wobbles, so Sally skids rather than walks.
+          const turn=this.sliding?1.4:9;model.headAngle+=clamp(difference(target,model.headAngle),-turn*dt,turn*dt)+(this.sliding?Math.sin(this.clock*6.3)*1.1*dt:0);
         }else model.headAngle=actor.facing; // The nose and visible gaze agree with actual perception.
         model.trail.update(actor);model.head=copy(actor);model.distance+=travelled;
         model.instantSpeed=speed;
@@ -149,6 +150,10 @@
       const m=this.lizard;m.phase=m.distance/m.stride;
       for(const leg of m.legs){
         leg.root=this.shoulder(leg);
+        // Sliding on ice: the legs splay out and paddle at the air instead of walking.
+        if(this.sliding){const angle=m.angles[leg.bodyIndex],paddle=Math.sin(this.clock*22+leg.index*1.9);
+          leg.swing=false;leg.foot=safeOffset(leg.root,offset(offset(leg.root,angle+leg.side*Math.PI/2,.3),angle,(leg.index<2?.12:-.1)+paddle*.11),.025,this.floor);
+          leg.footAngle=angle+leg.side*(.9+paddle*.4);leg.lift=.35+.25*paddle;leg.elbow=elbow(leg.root,leg.foot,leg.upper,leg.lower,leg.bendSign);continue;}
         const cycle=Math.floor(m.phase+(leg.index===1||leg.index===2?.5:0));
         // A stance foot stays at its world position. Opposite diagonal pairs
         // lift in turn; a blocked movement input never advances the gait.
