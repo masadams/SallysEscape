@@ -56,7 +56,12 @@ stands by the entrance. Locals are drawn only once their area is open.
 
 The Look setting has the five Blossom Hollow looks, and the Extras prop tool has the four spring props.
 
-## Still to do
+## Rewards, text and music
 
-Spring music
-and ambience, the Blossom Sally skin and keepsakes, the result and collection text, then opening.
+- Finishing all eight spring escapes earns **Blossom Sally**, a spring-green outfit with pink spots. It can be worn from the seasonal collection, next to Copper Lantern and Winterberry.
+- The collection, HUD, results and keepsakes use spring words: flower tokens, the blossom tree, and the watering can for finding every treasure.
+- There are two music moods: `blossom`, a bright garden waltz for the outdoor routes, and `rainshed`, a softer one for the shed, glasshouse and lantern dusk routes.
+
+## Release
+
+The pack is `ready:true` with 8 levels. It opens on its own on 20 March 2027 (Toronto time). Until then it shows its rain and blossom weather and a countdown. Set `access:'open'` to open it early for testing, or `access:'closed'` to keep it shut.
