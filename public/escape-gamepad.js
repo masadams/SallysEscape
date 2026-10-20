@@ -79,6 +79,8 @@ function pollEscapePad(){
   // springs back to Sally.
   {let rx=pad.axes[2]||0,ry=pad.axes[3]||0;const m=Math.hypot(rx,ry);if(m<ESCAPE_PAD_DEAD){rx=0;ry=0;}else{const k=Math.min(1,(m-ESCAPE_PAD_DEAD)/(1-ESCAPE_PAD_DEAD))/m;rx*=k;ry*=k;}escapePad.peekX=rx;escapePad.peekY=ry;}
   // A start card or a big moment: any button moves on, as any key does.
+  // On the intro card Y shows the hint, like H; any other button starts.
+  if(escapeIntroOpen&&now[ESCAPE_PAD.Y]&&!was[ESCAPE_PAD.Y]&&escapeHintHidden){escapeKeyPressed('h',72);return;}
   if(escapeIntroOpen||escapeMoment){if(now.some((b,i)=>b&&!was[i]))escapeKeyPressed(' ',32);return;}
   for(const [name,action] of Object.entries(ESCAPE_PAD_ACTIONS)){const i=ESCAPE_PAD[name];
     if(['pebble','glow','spore'].includes(action)){if(pressed(i))startEscapeCharge(action,'pad');else if(released(i)&&escapeCharge?.source==='pad'&&escapeCharge.kind===action)releaseEscapeCharge(action);continue;}
