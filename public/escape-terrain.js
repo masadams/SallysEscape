@@ -9,6 +9,7 @@ const ESCAPE_TERRAIN_HASH=(x,y,s=0)=>{let h=(Math.imul(x|0,374761393)+Math.imul(
 // What each place is made of: its walls and its ground.
 const ESCAPE_TERRAIN_SETS={
   'winter-village':['ice','snow'],'winter-ice':['ice','snow'],'winter-workshop':['wood','snow'],'winter-night':['ice','snow'],'winter-finale':['ice','snow'],
+  'summer-dunes':['sand','sand'],'summer-pools':['rock','sand'],'summer-tide':['rock','sand'],'summer-harbour':['wood','sand'],'summer-lagoon':['hedge','sand'],'summer-boatshed':['wood','sand'],'summer-sunset':['rock','sand'],'summer-lighthouse':['stone','sand'],
   autumn:['autumn-hedge','fallen-leaves'],'autumn-dusk':['autumn-hedge','fallen-leaves'],'autumn-night':['autumn-hedge','fallen-leaves'],'autumn-mill':['wood','fallen-leaves'],'autumn-festival':['autumn-hedge','fallen-leaves'],
   meadow:['hedge','grass'],garden:['hedge','grass'],orchard:['hedge','grass'],jungle:['hedge','grass'],hollow:['hedge','grass'],home:['hedge','grass'],finale:['hedge','grass'],
   river:['hedge','earth'],marsh:['hedge','earth'],lantern:['hedge','earth'],
