@@ -96,5 +96,181 @@
    '#.X...~~~...~~~.....#',
    '#####################'
   ]
+ },
+ {
+  id:'spring-glasshouse',name:'The Glasshouse Lookout',index:3,revision:1,difficulty:'Easy–medium',seasonalTheme:'spring-glass',cunning:0,
+  pebbles:2,tongues:1,spores:1,
+  brief:'Four greenhouse bays, a ladybird lookout and a mantis by the last switch.',
+  hint:'The ladybird plays dead when you come near on your feet: walk on calmly, or crawl, and do not rush past it or it buzzes the serpent over. Open the bays with their switches. Come at the mantis from behind.',
+  gates:[
+   {id:'bay-door',name:'bay door',tiles:[[10,3]],switch:[8,5],color:[150,206,120]},
+   {id:'key-bay',name:'key bay',tiles:[[17,7]],switch:[21,2],color:[236,170,196]},
+   {id:'home-bay',name:'home bay',tiles:[[10,11]],color:[150,206,120]}
+  ],
+  guards:[
+   {kind:'ladybird',spawn:[6,3],patrol:[[5,3],[7,3]]},
+   {kind:'snake',spawn:[16,6],patrol:[[12,6],[20,6]],facing:0},
+   {kind:'mantis',spawn:[19,2],patrol:[[19,2]],facing:Math.PI}
+  ],
+  reactions:[{id:'glass-key',when:'key',open:['home-bay'],message:'The home bay opens. Back to the start without the mantis.'}],
+  fieldNotes:[
+   {id:'spring-glasshouse-note-0',at:[2,9],title:'The ladybird',body:'It never bites. Come near on your feet and it flips over and plays dead. Rush past, or still be standing over it when it rights itself, and it flies up buzzing: everything that hunts hears where you are. Crawling past never startles it. - Clover'},
+   {id:'spring-glasshouse-note-1',at:[12,1],title:'The mantis',body:'It looks like a twig until you are close. It strikes in front of itself only. Its back is safe.'}
+  ],
+  props:[{at:[1,1],kind:'flowerpot'},{at:[9,1],kind:'flowerlantern'},{at:[11,4],kind:'flowerpot'},{at:[21,4],kind:'blossom'},{at:[1,13],kind:'wateringcan'},{at:[21,13],kind:'flowerpot'}],
+  map:[
+   '#######################',
+   '#.....1...#.1.........#',
+   '#.........#...........#',
+   '#..L.................1#',
+   '#.........#..oo.......#',
+   '#...1.....#.L.........#',
+   '#.........#...........#',
+   '###.#############.#####',
+   '#.........#...........#',
+   '#..1......#..L.....1..#',
+   '#.........#..........1#',
+   '#.@...................#',
+   '#.X...L...#..1.....K..#',
+   '#.........#.....2.....#',
+   '#######################'
+  ]
+ },
+ {
+  id:'spring-mill',name:'The Sleeping Waterwheel',index:4,revision:1,difficulty:'Easy–medium',seasonalTheme:'spring-garden',cunning:0,
+  pebbles:2,tongues:2,millWheel:[21,8],
+  brief:'A deep millrace, three bridges and a switch you can only reach with your tongue.',
+  hint:'The near switch lowers the first bridge. From the lower bank, stand opposite the far switch and flick it with your tongue: the second bridge comes down. The key lowers the middle bridge home. The toad sits in the walled bay on the lower right; creep along the leaves and take its treasure with your tongue, or leave it.',
+  gates:[
+   {id:'near-bridge',name:'near bridge',bridge:true,tiles:[[3,7],[3,8]],switch:[3,5],color:[176,214,120]},
+   {id:'far-bridge',name:'far bridge',bridge:true,tiles:[[19,7],[19,8]],switch:[18,6],color:[236,170,196]},
+   {id:'mill-bridge',name:'mill bridge',bridge:true,tiles:[[10,7],[10,8]],color:[196,150,96]}
+  ],
+  guards:[{kind:'toad',spawn:[21,12],patrol:[[21,12]],facing:Math.PI}],
+  reactions:[{id:'mill-key',when:'key',open:['mill-bridge'],message:'The middle bridge drops into place. Straight home.'}],
+  fieldNotes:[
+   {id:'spring-mill-note-0',at:[1,3],title:'The millrace',body:'The race is too fast and deep to swim. Every bridge has its own switch. One switch is across the water: get within three tiles and flick it with your tongue. - Clover'}
+  ],
+  props:[{at:[1,1],kind:'flowerpot'},{at:[13,1],kind:'flowerlantern'},{at:[15,5],kind:'blossom'},{at:[7,12],kind:'wateringcan'},{at:[13,13],kind:'flowerpot'}],
+  map:[
+   '#######################',
+   '#.....#.......#......1#',
+   '#.@...#...K...#...1...#',
+   '#..1..#...............#',
+   '#.....#..L....#.....L.#',
+   '#.....#......1#.......#',
+   '#.....#.......#.......#',
+   '#_____________________#',
+   '#_____________________#',
+   '#.....................#',
+   '#..1....L.....#########',
+   '#.............LLLL..1.#',
+   '#.X..1....L...#...L...#',
+   '#.......2...1.#.......#',
+   '#######################'
+  ]
+ },
+ {
+  id:'spring-wall',name:'The Gardener’s Shortcut',index:5,revision:1,difficulty:'Medium',seasonalTheme:'spring-shed',cunning:0,
+  pebbles:3,tongues:1,
+  brief:'A stag beetle in an apron, a cracked shed wall and a back path home.',
+  hint:'Stand in front of the cracked wall where the beetle can see you down the long row. When it lowers its head, step aside: it charges through the wall. The shed switch opens the back path home, so the wall is never your only way out.',
+  gates:[{id:'back-path',name:'back path',tiles:[[17,14]],switch:[17,12],color:[196,150,96]}],
+  guards:[{kind:'beetle',spawn:[4,7],patrol:[[4,7],[10,7]],facing:0}],
+  reactions:[],
+  fieldNotes:[
+   {id:'spring-wall-note-0',at:[10,12],title:'The gardener',body:'It cannot stop once it charges, and it breaks whatever it hits. A cracked wall is only a wall until something heavy runs into it. Let it see you in front of the crack, then step aside. - Clover'}
+  ],
+  props:[{at:[1,1],kind:'wateringcan'},{at:[13,13],kind:'flowerpot'},{at:[21,1],kind:'flowerlantern'},{at:[21,8],kind:'flowerpot'},{at:[11,15],kind:'blossom'}],
+  map:[
+   '#######################',
+   '#.............#......1#',
+   '#.......L.....#...1...#',
+   '#.............#.......#',
+   '#....###......#....K..#',
+   '#....###......#.......#',
+   '#.............#..1....#',
+   '#.............B.......#',
+   '#.............#.......#',
+   '#########.....#....1..#',
+   '#########..L..#.......#',
+   '#............1#.......#',
+   '#.@......1....#.......#',
+   '#.............#.......#',
+   '#################.#####',
+   '#.X..1...1.......2....#',
+   '#######################'
+  ]
+ },
+ {
+  id:'spring-lanterns',name:'Lanterns After Rain',index:6,revision:1,difficulty:'Medium',seasonalTheme:'spring-dusk',cunning:0,
+  pebbles:2,tongues:1,glows:2,
+  brief:'Twilight in three hedge rooms: a lantern moth over the leaves and a weaver in the alley.',
+  hint:'Cross the middle room while the moth is at the far end of its loop; its light shows you even in leaves. At the bottom alley, throw a glow mushroom ahead: the weaver backs out of the light. Take the key in the light and come back through the alley; the key opens the low gate home.',
+  gates:[{id:'home-gate',name:'home gate',tiles:[[6,12]],color:[236,170,196]}],
+  guards:[
+   {kind:'moth',spawn:[9,6],patrol:[[9,6],[12,9]],facing:0},
+   {kind:'spider',spawn:[18,12],patrol:[[18,12],[20,10]],facing:Math.PI}
+  ],
+  reactions:[{id:'lantern-key',when:'key',open:['home-gate'],message:'The low gate opens. Back through the alley and straight home.'}],
+  fieldNotes:[
+   {id:'spring-lanterns-note-0',at:[3,1],title:'After the rain',body:'At dusk the lantern moth comes out. Its glow finds you even in the leaves, so watch its loop and go when it is far. The weaver in the alley hates light: throw a glow mushroom past it and it backs off until the glow fades. Other hunters can still see you in that light. - Clover'}
+  ],
+  props:[{at:[5,1],kind:'flowerlantern'},{at:[11,1],kind:'flowerlantern'},{at:[21,1],kind:'flowerlantern'},{at:[1,10],kind:'flowerpot'},{at:[21,6],kind:'blossom'}],
+  map:[
+   '#######################',
+   '#.....#....1..#.......#',
+   '#.@...........#.......#',
+   '#.....#.......#.......#',
+   '#..1..#..LL.1.#.......#',
+   '#.....#..LL...#.......#',
+   '#.....#.......#.......#',
+   '#.1...#..LL...#.......#',
+   '#.....#..LL...#.......#',
+   '#.....#.......#.......#',
+   '#..L..#....1..#.......#',
+   '#.....#.......#.......#',
+   '#.....#.1.............#',
+   '#.X...#...2...#.11..K.#',
+   '#######################'
+  ]
+ },
+ {
+  id:'spring-festival',name:'The First Blossom',index:7,revision:1,difficulty:'Medium',seasonalTheme:'spring-garden',cunning:0,
+  pebbles:3,tongues:2,millWheel:[12,10],
+  brief:'Three garden courts and the last flower token: a mole, a millrace bridge and the gardener.',
+  hint:'Crawl the moss round the mole court. Flick the bridge switch with your tongue from the near bank. In the last court let the gardener charge the cracked wall, then the key garden switch opens the path home along the bottom.',
+  gates:[
+   {id:'race-bridge',name:'race bridge',bridge:true,tiles:[[12,6],[12,7]],switch:[12,5],color:[176,214,120]},
+   {id:'festival-path',name:'festival path',tiles:[[18,14]],switch:[19,12],color:[236,170,196]}
+  ],
+  guards:[
+   {kind:'mole',spawn:[4,6],patrol:[[4,6],[5,9]],facing:0},
+   {kind:'beetle',spawn:[20,2],patrol:[[20,2],[20,5]],facing:Math.PI/2}
+  ],
+  reactions:[],
+  fieldNotes:[
+   {id:'spring-festival-note-0',at:[3,2],title:'The last token',body:'You know everything this garden can do now. Moss is quiet, the race needs its bridge, and the gardener breaks what it runs into. The path home along the bottom opens from the key garden. - Clover'}
+  ],
+  props:[{at:[7,1],kind:'flowerlantern'},{at:[15,1],kind:'flowerlantern'},{at:[23,1],kind:'flowerlantern'},{at:[11,13],kind:'blossom'},{at:[23,10],kind:'flowerpot'},{at:[23,15],kind:'wateringcan'}],
+  map:[
+   '#########################',
+   '#mm1....#.......#.#.....#',
+   '#m@.....#..1....#1#.....#',
+   '#m......#.......#.#.....#',
+   '#m......#.........#.....#',
+   '#m......#.......#.#.....#',
+   '#m......#_______#.#.....#',
+   '#m......#_______#.#.....#',
+   '#m......#.......#.......#',
+   '#m..N...#..1....###BBB###',
+   '#m......#.......#.......#',
+   '#m.NN...#.......#...1...#',
+   '#mmmmmmm........#.....K.#',
+   '#.....1.#....1..#.......#',
+   '##################.######',
+   '#.X...1.........2.......#',
+   '#########################'
+  ]
  }
 ];root.EscapeSpring=routes;if(typeof module!=='undefined'&&module.exports)module.exports=routes;})(typeof globalThis!=='undefined'?globalThis:this);
