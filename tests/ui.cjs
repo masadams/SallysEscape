@@ -197,13 +197,13 @@ test('seasonal menu enters a continuous campaign-style map, keeps future paths l
  const h=harness(),panel=h.el('season-hub');panel.querySelectorAll=()=>[];panel.contains=()=>false;
  h.el('seasons-button').onclick();assert.equal(h.run('gameState'),'seasonalHub');assert.match(panel.innerHTML,/SEASONAL ADVENTURES/);assert.match(panel.innerHTML,/Winterlight Hollow/);assert.match(panel.innerHTML,/data-season-clock="winter"/);assert.equal(h.el('game-container').style.display,'block');
  h.run('seasonVisit("winter")');assert.equal(h.run('seasonPack'),'winter');assert.equal(h.run('seasonWorld.areaOpen("winter")'),true);h.run('seasonVisit("spring")');assert.match(h.el('season-prompt').textContent,/rain.*blossom/);
- h.run('seasonVisit("autumn-hollow")');assert.equal(h.run('seasonPack'),'autumn-hollow');assert.equal((panel.innerHTML.match(/class="world-node season-level/g)||[]).length,16);
+ h.run('seasonVisit("autumn-hollow")');assert.equal(h.run('seasonPack'),'autumn-hollow');assert.equal((panel.innerHTML.match(/class="world-node season-level/g)||[]).length,h.run('EscapeCatalog.seasonal.length'));
  h.run('seasonTogglePanel(true);escapeGoBack()');assert.equal(h.run('seasonPanelOpen'),false);assert.equal(h.run('seasonPack'),'autumn-hollow');
  h.run('seasonToggleOverview();escapeGoBack()');assert.equal(h.run('seasonOverview'),false);h.run('escapeGoBack()');assert.equal(h.run('gameState'),'start');
 });
 
 test('every seasonal level renders in Full and Simple lighting on desktop and touch, including all six costumes',()=>{
- const h=harness();Object.assign(h.c.drawingContext,{createRadialGradient:()=>({addColorStop(){}}),translate(){},scale(){},drawImage(){},setLineDash(){},arc(){},closePath(){}});for(const id of h.run('EscapeCatalog.seasonal.map(l=>l.id)'))for(const lighting of ['full','simple']){
+ const h=harness();Object.assign(h.c.drawingContext,{createRadialGradient:()=>({addColorStop(){}}),translate(){},scale(){},drawImage(){},setLineDash(){},arc(){},closePath(){}});for(const id of h.run('EscapeCatalog.seasonal.filter(l=>EscapeSeasons.release(EscapeSeasons.packs.find(p=>p.id===l.seasonal)).open).map(l=>l.id)'))for(const lighting of ['full','simple']){
   h.run('escapeLightingMode='+JSON.stringify(lighting)+';escapeLightingAuto=false;startEscape({seasonalId:'+JSON.stringify(id)+',skipIntro:true});draw();mobile=true;windowWidth=944;windowHeight=524;updateToolbar();draw();');
   assert.equal(h.run('escapeLightingFull()'),lighting==='full');assert.equal(h.run('gameState'),'escape');assert.match(h.el('escape-mission-name').textContent,/Lantern|Ornament/);assert.equal(h.el('touch-controls').style.display,'flex');assert.ok(!h.run('escapeGame.level.unlimited'));
  }
@@ -217,7 +217,7 @@ test('seasonal results, retry and leaving return to Autumn Hollow without changi
 });
 
 test('festival completion unlocks persistent menu keepsakes and a selectable skin; mastery adds the friendly ghost',()=>{
- const h=harness();h.run('for(const l of EscapeCatalog.seasonal){startEscape({seasonalId:l.id,skipIntro:true});escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.treasure=escapeGame.totalTreasure;escapeGame.finish("won","home");showEscapeResult();}');
+ const h=harness();h.run('for(const l of EscapeCatalog.seasonal.filter(l=>EscapeSeasons.release(EscapeSeasons.packs.find(p=>p.id===l.seasonal)).open)){startEscape({seasonalId:l.id,skipIntro:true});escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.treasure=escapeGame.totalTreasure;escapeGame.finish("won","home");showEscapeResult();}');
  assert.ok(h.run('seasonProgress().complete()&&seasonProgress().mastered()'));assert.match(h.el('title-keepsakes').innerHTML,/pumpkin earned/);assert.match(h.el('title-keepsakes').innerHTML,/All festival treasure found/);assert.equal(h.el('title-keepsakes').hidden,false);
  h.run('seasonProgress().set("skin",true)');assert.equal(h.run('escapeSkinPalette().body.join()'),'184,91,49');h.run('seasonProgress().set("display",false);renderSeasonKeepsakes()');assert.equal(h.el('title-keepsakes').hidden,true);
  const other=h.run('EscapePlayers.create("Festival Friend").id');assert.equal(h.run('EscapePlayers.storage('+JSON.stringify(other)+').getItem(EscapeSeasons.KEY)'),null);

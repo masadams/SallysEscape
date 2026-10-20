@@ -16,7 +16,10 @@ function make(id,delay=0){
        if(++n>18000)throw Error('Stalled '+id+' -> '+tx+','+ty+' at '+g.player.x.toFixed(2)+','+g.player.y.toFixed(2));
        const dx=pt.x-g.player.x,dy=pt.y-g.player.y,L=Math.hypot(dx,dy),icy=g.slippery.has(g.tileKey(g.player))||Math.hypot(g.slideVelocity.x,g.slideVelocity.y)>.02;
        if(icy){const brake=crawl||L<.8,limit=brake?1.25:2.45,v=g.slideVelocity,flow=require('../public/escape-ice.js').currentAt(g.currents,g.player,g.water(g.player)),fx=flow?flow.dir[0]*flow.speed:0,fy=flow?flow.dir[1]*flow.speed:0;frame({x:+Math.max(-1,Math.min(1,(dx*4-(v.x+fx)*.8-fx)/limit)).toFixed(4),y:+Math.max(-1,Math.min(1,(dy*4-(v.y+fy)*.8-fy)/limit)).toFixed(4),sprint,crawl:brake});}
-       else {const scale=Math.min(1,L*120/(sprint?4:2.45));frame({x:+(dx/L*scale).toFixed(4),y:+(dy/L*scale).toFixed(4),sprint,crawl});}
+       else {const wet=g.water(g.player),flow=wet&&g.currents.length?require('../public/escape-ice.js').currentAt(g.currents,g.player,true):null;
+         // In a stream, aim against the flow so Sally still arrives where she is heading (as a player would).
+         if(flow){const sp=2.45*.55*(g.hasTail?1:.9),want=Math.min(sp,L*120),vx=dx/L*want-flow.dir[0]*flow.speed,vy=dy/L*want-flow.dir[1]*flow.speed,m=Math.max(1,Math.hypot(vx,vy)/sp);frame({x:+(vx/sp/m).toFixed(4),y:+(vy/sp/m).toFixed(4),crawl});}
+         else {const scale=Math.min(1,L*120/(sprint?4:2.45));frame({x:+(dx/L*scale).toFixed(4),y:+(dy/L*scale).toFixed(4),sprint,crawl});}}
        if(g.player.flight){while(g.player.flight)frame({});if(g.caps.some(c=>c.at[0]===tx&&c.at[1]===ty))return;continue journey;}
      }
    }
