@@ -154,14 +154,15 @@
   ]
  },
  {
-  id:'summer-boatshed',name:'Beneath the Boatshed',index:5,revision:1,difficulty:'Medium',seasonalTheme:'summer-boatshed',cunning:2,
+  id:'summer-boatshed',name:'Beneath the Boatshed',index:5,revision:1,difficulty:'Medium\u2013hard',seasonalTheme:'summer-boatshed',cunning:2,
   pebbles:2,tongues:2,
-  brief:'A cargo lane where barrels roll, a deep slipway and a bridge switch across the water.',
-  hint:'A barrel rolls down the cargo lane every few seconds; the rumble warns you. Cross just after one goes by. In the store, stand opposite the bridge switch across the slipway and flick it with your tongue. The key is in the loft. The scorpion in the yard only stings when its tail is up.',
+  brief:'A cargo lane where barrels roll, a deep slipway, a crab by the key, and a serpent that wakes when you take it.',
+  hint:'A barrel rolls down the cargo lane every few seconds; the rumble warns you. Cross just after one goes by. In the store, stand opposite the bridge switch across the slipway and flick it with your tongue. The key is in the loft, in a hermit crab\u2019s lane: let it scuttle and tire before you grab it. Taking the key wakes a serpent under the store, right on the way home. It paces up and down the middle of the store; slip past behind it and keep still in the cover beside its path until a barrel goes by. The scorpion in the yard only stings when its tail is up.',
   logs:[{from:[7,1],to:[7,13],period:6,offset:0,speed:6}],
   gates:[{id:'slip-bridge',name:'slipway bridge',bridge:true,tiles:[[14,6],[15,6]],switch:[16,3],color:[236,196,98]}],
-  guards:[{kind:'scorpion',spawn:[19,12],patrol:[[19,12]],facing:Math.PI}],
-  reactions:[],
+  guards:[{kind:'scorpion',spawn:[19,12],patrol:[[19,12]],facing:Math.PI},{kind:'crab',spawn:[19,2],patrol:[[19,2]],facing:0,axis:'x',range:2}],
+  reinforcements:[{id:'store-serpent',kind:'snake',spawn:[11,13],patrol:[[11,13],[11,4]],facing:-Math.PI/2}],
+  reactions:[{id:'boatshed-key',when:'key',spawn:['store-serpent'],message:'Something stirs under the store floor. A serpent is watching the way home.'}],
   fieldNotes:[
    {id:'summer-boatshed-note-0',at:[4,3],title:'The cargo lane',body:'Barrels roll down the cargo lane from the loading door, one after another. Listen for the rumble, watch one go by, then cross. Never stop in the lane. - Marina'},
    {id:'summer-boatshed-note-1',at:[12,5],title:'The slipway',body:'The slipway is too deep to swim. Its bridge switch is on the far side: stand right opposite it and flick it with your tongue.'}
@@ -186,13 +187,13 @@
   ]
  },
  {
-  id:'summer-inlet',name:'The Sunset Inlet',index:6,revision:1,difficulty:'Medium',seasonalTheme:'summer-sunset',cunning:3,
-  pebbles:2,tongues:1,
-  brief:'Three sandbanks, two deep pools with a Sailfin in each, and a fast channel home.',
-  hint:'A Sailfin only hunts swimmers it can see, and it is quicker than you in the water. Wait until it is at the far end of its pool, then swim straight across; it can never follow you onto sand. The switch on the middle bank opens the lens vault. The bottom channel runs fast to the west: drop into it from the far pool for a quick ride home.',
+  id:'summer-inlet',name:'The Sunset Inlet',index:6,revision:1,difficulty:'Hard',seasonalTheme:'summer-sunset',cunning:3,
+  pebbles:1,tongues:1,
+  brief:'Three sandbanks with a serpent on two of them, two deep pools with a Sailfin in each, and a fast channel home.',
+  hint:'A Sailfin only hunts swimmers it can see, and it is quicker than you in the water. Wait until it is at the far end of its pool, then swim straight across; it can never follow you onto sand. Serpents pace the middle and far banks and cannot swim, but they see you in the water. Land behind one as it walks away. The switch on the middle bank opens the lens vault; the vault walls hide you while the far serpent goes by. The bottom channel runs fast to the west: drop into it from the far pool for a quick ride home.',
   currents:[{area:[6,13,16,13],dir:[-1,0],speed:.9}],
   gates:[{id:'lens-vault',name:'lens vault',tiles:[[19,7]],switch:[11,2],color:[236,196,98]}],
-  guards:[{kind:'fish',spawn:[7,9],patrol:[[7,2],[7,11]],facing:-Math.PI/2},{kind:'fish',spawn:[14,3],patrol:[[15,11],[14,2]],facing:Math.PI/2}],
+  guards:[{kind:'fish',spawn:[7,9],patrol:[[7,2],[7,11]],facing:-Math.PI/2},{kind:'fish',spawn:[14,3],patrol:[[15,11],[14,2]],facing:Math.PI/2},{kind:'snake',spawn:[11,11],patrol:[[11,11],[11,1]],facing:-Math.PI/2},{kind:'snake',spawn:[18,1],patrol:[[18,1],[18,11]],facing:Math.PI/2}],
   reactions:[],
   fieldNotes:[
    {id:'summer-inlet-note-0',at:[4,6],title:'Sailfins',body:'A Sailfin patrols each pool. It only chases swimmers it can see, and it cannot follow you onto the sand. Watch it turn at the far end, then swim straight across. - Marina'},
