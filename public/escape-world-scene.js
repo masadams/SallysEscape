@@ -194,7 +194,7 @@ function renderEscapeWorldHUD(){
   const enter=document.getElementById('world-enter');enter.disabled=!unlocked;enter.innerHTML=unlocked?(saved?'Play again':'Enter escape')+escapeControlHint('Enter','A'):node?'Trail locked':'Find an entrance';
 }
 function playEscapeWorld(){
-  if(!escapeWorld||escapeLibraryOpen)return;if(typeof tickEscapeStory==='function')tickEscapeStory();if(escapeBestiaryOpen||escapeStoryOpen){drawEscapeWorld();return;}if(!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){escapeWorld.advance(deltaTime/1000,escapeMovement());escapeFootsteps(escapeWorld.player);}drawEscapeWorld();renderEscapeWorldHUD();
+  if(!escapeWorld||escapeLibraryOpen)return;if(typeof tickEscapeStory==='function')tickEscapeStory();if(escapeBestiaryOpen||escapeStoryOpen){escapeWorld.held(drawEscapeWorld);return;}if(!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){escapeWorld.advance(deltaTime/1000,escapeMovement());escapeFootsteps(escapeWorld.player);}escapeWorld.held(drawEscapeWorld);renderEscapeWorldHUD();
 }
 // Per-tile floor and wall colours, averaged over nearby regions so borders blend over a few tiles.
 let escapeWorldShadeCache=null;
@@ -212,16 +212,28 @@ const ESCAPE_CHUNK=16;let escapeWorldChunks={key:null,map:new Map()};
 // the current zoom, so easing the zoom in and out never throws the drawn chunks away.
 function escapeWorldTerrain(w,palettes,cell,x1,x2,y1,y2){
   const base=Math.round(Math.max(30,Math.min(84,height/11))),key=base+':'+w.terrainVersion;if(escapeWorldChunks.key!==key||escapeWorldChunks.world!==w)escapeWorldChunks={key,world:w,map:new Map()};
-  for(let cy=Math.floor(y1/ESCAPE_CHUNK);cy<=Math.floor(y2/ESCAPE_CHUNK);cy++)for(let cx=Math.floor(x1/ESCAPE_CHUNK);cx<=Math.floor(x2/ESCAPE_CHUNK);cx++){
-    const id=cx+','+cy;let chunk=escapeWorldChunks.map.get(id);
-    if(!chunk){chunk=createGraphics(ESCAPE_CHUNK*base,ESCAPE_CHUNK*base);chunk.pixelDensity(1);chunk.push();chunk.translate(-cx*ESCAPE_CHUNK*base,-cy*ESCAPE_CHUNK*base);
-      // Neighbouring tiles are drawn too, so crowns that overhang a chunk edge match on both sides.
-      drawEscapeWorldTerrain(chunk,w,palettes,base,Math.max(0,cx*ESCAPE_CHUNK-1),Math.min(w.width-1,cx*ESCAPE_CHUNK+ESCAPE_CHUNK),Math.max(0,cy*ESCAPE_CHUNK-1),Math.min(w.height-1,cy*ESCAPE_CHUNK+ESCAPE_CHUNK));chunk.pop();
-      escapeWorldChunks.map.set(id,chunk);
-      if(escapeWorldChunks.map.size>36){const [oldest,g]=escapeWorldChunks.map.entries().next().value;g.remove();escapeWorldChunks.map.delete(oldest);}
-    }else{escapeWorldChunks.map.delete(id);escapeWorldChunks.map.set(id,chunk);}
-    image(chunk,cx*ESCAPE_CHUNK*cell,cy*ESCAPE_CHUNK*cell,ESCAPE_CHUNK*cell+.5,ESCAPE_CHUNK*cell+.5);
+  const map=escapeWorldChunks.map,cols=Math.ceil(w.width/ESCAPE_CHUNK),rows=Math.ceil(w.height/ESCAPE_CHUNK);let painted=0;
+  const paint=(cx,cy)=>{const chunk=createGraphics(ESCAPE_CHUNK*base,ESCAPE_CHUNK*base);chunk.pixelDensity(1);chunk.push();chunk.translate(-cx*ESCAPE_CHUNK*base,-cy*ESCAPE_CHUNK*base);
+    // Neighbouring tiles are drawn too, so crowns that overhang a chunk edge match on both sides.
+    drawEscapeWorldTerrain(chunk,w,palettes,base,Math.max(0,cx*ESCAPE_CHUNK-1),Math.min(w.width-1,cx*ESCAPE_CHUNK+ESCAPE_CHUNK),Math.max(0,cy*ESCAPE_CHUNK-1),Math.min(w.height-1,cy*ESCAPE_CHUNK+ESCAPE_CHUNK));chunk.pop();
+    map.set(cx+','+cy,chunk);painted++;
+    if(map.size>36){const [oldest,g]=map.entries().next().value;g.remove();map.delete(oldest);}
+    return chunk;};
+  const gx1=Math.floor(x1/ESCAPE_CHUNK),gx2=Math.floor(x2/ESCAPE_CHUNK),gy1=Math.floor(y1/ESCAPE_CHUNK),gy2=Math.floor(y2/ESCAPE_CHUNK);
+  for(let cy=gy1;cy<=gy2;cy++)for(let cx=gx1;cx<=gx2;cx++){
+    const id=cx+','+cy;let chunk=map.get(id);
+    if(chunk){map.delete(id);map.set(id,chunk);}
+    // Painting a chunk is the costly part, so at most two a frame; a gap shows plain ground until then
+    // (only after a long jump, as the ring below is usually painted ahead of Sally).
+    else if(painted<2)chunk=paint(cx,cy);
+    const size=ESCAPE_CHUNK*cell;
+    if(!chunk){noStroke();fill(...(palettes[w.chapters[w.chapterAt({x:(cx+.5)*ESCAPE_CHUNK,y:(cy+.5)*ESCAPE_CHUNK})]?.theme]?.[0]||[60,90,70]));rect(cx*size,cy*size,size,size);continue;}
+    // At the close zoom chunks land on whole pixels at their painted size, a plain copy; while zooming
+    // they are scaled, with a half pixel more so no seam shows.
+    const exact=cell===base;image(chunk,cx*size,cy*size,exact?size:size+.5,exact?size:size+.5);
   }
+  // On a quiet frame, paint one chunk of the ring around the view so walking on rarely waits for one.
+  if(!painted)for(let cy=gy1-1;cy<=gy2+1&&!painted;cy++)for(let cx=gx1-1;cx<=gx2+1&&!painted;cx++)if(cx>=0&&cy>=0&&cx<cols&&cy<rows&&!map.has(cx+','+cy))paint(cx,cy);
 }
 // Tiles the trail, entrances, signs, villagers and caches use; ground details keep clear of them.
 let escapeWorldBusyCache=null;
@@ -324,17 +336,17 @@ function escapeWorldSet(el,key,value,apply){if(el['_w'+key]===value)return;el['_
 // on screen, so less to draw), and drifts back out after she has stood still a couple of seconds.
 let escapeWorldZoom={cell:null,still:0};
 function escapeWorldCell(w){
-  const dt=Math.min(.1,(deltaTime||16)/1000),far=Math.max(24,Math.min(60,height/15)),near=Math.max(30,Math.min(84,height/11));
+  const dt=Math.min(.1,(deltaTime||16)/1000),far=Math.max(24,Math.min(60,height/15)),near=Math.round(Math.max(30,Math.min(84,height/11)));
   if(escapeWorldZoom.cell===null||escapeWorldZoom.w!==w){escapeWorldZoom={cell:far,still:3,w};}
   escapeWorldZoom.still=w.player.moving||w.target?0:escapeWorldZoom.still+dt;
   const goal=escapeWorldZoom.still>2?far:near,rate=goal>escapeWorldZoom.cell?2.2:.9;
-  escapeWorldZoom.cell+=(goal-escapeWorldZoom.cell)*(1-Math.exp(-dt*rate));return escapeWorldZoom.cell;
+  escapeWorldZoom.cell+=(goal-escapeWorldZoom.cell)*(1-Math.exp(-dt*rate));if(Math.abs(goal-escapeWorldZoom.cell)<.02)escapeWorldZoom.cell=goal;return escapeWorldZoom.cell;
 }
 function drawEscapeWorld(){
-  const w=escapeWorld,cell=escapeWorldCell(w),clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),cx=clamp(w.player.x,width/(2*cell),w.width-width/(2*cell)),cy=clamp(w.player.y,(height-90)/(2*cell),w.height-(height-90)/(2*cell)),ox=width/2-cx*cell,oy=(width<600?height*.42:(height+30)/2)-cy*cell;
+  const w=escapeWorld,cell=escapeWorldCell(w),clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),cx=clamp(w.player.x,width/(2*cell),w.width-width/(2*cell)),cy=clamp(w.player.y,(height-90)/(2*cell),w.height-(height-90)/(2*cell)),ox=Math.round(width/2-cx*cell),oy=Math.round((width<600?height*.42:(height+30)/2)-cy*cell);
   const bounds=document.getElementById('game-container').getBoundingClientRect?.()||{left:0,top:0,width,height},panels=escapeWorldPanels();
   // Flag number buttons are DOM elements above the canvas; hide any the villager's speech bubble covers.
-  const talking=w.nearbyNpc()||escapeWorldSignNear(w);if(talking){const b=escapeSpeechRect(talking,cell),sx=v=>bounds.left+(v+ox)/width*bounds.width,sy=v=>bounds.top+(v+oy)/height*bounds.height;panels.push({left:sx(b.x),right:sx(b.x+b.w),top:sy(b.y),bottom:sy(b.y+b.h+cell*.3)});}
+  const talking=w.nearbyNpc()||escapeWorldSignNear(w),talkLine=talking?(talking.name?escapeNpcLine(talking):'The sign reads: '+EscapeStory.LOCALS[talking.chapter].sign):'';if(talking){const b=escapeSpeechRect(talking,cell,talkLine),sx=v=>bounds.left+(v+ox)/width*bounds.width,sy=v=>bounds.top+(v+oy)/height*bounds.height;panels.push({left:sx(b.x),right:sx(b.x+b.w),top:sy(b.y),bottom:sy(b.y+b.h+cell*.3)});}
   const palettes={meadow:[[134,168,106],[51,86,65],[175,190,130]],garden:[[114,153,102],[50,83,63],[161,177,123]],river:[[103,156,127],[43,90,81],[150,182,139]],ruins:[[123,147,111],[73,94,82],[171,177,139]],quarry:[[155,138,104],[99,91,75],[192,173,132]],desert:[[201,162,99],[135,112,73],[232,193,125]],marsh:[[99,141,109],[40,81,72],[143,164,120]],jungle:[[77,125,91],[27,74,54],[122,153,94]],glow:[[38,77,82],[18,44,52],[96,168,151]],orchard:[[126,153,93],[56,93,53],[180,185,119]],coast:[[179,176,121],[56,118,110],[221,201,143]],hollow:[[128,104,112],[58,40,56],[176,140,150]],lantern:[[70,104,104],[24,52,58],[120,170,150]],rooftops:[[196,150,108],[132,78,56],[226,190,140]],ants:[[150,112,76],[78,52,34],[190,150,104]],frost:[[196,214,226],[96,124,146],[236,244,250]],vents:[[150,120,100],[86,60,50],[196,160,130]],grotto:[[96,92,124],[44,36,70],[150,214,190]],storm:[[118,130,140],[54,62,76],[178,192,204]],tide:[[198,186,140],[70,124,130],[232,220,176]],home:[[150,140,110],[70,62,74],[214,180,130]]};
   background(37,66,54);push();translate(ox,oy);
   const x1=Math.max(0,Math.floor(-ox/cell)),x2=Math.min(w.width-1,Math.ceil((width-ox)/cell)),y1=Math.max(0,Math.floor(-oy/cell)),y2=Math.min(w.height-1,Math.ceil((height-oy)/cell));
@@ -348,6 +360,7 @@ function drawEscapeWorld(){
   if(next){const pulse=(sin(w.elapsed*3)+1)/2;noFill();stroke(255,226,120,90+pulse*130);strokeWeight(cell*.09);ellipse(next.x*cell,next.y*cell,cell*(1.9+pulse*.6),cell*(1.9+pulse*.6));}
   for(const gate of w.gates){if(w.regionOpen(gate.chapter))continue;const x=gate.x+.5,y=gate.y+.5;stroke(224,187,99);strokeWeight(cell*.1);for(const d of [-1.2,-.8,-.4,0,.4,.8,1.2]){if(gate.vertical)line((x+d)*cell,(y-.32)*cell,(x+d)*cell,(y+.32)*cell);else line((x-.32)*cell,(y+d)*cell,(x+.32)*cell,(y+d)*cell);}noStroke();fill(245,223,151);textAlign(CENTER,CENTER);const need=EscapeCatalog.levels[w.chapters[gate.chapter].start]?.unlockChallenges;textSize(cell*(need?.42:.34));text(need?'⚑'+need:'◇',x*cell,y*cell);}
   for(const s of w.secrets||[])if(Math.abs(s.x-w.player.x)<width/cell+s.rx+4&&Math.abs(s.y-w.player.y)<height/cell+s.ry+4){if(s.id!=='sallys-burrow'&&!w.revealed?.())continue;drawEscapeWorldSecret(s,cell,w.elapsed,w.secretOpen?.(s.id));}
+  drawEscapeWorldRecovery(w,cell,near);
   for(const sign of w.signs)if(w.regionOpen(sign.chapter)&&near(sign.x,sign.y,4))drawEscapeWorldSign(sign,w.chapters[sign.chapter],escapeRegionStars(sign.chapter),cell);
   for(const cache of w.caches)if(w.regionOpen(cache.chapter)&&near(cache.x,cache.y))drawEscapeWorldCache(cache,w.found.has(cache.id),cell,w.elapsed,Math.hypot(cache.x+.5-w.player.x,cache.y+.5-w.player.y));
   for(const n of w.nodes){const x=n.x*cell,y=n.y*cell,saved=escapeProgress.data.levels[n.id],unlocked=escapeWorldUnlocked(n.id);
@@ -389,7 +402,7 @@ function drawEscapeWorld(){
   if(w.fly)drawEscapeGoldfly(w.fly,cell,w.elapsed);
   // Cloud shadows drift across the whole trail.
   noStroke();for(let i=0;i<7;i++){const cx=((i*41+w.elapsed*.35)%(w.width+24))-12,cy=(i*13+7)%w.height;fill(10,30,25,26);ellipse(cx*cell,cy*cell,cell*7,cell*3.4);ellipse((cx+2.6)*cell,(cy-.8)*cell,cell*5,cell*2.6);}
-  if(talking)drawEscapeSpeech(talking,talking.name?escapeNpcLine(talking):'The sign reads: '+EscapeStory.LOCALS[talking.chapter].sign,cell);
+  if(talking)drawEscapeSpeech(talking,talkLine,cell);
   pop();
   drawEscapeWorldWeather(w);
   // A slow day and night cycle tints the trail every four minutes.
@@ -454,22 +467,72 @@ function drawEscapeRegionCloud(c,i,cell,clock){
   for(const [k,[dx,dy,r]] of puffs.entries()){const drift=Math.sin(clock*.25+i+k)*.5;fill(245,248,246,170);ellipse((c.x+.5+dx+drift-.4)*cell,(c.y+.5+dy-.5)*cell,r*cell*1.05,r*cell*.7);}
   fill(98,116,112);textAlign(CENTER,CENTER);textSize(cell*.7);text('?',(c.x+.5)*cell,(c.y+.5)*cell);
 }
+// The courtyard locals: a tortoise, snail, frog or beetle each, drawn with a soft shadow, a darker
+// outline, a highlight and bright eyes, plus one thing of their own (Old Moss's scarf and spectacles,
+// Wick's lantern, Rivet's coil of wire, Granny Sedge's shawl...). They breathe and glance about.
+const ESCAPE_NPC_EXTRA={'Old Moss':'scarf','Wick':'lantern','Rivet':'wire','Granny Sedge':'shawl','Shelly':'shell','Gale':'scarf','Flurry':'scarf','Pip':'bracket','Briar':'leaf','Coral':'shell','Morel':'cap','Glimmer':'glow','Reed':'reed','Murk':'leaf','Fern':'leaf','Husk':'leaf','Tiles':'feather','Pincer':'crumb','Dusty':'cloth','Brass':'bracket','Gravel':'pebble'};
 function drawEscapeWorldNpc(npc,cell,clock){
-  push();translate((npc.x+.5)*cell,(npc.y+.5)*cell);scale(1.45);translate(-(npc.x+.5)*cell,-(npc.y+.5)*cell);
-  const x=(npc.x+.5)*cell,bob=Math.sin(clock*2+npc.chapter)*cell*.04,y=(npc.y+.5)*cell+bob;noStroke();fill(7,26,19,70);ellipse(x,(npc.y+.5)*cell+cell*.3,cell*.9,cell*.3);
-  if(npc.kind==='tortoise'){fill(98,128,74);ellipse(x+cell*.36,y,cell*.3,cell*.24);fill(122,94,58);arc(x,y+cell*.08,cell*.85,cell*.7,PI,TWO_PI);fill(150,118,72);for(const d of [-.2,0,.2])ellipse(x+d*cell,y-cell*.12,cell*.18,cell*.14);fill(20);ellipse(x+cell*.43,y-cell*.03,cell*.05,cell*.05);}
-  else if(npc.kind==='snail'){fill(196,170,120);ellipse(x+cell*.1,y+cell*.16,cell*.8,cell*.22);fill(186,120,92);ellipse(x-cell*.05,y-cell*.08,cell*.55,cell*.55);noFill();stroke(120,70,52);strokeWeight(cell*.04);arc(x-cell*.05,y-cell*.08,cell*.3,cell*.3,0,PI*1.5);noStroke();stroke(196,170,120);strokeWeight(cell*.03);line(x+cell*.38,y+cell*.1,x+cell*.45,y-cell*.12);noStroke();}
-  else if(npc.kind==='frog'){fill(92,170,92);ellipse(x,y+cell*.05,cell*.65,cell*.5);for(const s of [-1,1]){fill(110,190,110);ellipse(x+s*cell*.17,y-cell*.17,cell*.22,cell*.22);fill(20);ellipse(x+s*cell*.17,y-cell*.18,cell*.09,cell*.09);}fill(60,120,64);arc(x,y+cell*.05,cell*.3,cell*.15,0,PI);}
-  else{fill(70,92,150);ellipse(x,y,cell*.42,cell*.6);stroke(30,40,70);strokeWeight(cell*.03);line(x,y-cell*.3,x,y+cell*.3);for(const s of [-1,1])for(const o of [-.12,0,.12])line(x+s*cell*.2,y+o*cell,x+s*cell*.34,y+o*cell+cell*.06);noStroke();fill(150,190,255,120);ellipse(x-cell*.08,y-cell*.12,cell*.1,cell*.18);}
-  fill(255,246,220,230);textAlign(CENTER,CENTER);textSize(cell*.28);text(npc.name,x,y-cell*.62);pop();
+  const x=(npc.x+.5)*cell,base=(npc.y+.5)*cell,breathe=1+.03*Math.sin(clock*2.2+npc.chapter),bob=Math.sin(clock*2+npc.chapter)*cell*.03,y=base+bob,u=cell*1.85,glance=Math.sin(clock*.7+npc.chapter*1.3)*u*.03;
+  const ink=[38,32,24],extra=ESCAPE_NPC_EXTRA[npc.name];noStroke();
+  fill(7,26,19,80);ellipse(x,base+u*.26,u*.82,u*.24);
+  push();translate(x,y);scale(breathe,1/breathe);
+  const eye=(ex,ey,r)=>{fill(250,248,238);ellipse(ex,ey,r,r);fill(24,20,16);ellipse(ex+glance,ey+r*.05,r*.55,r*.6);fill(255);ellipse(ex+glance-r*.12,ey-r*.12,r*.2,r*.2);};
+  stroke(...ink,180);strokeWeight(Math.max(1,u*.025));
+  if(npc.kind==='tortoise'){
+    fill(112,140,84);ellipse(u*.34,-u*.02,u*.3,u*.26);for(const s of [-1,1]){ellipse(-u*.22,s*u*.16+u*.08,u*.14,u*.1);ellipse(u*.16,s*u*.16+u*.08,u*.14,u*.1);}
+    fill(124,94,58);ellipse(0,0,u*.74,u*.56);fill(150,116,70);noStroke();for(const [dx,dy] of [[-.16,-.06],[.06,-.1],[-.04,.1],[.18,.06]])ellipse(dx*u,dy*u,u*.2,u*.16);fill(255,240,200,50);ellipse(-u*.08,-u*.12,u*.36,u*.14);
+    eye(u*.39,-u*.06,u*.09);}
+  else if(npc.kind==='snail'){
+    fill(206,182,132);ellipse(u*.06,u*.14,u*.78,u*.2);fill(206,182,132);for(const s of [-1,1]){line(u*.36,u*.06,u*.42+s*u*.04,-u*.14);}noStroke();
+    stroke(...ink,180);fill(192,124,96);ellipse(-u*.06,-u*.04,u*.52,u*.5);noFill();stroke(130,74,56);strokeWeight(u*.035);arc(-u*.06,-u*.04,u*.3,u*.3,0,PI*1.6);arc(-u*.04,-u*.04,u*.14,u*.14,PI,PI*2.6);noStroke();fill(255,240,210,60);ellipse(-u*.14,-u*.16,u*.2,u*.1);
+    eye(u*.4,-u*.16,u*.08);eye(u*.47,-u*.15,u*.08);}
+  else if(npc.kind==='frog'){
+    fill(86,164,88);ellipse(0,u*.06,u*.64,u*.48);for(const s of [-1,1]){fill(96,176,96);ellipse(s*u*.24,u*.24,u*.24,u*.14);}noStroke();fill(170,214,140);ellipse(0,u*.14,u*.34,u*.22);
+    stroke(...ink,180);fill(106,186,106);for(const s of [-1,1])ellipse(s*u*.15,-u*.14,u*.22,u*.22);noStroke();for(const s of [-1,1])eye(s*u*.15,-u*.15,u*.15);fill(54,110,58);arc(0,u*.04,u*.26,u*.12,0,PI);}
+  else{
+    fill(66,88,146);ellipse(0,0,u*.42,u*.6);stroke(30,40,70);strokeWeight(u*.025);line(0,-u*.26,0,u*.3);for(const s of [-1,1])for(const o of [-.12,0,.12])line(s*u*.2,o*u,s*u*.32,o*u+u*.06);noStroke();
+    fill(42,56,96);ellipse(0,-u*.3,u*.26,u*.16);fill(150,190,255,130);ellipse(-u*.08,-u*.08,u*.09,u*.2);eye(-u*.06,-u*.32,u*.07);eye(u*.06,-u*.32,u*.07);}
+  noStroke();
+  // Their own touch.
+  if(extra==='scarf'){fill(196,64,52);rect(u*.2,u*.02,u*.2,u*.07,u*.03);rect(u*.22,u*.06,u*.06,u*.16,u*.02);}
+  if(npc.name==='Old Moss'){noFill();stroke(70,60,40);strokeWeight(u*.018);ellipse(u*.39,-u*.06,u*.12,u*.12);line(u*.33,-u*.06,u*.3,-u*.04);noStroke();}
+  if(extra==='lantern'){const glow=.7+.3*Math.sin(clock*3);fill(255,210,110,70*glow);ellipse(u*.3,-u*.3,u*.4,u*.4);fill(70,50,30);rect(u*.25,-u*.36,u*.1,u*.04);fill(255,220,120);rect(u*.26,-u*.32,u*.08,u*.1,u*.02);}
+  if(extra==='wire'){noFill();stroke(170,170,160);strokeWeight(u*.02);for(let i=0;i<3;i++)ellipse(-u*.3,u*.12,u*.12+i*u*.04,u*.08+i*u*.02);noStroke();}
+  if(extra==='shawl'){fill(150,96,140,220);arc(0,-u*.02,u*.78,u*.6,PI*1.05,PI*1.95);}
+  if(extra==='shell'){fill(250,226,214);ellipse(-u*.28,-u*.18,u*.1,u*.08);}
+  if(extra==='leaf'){fill(118,170,80);ellipse(-u*.18,-u*.24,u*.14,u*.07);}
+  if(extra==='cap'){fill(210,90,120);arc(0,-u*.3,u*.26,u*.2,PI,TWO_PI);fill(255,240,240);ellipse(-u*.04,-u*.34,u*.04,u*.04);}
+  if(extra==='glow'){fill(150,240,220,90+60*Math.sin(clock*2));ellipse(0,0,u*.18,u*.18);}
+  if(extra==='feather'){stroke(230,220,200);strokeWeight(u*.02);line(-u*.25,-u*.2,-u*.12,-u*.32);noStroke();}
+  if(extra==='bracket'){fill(190,170,120);rect(-u*.34,-u*.1,u*.06,u*.16,u*.01);rect(-u*.34,-u*.1,u*.12,u*.04,u*.01);}
+  if(extra==='pebble'||extra==='crumb'){fill(extra==='crumb'?[220,190,140]:[150,146,138]);ellipse(-u*.3,u*.16,u*.08,u*.06);}
+  if(extra==='cloth'){fill(220,200,150,220);rect(-u*.2,-u*.3,u*.4,u*.08,u*.03);}
+  if(extra==='reed'){stroke(120,150,80);strokeWeight(u*.02);line(-u*.3,u*.2,-u*.36,-u*.2);noStroke();fill(110,80,50);ellipse(-u*.36,-u*.22,u*.04,u*.1);}
+  pop();
+  // Name tag: a small paper label.
+  textFont('Georgia');textSize(Math.max(10,cell*.3));const tw=textWidth(npc.name)+cell*.3,ty=base-u*.62;
+  fill(0,0,0,50);rect(x-tw/2+1,ty-cell*.2+2,tw,cell*.4,cell*.1);fill(246,236,212,235);rect(x-tw/2,ty-cell*.2,tw,cell*.4,cell*.1);
+  fill(60,46,28);textAlign(CENTER,CENTER);text(npc.name,x,ty+1);textFont('sans-serif');
 }
 // Standing right by a courtyard's signpost shows its one extra line.
 function escapeWorldSignNear(w){if(typeof EscapeStory==='undefined')return null;return w.signs.find(s=>w.regionOpen(s.chapter)&&EscapeStory.LOCALS[s.chapter]&&Math.hypot(s.x+.5-w.player.x,s.y+.5-w.player.y)<=1.4)||null;}
-function escapeSpeechRect(npc,cell){const w=cell*8,h=cell*2.2;return {x:(npc.x+.5)*cell-w/2,y:(npc.y+.5)*cell-cell*1.2-h,w,h};}
+// The bubble fits its words: a rough line count from the text width at the bubble's type size.
+function escapeSpeechParts(npc,line){const sign=!npc.name,colon=line.indexOf(': '),who=sign?'Signpost':colon>0&&colon<20?line.slice(0,colon):'';return {sign,who,words:sign?line.replace(/^The sign reads: /,''):who?line.slice(colon+2):line};}
+function escapeSpeechRect(npc,cell,line=''){const w=cell*8.4,{who,words}=escapeSpeechParts(npc,line);push();textFont('Georgia');textSize(cell*.36);const lines=Math.max(1,Math.ceil(textWidth(words)*1.08/(w-cell*.6)));pop();
+  const h=cell*((who?.58:.32)+lines*.46+.18);return {x:(npc.x+.5)*cell-w/2,y:(npc.y+.5)*cell-cell*1.75-h,w,h};}
+// A local's words, or a signpost's line, on a slip of parchment in the story cards' style: serif
+// type, the speaker's name small above, a soft shadow and a little tail.
 function drawEscapeSpeech(npc,line,cell){
-  const {w,h,x,y}=escapeSpeechRect(npc,cell);noStroke();fill(250,244,222,240);rect(x,y,w,h,cell*.25);triangle((npc.x+.3)*cell,y+h,(npc.x+.7)*cell,y+h,(npc.x+.5)*cell,y+h+cell*.3);
-  fill(44,58,44);textAlign(LEFT,TOP);textSize(cell*.36);text(line,x+cell*.25,y+cell*.2,w-cell*.5,h-cell*.3);textAlign(CENTER,CENTER);
+  const {w,h,x,y}=escapeSpeechRect(npc,cell,line),ctx=drawingContext,{sign,who,words}=escapeSpeechParts(npc,line);
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=cell*.4;ctx.shadowOffsetY=cell*.08;noStroke();fill(...(sign?[226,206,160]:[247,239,218]),248);rect(x,y,w,h,cell*.28);ctx.restore();
+  stroke(...(sign?[150,116,70]:[190,166,120]),200);strokeWeight(Math.max(1,cell*.03));noFill();rect(x+cell*.08,y+cell*.08,w-cell*.16,h-cell*.16,cell*.22);noStroke();
+  fill(...(sign?[226,206,160]:[247,239,218]));triangle((npc.x+.3)*cell,y+h-1,(npc.x+.7)*cell,y+h-1,(npc.x+.5)*cell,y+h+cell*.32);
+  textFont('Georgia');textAlign(LEFT,TOP);
+  if(who){fill(140,104,60);textSize(cell*.24);textStyle(BOLD);text(who.toUpperCase(),x+cell*.3,y+cell*.2);textStyle(NORMAL);}
+  fill(58,44,26);textSize(cell*.36);textLeading(cell*.46);text(words,x+cell*.3,y+(who?cell*.52:cell*.28),w-cell*.6,h-(who?cell*.6:cell*.36));
+  textFont('sans-serif');textAlign(CENTER,CENTER);
 }
+
 function drawEscapeGoldfly(fly,cell,clock){
   const x=fly.x*cell,y=fly.y*cell,pulse=.5+.5*Math.sin(clock*7),fade=Math.min(1,(fly.expires-clock)/2);noStroke();
   fill(255,214,80,(60+60*pulse)*fade);ellipse(x,y,cell*(1+pulse*.3),cell*(1+pulse*.3));const flap=Math.abs(Math.sin(clock*30));
@@ -509,3 +572,31 @@ function drawEscapeWorldCritters(chapter,index,w,cell){
   }
 }
 
+
+// The garden recovers (EscapeStory.stage, from progress alone) and the map shows it, lastingly: the
+// twig Sally laid for the snail with its silver trail; the orchard waymark warm again; Wick's
+// lantern lit in the marsh with the path marks it reaches; the frost sentinel resting, looking down
+// a lit path; and once Sally is home, a lantern glowing in every courtyard. Soft additive light.
+function escapeWorldGlow(x,y,r,rgb,a){const ctx=drawingContext;if(!ctx.createRadialGradient)return;ctx.save();ctx.globalCompositeOperation='lighter';const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'rgba('+rgb.join(',')+','+a+')');g.addColorStop(1,'rgba('+rgb.join(',')+',0)');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);ctx.restore();}
+function drawEscapeWorldLanternPost(x,y,cell,t,lit){
+  noStroke();fill(0,0,0,60);ellipse(x,y+cell*.45,cell*.6,cell*.2);stroke(60,46,30);strokeWeight(cell*.1);line(x,y+cell*.45,x,y-cell*.55);line(x,y-cell*.55,x+cell*.32,y-cell*.55);noStroke();
+  const flick=.85+.15*Math.sin(t*7+x)*Math.sin(t*3.1+y);fill(...(lit?[255,214,120]:[90,88,80]));rect(x+cell*.2,y-cell*.5,cell*.26,cell*.34,cell*.06);
+  fill(60,46,30);rect(x+cell*.18,y-cell*.54,cell*.3,cell*.06,cell*.03);if(lit){fill(255,250,220);ellipse(x+cell*.33,y-cell*.33,cell*.1*flick,cell*.14*flick);escapeWorldGlow(x+cell*.33,y-cell*.33,cell*2.2*flick,[255,190,90],.42);}
+}
+function drawEscapeWorldRecovery(w,cell,near){
+  if(typeof EscapeStory==='undefined'||typeof escapeStoryStage!=='function')return;const stage=escapeStoryStage(),t=w.elapsed;noStroke();
+  // The Other Bank: a twig over a little groove, and a snail's silver trail.
+  if(w.regionOpen(1)&&near(12,22,3)){const x=12.5*cell,y=22.5*cell;fill(70,110,120,140);rect(x-cell*.7,y-cell*.12,cell*1.4,cell*.24,cell*.1);stroke(110,78,44);strokeWeight(cell*.1);line(x-cell*.8,y-cell*.2,x+cell*.8,y+cell*.16);noStroke();
+    for(let i=0;i<7;i++){const px=x+cell*(.9+i*.22),py=y+cell*(.1+Math.sin(i*.9)*.12),sh=.5+.5*Math.sin(t*2-i*.6);fill(220,230,240,90+90*sh);ellipse(px,py,cell*.12,cell*.07);}}
+  // Stage 1: the orchard waymark, a carved foot on a stone, warm and breathing.
+  if(stage>=1&&near(16,45,3)){const x=16.5*cell,y=45.5*cell,b=.75+.25*Math.sin(t*1.6);fill(0,0,0,50);ellipse(x,y+cell*.3,cell*.9,cell*.25);fill(150,140,120);ellipse(x,y,cell*.9,cell*.7);fill(255,170,90,180*b);
+    for(const [dx,dy,r] of [[0,.05,.22],[-.14,-.18,.08],[-.02,-.22,.08],[.11,-.18,.08]])ellipse(x+dx*cell,y+dy*cell,cell*r,cell*r*1.1);escapeWorldGlow(x,y,cell*1.8,[255,150,70],.35*b);}
+  // Stage 2: Wick's lantern lit, and two path marks it reaches.
+  if(stage>=2&&near(38,94,4)){const x=38.5*cell,y=94.5*cell;drawEscapeWorldLanternPost(x,y,cell,t,true);for(const [dx,dy] of [[1.6,.9],[2.8,1.6]]){const b=.6+.4*Math.sin(t*2-dx);fill(255,210,130,160*b);ellipse(x+dx*cell,y+dy*cell,cell*.28,cell*.2);escapeWorldGlow(x+dx*cell,y+dy*cell,cell*.8,[255,190,100],.25*b);}}
+  // Stage 3: the courtyard sentinel at rest, head bowed to a thin lit line beneath the ice.
+  if(stage>=3&&near(13,98,4)){const x=13.5*cell,y=98.5*cell;fill(0,0,0,60);ellipse(x,y+cell*.5,cell*1.1,cell*.3);fill(150,184,214);rect(x-cell*.35,y-cell*.4,cell*.7,cell*.95,cell*.3);fill(176,206,232);ellipse(x+cell*.08,y-cell*.48,cell*.5,cell*.42);
+    fill(40,70,110);ellipse(x+cell*.18,y-cell*.44,cell*.07,cell*.05);stroke(170,230,255,150+60*Math.sin(t*1.4));strokeWeight(cell*.06);line(x+cell*.5,y+cell*.45,x+cell*3.2,y+cell*.7);noStroke();escapeWorldGlow(x+cell*1.8,y+cell*.6,cell*1.6,[140,210,255],.28);}
+  // Stage 4: Sally is home, and a lantern glows in every courtyard.
+  // Beside each local, so it is in view while Sally talks to them (Wick's own lantern is already lit).
+  if(stage>=4)for(const n of w.npcs||[]){if(n.chapter===12||!near(n.x-1.6,n.y,4))continue;drawEscapeWorldLanternPost((n.x-1.1)*cell,(n.y+.3)*cell,cell,t+n.chapter,true);}
+}
