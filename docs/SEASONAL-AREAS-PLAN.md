@@ -39,7 +39,7 @@ Names, dimensions, supply counts and palettes are proposed targets. Final tile l
 
 **New content:** sixteen authored levels and their notes, sixteen seasonal creature appearances/cues across the two packs, spring/summer terrain/scenery/music, eight-token world restoration per area, two skins and four menu keepsakes.
 
-**Small presentation features:** spring lily-hop world interaction using the existing flight model; summer kite lawn; waterwheel/lighthouse restoration; improved themed water and gate weather. Keep these bounded and disposable with the scene.
+**Small presentation features:** spring lily-hop world interaction (new world-map code: the seasonal world has no flight model today, so it comes after the levels or waits); summer kite lawn; waterwheel/lighthouse restoration; improved themed water and gate weather. Keep these bounded and disposable with the scene.
 
 **Explicitly outside the first delivery:** new combat, bosses, health/heat/pollen meters, random procedural levels, fluid simulation, boat controls, a new jump action, custom seasonal control schemes, new upgrade economy or annual save wipes.
 
@@ -86,11 +86,17 @@ Follow the existing winter structure rather than requiring an engine rewrite:
 | Access, names, palettes and rewards | Existing seasons registry/progress system and shared keepsake renderer |
 | Music, ambience and effects | Extend current banks/recipes, honour mixer and voice limits |
 | Shared physics, if genuinely required | Small opt-in changes with ordinary campaign regression proof |
-| Builder | Expose any newly supported data; preserve current/water/ground defaults through save/load |
+| Builder | Add **Spring** and **Summer** looks to the builder's Look setting (as Autumn Hollow and Winterlight have), plus new props (watering can, flower lantern, bunting, crates, lighthouse lantern) in the prop tool. Every spring and summer level must open in the builder, round-trip and still win its recorded runs (the existing builder round-trip test). Author blockouts in the builder with the season's look, then export. |
 | Solutions | Readable waypoint tours plus generated compressed real-input fixtures |
 | Documentation | Final SPRING.md and SUMMER.md describing actual authored content, replacing proposal assumptions |
 
 Potentially expensive work is mostly **level design and verification**, not reskinning. Keep the first implementation to existing hazard rules; treat any request for a new behaviour as a separately stated design change. Avoid promising calendar estimates before the blockout routes pass.
+
+## Shared conventions since the plan was drafted
+
+- **Creature art.** The campaign creatures were redrawn with eyes and detail, and a creature's eyes turn red on its tell. Seasonal costumes keep that: whatever the costume, the tell shows on the creature itself (eyes, colour, pose), not only in a marker.
+- **Ladybird.** The campaign now has a ladybird alarm creature (plays dead, then buzzes hunters to Sally). It suits spring and replaces the planned Bell Cricket there.
+- **TV boxes.** Android TV hardware (e.g. the Shield) is much slower than phones and computers. Any reduction of rain, petals, glints or water detail for performance applies to TV only; phones and computers keep the full look.
 
 ## Fairness and solvability contract
 
