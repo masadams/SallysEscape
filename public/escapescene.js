@@ -306,7 +306,8 @@ function playEscape(){
     let {x,y,sprint,crawl,dig}=escapeMovement();
     // A key held for a throw can be let go while the window was away: drop the throw then.
     if(escapeCharge?.source==='key'&&!keyIsDown({glow:76,spore:90}[escapeCharge.kind]||81))releaseEscapeCharge();
-    escapeGame.advance(deltaTime/1000,{x,y,sprint,crawl,dig,aiming:Boolean(escapeCharge)});tickEscapeCrawlTip(escapeGame);
+    const pad=typeof escapePad!=='undefined'&&escapePad.active?escapePad:null,look=pad&&(pad.peekX||pad.peekY)?{x:pad.peekX,y:pad.peekY}:null;
+    escapeGame.advance(deltaTime/1000,{x,y,sprint,crawl,dig,aiming:Boolean(escapeCharge),look});tickEscapeCrawlTip(escapeGame);
   }
   const events=escapeGame.drainEvents();
   escapeCharacter?.update(escapeGame,events);
