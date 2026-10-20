@@ -8799,7 +8799,8 @@
   // Seasonal content has its own catalog and saves. It never joins the campaign trail.
   const autumn=typeof module!=='undefined'&&module.exports?require('./escape-autumn.js'):root.EscapeAutumn||[];
   const winter=typeof module!=='undefined'&&module.exports?require('./escape-winter.js'):root.EscapeWinter||[];
-  const seasonal=[...autumn.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,...route,seasonal:'autumn-hollow'})),...winter.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,...route,seasonal:'winter'}))];
+  const spring=typeof module!=='undefined'&&module.exports?require('./escape-spring.js'):root.EscapeSpring||[];
+  const seasonal=[...autumn.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,...route,seasonal:'autumn-hollow'})),...winter.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,...route,seasonal:'winter'})),...spring.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,...route,seasonal:'spring'}))];
   const catalog=freeze({levels,challenges,regions,hidden,kids,seasonal});
   // Custom levels from the builder go through the same text-map path as every rebuilt route.
   function applyEdit(old,route){const keep={};for(const k of EDIT_KEEP)if(old[k]!==undefined)keep[k]=old[k];
@@ -8807,7 +8808,7 @@
   // A builder level may choose a look: its theme for ground and palette, and for the seasonal looks a
   // costume (autumn or winter) that dresses the creatures and scenery. Drawing only; it is still a
   // custom level for saves, results and story pages.
-  const lookOf=look=>typeof look==='string'&&/^(autumn|winter)(-[a-z]+)?$/.test(look)?{seasonalTheme:look,costume:look.startsWith('winter')?'winter':'autumn-hollow'}:{};
+  const lookOf=look=>typeof look==='string'&&/^(autumn|winter|spring)(-[a-z]+)?$/.test(look)?{seasonalTheme:look,costume:look.startsWith('winter')?'winter':look.startsWith('spring')?'spring':'autumn-hollow'}:{};
   const buildCustom=route=>freeze(fromMap({burrows:0,pebbles:0,tongues:0,...JSON.parse(JSON.stringify(route)),...lookOf(route.look),custom:true,revision:1}));
   root.EscapeCatalog=catalog;root.escapeGridFor=gridFor;root.escapeBuildCustom=buildCustom;
   // The game's own copy of an escape, even while a workshop draft stands in for it.
