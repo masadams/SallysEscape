@@ -30,4 +30,4 @@ Each escape has 10 treasure, field notes from Marina, finite supplies and normal
 
 ## World
 
-The summer area has a guide, Marina, by the north gate. Its centre is a lighthouse whose lamp brightens with each sun lens. Eight harbour lanterns light one per escape, and a sailboat moors once all eight are done.
+The summer area has a guide, Marina, by the north gate, and sand underfoot (Sally's steps hiss on it). Its centre is a lagoon with the lighthouse on a rock, its lamp brightening with each sun lens. The open sea runs along the south shore with waves rolling in, and a wooden pier Sally can walk out on (her steps knock on the boards). Eight harbour lanterns along the shore light one per escape, and a sailboat moors by the pier once all eight are done. Striped beach huts stand in the north-west corner, and three kites fly over a grassy kite lawn in the north-east (still with reduced motion).

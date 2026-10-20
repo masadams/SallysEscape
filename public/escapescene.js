@@ -476,7 +476,7 @@ function escapeFootsteps(p){
   escapeStepDistance+=Math.hypot(p.x-escapeStepFrom.x,p.y-escapeStepFrom.y);escapeStepFrom={x:p.x,y:p.y};
   if(escapeStepDistance>=(p.sprinting?.62:p.crawling?.7:.48)){escapeStepDistance=0;escapeStepAlt=!escapeStepAlt;
     // The world map walks on plain ground; inside an escape the ground decides the step.
-    const inRun=gameState==='escape'&&escapeGame&&typeof EscapeFeel!=='undefined',surface=inRun?EscapeFeel.surface(escapeGame):gameState==='seasonalHub'&&seasonWorld?.areaAt().id==='winter'?(seasonWorld.sled.riding||seasonWorld.slippery.has(Math.floor(p.x)+','+Math.floor(p.y))?'ice':'snow'):'floor';
+    const inRun=gameState==='escape'&&escapeGame&&typeof EscapeFeel!=='undefined',surface=inRun?EscapeFeel.surface(escapeGame):gameState==='seasonalHub'&&seasonWorld?seasonWorld.surfaceAt(p):'floor';
     escapeSound(p.swimming?'paddle':p.crawling?'crawl':'step',{sprint:p.sprinting,alt:escapeStepAlt,surface});
     if(inRun&&!p.swimming&&!p.crawling)EscapeFeel.step(escapeFx,escapeGame,{t:escapeFxClock,sprint:p.sprinting,alt:escapeStepAlt});}
 }

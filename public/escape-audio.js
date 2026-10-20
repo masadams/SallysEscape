@@ -48,7 +48,7 @@
     gobble:v=>{for(let i=0;i<3;i++)tone(v,{freq:i%2?330:240,to:170,dur:.085,delay:i*.075,type:'triangle',gain:.12});},
     // Footsteps sound like the ground: a soft pad on plain floor, a crunch of gravel (loud: hunters
     // hear it), a rustle of leaves, next to nothing on moss, a squelch of mud, a hiss of sand, the
-    // squeak and crunch of snow, a wet slap on the tide flats.
+    // squeak and crunch of snow, a wet slap on the tide flats, a plip on a lily pad, a knock on pier boards.
     step:(v,o)=>{const s=o.sprint?1.6:1,f=o.alt?1.12:1;switch(o.surface){
       case 'gravel':for(let i=0;i<3;i++)noise(v,{dur:.025,delay:i*.018,gain:.16*s,filter:'bandpass',freq:(2600+i*500)*f,q:3});noise(v,{dur:.06,gain:.08*s,filter:'lowpass',freq:700});break;
       case 'leaves':case 'tangle':noise(v,{dur:.14,gain:.11*s,filter:'bandpass',freq:2800*f,to:1800,q:.9,attack:.02});break;
@@ -59,6 +59,8 @@
       case 'ice':noise(v,{dur:.2,gain:.07*s,filter:'bandpass',freq:3200*f,to:2100,q:2,attack:.025});break;
       case 'snow':noise(v,{dur:.09,gain:.13*s,filter:'bandpass',freq:1500*f,to:900,q:1.6,attack:.01});noise(v,{dur:.02,delay:.03,gain:.06*s,filter:'highpass',freq:4200});break;
       case 'wet':noise(v,{dur:.07,gain:.12*s,filter:'bandpass',freq:1700*f,to:1100,q:1.2});break;
+      case 'lily':tone(v,{freq:820*f,to:430,dur:.09,type:'sine',gain:.09*s});noise(v,{dur:.06,delay:.02,gain:.05*s,filter:'bandpass',freq:1500*f,q:1.4});break;
+      case 'boards':tone(v,{freq:180*f,to:140,dur:.06,type:'triangle',gain:.07*s});noise(v,{dur:.04,gain:.07*s,filter:'bandpass',freq:900*f,q:2});break;
       default:noise(v,{dur:.05,gain:o.sprint?.22:.13,filter:'lowpass',freq:o.alt?520:420,q:.7});}},
     paddle:(v)=>noise(v,{dur:.16,gain:.16,freq:700,to:300,q:1.5}),
     treasure:(v)=>{notes(v,[[988,0,.09],[1319,.07,.22]],{type:'square',gain:.16});tone(v,{freq:2637,delay:.07,dur:.2,type:'sine',gain:.12});},
