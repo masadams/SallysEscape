@@ -8804,7 +8804,11 @@
   // Custom levels from the builder go through the same text-map path as every rebuilt route.
   function applyEdit(old,route){const keep={};for(const k of EDIT_KEEP)if(old[k]!==undefined)keep[k]=old[k];
     return fromMap({burrows:0,pebbles:0,tongues:0,...JSON.parse(JSON.stringify(route)),...keep,id:old.id,draft:true});}
-  const buildCustom=route=>freeze(fromMap({burrows:0,pebbles:0,tongues:0,...JSON.parse(JSON.stringify(route)),custom:true,revision:1}));
+  // A builder level may choose a look: its theme for ground and palette, and for the seasonal looks a
+  // costume (autumn or winter) that dresses the creatures and scenery. Drawing only; it is still a
+  // custom level for saves, results and story pages.
+  const lookOf=look=>typeof look==='string'&&/^(autumn|winter)(-[a-z]+)?$/.test(look)?{seasonalTheme:look,costume:look.startsWith('winter')?'winter':'autumn-hollow'}:{};
+  const buildCustom=route=>freeze(fromMap({burrows:0,pebbles:0,tongues:0,...JSON.parse(JSON.stringify(route)),...lookOf(route.look),custom:true,revision:1}));
   root.EscapeCatalog=catalog;root.escapeGridFor=gridFor;root.escapeBuildCustom=buildCustom;
   // The game's own copy of an escape, even while a workshop draft stands in for it.
   const gameLevel=key=>{const [kind,id]=key.split(':');return originals[key]||(kind==='hidden'?hidden:levels).find(l=>l.id===id)||null;};root.escapeGameLevel=gameLevel;

@@ -35,11 +35,15 @@ function escapeKidsResult(r){
 // Cache per run: two different levels can have identical start/key coordinates.
 // Include the small grid in the key so a grown bush, opened door or tide cannot leave stale dots.
 const escapeKidsTrails=new WeakMap();
+// What can change the way through in a run, cheaply: gates, smashed walls, grown seeds, fallen floors
+// and the tide. The guide replans only when one of these (or Sally's tile) changes.
+function escapeKidsGridStamp(g){let fallen=0;if(g.crumbling)for(const c of g.crumbling.values())if(c.fallen)fallen++;
+  return [g.gates.map(q=>q.open?1:0).join(''),g.smashed||0,g.seedGrowth?.length||0,fallen,g.tideFlats?.length?g.grid[g.tideFlats[0].y][g.tideFlats[0].x]:''].join(',');}
 function drawEscapeKidsGuide(g,cell){
   if(g.status!=='playing')return;
   const t=g.elapsed;drawEscapeKidsSigns(g,cell);push();
   if(g.level.seasonal?seasonProgress().data.guide:escapeKidsGuideOn()){
-    const key=[Math.floor(g.player.x),Math.floor(g.player.y),g.hasKey,g.burrows,g.tongues,g.grid.map(r=>r.join('')).join('')].join('|');
+    const key=[Math.floor(g.player.x),Math.floor(g.player.y),g.hasKey,g.burrows,g.tongues,escapeKidsGridStamp(g)].join('|');
     let guide=escapeKidsTrails.get(g);if(guide?.key!==key){guide={key,...EscapeKidsGuide.plan(g)};escapeKidsTrails.set(g,guide);}
     noStroke();guide.path.slice(1,16).forEach(([x,y],i)=>{const pulse=.5+.5*Math.sin(t*5-i*.7);fill(255,236,140,90+120*pulse);ellipse((x+.5)*cell,(y+.5)*cell,cell*(.22+.08*pulse));});
     const a=guide.action;

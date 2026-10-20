@@ -250,8 +250,8 @@ test('the earned autumn outfit participates in the ordinary world Colours cycle'
 
 test('seasonal world rendering bounds and releases terrain graphics, and leaving restores the campaign',()=>{
  const h=harness();h.el('season-hub').querySelectorAll=()=>[];const make=h.c.createGraphics;let alive=0;h.c.createGraphics=(...args)=>{const g=make(...args);alive++;g.remove=()=>{alive--;};return g;};
- h.run('openSeasonalHub();drawSeasonWorld()');assert.ok(h.run('seasonWorld.motion.lizard.joints.length')>8);assert.ok(h.run('seasonWorldChunks.map.size')<=16);assert.ok(alive>0);
- h.run('seasonToggleOverview();drawSeasonWorld()');assert.ok(h.run('seasonWorldChunks.map.size')<=49);h.run('seasonToggleOverview();seasonBack()');assert.equal(alive,0);assert.equal(h.run('gameState'),'start');h.run('showEscapeSelect();draw()');assert.equal(h.run('gameState'),'escapeSelect');
+ h.run('openSeasonalHub();drawSeasonWorld()');assert.ok(h.run('seasonWorld.motion.lizard.joints.length')>8);const chunkCount=()=>h.run('[...seasonWorldChunks.byBase.values()].reduce((n,m)=>n+m.size,0)');assert.ok(chunkCount()>0&&chunkCount()<=22);assert.ok(alive>0);
+ h.run('seasonToggleOverview();drawSeasonWorld()');assert.ok(chunkCount()<=22+55,'the close view and the overview keep their own bounded chunks');h.run('seasonToggleOverview();seasonBack()');assert.equal(alive,0);assert.equal(h.run('gameState'),'start');h.run('showEscapeSelect();draw()');assert.equal(h.run('gameState'),'escapeSelect');
 });
 
 test('switching players creates a fresh seasonal walker and loads only that player\'s lanterns',()=>{

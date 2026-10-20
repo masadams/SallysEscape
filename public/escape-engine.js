@@ -17,7 +17,7 @@
   // recovers after a strike) and ear (how far the fox hears her footsteps).
   const CUNNING=[{lead:0,loop:Infinity,feel:0,turn:.85,snap:.35,pace:.92,react:1.35,memory:1,search:1.2,warn:1.3,aim:.5,rest:1.25,ear:.8},{lead:.55,loop:8,feel:1.8,turn:.93,snap:.7,pace:.96,react:1.15,memory:1.25,search:1.6,warn:1.12,aim:.8,rest:1.1,ear:.9},{lead:1,loop:5.5,feel:3,turn:1,snap:1,pace:1,react:1,memory:1.5,search:2,warn:1,aim:1,rest:1,ear:1},{lead:1.2,loop:4.2,feel:3.6,turn:1.1,snap:1,pace:1.03,react:.85,memory:1.8,search:2.6,warn:.88,aim:1.15,rest:.85,ear:1.15}];
   // Hunters that keep their own counsel and do not answer a magpie's caw.
-  const MAGPIE_DEAF=new Set(['magpie','owl','moth','cricket','angler','mimic','flytrap','sentinel','cloudray','echofrog','toad','scorpion','millipede','heron','mantis','wasp','eel','crab','gecko']);
+  const MAGPIE_DEAF=new Set(['magpie','ladybird','owl','moth','cricket','angler','mimic','flytrap','sentinel','cloudray','echofrog','toad','scorpion','millipede','heron','mantis','wasp','eel','crab','gecko']);
   // lead is how far ahead it reads Sally: 1 aims where she will be by the time it gets there, 0 where she is.
   const MOMENTUM={snake:{turn:2.4,grip:.55,accel:1.6,pulse:1.5,lead:.85},cobra:{turn:2,grip:.5,accel:1.3,pulse:1.1,lead:1},'sea-snake':{turn:2.4,grip:.55,accel:1.6,pulse:1.4,lead:.85},fish:{turn:4.5,grip:.6,accel:2.5,pulse:2.2,lead:.5},chameleon:{turn:3.5,grip:.55,accel:2,pulse:1,lead:.4}};
   // Hunters heavy enough to press a heavy plate.
@@ -765,7 +765,7 @@
       if(this.elapsed>=this.invulnerableUntil&&stinger&&this.shedTail(stinger))return;
       if(this.elapsed>=this.invulnerableUntil&&stinger){this.finish('caught','The scorpion struck. Cross its ring while the tail is down, or change direction when it strikes.');return;}
       // Capture wins over picking up the key or escaping in the same simulation step.
-      const captor=this.hunters.find(h=>!(LIGHT_SHY.has(h.kind)&&this.lights.length&&this.inLight(p))&&!h.eaten&&!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='magpie'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='sentinel'&&h.kind!=='cloudray'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(h.kind==='beetle'&&h.state==='charge'?.62:.48)&&this.clear(p,h));
+      const captor=this.hunters.find(h=>!(LIGHT_SHY.has(h.kind)&&this.lights.length&&this.inLight(p))&&!h.eaten&&!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='magpie'&&h.kind!=='ladybird'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='sentinel'&&h.kind!=='cloudray'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(h.kind==='beetle'&&h.state==='charge'?.62:.48)&&this.clear(p,h));
       if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
       if(this.elapsed>=this.invulnerableUntil && captor){
         this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. It crept up while Sally looked away. Keep it in view as you back off.':captor.kind==='mimic'?'That chest was a mimic! Watch for its tell, or throw a pebble to make it snap first.':captor.kind==='fox'?'A snow fox heard Sally and pounced. Stand still, keep to quiet ground, or toss a pebble to send it pouncing elsewhere.':captor.kind==='crab'?'A hermit crab scuttled out and pinched Sally. Pass its lane while it is tucked in, or send it back into its shell with a pebble.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'A hunter spotted you. Break sight at a corner or use a pebble.');return;
@@ -823,6 +823,7 @@
       if(h.kind==='moth'){this.updateMoth(dt,h);return;}
       if(h.kind==='owl'){this.updateOwl(dt,h);return;}
       if(h.kind==='magpie'){this.updateMagpie(dt,h);return;}
+      if(h.kind==='ladybird'){this.updateLadybird(dt,h);return;}
       if(h.kind==='gecko'){this.updateGecko(dt,h);return;}
       if(h.kind==='mimic'){this.updateMimic(dt,h);return;}
       if(h.kind==='toad'||h.kind==='spider'){this.updateNestHunter(dt,h);return;}
@@ -1326,6 +1327,27 @@
       const look=h.patrol[h.routeIndex%h.patrol.length],want=Math.atan2(look.y-h.y,look.x-h.x),turn=Math.atan2(Math.sin(want-h.facing),Math.cos(want-h.facing));
       if(Math.abs(turn)>.02){h.facing+=Math.sign(turn)*Math.min(Math.abs(turn),1.3*dt);h.lookUntil=this.elapsed+1.5;}
       else if(this.elapsed>=(h.lookUntil||0))h.routeIndex=(h.routeIndex+1)%h.patrol.length;
+    }
+    // The ladybird plays dead. It ambles along its patrol and never catches Sally, but when she comes
+    // near on her feet it flips onto its back and lies still, watching. Lying still it is harmless:
+    // Sally may creep past (crawling, she never startles it at all). Rush past it close, toss a pebble
+    // near it, or still be standing over it when it rights itself, and it shakes its wings, flies up
+    // and buzzes an alarm that brings every hunter in earshot to where Sally is; then it is gone for a
+    // while before it lands back on its patrol.
+    updateLadybird(dt,h){
+      const p=this.player,d=distance(h,p),home=h.home||(h.home={x:h.x,y:h.y}),near=r=>d<r&&!p.hidden&&!p.underground&&this.clear(h,p,true);
+      const startled=this.decoy&&!this.decoy.ladybird&&distance(this.decoy,h)<1.5;
+      if(h.state==='warn'){if(this.elapsed>=h.phaseUntil){this.magpieCall(h);this.alarms++;this.cue('ladybird',h);this.notice('A ladybird buzzes up in alarm! The hunters know where you are.','warning');h.state='away';h.phaseUntil=this.elapsed+7;}return;}
+      if(h.state==='away'){if(this.elapsed>=h.phaseUntil){h.x=home.x;h.y=home.y;h.state='patrol';h.routeIndex=0;}return;}
+      if(h.state==='dead'){
+        if(startled||near(1.3)&&p.moving&&!p.crawling||this.elapsed>=h.phaseUntil&&near(2.3)&&!p.crawling){if(this.decoy&&startled)this.decoy.ladybird=true;h.state='warn';h.phaseUntil=this.elapsed+.7;this.cue('flutter',h);return;}
+        if(this.elapsed>=h.phaseUntil){h.state='patrol';this.cue('rustle',h);}
+        return;}
+      if(startled){this.decoy.ladybird=true;h.state='warn';h.phaseUntil=this.elapsed+.7;this.cue('flutter',h);return;}
+      if(near(2.3)&&!p.crawling){h.state='dead';h.phaseUntil=this.elapsed+3;h.facing=Math.atan2(p.y-h.y,p.x-h.x);this.cue('click',h);return;}
+      h.state='patrol';if(!h.patrol.length)return;
+      const to=h.patrol[h.routeIndex%h.patrol.length],dist=distance(h,to),step=Math.min(dist,.7*dt);
+      if(dist>.02){h.facing=Math.atan2(to.y-h.y,to.x-h.x);h.x+=Math.cos(h.facing)*step;h.y+=Math.sin(h.facing)*step;h.distanceMoved+=step;}else h.routeIndex=(h.routeIndex+1)%h.patrol.length;
     }
     // A caw is an alarm, not a lure: every chasing hunter in earshot learns where Sally is right now
     // and comes for her as if it had just seen her; it searches there when it loses her again.

@@ -100,7 +100,7 @@
  '#..........K........#',
  '#####################'],
  gates:[{id:'blue',name:'Blue',color:[106,195,236],switch:[1,5],tiles:[[15,9],[16,9],[17,9],[18,9],[19,9]]}],
- guards:[{spawn:[17,4],facing:PI,patrol:[[10,4],[18,4],[18,5],[10,5]]},{spawn:[18,8],facing:PI,patrol:[[8,7],[18,7],[18,8],[8,8]]}]},
+ guards:[{kind:'ladybird',spawn:[2,7],patrol:[[2,7],[3,7]]},{spawn:[17,4],facing:PI,patrol:[[10,4],[18,4],[18,5],[10,5]]},{spawn:[18,8],facing:PI,patrol:[[8,7],[18,7],[18,8],[8,8]]}]},
 {id:'lantern-courtyard',name:'Lantern Courtyard',brief:'The key room is walled up. A beetle could knock it down for you.',hint:'A charging beetle smashes cracked walls and flattens leaves. Lure it, then step out of its lane.',
  burrows:2,pebbles:2,map:[
  '#####################',
@@ -116,7 +116,7 @@
  '#....#..L#.#..2....X#',
  '#..1.#...#...#......#',
  '#####################'],
- guards:[{kind:'beetle',spawn:[12,1],facing:PI,patrol:[[6,1],[12,1],[12,3],[6,3]]},{spawn:[19,8],facing:PI,patrol:[[1,7],[19,7],[19,8],[1,8]]}]},
+ guards:[{kind:'ladybird',spawn:[12,1],patrol:[[12,1],[13,1]]},{kind:'beetle',spawn:[12,1],facing:PI,patrol:[[6,1],[12,1],[12,3],[6,3]]},{spawn:[19,8],facing:PI,patrol:[[1,7],[19,7],[19,8],[1,8]]}]},
 {id:'echo-cistern',name:'Echo Cistern',brief:'A dark cistern. Thorns guard the way out.',hint:'Blue opens the key room; amber opens the exit stair. Cross the thorns while they sink.',
  explore:true,pebbles:2,map:[
  '#######################',
@@ -161,7 +161,7 @@
  '#..1....L.........2...#',
  '#.................L..X#',
  '#######################'],
- guards:[{spawn:[16,2],facing:PI,patrol:[[6,1],[20,1],[20,3],[6,3]]},{kind:'beetle',spawn:[20,8],facing:PI,patrol:[[2,8],[20,8]]},{spawn:[14,9],facing:PI,patrol:[[10,7],[17,7],[17,9],[10,9]]}]},
+ guards:[{kind:'ladybird',spawn:[17,1],patrol:[[17,1],[18,1]]},{spawn:[16,2],facing:PI,patrol:[[6,1],[20,1],[20,3],[6,3]]},{kind:'beetle',spawn:[20,8],facing:PI,patrol:[[2,8],[20,8]]},{spawn:[14,9],facing:PI,patrol:[[10,7],[17,7],[17,9],[10,9]]}]},
 {id:'split-shelves',name:'Split Shelves',brief:'Three shelves stack above a chasm. A blue gate splits the top shelf.',hint:'Ramps join the shelves at alternate ends. Your tongue reaches three tiles across the chasm; a cracked wall is a burrow shortcut up.',
  tongues:1,burrows:2,explore:true,map:[
  '###########################',
@@ -175,7 +175,7 @@
  '#@......1..L.........L....#',
  '###########################'],
  gates:[{id:'blue',name:'Blue',color:[106,195,236],switch:[13,4],tiles:[[15,1],[15,2]]}],
- guards:[{kind:'beetle',spawn:[24,8],facing:PI,patrol:[[6,7],[24,7],[24,8],[6,8]]},{spawn:[19,5],facing:PI,patrol:[[5,4],[20,4],[20,5],[5,5]]}]},
+ guards:[{kind:'ladybird',spawn:[23,4],patrol:[[23,4],[24,4]]},{kind:'beetle',spawn:[24,8],facing:PI,patrol:[[6,7],[24,7],[24,8],[6,8]]},{spawn:[19,5],facing:PI,patrol:[[5,4],[20,4],[20,5],[5,5]]}]},
 {id:'stillwater-vault',name:'Stillwater Vault',brief:'A silent pool, a noisy rim, and a key on its island.',hint:'Gravel on the rim is loud; the reeds are quiet. Grab the island key from the north walk.',
  tongues:2,explore:true,map:[
  '#########################',

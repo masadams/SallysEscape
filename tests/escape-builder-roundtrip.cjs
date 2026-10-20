@@ -35,3 +35,25 @@ test('the builder can place every extra the game has, and the game plays them',(
   const again=B.sanitize(JSON.parse(JSON.stringify(m)));assert.deepEqual(B.toRoute(again),route,'saving and loading keeps every extra');
   const g=new EscapeAdventure({level:escapeBuildCustom(route)});for(let i=0;i<240;i++)g.advance(1/120,{});assert.ok(['playing','caught'].includes(g.status));
 });
+
+// The seasonal adventures and the Little Explorers adventures open in the builder too: their checkpoints,
+// gentle catches, trail signs, scenery, mill wheel, fox warning and look all come back out, and each
+// recorded winning run still wins on the rebuilt level.
+test('seasonal and Little Explorers adventures survive the builder round trip with their recorded wins',()=>{
+  const ACT2={...ACT,glow:'throwGlow',spore:'throwSpore'},play=(options,commands)=>{const g=new EscapeAdventure(options);for(const c of commands){if(c.kind==='move'){for(let n=0;n<c.frames;n++)g.advance(1/120,c);}else g[ACT2[c.kind]](c.power);}return g;};
+  const sets=[[EscapeCatalog.seasonal,require('./fixtures/escape-seasons.json')],[EscapeCatalog.kids.filter(l=>l.adventure),require('./fixtures/escape-kids-adventures.json')]],failed=[];let runs=0;
+  for(const [levels,recs] of sets)for(const level of levels){
+    const model=B.sanitize(JSON.parse(JSON.stringify(B.fromRoute(level))));if(!model){failed.push(level.id+': does not sanitize');continue;}
+    const route=B.toRoute(model);
+    for(const k of ['gentle','foxWarn','checkpoints','props','millWheel'])if(level[k]!==undefined)assert.deepEqual(route[k],level[k],level.id+' keeps '+k);
+    if(level.fieldNotes)assert.equal(route.fieldNotes.length,level.fieldNotes.length,level.id+' keeps its signs');
+    if(level.seasonalTheme)assert.equal(route.look,level.seasonalTheme);
+    const built=escapeBuildCustom(route);
+    for(const r of recs.filter(r=>r.id===level.id)){runs++;const g=play({level:built},r.commands),o=play(r.options,r.commands);
+      if(g.status!=='won'||Math.abs(g.elapsed-o.elapsed)>1e-6)failed.push(level.id+' '+r.variant+': '+g.status+' at '+g.elapsed.toFixed(2)+'s');}
+  }
+  assert.ok(runs>=20,'recorded runs replayed: '+runs);assert.deepEqual(failed,[]);
+});
+test('every Little Explorers level, even the smallest, opens in the builder and passes its checks',()=>{
+  for(const level of EscapeCatalog.kids){const m=B.sanitize(JSON.parse(JSON.stringify(B.fromRoute(level))));assert.ok(m,level.id);assert.deepEqual(B.validate(m),[],level.id);}
+});
