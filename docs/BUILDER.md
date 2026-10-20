@@ -41,7 +41,7 @@ Signed in, the builder opens straight away. **Admin** in its toolbar goes to the
 ## Doors, bridges and triggers
 Pick a colour, then paint **▮ Door** or **═ Bridge** tiles. Each colour is one door and one bridge.
 Place triggers: **◉ Plate** (Sally stands on it), **⬛ Heavy plate** (only a beetle's weight; give a
-beetle a patrol point on it) and **⚲ Lever**. The key and every chest are triggers too.
+beetle rounds that cross it: a patrol point on it, or a straight stretch between two points) and **⚲ Lever**. The key and every chest are triggers too.
 
 **🔗 Link**: click a trigger, the key or a chest, then click the doors, bridges or enemies it should
 affect. Click again to unlink. A door can have as many triggers as you like, so three ways to open

@@ -285,7 +285,13 @@
   function treasureTotal(model){return model.map.join('').split('').filter(c=>/[1-5]/.test(c)).reduce((n,c)=>n+Number(c),0);}
   const doorName=d=>(d.name||COLORS[d.color][0])+(d.bridge?' bridge':d.root?' roots':' door');
   // Plain-language problems that would stop the level from being fair to play.
-  function validate(model){
+  // A patrol crosses a tile when the tile is one of its points, or lies on a straight stretch
+// between two points in turn (the last leads back to the first).
+function patrolCrosses(patrol,at){
+  return patrol.some((p,i)=>{const q=patrol[(i+1)%patrol.length];if(p[0]===at[0]&&p[1]===at[1])return true;
+    return p[1]===q[1]&&p[1]===at[1]&&at[0]>=Math.min(p[0],q[0])&&at[0]<=Math.max(p[0],q[0])||p[0]===q[0]&&p[0]===at[0]&&at[1]>=Math.min(p[1],q[1])&&at[1]<=Math.max(p[1],q[1]);});
+}
+function validate(model){
     const problems=[],rows=model.map,w=rows[0]?.length||0;
     if(!w||rows.some(r=>r.length!==w))problems.push('Every row must be the same width.');
     for(const [ch,name] of [['@','Sally'],['K','the key'],['X','the hatch']]){const n=find(model,ch).length;if(n!==1)problems.push(n?'Place only one '+name+'.':'Place '+name+'.');}
@@ -305,7 +311,7 @@
       if(g.kind!=='dragonfly')for(const p of g.patrol)if(!seen.has(p.join())&&!seen.has(g.spawn.join()))problems.push(ENEMIES[g.kind]+' has a patrol point it cannot reach.');}
     for(const d of model.doors)if(d.mode!=='crumble'&&!linksTo(model,d.id).length)problems.push('The '+doorName(d).toLowerCase()+' has nothing linked to '+(d.mode==='shut'?'shut':'open')+' it.');
     for(const t of model.triggers){if(!linksFrom(model,t.id).length)problems.push('A '+TRIGGERS[t.type].toLowerCase()+' is not linked to anything.');
-      if(t.type==='heavy'&&!model.guards.some(g=>g.kind==='beetle'&&!g.sleep&&g.patrol.some(p=>same(p,t.at))))problems.push('A heavy plate needs a beetle with a patrol point on it.');}
+      if(t.type==='heavy'&&!model.guards.some(g=>g.kind==='beetle'&&!g.sleep&&patrolCrosses(g.patrol,t.at)))problems.push('A heavy plate needs a beetle whose rounds cross it.');}
     for(const h of model.hazards)if(h.type==='log'&&!h.to)problems.push('A rolling log needs an end: pick it with the Link tool, then click where it rolls to.');
     if((model.caps||[]).some(c=>!c.to))problems.push('A bounce cap needs a landing: click where it throws Sally.');
     if((model.antTrails||[]).some(t=>t.path.length<2))problems.push('An ant column needs at least two points to march between.');

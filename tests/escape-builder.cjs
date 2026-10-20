@@ -53,6 +53,8 @@ test('door modes: stays open, slams shut, and a heavy plate only a beetle presse
   const h=walled();B.addTrigger(h,'heavy',5,3);B.toggleLink(h,B.triggerAt(h,5,3).id,'d0');assert.ok(B.validate(h).some(p=>/heavy plate needs a beetle/.test(p)));
   B.addEnemy(h,'beetle',3,3);B.addPatrol(h,0,5,3);assert.deepEqual(B.validate(h).filter(p=>!/too close/.test(p)),[]);
   const c=play(h);stand(c,5,3);assert.equal(c.gates[0].open,false,'Sally is too light');
+  // A plate on the straight stretch between two patrol points counts too, as the beetle walks over it.
+  const k=walled();B.addTrigger(k,'heavy',5,3);B.toggleLink(k,B.triggerAt(k,5,3).id,'d0');B.addEnemy(k,'beetle',3,3);B.addPatrol(k,0,2,3);B.addPatrol(k,0,8,3);assert.deepEqual(B.validate(k).filter(p=>/heavy/.test(p)),[]);
 });
 test('taking the key wakes a sleeping enemy, and only the key or a chest can wake one',()=>{
   const m=B.blank(21,13);B.addEnemy(m,'snake',15,9);const id=m.guards[0].id;B.addTrigger(m,'plate',5,3);
