@@ -6,10 +6,10 @@
   const KEY='sally-escape-custom-v1',VERSION=3;
   const TILES={'#':'Wall','.':'Floor','L':'Leaves','N':'Gravel','B':'Cracked wall','M':'Mud','~':'Water','_':'Gap','c':'Crumbling floor','T':'Tangle vine','S':'Crack (Sally only)','o':'Spore puffball','t':'Tide flat','m':'Moss (silent)','d':'Soft dirt (Sally digs in)','I':'Ice wall (a sentinel’s gaze glances off it)'};
   const MARKS={'@':'Sally','K':'Key','X':'Hatch','1':'Treasure 1','2':'Treasure 2','3':'Chest 3'};
-  const ENEMIES={snake:'Snake',beetle:'Beetle',scorpion:'Scorpion',toad:'Toad',spider:'Spider',cricket:'Cricket',moth:'Moth',mimic:'Mimic',millipede:'Millipede',cobra:'King cobra',flytrap:'Flytrap',crab:'Hermit crab',fox:'Snow fox',heron:'Bog heron',mantis:'Praying mantis',wasp:'Wasp nest',dragonfly:'Dragonfly',mole:'Mole',bat:'Echo bat',eel:'Eel',angler:'Angler',fish:'Reef fish','sea-snake':'Sea snake',owl:'Owl',gecko:'Gecko',echofrog:'Echo frog',chameleon:'Chameleon',sentinel:'Frost sentinel',cloudray:'Cloud ray',magpie:'Magpie'};
+  const ENEMIES={snake:'Snake',ladybird:'Ladybird',beetle:'Beetle',scorpion:'Scorpion',toad:'Toad',spider:'Spider',cricket:'Cricket',moth:'Moth',mimic:'Mimic',millipede:'Millipede',cobra:'King cobra',flytrap:'Flytrap',crab:'Hermit crab',fox:'Snow fox',heron:'Bog heron',mantis:'Praying mantis',wasp:'Wasp nest',dragonfly:'Dragonfly',mole:'Mole',bat:'Echo bat',eel:'Eel',angler:'Angler',fish:'Reef fish','sea-snake':'Sea snake',owl:'Owl',gecko:'Gecko',echofrog:'Echo frog',chameleon:'Chameleon',sentinel:'Frost sentinel',cloudray:'Cloud ray',magpie:'Magpie'};
   // Enemies that stay on their post; the rest walk their patrol.
   const POSTED=new Set(['scorpion','toad','mimic','millipede','cobra','flytrap','crab','heron','mantis','wasp','eel','angler','gecko','echofrog','sentinel','magpie']);
-  const LIMITS={minW:11,maxW:45,minH:9,maxH:29,doors:6,triggers:24,hazards:40,guards:30};
+  const LIMITS={minW:11,maxW:45,minH:6,maxH:29,doors:6,triggers:24,hazards:40,guards:30};
   // Doors and bridges come in six colours; each colour is one door and one bridge.
   const COLORS=[['Red',[226,96,96]],['Blue',[96,150,236]],['Gold',[240,196,80]],['Green',[110,200,120]],['Violet',[178,120,230]],['Teal',[80,200,196]]];
   // How a door or bridge behaves when one of its triggers fires.
@@ -27,9 +27,13 @@
   const clampInt=(n,a,b)=>Math.max(a,Math.min(b,Math.round(Number(n)||0)));
   const clampNum=(n,a,b,d=a)=>Number.isFinite(Number(n))?Math.max(a,Math.min(b,Number(n))):d;
   // Whole-level extras the game supports beyond the map: the sky, the weather, and what lives there.
+  // How a level looks: its own palette and ground, and (for the autumn looks) the creatures in costume.
+  const LOOKS={'':'Plain','autumn':'Autumn Hollow','autumn-dusk':'Autumn Hollow at dusk','autumn-night':'Autumn Hollow at night','autumn-mill':'Autumn Hollow mill','autumn-festival':'Autumn Hollow festival','winter-village':'Winterlight village','winter-ice':'Winterlight ice','winter-workshop':'Winterlight workshop','winter-night':'Winterlight night','winter-finale':'Winterlight finale'};
+  // Scenery that sits on any tile and changes nothing in play.
+  const PROPS={lantern:'Lantern post',tree:'Autumn tree',pumpkin:'Pumpkin',brazier:'Brazier',pine:'Pine tree',gift:'Gift'};
   const LAYERS={shade:'Awning (shade from the hawk)',glowPlants:'Glow plant (light in the dark)',regrowth:'Pink regrowth bug (grows back a lost tail)'};
   const EXTRAS=()=>({hint:'',tailDrop:false,timeLimit:0,camos:0,seeds:0,glows:0,spores:0,cunning:2,unlimited:false,gaze:false,sightRadius:0,dark:false,living:false,abyss:false,biome:'',
-    hawk:null,storm:null,tide:null,caps:[],wind:[],echoes:[],currents:[],tunnels:[],antTrails:[],seedCrossings:[],rootWheel:null,rivalries:[],shade:[],glowPlants:[],regrowth:[],regions:[],messages:{},pages:[]});
+    hawk:null,storm:null,tide:null,caps:[],wind:[],echoes:[],currents:[],tunnels:[],antTrails:[],seedCrossings:[],rootWheel:null,rivalries:[],shade:[],glowPlants:[],regrowth:[],regions:[],messages:{},pages:[],gentle:0,foxWarn:0,look:'',checkpoints:[],signs:[],props:[],millWheel:null});
 
   function blank(width=21,height=13){
     width=clampInt(width,LIMITS.minW,LIMITS.maxW);height=clampInt(height,LIMITS.minH,LIMITS.maxH);
@@ -87,6 +91,7 @@
     keep.caps=(model.caps||[]).filter(c=>inside(c.at)&&inside(c.to));keep.antTrails=(model.antTrails||[]).map(t=>({...t,path:t.path.filter(inside)})).filter(t=>t.path.length>1);
     keep.wind=(model.wind||[]).filter(z=>inside([z.area[2],z.area[3]]));keep.echoes=(model.echoes||[]).filter(a=>inside([a[2],a[3]]));keep.currents=(model.currents||[]).filter(z=>inside([z.area[2],z.area[3]]));keep.tunnels=(model.tunnels||[]).filter(t=>t.every(inside));keep.regions=(model.regions||[]).filter(r=>inside([r.area[2],r.area[3]]));
     keep.seedCrossings=(model.seedCrossings||[]).filter(c=>[...c.banks,...c.tiles].every(inside));keep.rootWheel=model.rootWheel&&inside(model.rootWheel)?model.rootWheel:null;
+    keep.pages=(model.pages||[]).filter(q=>inside(q.at));keep.signs=(model.signs||[]).filter(q=>inside(q.at));keep.props=(model.props||[]).filter(q=>inside(q.at));keep.checkpoints=(model.checkpoints||[]).filter(inside);keep.millWheel=model.millWheel&&inside(model.millWheel)?model.millWheel:null;
     for(const ch of ['@','K','X'])if(!keep.map.some(r=>r.includes(ch))){const spot=findFloor(keep);if(spot)paint(keep,...spot,ch);}
     prune(keep);return keep;
   }
@@ -218,6 +223,15 @@
     for(let x=a[0]+dx,y=a[1]+dy;!(x===b[0]&&y===b[1]);x+=dx,y+=dy)tiles.push([x,y]);if(!tiles.length)return false;
     model.seedCrossings=model.seedCrossings||[];model.seedCrossings.push({id:'seed-'+(model.nextId=(model.nextId||1)+1),banks:[a.slice(),b.slice()],tiles});return true;
   }
+  // Checkpoints (a catch in a gentle level sends Sally back to the last one reached), trail signs
+  // (read when Sally steps on them), scenery props and the mill wheel.
+  function toggleCheckpoint(model,x,y){if(!walkable(at(model,x,y)))return false;model.checkpoints=model.checkpoints||[];const i=model.checkpoints.findIndex(p=>same(p,[x,y]));if(i>=0)model.checkpoints.splice(i,1);else{if(model.checkpoints.length>=6)return false;model.checkpoints.push([x,y]);}return true;}
+  function addSign(model,x,y){model.signs=model.signs||[];if(!walkable(at(model,x,y))||model.signs.some(q=>same(q.at,[x,y]))||model.signs.length>=4)return false;model.signs.push({at:[x,y],title:'A sign',body:''});return true;}
+  function setSign(model,i,changes){const q=(model.signs||[])[i];if(!q)return false;if(changes.title!==undefined)q.title=cleanText(changes.title,40)||'A sign';if(changes.body!==undefined)q.body=cleanText(changes.body,200);return true;}
+  const signAt=(model,x,y)=>(model.signs||[]).findIndex(q=>same(q.at,[x,y]));
+  function toggleProp(model,kind,x,y){if(!PROPS[kind]||!at(model,x,y))return false;model.props=model.props||[];const i=model.props.findIndex(q=>same(q.at,[x,y]));
+    if(i>=0){const same_=model.props[i].kind===kind;model.props.splice(i,1);if(same_)return true;}if(model.props.length>=40)return false;model.props.push({at:[x,y],kind});return true;}
+  function setMillWheel(model,x,y){if(!at(model,x,y))return false;model.millWheel=same(model.millWheel,[x,y])?null:[x,y];return true;}
   function setRootWheel(model,x,y){if(!walkable(at(model,x,y)))return false;model.rootWheel=same(model.rootWheel,[x,y])?null:[x,y];return true;}
   // Rivals fight when they meet; linking two enemies again ends the feud.
   function toggleRival(model,a,b){if(a===b||!model.guards.some(g=>g.id===a)||!model.guards.some(g=>g.id===b))return false;model.rivalries=model.rivalries||[];
@@ -226,9 +240,10 @@
   function removeExtraAt(model,x,y){
     let hit=false;for(const k of Object.keys(LAYERS)){const n=(model[k]||[]).length;model[k]=(model[k]||[]).filter(p=>!same(p,[x,y]));hit=hit||model[k].length<n;}
     const inRect=a=>x>=a[0]&&x<=a[2]&&y>=a[1]&&y<=a[3];
-    for(const [k,test] of [['pages',pg=>same(pg.at,[x,y])],['caps',c=>same(c.at,[x,y])||same(c.to,[x,y])],['seedCrossings',c=>[...c.banks,...c.tiles].some(p=>same(p,[x,y]))],['wind',z=>inRect(z.area)],['currents',z=>inRect(z.area)],['tunnels',t=>t.some(p=>same(p,[x,y]))],['echoes',a=>inRect(a)],['regions',r=>inRect(r.area)],['antTrails',t=>t.path.some(p=>same(p,[x,y]))]]){
+    for(const [k,test] of [['pages',pg=>same(pg.at,[x,y])],['signs',q=>same(q.at,[x,y])],['props',q=>same(q.at,[x,y])],['checkpoints',q=>same(q,[x,y])],['caps',c=>same(c.at,[x,y])||same(c.to,[x,y])],['seedCrossings',c=>[...c.banks,...c.tiles].some(p=>same(p,[x,y]))],['wind',z=>inRect(z.area)],['currents',z=>inRect(z.area)],['tunnels',t=>t.some(p=>same(p,[x,y]))],['echoes',a=>inRect(a)],['regions',r=>inRect(r.area)],['antTrails',t=>t.path.some(p=>same(p,[x,y]))]]){
       const n=(model[k]||[]).length;model[k]=(model[k]||[]).filter(v=>!test(v));if(model[k].length<n){hit=true;break;}}
     if(!hit&&same(model.rootWheel,[x,y])){model.rootWheel=null;hit=true;}
+    if(!hit&&same(model.millWheel,[x,y])){model.millWheel=null;hit=true;}
     if(hit)prune(model);return hit;
   }
   // Per-enemy settings: where an angler's lure dangles, a crab's lane, a heron's looks, a bat's beat...
@@ -246,6 +261,9 @@
     for(const [k,lo,hi] of [['timeLimit',0,600],['camos',0,5],['seeds',0,5],['glows',0,5],['spores',0,5],['sightRadius',0,12]])if(changes[k]!==undefined)model[k]=clampNum(changes[k],lo,hi,0);
     if(changes.cunning!==undefined)model.cunning=Math.round(clampNum(changes.cunning,0,3,2));
     if(changes.hint!==undefined)model.hint=String(changes.hint).slice(0,400);if(changes.biome!==undefined)model.biome=changes.biome==='desert'?'desert':'';
+    if(changes.gentle!==undefined)model.gentle=changes.gentle===true?.6:Number(changes.gentle)>0?clampNum(changes.gentle,.3,1,.6):0;
+    if(changes.foxWarn!==undefined)model.foxWarn=clampNum(changes.foxWarn,0,3,0);
+    if(changes.look!==undefined)model.look=Object.prototype.hasOwnProperty.call(LOOKS,changes.look)?changes.look:'';
     for(const [k,fields] of [['hawk',['every','warn','first']],['storm',['every','warn','first']],['tide',['period','high','offset']]])
       if(changes[k]!==undefined)model[k]=changes[k]?Object.fromEntries(fields.map(f=>[f,clampNum(changes[k][f],0,120,f==='offset'?0:6)])):null;
     return true;
@@ -258,9 +276,10 @@
   function find(model,ch){const out=[];model.map.forEach((r,y)=>[...r].forEach((c,x)=>{if(c===ch)out.push([x,y]);}));return out;}
   // Doors and bridges count as passable here: the checks assume their triggers can open them.
   function reach(model,from){
-    const passable=(x,y)=>walkable(at(model,x,y))||Boolean(doorAt(model,x,y));
-    const seen=new Set([from.join()]),q=[from];
-    while(q.length){const [x,y]=q.shift();for(const [dx,dy] of DIRS){const n=[x+dx,y+dy];if(!seen.has(n.join())&&passable(...n)){seen.add(n.join());q.push(n);}}}
+    // A cracked wall counts when Sally has a burrow to dig through it, and a burrow pair joins its mounds.
+    const passable=(x,y)=>walkable(at(model,x,y))||Boolean(doorAt(model,x,y))||model.burrows>0&&at(model,x,y)==='B';
+    const seen=new Set([from.join()]),q=[from],step=n=>{if(!seen.has(n.join())&&passable(...n)){seen.add(n.join());q.push(n);}};
+    while(q.length){const [x,y]=q.shift();for(const [dx,dy] of DIRS)step([x+dx,y+dy]);for(const t of model.tunnels||[])for(const [a,b] of [[t[0],t[1]],[t[1],t[0]]])if(same(a,[x,y]))step(b.slice());for(const c of model.caps||[])if(c.to&&same(c.at,[x,y])){const n=c.to.slice();if(!seen.has(n.join())){seen.add(n.join());q.push(n);}}}
     return seen;
   }
   function treasureTotal(model){return model.map.join('').split('').filter(c=>/[1-5]/.test(c)).reduce((n,c)=>n+Number(c),0);}
@@ -280,8 +299,8 @@
     if(!seen.has(find(model,'X')[0].join()))problems.push('Sally cannot reach the hatch.');
     for(const pg of model.pages||[])if(!walkable(rows[pg.at[1]]?.[pg.at[0]]))problems.push('A page must lie on open floor.');
     const total=treasureTotal(model);if(model.requiredTreasure>total)problems.push('The hatch asks for more treasure than the level holds.');
-    for(const g of model.guards){if(!roamable(at(model,...g.spawn)))problems.push(ENEMIES[g.kind]+' stands on a wall.');
-      if(!g.sleep&&Math.hypot(g.spawn[0]-start[0],g.spawn[1]-start[1])<4)problems.push(ENEMIES[g.kind]+' starts too close to Sally.');
+    for(const g of model.guards){if(!['dragonfly','cloudray'].includes(g.kind)&&!roamable(at(model,...g.spawn)))problems.push(ENEMIES[g.kind]+' stands on a wall.');
+      if(!g.sleep&&!(model.gentle>0)&&Math.hypot(g.spawn[0]-start[0],g.spawn[1]-start[1])<4)problems.push(ENEMIES[g.kind]+' starts too close to Sally.');
       if(g.sleep&&!linksTo(model,g.id).length)problems.push('A sleeping '+ENEMIES[g.kind].toLowerCase()+' has nothing to wake it: link the key, a chest or an area to it.');
       if(g.kind!=='dragonfly')for(const p of g.patrol)if(!seen.has(p.join())&&!seen.has(g.spawn.join()))problems.push(ENEMIES[g.kind]+' has a patrol point it cannot reach.');}
     for(const d of model.doors)if(d.mode!=='crumble'&&!linksTo(model,d.id).length)problems.push('The '+doorName(d).toLowerCase()+' has nothing linked to '+(d.mode==='shut'?'shut':'open')+' it.');
@@ -334,6 +353,9 @@
       ...some('hawk',model.hawk),...some('storm',model.storm),...some('tide',model.tide),...some('caps',(model.caps||[]).filter(c=>c.to)),...some('wind',model.wind),...some('echoes',model.echoes),...some('currents',model.currents),...some('tunnels',model.tunnels),
       ...some('antTrails',(model.antTrails||[]).filter(t=>t.path.length>1)),...some('seedCrossings',model.seedCrossings),...some('rootWheel',model.rootWheel),...some('rivalries',model.rivalries),
       ...some('shade',model.shade),...some('glowPlants',model.glowPlants),...some('regrowth',model.regrowth),
+      ...(model.gentle>0?{gentle:model.gentle}:{}),...(model.foxWarn>0?{foxWarn:model.foxWarn}:{}),...(model.look?{look:model.look}:{}),
+      ...some('checkpoints',(model.checkpoints||[]).map(p=>p.slice())),...some('props',(model.props||[]).map(q=>({at:q.at.slice(),kind:q.kind}))),...some('millWheel',model.millWheel),
+      ...some('fieldNotes',(model.signs||[]).filter(q=>q.body).map((q,i)=>({id:(q.id||'sign-'+(i+1)),at:q.at.slice(),title:q.title,body:q.body}))),
       ...some('pages',(model.pages||[]).filter(pg=>pg.body).map(pg=>({at:pg.at.slice(),title:pg.title,body:pg.body,...(pg.author?{author:pg.author}:{}),...(pg.id?{id:pg.id}:{})})))};
   }
   // Any escape in the game as a builder model, so it can be edited. Nothing the game plays is lost:
@@ -346,6 +368,9 @@
     const copy=v=>v==null?null:JSON.parse(JSON.stringify(v));
     for(const k of ['hawk','storm','tide','rootWheel'])m[k]=copy(route[k]);
     for(const k of ['caps','wind','echoes','currents','tunnels','antTrails','seedCrossings','shade','glowPlants','regrowth','pages'])m[k]=copy(route[k])||[];
+    m.gentle=route.gentle>0?route.gentle:0;m.foxWarn=route.foxWarn||0;m.look=LOOKS[route.look]!==undefined?route.look:LOOKS[route.seasonalTheme]!==undefined?route.seasonalTheme:'';
+    m.checkpoints=(copy(route.checkpoints)||[]).map(p=>Array.isArray(p)?p.slice(0,2):[p.x,p.y]);m.props=copy(route.props)||[];m.millWheel=copy(route.millWheel);
+    m.signs=(route.fieldNotes||[]).map(q=>({at:q.at.slice(),title:q.title||'A sign',body:q.body||'',...(q.id?{id:q.id}:{})}));
     // An official escape brings its story page along, so it can be seen and moved while editing.
     if(!m.pages.length&&root.EscapeNotes){const n=root.EscapeNotes.NOTES.find(q=>q.levelId===route.id);if(n)m.pages=[{at:n.at.slice(),title:n.title,body:n.body,author:n.author,id:n.id}];}
     const ids={},guardOf=(g,sleep)=>{const id=newId(m,'e');if(g.id)ids[g.id]=id;const out={id,kind:g.kind||'snake',spawn:g.spawn.slice(),facing:g.facing??Math.PI,patrol:(g.patrol||[g.spawn]).map(p=>p.slice()),sleep};
@@ -423,6 +448,9 @@
     model.antTrails=list(r.antTrails,6).map(t=>({path:pts(t?.path,16),groups:clampNum(t?.groups,1,8,3),size:clampNum(t?.size,1,8,3),speed:clampNum(t?.speed,.3,4,1.5)})).filter(t=>t.path.length);
     model.seedCrossings=list(r.seedCrossings,8).map(c=>({id:safeId(c?.id,/^[a-z0-9-]{1,30}$/)||fresh('seed-'),banks:pts(c?.banks,4),tiles:pts(c?.tiles,12)})).filter(c=>c.banks.length&&c.tiles.length);
     model.rootWheel=point(r.rootWheel,w,h);
+    model.gentle=Number(r.gentle)>0?clampNum(r.gentle,.3,1,.6):0;model.foxWarn=clampNum(r.foxWarn,0,3,0);model.look=typeof r.look==='string'&&Object.prototype.hasOwnProperty.call(LOOKS,r.look)?r.look:'';
+    model.checkpoints=pts(r.checkpoints,6);model.props=list(r.props,40).map(q=>({at:point(q?.at,w,h),kind:q?.kind})).filter(q=>q.at&&PROPS[q.kind]);model.millWheel=point(r.millWheel,w,h);
+    model.signs=list(r.signs,4).map(q=>({at:point(q?.at,w,h),title:cleanText(q?.title,40)||'A sign',body:cleanText(q?.body,200),...(typeof q?.id==='string'&&/^[a-z0-9-]{1,40}$/.test(q.id)?{id:q.id}:{})})).filter(q=>q.at);
     model.pages=list(r.pages,PAGE_LIMIT).map(pg=>({at:point(pg?.at,w,h),title:cleanText(pg?.title,40)||'A note',body:cleanText(pg?.body,320),author:cleanText(pg?.author,30),...(typeof pg?.id==='string'&&/^level-note:[a-z]+:[12]$/.test(pg.id)?{id:pg.id}:{})})).filter(pg=>pg.at);
     model.regions=list(r.regions,12).map(q=>({id:safeId(q?.id,/^r[0-9]{1,8}$/),area:area(q?.area),requiresKey:Boolean(q?.requiresKey)})).filter(q=>q.id&&q.area);
     model.rivalries=list(r.rivalries,12).filter(p=>Array.isArray(p)&&typeof p[0]==='string'&&typeof p[1]==='string').map(p=>[p[0],p[1]]);
@@ -439,7 +467,7 @@
   const api={TILES,MARKS,ENEMIES,POSTED,LIMITS,COLORS,MODES,TRIGGERS,HAZARDS,SPEEDS,blank,paint,resize,addEnemy,removeEnemy,turnEnemy,addPatrol,clearPatrol,setSleep,
     paintDoor,removeDoorTile,setDoor,addTrigger,removeAt,toggleLink,linksFrom,linksTo,sourceAt,doorAt,triggerAt,hazardAt,guardAt,addHazard,setLogEnd,setHazard,paintClimate,doorName,
     validate,toRoute,fromRoute,treasureTotal,exportText,importText,sanitize,loadAll,saveOne,removeOne,
-    LAYERS,DIRS,toggleLayer,addPage,setPage,pageAt,PAGE_LIMIT,addCap,setCapEnd,addWind,setWind,addEcho,addCurrent,setCurrent,addTunnel,addRegion,setRegion,addAntPoint,setAnts,addSeedCrossing,setRootWheel,toggleRival,removeExtraAt,setGuard,setSettings,setMessage,setLinkAction,regionAt};
+    LOOKS,PROPS,toggleCheckpoint,addSign,setSign,signAt,toggleProp,setMillWheel,LAYERS,DIRS,toggleLayer,addPage,setPage,pageAt,PAGE_LIMIT,addCap,setCapEnd,addWind,setWind,addEcho,addCurrent,setCurrent,addTunnel,addRegion,setRegion,addAntPoint,setAnts,addSeedCrossing,setRootWheel,toggleRival,removeExtraAt,setGuard,setSettings,setMessage,setLinkAction,regionAt};
   root.EscapeBuilder=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

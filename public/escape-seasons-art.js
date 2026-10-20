@@ -1,6 +1,6 @@
 // These are costumes, not new collision shapes. Every warning and hit test stays in the engine.
-function seasonPalette(l){if(l.seasonal==='winter')return l.seasonalTheme==='winter-workshop'?[[143,165,166],[101,76,66],[238,201,139]]:l.seasonalTheme==='winter-night'?[[66,99,121],[91,134,155],[202,230,233]]:[[142,178,192],[84,126,145],[232,243,232]];return l.seasonalTheme==='autumn-night'?[[39,43,51],[102,74,64],[194,151,91]]:l.seasonalTheme==='autumn-mill'?[[56,53,40],[107,80,49],[194,148,88]]:[[65,53,38],[126,81,49],[222,162,81]];}
-function drawSeasonGhost(h,c,g){if(g.level.seasonal==='winter')return drawWinterWisp(h,c,g);
+function seasonPalette(l){if((l.seasonal||l.costume)==='winter')return l.seasonalTheme==='winter-workshop'?[[143,165,166],[101,76,66],[238,201,139]]:l.seasonalTheme==='winter-night'?[[66,99,121],[91,134,155],[202,230,233]]:[[142,178,192],[84,126,145],[232,243,232]];return l.seasonalTheme==='autumn-night'?[[39,43,51],[102,74,64],[194,151,91]]:l.seasonalTheme==='autumn-mill'?[[56,53,40],[107,80,49],[194,148,88]]:[[65,53,38],[126,81,49],[222,162,81]];}
+function drawSeasonGhost(h,c,g){if((g.level.seasonal||g.level.costume)==='winter')return drawWinterWisp(h,c,g);
  // The same seven-tile, wall-clipped cone as the original owl; its cool colour belongs to the lantern.
  if(h.state==='patrol'){noStroke();fill(167,226,246,44);beginShape();vertex(h.x*c,h.y*c);for(let a=-Math.PI/9;a<=Math.PI/9+.001;a+=Math.PI/36){let reach=0;for(let d=.2;d<=7;d+=.2){if(!g.clear(h,{x:h.x+Math.cos(h.facing+a)*d,y:h.y+Math.sin(h.facing+a)*d},true))break;reach=d;}vertex((h.x+Math.cos(h.facing+a)*reach)*c,(h.y+Math.sin(h.facing+a)*reach)*c);}endShape(CLOSE);}
  const warn=h.state==='glare',bob=Math.sin(g.elapsed*3+h.x)*.035;push();translate(h.x*c,(h.y+bob)*c);scale(c);
@@ -9,7 +9,7 @@ function drawSeasonGhost(h,c,g){if(g.level.seasonal==='winter')return drawWinter
  fill(45,68,88);ellipse(-.12,-.16,.075,warn?.16:.1);ellipse(.12,-.16,.075,warn?.16:.1);ellipse(0,.02,.08,warn?.13:.045);
  stroke(132,191,199);strokeWeight(.035);noFill();line(.26,0,.48,.08);arc(.49,.14,.19,.25,Math.PI,Math.PI*2);fill(warn?255:174,warn?200:230,236);rect(.39,.14,.21,.27,.04);line(.39,.15,.6,.15);pop();
 }
-function drawSeasonCreature(h,model,c,g){if(g.level.seasonal==='winter')return drawWinterCreature(h,model,c,g);
+function drawSeasonCreature(h,model,c,g){if((g.level.seasonal||g.level.costume)==='winter')return drawWinterCreature(h,model,c,g);
  if(!EscapeSeasons.creatures[h.kind]||h.kind==='owl')return false;
  if(h.kind==='snake'){drawSeasonBones(h,model,c,g.elapsed);return true;}
  push();translate(h.x*c,h.y*c);rotate(h.facing+Math.PI/2);scale(c);const t=g.elapsed,hot=['windup','reveal','crouch','charge','lunge','pounce'].includes(h.state),stride=Math.sin(h.distanceMoved*10);
@@ -40,7 +40,7 @@ function drawSeasonBones(h,model,c,t){if(!model?.joints)return;const j=model.joi
 }
 let seasonSceneryCache=null,seasonSceneryMotionQuery;
 function clearSeasonScenery(){seasonSceneryCache?.image.remove?.();seasonSceneryCache=null;}
-function drawSeasonScenery(g,c){if(g.level.seasonal==='winter')return drawWinterScenery(g,c);
+function drawSeasonScenery(g,c){if((g.level.seasonal||g.level.costume)==='winter')return drawWinterScenery(g,c);
  // Static decorations are painted once per run/cell size, never per tile per frame.
  let cached=seasonSceneryCache;if(!cached||cached.game!==g||cached.cell!==c){cached?.image.remove?.();const art=createGraphics(Math.ceil(g.width*c),Math.ceil(g.height*c));art.pixelDensity(1);art.clear();
   for(const p of g.level.props||[]){const x=(p.at[0]+.5)*c,y=(p.at[1]+.5)*c;art.push();art.translate(x,y);art.noStroke();if(p.kind==='tree'){art.fill(92,57,38);art.rect(-c*.06,-c*.28,c*.12,c*.5);art.fill(178,99,47);art.ellipse(0,-c*.24,c*.65,c*.6);art.fill(225,156,59);art.ellipse(c*.14,-c*.32,c*.32,c*.3);art.fill(177,55,44);art.ellipse(-c*.08,-c*.2,c*.1,c*.1);}else if(p.kind==='lantern'){art.fill(76,55,39);art.rect(-c*.04,-c*.4,c*.08,c*.8);art.fill(104,70,42);art.rect(-c*.18,-c*.5,c*.36,c*.38,c*.05);art.fill(255,210,126);art.rect(-c*.12,-c*.45,c*.24,c*.26,c*.03);art.fill(130,87,44);art.triangle(-c*.23,-c*.5,0,-c*.65,c*.23,-c*.5);art.stroke(104,70,42);art.strokeWeight(c*.025);art.line(0,-c*.45,0,-c*.19);}else{art.fill(162,77,30);art.ellipse(0,0,c*.48,c*.35);art.fill(223,130,39);art.ellipse(0,0,c*.23,c*.36);art.fill(109,128,55);art.rect(-c*.03,-c*.24,c*.06,c*.1);}art.pop();}

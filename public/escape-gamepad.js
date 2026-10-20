@@ -55,7 +55,11 @@ function pollEscapePad(){
   escapePad.x=Math.max(-1,Math.min(1,ax));escapePad.y=Math.max(-1,Math.min(1,ay));escapePad.sprint=down(ESCAPE_PAD.RT);escapePad.crawl=down(ESCAPE_PAD.LT);escapePad.dig=down(ESCAPE_PAD.B);
   if(!was.length)return;
   if(pressed(ESCAPE_PAD.START)){if(gameState==='escape')togglePause();else document.getElementById('menu-button')?.click();return;}
-  if(gameState==='seasonalHub'){if(pressed(ESCAPE_PAD.A))seasonEnter();if(pressed(ESCAPE_PAD.B))escapeGoBack();if(pressed(ESCAPE_PAD.X))seasonTogglePanel(true);if(pressed(ESCAPE_PAD.VIEW)||pressed(ESCAPE_PAD.Y))seasonToggleOverview();if(pressed(ESCAPE_PAD.LB)||pressed(ESCAPE_PAD.RB))seasonTravelStep(pressed(ESCAPE_PAD.RB)?1:-1);return;}
+  // The seasonal world uses the same buttons as the main world map: A enters, B goes back, holding Y
+    // opens the panel (X does too), View shows the overview, LB/RB step between open areas.
+    if(gameState==='seasonalHub'){if(pressed(ESCAPE_PAD.A))seasonEnter();if(pressed(ESCAPE_PAD.B))escapeGoBack();if(pressed(ESCAPE_PAD.X))seasonTogglePanel(true);
+      if(pressed(ESCAPE_PAD.Y))escapePad.holdY=millis();if(escapePad.holdY!==null&&down(ESCAPE_PAD.Y)&&millis()-escapePad.holdY>450){escapePad.holdY=null;seasonTogglePanel(true);return;}
+      if(released(ESCAPE_PAD.Y)&&escapePad.holdY!==null){escapePad.holdY=null;seasonToggleOverview();}if(pressed(ESCAPE_PAD.VIEW))seasonToggleOverview();if(pressed(ESCAPE_PAD.LB)||pressed(ESCAPE_PAD.RB))seasonTravelStep(pressed(ESCAPE_PAD.RB)?1:-1);return;}
   if(gameState==='escapeSelect'){
     if(pressed(ESCAPE_PAD.A))enterEscapeWorld();
     if(pressed(ESCAPE_PAD.B)&&typeof escapeGoBack==='function'){escapeGoBack();return;}

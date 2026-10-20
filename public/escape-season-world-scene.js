@@ -1,18 +1,22 @@
 // The campaign's terrain painter and Sally rig, on a separate seasonal world model.
 const SEASON_WORLD_PALETTES={autumn:[[151,125,78],[111,66,42],[226,160,67]],frost:[[193,216,229],[94,129,144],[236,246,250]],garden:[[128,167,109],[57,99,71],[225,179,195]],coast:[[185,178,112],[66,119,99],[238,213,139]]};
-let seasonWorldChunks={base:0,world:null,map:new Map()},seasonWorldCamera=null;
-function clearSeasonWorldArt(){for(const g of seasonWorldChunks.map.values())g.remove?.();seasonWorldChunks={base:0,world:null,map:new Map()};seasonWorldCamera=null;}
+// Painted chunks are kept per drawing size (the close view and the overview each keep their own), so
+// switching between them does not repaint the world; a few new chunks are painted each frame at most.
+let seasonWorldChunks={world:null,byBase:new Map()},seasonWorldCamera=null;
+function clearSeasonWorldArt(){for(const m of seasonWorldChunks.byBase.values())for(const g of m.values())g.remove?.();seasonWorldChunks={world:null,byBase:new Map()};seasonWorldCamera=null;}
 function seasonPaintTerrain(w,c,x1,x2,y1,y2){
- const base=seasonOverview?12:Math.round(Math.max(30,Math.min(64,height/11))),size=12;if(seasonWorldChunks.base!==base||seasonWorldChunks.world!==w){clearSeasonWorldArt();seasonWorldChunks.base=base;seasonWorldChunks.world=w;}
+ const base=seasonOverview?12:Math.round(Math.max(30,Math.min(64,height/11))),size=12;if(seasonWorldChunks.world!==w){clearSeasonWorldArt();seasonWorldChunks.world=w;}
+ if(!seasonWorldChunks.byBase.has(base))seasonWorldChunks.byBase.set(base,new Map());const chunks=seasonWorldChunks.byBase.get(base);let budget=chunks.size?3:Infinity,shown=0;
  for(let cy=Math.floor(y1/size);cy<=Math.floor(y2/size);cy++)for(let cx=Math.floor(x1/size);cx<=Math.floor(x2/size);cx++){
-  const key=cx+','+cy;let g=seasonWorldChunks.map.get(key);
-  if(!g){g=createGraphics(size*base,size*base);g.pixelDensity(1);g.push();g.translate(-cx*size*base,-cy*size*base);const xa=Math.max(0,cx*size-1),xb=Math.min(w.width-1,(cx+1)*size),ya=Math.max(0,cy*size-1),yb=Math.min(w.height-1,(cy+1)*size);
-   drawEscapeWorldTerrain(g,w,SEASON_WORLD_PALETTES,base,xa,xb,ya,yb);paintSeasonWorldDetails(g,w,base,xa,xb,ya,yb);g.pop();seasonWorldChunks.map.set(key,g);
-  }else{seasonWorldChunks.map.delete(key);seasonWorldChunks.map.set(key,g);}
+  const key=cx+','+cy;let g=chunks.get(key);shown++;
+  if(!g&&budget<=0){noStroke();fill(...(SEASON_WORLD_PALETTES.autumn[1]));rect(cx*size*c,cy*size*c,size*c+.5,size*c+.5);continue;}
+  if(!g){budget--;g=createGraphics(size*base,size*base);g.pixelDensity(1);g.push();g.translate(-cx*size*base,-cy*size*base);const xa=Math.max(0,cx*size-1),xb=Math.min(w.width-1,(cx+1)*size),ya=Math.max(0,cy*size-1),yb=Math.min(w.height-1,(cy+1)*size);
+   drawEscapeWorldTerrain(g,w,SEASON_WORLD_PALETTES,base,xa,xb,ya,yb);paintSeasonWorldDetails(g,w,base,xa,xb,ya,yb);g.pop();chunks.set(key,g);
+  }else{chunks.delete(key);chunks.set(key,g);}
   image(g,cx*size*c,cy*size*c,size*c+.5,size*c+.5);
  }
  // Overview uses smaller chunks so it does not create a whole high-resolution world at once.
- const limit=seasonOverview?49:16;while(seasonWorldChunks.map.size>limit){const [key,g]=seasonWorldChunks.map.entries().next().value;g.remove?.();seasonWorldChunks.map.delete(key);}
+ const limit=Math.max(seasonOverview?49:16,shown+6);while(chunks.size>limit){const [key,g]=chunks.entries().next().value;g.remove?.();chunks.delete(key);}
 }
 function paintSeasonWorldDetails(d,w,c,x1,x2,y1,y2){
  const inside=(x,y,r=2)=>x>=x1-r&&x<=x2+r&&y>=y1-r&&y<=y2+r;
