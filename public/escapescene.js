@@ -7,18 +7,18 @@ function escapeRecordSummary(level,saved,challenge=false){
   if(!saved)return '';
   return challenge?'✓ Complete · Best '+saved.bestTime.toFixed(1)+'s':'★'.repeat(saved.stars)+'☆'.repeat(3-saved.stars)+' · Best '+saved.bestTime.toFixed(1)+'s'+(saved.perfect?' · ✦ Perfect':saved.firstTry?' · ✓ First try':'')+(escapeProgress.isHard(level.id)?' · ◆ Hard mode':'');
 }
-function escapeToolkit(level){return [[level.camos||0,'camouflage'],[level.seeds||0,'seed pod'],[level.tongues||0,'tongue grab'],[level.burrows,'burrow'],[level.pebbles,'pebble']].filter(([n])=>n>0).map(([n,label])=>n+' '+label+(n>1&&label!=='camouflage'?'s':'')).concat(level.requiredTreasure?[level.requiredTreasure+' treasure to escape']:[],level.timeLimit?[level.timeLimit+' second escape']:[],level.tailDrop?['spare tail']:[],level.soil?.length?['soft dirt to dig into (hold '+(typeof escapePadActive==='function'&&escapePadActive()?'B':typeof mobile!=='undefined'&&mobile?'Burrow':'E')+')']:[],level.regrowth?.length?[level.regrowth.length+' pink regrowth bug'+(level.regrowth.length>1?'s':'')]:[],level.hawk?['hawk overhead']:[],level.antTrails?[level.antTrails.length+' ant column'+(level.antTrails.length>1?'s':'')]:[],level.guards.some(h=>h.kind==='gecko')?['gecko thief']:[],level.cold?['cold rooms']:[],level.vents?[level.vents.length+' steam vents']:[]);}
+function escapeToolkit(level){return [[level.camos||0,'camouflage'],[level.seeds||0,'seed pod'],[level.tongues||0,'tongue grab'],[level.glows||0,'glow mushroom'],[level.spores||0,'spore pouch'],[level.burrows,'burrow'],[level.pebbles,'pebble']].filter(([n])=>n>0).map(([n,label])=>n+' '+label+(n>1&&label!=='camouflage'?'s':'')).concat(level.requiredTreasure?[level.requiredTreasure+' treasure to escape']:[],level.timeLimit?[level.timeLimit+' second escape']:[],level.tailDrop?['spare tail']:[],level.soil?.length?['soft dirt to dig into (hold '+(typeof escapePadActive==='function'&&escapePadActive()?'B':typeof mobile!=='undefined'&&mobile?'Burrow':'E')+')']:[],level.regrowth?.length?[level.regrowth.length+' pink regrowth bug'+(level.regrowth.length>1?'s':'')]:[],level.hawk?['hawk overhead']:[],level.antTrails?[level.antTrails.length+' ant column'+(level.antTrails.length>1?'s':'')]:[],level.guards.some(h=>h.kind==='gecko')?['gecko thief']:[],level.cold?['cold rooms']:[],level.vents?[level.vents.length+' steam vents']:[]);}
 let escapeGame=null,escapeIntroOpen=false,escapeCharacter=null;
 // Leaving a route part-way counts as an attempt, so the first-try bonus stays honest.
 // Anonymous play data: a run left part-way counts as quit once it has really started.
 const escapeDevice=()=>typeof mobile!=='undefined'&&mobile?'touch':'desk';
-function escapeRecordQuit(){if(typeof EscapePlayData!=='undefined'&&escapeGame?.status==='playing'&&escapeGame.elapsed>3)EscapePlayData.record(escapeGame,'quit',escapeDevice());}
+function escapeRecordQuit(){if(typeof EscapePlayData!=='undefined'&&escapeGame?.status==='playing'&&escapeGame.elapsed>3&&!escapeGame.level.seasonal)EscapePlayData.record(escapeGame,'quit',escapeDevice());}
 if(typeof window!=='undefined'&&typeof EscapePlayData!=='undefined'){window.addEventListener('pagehide',()=>{escapeRecordQuit();EscapePlayData.flush(true);});if(typeof setTimeout==='function')setTimeout(()=>EscapePlayData.flush(),8000);}
 function escapeRestart(){if(paused)togglePause();startEscape({...escapeOptions,skipIntro:true,quick:true});}
-function escapeAbandonRun(){escapeRecordQuit();if(escapeGame&&escapeGame.status==='playing'&&!escapeGame.challenge&&escapeGame.elapsed>3){escapeProgress.attempt(escapeGame.level.id);escapeGame.status='abandoned';}}
+function escapeAbandonRun(){escapeRecordQuit();if(escapeGame&&escapeGame.status==='playing'&&!escapeGame.challenge&&escapeGame.elapsed>3){if(!escapeGame.level.seasonal)escapeProgress.attempt(escapeGame.level.id);escapeGame.status='abandoned';}}
 // Full cards always show the hint; otherwise only where an area teaches a new idea.
 // The opening tip repeats the hint in game, so it follows the same rule.
-function escapeHintOpen(g){if(g.level.kids)return true;const index=EscapeCatalog.levels.indexOf(g.level),best=escapeProgress.data.levels[g.level.id],open=(typeof introMode==='undefined'?'full':introMode)==='full'||(index===0||EscapeCatalog.regions.includes(index))&&!best;if(!open&&!g.challenge&&g.message===g.level.hint)g.message='';return open;}
+function escapeHintOpen(g){if(g.level.kids||g.level.seasonal)return true;const index=EscapeCatalog.levels.indexOf(g.level),best=escapeProgress.data.levels[g.level.id],open=(typeof introMode==='undefined'?'full':introMode)==='full'||(index===0||EscapeCatalog.regions.includes(index))&&!best;if(!open&&!g.challenge&&g.message===g.level.hint)g.message='';return open;}
 // The intro card holds the hunters still until the player is ready.
 function showEscapeIntro(){
   const g=escapeGame,level=g.level,index=EscapeCatalog.levels.indexOf(level),best=!g.challenge&&escapeProgress.data.levels[level.id];
@@ -26,11 +26,11 @@ function showEscapeIntro(){
   const mode=typeof introMode==='undefined'?'full':introMode,full=mode==='full',showHint=escapeHintOpen(g);
   escapeHintHidden=false;if(mode==='off')return;
   const card=document.getElementById('escape-intro');escapeIntroOpen=true;escapeHintHidden=!showHint;
-  const tools=escapeToolkit(level),toolList=full?(tools.length?'<ul class="escape-intro-tools">'+tools.map(t=>'<li>'+t+'</li>').join('')+'</ul>':''):(tools.length?'<p class="escape-intro-kit">'+tools.join(' · ')+'</p>':'');
+  const tools=level.kids||level.seasonal?[...escapeToolkit(level),'Your tools never run out. Treasure is optional.']:escapeToolkit(level),toolList=full?(tools.length?'<ul class="escape-intro-tools">'+tools.map(t=>'<li>'+t+'</li>').join('')+'</ul>':''):(tools.length?'<p class="escape-intro-kit">'+tools.join(' · ')+'</p>':'');
   const brief=g.challenge?g.challenge.brief:full?level.brief:'';
   // Names, briefs and hints can come from a shared or community level, so they are escaped as text.
   const t=escapeText;
-  card.innerHTML='<span class="escape-intro-number">'+(g.challenge?'CHALLENGE · '+t(level.name):level.custom?'YOUR LEVEL':level.kids?'LITTLE EXPLORERS · '+(escapeKidsLevels().indexOf(level)+1)+' '+t(level.sticker||''):level.hidden?escapeHiddenLabel(level):'ESCAPE '+(index+1))+(level.draft?' · ✎ WORKSHOP DRAFT':'')+'</span><h2 id="escape-intro-title">'+t(g.challenge?g.challenge.name:level.name)+'</h2>'+(brief?'<p class="escape-intro-brief">'+t(brief)+'</p>':'')+(showHint?'<p class="escape-intro-hint">'+t(level.hint)+'</p>':'<p class="escape-intro-hint escape-intro-hidden" id="escape-intro-hint">'+t(level.hint)+'</p><button id="escape-intro-reveal" class="escape-secondary">Show hint <span class="key-hint">[H]</span></button>')+toolList+(g.tailDrop&&full?'<p class="escape-intro-tail">Sally can drop her tail once here. The next catch is final.</p>':'')+(best?'<p class="escape-intro-best">Best: '+escapeRecordSummary(level,best)+'</p>':'')+'<button id="escape-intro-start" class="escape-primary">Start<span class="key-hint"> · any key</span></button>';
+  card.innerHTML='<span class="escape-intro-number">'+(g.challenge?'CHALLENGE · '+t(level.name):level.custom?'YOUR LEVEL':level.seasonal?'AUTUMN HOLLOW · LANTERN '+(level.index+1):level.kids?'LITTLE EXPLORERS · '+(escapeKidsLevels().indexOf(level)+1)+' '+t(level.sticker||''):level.hidden?escapeHiddenLabel(level):'ESCAPE '+(index+1))+(level.draft?' · ✎ WORKSHOP DRAFT':'')+'</span><h2 id="escape-intro-title">'+t(g.challenge?g.challenge.name:level.name)+'</h2>'+(brief?'<p class="escape-intro-brief">'+t(brief)+'</p>':'')+(showHint?'<p class="escape-intro-hint">'+t(level.hint)+'</p>':'<p class="escape-intro-hint escape-intro-hidden" id="escape-intro-hint">'+t(level.hint)+'</p><button id="escape-intro-reveal" class="escape-secondary">Show hint <span class="key-hint">[H]</span></button>')+toolList+(g.tailDrop&&full?'<p class="escape-intro-tail">Sally can drop her tail once here. The next catch is final.</p>':'')+(best?'<p class="escape-intro-best">Best: '+escapeRecordSummary(level,best)+'</p>':'')+'<button id="escape-intro-start" class="escape-primary">Start<span class="key-hint"> · any key</span></button>';
   card.style.display='block';card.onclick=e=>{if(e.target.closest('#escape-intro-reveal')){revealEscapeHint();return;}hideEscapeIntro();};document.getElementById('escape-intro-start').focus();
 }
 let escapeHintHidden=false;
@@ -143,7 +143,7 @@ const ESCAPE_TIPS=[
   {key:'sally-escape-echo-tip',live:g=>g.echoes.length>0&&g.inEcho(g.player)&&g.player.noisy,text:()=>'This hall echoes: every sound here carries much further.'},
   {key:'sally-escape-current-tip',live:g=>g.currents.length>0&&g.player.swimming&&g.currents.some(c=>g.player.x>=c.x1&&g.player.x<c.x2+1&&g.player.y>=c.y1&&g.player.y<c.y2+1),text:()=>'A current! It carries Sally along. Swim with it, or find another way.'},
   {key:'sally-escape-glow-tip',live:g=>g.level.glows>0&&g.elapsed>3,
-    text:()=>mobile?'Glow mushrooms: hold Glow, aim and let go to light up the dark for a while.':'Glow mushrooms: hold L, aim and let go to light up the dark for a while.'}
+    text:()=>mobile?'Glow mushrooms: hold Glow, aim and release. Their light keeps spiders and millipedes back until it fades.':'Glow mushrooms: hold L, aim and release. Their light keeps spiders and millipedes back until it fades.'}
 ];
 let escapeTipQueue=[],escapeTipsPending=[];
 function escapeCrawlTip(g){
@@ -159,14 +159,15 @@ function tickEscapeCrawlTip(g){
 // A run counts as hard only when hard mode was on from its start to its end.
 let escapeHardRun=false;
 function startEscape(options={}){
-  escapeAbandonRun();escapeHardRun=escapeHardMode;
+  escapeAbandonRun();if(typeof clearSeasonScenery==='function')clearSeasonScenery();escapeHardRun=escapeHardMode;
   escapeFx.clear();escapeFxDecoy=null;escapeMoment=null;escapeCurtain={at:millis(),ms:options.quick?260:620,seed:Math.random()*10};
-  if(options.custom||options.kidsId?false:options.hiddenId?!escapeProgress.hiddenLevelOpen(options.hiddenId,EscapeWorld.chapters):options.challengeId?!escapeProgress.challengeUnlocked(options.challengeId):!escapeProgress.unlocked(options.levelId||'quiet-vault')){showEscapeSelect();return;}
+  if(options.seasonalId){const level=EscapeCatalog.seasonal.find(l=>l.id===options.seasonalId),pack=EscapeSeasons.packs.find(p=>p.id===level?.seasonal);if(!level||!pack||!seasonOpen(pack)){openSeasonalHub();return;}}
+  if(options.custom||options.kidsId||options.seasonalId?false:options.hiddenId?!escapeProgress.hiddenLevelOpen(options.hiddenId,EscapeWorld.chapters):options.challengeId?!escapeProgress.challengeUnlocked(options.challengeId):!escapeProgress.unlocked(options.levelId||'quiet-vault')){showEscapeSelect();return;}
   // Now and then (about one escape in four, never in a challenge) glow bugs drift about as a bonus.
-  if(options.glowbugs===undefined&&!options.challengeId&&!options.custom&&!options.kidsId&&Math.random()<ESCAPE_GLOWBUG_CHANCE)options={...options,glowbugs:1+Math.floor(Math.random()*1e6)};
+  if(options.glowbugs===undefined&&!options.challengeId&&!options.custom&&!options.kidsId&&!options.seasonalId&&Math.random()<ESCAPE_GLOWBUG_CHANCE)options={...options,glowbugs:1+Math.floor(Math.random()*1e6)};
   startRun('escape');escapeGame=new EscapeAdventure(options.custom?{level:escapeBuildCustom(options.custom)}:options);escapeMetCount=0;escapeBestiaryNote=null;escapeCharacter=new SallyCharacter({reducedMotion:Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)});document.getElementById('escape-builder').style.display='none';escapeResultShown=false;escapeHudAt=-Infinity;
   escapeCrawlTip(escapeGame);
-  escapeOptions=options.custom?{custom:options.custom,from:options.from||'builder'}:escapeGame.level.kids?{kidsId:escapeGame.level.id,from:'kids'}:escapeGame.level.hidden?{hiddenId:escapeGame.level.id}:{levelId:escapeGame.level.id,challengeId:escapeGame.challenge?.id||null};
+  escapeOptions=options.custom?{custom:options.custom,from:options.from||'builder'}:escapeGame.level.seasonal?{seasonalId:escapeGame.level.id,from:'seasonal'}:escapeGame.level.kids?{kidsId:escapeGame.level.id,from:'kids'}:escapeGame.level.hidden?{hiddenId:escapeGame.level.id}:{levelId:escapeGame.level.id,challengeId:escapeGame.challenge?.id||null};
   gameState='escape';escapeLibraryOpen=false;document.getElementById('game-area').classList.remove('escape-world-open');mountEscapeChrome(true);
   document.getElementById('game-area').classList.toggle('escape-exploring',Boolean(escapeGame.level.explore));
   for(const id of ['start-menu-container','escape-result','escape-select','escape-intro'])document.getElementById(id).style.display='none';escapeIntroOpen=false;
@@ -198,6 +199,7 @@ function escapeLeaveRun(){
   if(paused)togglePause();const from=escapeOptions?.from;
   if(from==='builder'&&typeof openEscapeBuilder==='function'){escapeRecordQuit?.();openEscapeBuilder();return;}
   if(from==='community'&&typeof openEscapeCommunity==='function'){escapeRecordQuit?.();openEscapeCommunity();return;}
+  if(from==='seasonal'){openSeasonalHub(escapeGame?.level.seasonal||'autumn-hollow',escapeOptions.seasonalId);return;}
   if(from==='kids'&&typeof openLittleExplorers==='function'){openLittleExplorers(escapeOptions.kidsId);return;}
   showEscapeSelect();
 }
@@ -290,10 +292,10 @@ function toggleEscapeMap(){
 }
 function playEscape(){
   if(!escapeGame)return;
-  escapeGame.paused=paused;
+  escapeGame.paused=paused||Boolean(typeof escapeStoryOpen!=='undefined'&&escapeStoryOpen);
   if(!paused&&gameState==='escape')escapeWatchFrameRate(deltaTime);
   if(escapeIntroOpen&&gameState==='escape'&&!paused){const m=escapeMovement();if(m.x||m.y)hideEscapeIntro();}
-  if(gameState==='escape'&&!paused&&!skipSimulationFrame&&!escapeIntroOpen){
+  if(gameState==='escape'&&!escapeGame.paused&&!skipSimulationFrame&&!escapeIntroOpen){
     let {x,y,sprint,crawl,dig}=escapeMovement();
     // A key held for a throw can be let go while the window was away: drop the throw then.
     if(escapeCharge?.source==='key'&&!keyIsDown({glow:76,spore:90}[escapeCharge.kind]||81))releaseEscapeCharge();
@@ -316,17 +318,18 @@ function playEscape(){
   if(gameState==='escape'&&!paused){if(escapeGame.status==='playing')escapeFootsteps(escapeGame.player);tickEscapeFx(escapeGame);escapeShakeFor(events);}
   if(mobile&&typeof EscapeFeel!=='undefined'&&events.length)EscapeFeel.buzz(events);
   if(events.length&&typeof escapePadRumble==='function')escapePadRumble(events);
-  drawEscapeVault();drawEscapeMoment();drawEscapeCurtain();renderEscapeHUD();
+  drawEscapeVault();drawEscapeMoment();drawEscapeCurtain();renderEscapeHUD();seasonWarningNames();
   // A creature met for the first time joins the bestiary, with a short note at the top.
-  if(typeof tickEscapeNote==='function')tickEscapeNote(escapeGame);
-  if(escapeGame.met&&escapeGame.met.size!==escapeMetCount&&!escapeGame.level.custom){escapeMetCount=escapeGame.met.size;const fresh=escapeProgress.meet([...escapeGame.met]);const first=fresh.map(k=>EscapeBestiary.byKind(k)).find(Boolean);if(first)escapeBestiaryNote={text:'📖 New in the bestiary: '+first.name,until:millis()+3500};}
+  if(!escapeGame.level.seasonal&&typeof tickEscapeNote==='function')tickEscapeNote(escapeGame);
+  if(typeof tickEscapeKidsSign==='function')tickEscapeKidsSign(escapeGame);
+  if(escapeGame.met&&escapeGame.met.size!==escapeMetCount&&!escapeGame.level.custom&&!escapeGame.level.seasonal){escapeMetCount=escapeGame.met.size;const fresh=escapeProgress.meet([...escapeGame.met]);const first=fresh.map(k=>EscapeBestiary.byKind(k)).find(Boolean);if(first)escapeBestiaryNote={text:'📖 New in the bestiary: '+first.name,until:millis()+3500};}
   if(escapeBestiaryNote&&millis()<escapeBestiaryNote.until){push();textAlign(CENTER,CENTER);const size=width<600?13:16;textSize(size);const w=escapeBestiaryNote.text.length*size*.56+28,a=Math.min(1,(escapeBestiaryNote.until-millis())/600);noStroke();fill(20,44,40,220*a);rect(width/2-w/2,54,w,32,16);fill(255,236,170,255*a);text(escapeBestiaryNote.text,width/2,70);pop();}
   if(escapeGame.status!=='playing'&&!escapeResultShown){if(!escapeMoment)startEscapeMoment(escapeGame);else if(millis()-escapeMoment.at>=escapeMoment.hold)showEscapeResult();}
 }
 function renderEscapeHUD(force=false){
   if(!escapeGame||(!force&&gameNow()-escapeHudAt<100))return;escapeHudAt=gameNow();
   const g=escapeGame;
-  document.getElementById('escape-mission-name').textContent=(g.level.draft?'✎ ':'')+(g.challenge?g.challenge.name:g.level.custom?'✎ '+g.level.name:g.level.kids?(g.level.sticker||'⭐')+' '+g.level.name:g.level.hidden?'✦ '+g.level.name:(EscapeCatalog.levels.indexOf(g.level)+1)+' · '+g.level.name);
+  document.getElementById('escape-mission-name').textContent=(g.level.draft?'✎ ':'')+(g.challenge?g.challenge.name:g.level.custom?'✎ '+g.level.name:g.level.seasonal?'Lantern '+(g.level.index+1)+' · '+g.level.name:g.level.kids?(g.level.sticker||'⭐')+' '+g.level.name:g.level.hidden?'✦ '+g.level.name:(EscapeCatalog.levels.indexOf(g.level)+1)+' · '+g.level.name);
   const crossing=g.gates.filter(gate=>gate.duration&&gate.open&&gate.expiresAt!==null).sort((a,b)=>a.expiresAt-b.expiresAt)[0];
   const brace=g.gates.filter(gate=>gate.bracedUntil>g.elapsed).sort((a,b)=>a.bracedUntil-b.bracedUntil)[0],growing=g.seedGrowth.slice().sort((a,b)=>a.expires-b.expires)[0];
   const remaining=Math.max(0,Math.ceil((g.timeLimit||0)-g.elapsed));
@@ -366,10 +369,11 @@ function renderEscapeHUD(force=false){
   const beetleWarning=hunter.kind==='magpie'&&hunter.state==='caw'?'A magpie has seen you! It is about to caw.':hunter.kind==='magpie'&&['fly','grab'].includes(hunter.state)?'A magpie is after your pebble. The distraction will not last.':hunter.kind==='owl'&&['glare','swoop'].includes(hunter.state)?'An owl has seen you! Leave the marked spot before it swoops.':hunter.kind==='mimic'&&['reveal','lunge'].includes(hunter.state)?'That chest is a mimic! Change direction!':hunter.kind==='moth'&&['glimmer','swoop'].includes(hunter.state)?'Pale wings gathering! Step away from the glowing mark.':hunter.kind==='cricket'&&hunter.state==='rise'?'The ground is heaving! Step away.':['toad','spider'].includes(hunter.kind)&&['windup','leap'].includes(hunter.state)?(hunter.kind==='toad'?'Toad tongue! Break its line of sight.':'Spider aiming silk! Leave the marked ground.'):(g.logs||[]).some(l=>l.warning)?'A log is about to roll! Get out of its lane.':hunter.kind==='toad'&&['windup','tongue'].includes(hunter.state)?'Toad tongue! Break its line of sight.':hunter.kind==='spider'&&hunter.state==='rush'?'A plucked web brings the spider!':hunter.kind==='cricket'&&hunter.state==='chirp'?'A cricket is about to chirp!':hunter.kind==='scorpion'&&['windup','sting','raise'].includes(hunter.state)?(hunter.state==='raise'?'Scorpion tail rising! Get out of its ring.':'Scorpion striking! Change direction!'):['windup','charge'].includes(hunter.state)?'Beetle '+(hunter.state==='windup'?'aiming':'charging')+' from '+(Math.abs(hunter.x-g.player.x)>Math.abs(hunter.y-g.player.y)?hunter.x<g.player.x?'the left':'the right':hunter.y<g.player.y?'above':'below')+'! Dodge sideways.':null;
   document.getElementById('escape-warning').textContent=paused?'Paused':escapeAidsHidden(g)?'':g.vents.some(v=>v.warning&&v.tiles.some(([x,y])=>Math.hypot(x+.5-g.player.x,y+.5-g.player.y)<2.2))?'A vent is hissing! Clear its lane.':g.player.chilled?(g.player.warmth<=0?'Sally is frozen stiff! Crawl to a warm stone.':'Sally is freezing! Get to a warm stone or warm ground.'):g.hunters.some(h=>h.kind==='gecko'&&h.state==='flee')?'Catch the gecko before it reaches its burrow!':g.hunters.some(h=>h.kind==='gecko'&&h.state==='dash')?'A gecko is after your treasure! Outrun it or hide.':g.antTrails.length&&g.antAt(g.player,2)?'Ants marching! Cross in the gaps between groups.':g.hawk&&['stalk','dive'].includes(g.hawk.state)?(g.shaded()||g.player.hidden?'The hawk is circling. Stay put—you are hidden.':'A hawk is circling! Get under an awning, into leaves, or press X to blend in.'):g.droppedTail?'Your tail is wriggling. The hunters want it—run!':beetleWarning||(priority[hunter.state]<3?(growing&&growing.expires-g.elapsed<=1.2?'The seed growth is fading. Clear the vines or find fresh cover.':crossing&&crossing.expiresAt-g.elapsed<=1.2?'The crossing is folding! Clear the planks or doorway.':hunter.state==='clash'?'The hunters clash! Slip past.':g.player.swimming?'Swimming slows Sally. Aim for the next island.':g.player.webbed?'Silk slows your feet. Move off the web.':g.pendingSpawns.length?'A den is opening. Keep clear of the shaking ground.':null):null)|| (g.player.hidden?(hunter.state==='chase'?'Hidden, but it remembers where you were.':(g.player.underground?'Underground. Nothing can reach Sally here.':g.player.dig?.buried?'Dug in. Nothing can see or catch Sally. Let go to climb out.':g.inCloud?.(g.player)&&g.clouds?.length?'Hidden in the spores, even on the move.':g.moss?.has(g.tileKey(g.player))&&!g.player.moving?'Hidden. Wait for an opening.':'Hidden in the leaves. Wait for an opening.')):['alert','chase'].includes(hunter.state)?moods[hunter.state]:g.player.noisy&&!g.player.sprinting?'Noisy ground! Step onto dark floor to stay quiet.':g.messageUntil>g.elapsed?g.message:moods[hunter.state]??(hunter.state==='rooted'?'The garden stirs.':['still','follow'].includes(hunter.state)?'Something rustles nearby.':hunter.kind==='scorpion'?'Scorpion recovering. Slip past.':hunter.kind==='beetle'?'The beetle is catching its breath.':'The hunter is recovering. Slip past.'));
 }
+function seasonWarningNames(){if(!escapeGame?.level.seasonal)return;const el=document.getElementById('escape-warning');if(escapeGame.hunters.some(h=>h.kind==='fox'&&['crouch','pounce'].includes(h.state)))el.textContent='The roast turkey is rushing! Move sideways, or creep quietly next time.';el.textContent=el.textContent.replace(/An owl/g,'A ghost').replace(/owl/g,'ghost').replace(/Beetle/g,'Zombie gardener').replace(/beetle/g,'zombie gardener').replace(/Toad tongue/g,'Pumpkin vine').replace(/toad/g,'pumpkin').replace(/That chest is a mimic/g,'That basket is haunted');}
 function showEscapeResult(){
   escapeResultShown=true;gameState='escapeResult';clearTouchInput();suppressHeldKeys();
-  const r=escapeGame.result,won=r.status==='won',hardWin=won&&!r.challengeId&&!escapeGame.level.custom&&!r.draft&&(escapeHardRun||escapeGame.level.noAids);if(hardWin)escapeProgress.markHard(r.levelId);
-  escapeProgress.record(r);if(typeof escapeStoryForResult==='function')escapeStoryForResult(escapeGame.level,won);if(typeof EscapePlayData!=='undefined')EscapePlayData.record(escapeGame,r.status,escapeDevice());const firstTry=won&&!r.challengeId&&escapeProgress.lastFirstTry,perfect=won&&!r.challengeId&&escapeProgress.lastPerfect;document.getElementById('escape-result').classList.toggle('escape-first-try',firstTry&&!perfect);document.getElementById('escape-result').classList.toggle('escape-perfect',perfect);
+  const r=escapeGame.result,won=r.status==='won',hardWin=won&&!escapeGame.level.seasonal&&!r.challengeId&&!escapeGame.level.kids&&!escapeGame.level.custom&&!r.draft&&(escapeHardRun||escapeGame.level.noAids);if(hardWin)escapeProgress.markHard(r.levelId);
+  const seasonal=Boolean(escapeGame.level.seasonal);if(!seasonal){escapeProgress.record(r);if(typeof escapeStoryForResult==='function')escapeStoryForResult(escapeGame.level,won);if(typeof EscapePlayData!=='undefined')EscapePlayData.record(escapeGame,r.status,escapeDevice());}const firstTry=!seasonal&&won&&!r.challengeId&&escapeProgress.lastFirstTry,perfect=!seasonal&&won&&!r.challengeId&&escapeProgress.lastPerfect;document.getElementById('escape-result').classList.toggle('escape-first-try',firstTry&&!perfect);document.getElementById('escape-result').classList.toggle('escape-perfect',perfect);
   document.getElementById('game-area').classList.add('escape-results-open');
   document.getElementById('escape-result-location').textContent=r.levelName;
   document.getElementById('escape-result-title').textContent=won?(r.challengeId?'Challenge complete!':perfect?'Perfect escape! First try, every star, every treasure.':firstTry?'First try! Sally escaped!':'Sally escaped!'):r.status==='failed'?'Challenge missed':'Nearly… try another way';
@@ -384,18 +388,18 @@ function showEscapeResult(){
   if(r.glowbugs)document.getElementById('escape-result-summary').textContent+=' · ✦ '+r.glowbugs+' glow bug'+(r.glowbugs>1?'s':'')+' freed';
   document.getElementById('escape-result-medals').textContent=won?(r.challengeId?'✓ '+escapeGame.challenge.name:' · ✓ Escape · '+(r.treasure>=Math.ceil(r.totalTreasure*.6)?'✓':'○')+' Collect '+Math.ceil(r.totalTreasure*.6)+'+ treasure · '+(r.alarms===0&&r.hasTail!==false?'✓':'○')+' No alarm'+(r.hasTail===false?' · tail lost':'')+(firstTry?' · ✓ First try bonus':'')+(hardWin?' · ◆ Hard mode':'')):(best?'Your best here: '+escapeRecordSummary(escapeGame.level,best)+'.':'Every attempt teaches something new.');
   // The stars pop in one at a time, each with a chime that climbs.
-  if(won&&!r.challengeId&&!escapeGame.level.kids){const medals=document.getElementById('escape-result-medals'),row=document.createElement('span');row.className='escape-stars';
+  if(won&&!r.challengeId&&!escapeGame.level.kids&&!seasonal){const medals=document.getElementById('escape-result-medals'),row=document.createElement('span');row.className='escape-stars';
     for(let i=0;i<3;i++){const star=document.createElement('span');star.className=i<r.stars?'star-pop':'star-pop star-empty';star.style.animationDelay=(.25+i*.3)+'s';star.textContent=i<r.stars?'★':'☆';row.appendChild(star);
       if(i<r.stars&&typeof setTimeout==='function')setTimeout(()=>{if(gameState==='escapeResult')escapeSound('ping',{gain:.8+i*.2});},250+i*300);}
     medals.prepend?.(row);}
-  const next=escapeGame.level.hidden||escapeGame.level.custom||escapeGame.level.kids?null:EscapeCatalog.levels[EscapeCatalog.levels.indexOf(escapeGame.level)+1],nextButton=document.getElementById('escape-next-btn');
+  const next=escapeGame.level.hidden||escapeGame.level.custom||escapeGame.level.kids||seasonal?null:EscapeCatalog.levels[EscapeCatalog.levels.indexOf(escapeGame.level)+1],nextButton=document.getElementById('escape-next-btn');
   // Point at any challenge this win opened, so it is not missed on the map.
-  const opened=won?escapeProgress.announceChallenges():[],openedText=opened.map(c=>c.name+(c.levelId===r.levelId?'':' ('+EscapeCatalog.levels.find(l=>l.id===c.levelId).name+')')).join(', ');
-  const mastered=won&&!r.challengeId?escapeProgress.announceMastery(EscapeWorld.chapters):[];
+  const opened=won&&!seasonal?escapeProgress.announceChallenges():[],openedText=opened.map(c=>c.name+(c.levelId===r.levelId?'':' ('+EscapeCatalog.levels.find(l=>l.id===c.levelId).name+')')).join(', ');
+  const mastered=won&&!seasonal&&!r.challengeId?escapeProgress.announceMastery(EscapeWorld.chapters):[];
   document.getElementById('escape-result-challenge').textContent=[opened.length?'⚑ New challenge open: '+openedText+'. Find the glowing flag on the map.':'',...mastered.map(c=>'♛ '+c.name+' mastered! Every star is yours, and Sally can now wear its '+(ESCAPE_SKINS[c.theme]?.name||c.name)+' colours. Change them on the world map.')].filter(Boolean).join(' ');
   if(mastered.length)escapeSound('cache');
   if(perfect&&escapeProgress.whisper())document.getElementById('escape-result-challenge').textContent+=' ✦ Somewhere beyond the trail, something has noticed you.';
-  if(typeof escapeNoteResultButton==='function')escapeNoteResultButton();
+  if(seasonal)document.getElementById('escape-note-btn')?.remove?.();else if(typeof escapeNoteResultButton==='function')escapeNoteResultButton();
   nextButton.style.display=won&&!r.challengeId?'inline-block':'none';
   nextButton.textContent=next?'Try next escape →':'World map';
   const community=escapeGame.level.custom&&escapeOptions.from==='community';
@@ -408,6 +412,7 @@ function showEscapeResult(){
   // A playtest or a community level has no way out to the world map from its results: only back to where it came from.
   {const menu=document.getElementById('escape-menu-btn');menu.onclick=showEscapeSelect;menu.textContent='World map';menu.className=won?'escape-primary':'escape-secondary';menu.style.display=escapeGame.level.custom?'none':'';}
   if(escapeGame.level.kids&&typeof escapeKidsResult==='function')escapeKidsResult(r);
+  if(seasonal)escapeSeasonResult(r);
   (won&&!r.challengeId?nextButton:document.getElementById('escape-retry-btn')).focus();renderEscapeHUD(true);
 }
 // Adaptive music boots after the first user gesture and then follows the game every frame.
@@ -420,17 +425,18 @@ function startEscapeMusic(context){
 function tickEscapeMusic(){
   if(!escapeMusic)return;
   escapeMusic.setVolume((paused?.35:1)*.6*musicVolume,isMuted||!musicOn||musicVolume===0);
-  const screen=gameState==='start'?'menu':gameState==='escapeSelect'?'world':'game';
+  const screen=gameState==='start'?'menu':gameState==='escapeSelect'||gameState==='seasonalHub'?'world':'game';
+  const seasonTheme=gameState==='seasonalHub'?'autumn-festival':screen==='game'&&escapeGame?.level.seasonal?escapeGame.level.seasonalTheme:null;
   // A story card being read has music of its own: a music box, warmer once Sally knows she is a Wayfinder.
-  if(typeof escapeStoryOpen!=='undefined'&&escapeStoryOpen){const part=escapeStoryOpen.part?.n||escapeStoryOpen.card?.part||1;escapeMusic.setState('story',millis()/1000);escapeMusic.setStyle(EscapeMusic.styleFor(part>=2?'wayfinder':'tale'));escapeAmbience?.setVolume(0);return;}
+  if(typeof escapeStoryOpen!=='undefined'&&escapeStoryOpen){const part=escapeStoryOpen.part?.n||escapeStoryOpen.card?.part||1;escapeMusic.setState('story',millis()/1000);escapeMusic.setStyle(EscapeMusic.styleFor(escapeStoryOpen.card?.kind==='season-sign'?escapeStoryOpen.card.theme:part>=2?'wayfinder':'tale'));escapeAmbience?.setVolume(0);return;}
   escapeMusic.setState(EscapeMusic.stateFor({screen,game:screen==='game'?escapeGame:null}),millis()/1000);
   // Each region has a style and each escape its own tune; the world map follows the courtyard Sally is standing in.
   const chapters=EscapeWorld.chapters,index=screen==='game'&&escapeGame?EscapeCatalog.levels.indexOf(escapeGame.level):-1,chapter=index>=0?chapters.find(c=>index>=c.start&&index<c.end):screen==='world'&&escapeWorld?chapters[escapeWorld.chapterAt()]:chapters[0];
   // Places off the trail have their own themes: each secret spot, the Gilded Burrow, the bonus
   // maze, and the finale for the last escape and the long run home.
   const lvl=screen==='game'&&escapeGame?escapeGame.level:null,hiddenAt=lvl?.hidden?EscapeCatalog.hidden.findIndex(l=>l.id===lvl.id):-1;
-  const special=!lvl?null:lvl.secret?'secret:'+lvl.secret:lvl.id==='the-long-way-home'||lvl.id==='home'?'finale':lvl.bonus?'hollow':lvl.hidden?'gilded':null;
-  escapeMusic.setStyle(special&&EscapeMusic.STYLES[special]?EscapeMusic.styleFor(special,special==='hollow'?1:Math.max(0,hiddenAt)):EscapeMusic.styleFor(chapter?.theme||'meadow',index>=0&&chapter?index-chapter.start:-1));
+  const special=seasonTheme||(!lvl?null:lvl.secret?'secret:'+lvl.secret:lvl.id==='the-long-way-home'||lvl.id==='home'?'finale':lvl.bonus?'hollow':lvl.hidden?'gilded':null);
+  escapeMusic.setStyle(special&&EscapeMusic.STYLES[special]?EscapeMusic.styleFor(special,seasonTheme?(lvl?.index??-1):special==='hollow'?1:Math.max(0,hiddenAt)):EscapeMusic.styleFor(chapter?.theme||'meadow',index>=0&&chapter?index-chapter.start:-1));
   escapeMusic.setFlavor?.(screen==='game'&&escapeGame?EscapeMusic.flavorFor(escapeGame):null);
   // Under the water the music is muffled, and hidden still in leaves it softens a little. The
   // nearest creature swells the tension strings as it comes close, before anything has noticed her.
@@ -446,7 +452,7 @@ function tickEscapeMusic(){
 }
 function escapeSound(event,options={}){
   if(isMuted||paused||!audioUnlocked||soundVolume===0||typeof EscapeAudio==='undefined')return;
-  try{EscapeAudio.play(getAudioContext(),event,soundVolume,options);}catch(_){/* Audio feedback remains optional. */}
+  try{EscapeAudio.play(getAudioContext(),event,soundVolume,options);if(gameState==='escape'&&escapeGame?.level.seasonal){const cue=seasonSoundCue(event,escapeGame);if(cue)EscapeAudio.play(getAudioContext(),cue,soundVolume*.65,options);}}catch(_){/* Audio feedback remains optional. */}
 }
 // Soft footfalls follow Sally's real travelled distance, louder when sprinting.
 let escapeHatchCued=false;
@@ -544,7 +550,7 @@ function drawEscapeCurtain(){
 // Hard mode (an option) and the Blind Grove hide every drawn aid: gaze cones, ?/! marks, aim lines
 // and charge lanes, strike and hearing rings, noise rings, off-screen markers, the danger edge and
 // creature warnings. The creatures' own body tells, their sounds and the music still give them away.
-function escapeAidsHidden(g=escapeGame){return Boolean((typeof escapeHardMode!=='undefined'&&escapeHardMode)||g?.level?.noAids);}
+function escapeAidsHidden(g=escapeGame){if(g?.level?.seasonal)return false;return Boolean((typeof escapeHardMode!=='undefined'&&escapeHardMode)||g?.level?.noAids);}
 const escapeMarkPops=new WeakMap();
 function escapeHunterMark(h,cell,g){
   // A creature bonked by a pebble sees stars for a moment (shown even in hard mode: it is the creature's own tell).
@@ -679,7 +685,8 @@ function escapeWatchFrameRate(dt){
 // Where a level sits, for its mood: its region (and how far into it), or a place of its own.
 function escapePlace(level){
   if(!level||level.custom)return null;
-  if(level.kids)return {key:EscapeWorld.chapters[0]?.theme||'meadow',step:0};
+  if(level.seasonal)return {key:level.seasonalTheme,step:level.index||0};
+  if(level.kids)return {key:level.kidsTheme||EscapeWorld.chapters[0]?.theme||'meadow',step:0};
   if(level.secret)return {key:'secret:'+level.secret,step:0};
   if(level.id==='the-long-way-home'||level.id==='home')return {key:'finale',step:0};
   if(level.bonus)return {key:'hollow',step:0};if(level.hidden)return {key:'gilded',step:0};
@@ -819,13 +826,14 @@ function drawEscapeVault(){
   const stormPalettes=[[[22,26,32],[66,74,88],[130,142,160]],[[20,24,30],[58,68,84],[120,136,156]],[[18,20,28],[52,58,76],[110,120,146]],[[24,26,30],[72,76,86],[140,146,160]],[[16,20,28],[48,56,74],[104,118,146]]];
   const grottoPalettes=[[[20,18,30],[56,44,78],[104,90,140]],[[16,22,28],[44,62,72],[90,130,140]],[[24,18,28],[72,46,76],[130,90,130]],[[18,20,30],[50,52,86],[96,104,150]],[[22,20,24],[66,52,62],[124,100,112]]];
   const ventPalettes=[[[30,24,22],[96,66,52],[160,112,84]],[[26,24,26],[84,70,66],[148,124,112]],[[32,26,20],[104,74,44],[172,128,80]],[[28,22,24],[92,58,56],[158,100,92]],[[30,26,22],[100,80,60],[166,136,100]]];
-  const palette=g.level.kids?[[28,50,40],[84,128,80],[150,192,118]]:g.level.custom?[[24,40,34],[58,84,70],[110,140,110]]:g.level.hidden?[[38,30,14],[96,76,32],[176,144,64]]:index>=93?homePalettes[(index-93)%homePalettes.length]:index>=88?tidePalettes[(index-88)%tidePalettes.length]:index>=83?stormPalettes[(index-83)%stormPalettes.length]:index>=78?grottoPalettes[(index-78)%grottoPalettes.length]:index>=73?ventPalettes[(index-73)%ventPalettes.length]:index>=68?frostPalettes[(index-68)%frostPalettes.length]:index>=63?antPalettes[(index-63)%antPalettes.length]:index>=58?rooftopPalettes[(index-58)%rooftopPalettes.length]:index>=53?lanternPalettes[(index-53)%lanternPalettes.length]:index>=49?hollowPalettes[(index-49)%hollowPalettes.length]:index>=47?biomePalettes[index-47]:index>=42?livingPalettes[index-42]:index>=37?glowPalettes[index-37]:index>=32?junglePalettes[index-32]:index>=27?wakingPalettes[index-27]:palettes[index]||(index>=17?deepPalettes[(index-17)%deepPalettes.length]:palettes[0]);
+  const palette=g.level.seasonal?seasonPalette(g.level):g.level.kids?[[28,50,40],[84,128,80],[150,192,118]]:g.level.custom?[[24,40,34],[58,84,70],[110,140,110]]:g.level.hidden?[[38,30,14],[96,76,32],[176,144,64]]:index>=93?homePalettes[(index-93)%homePalettes.length]:index>=88?tidePalettes[(index-88)%tidePalettes.length]:index>=83?stormPalettes[(index-83)%stormPalettes.length]:index>=78?grottoPalettes[(index-78)%grottoPalettes.length]:index>=73?ventPalettes[(index-73)%ventPalettes.length]:index>=68?frostPalettes[(index-68)%frostPalettes.length]:index>=63?antPalettes[(index-63)%antPalettes.length]:index>=58?rooftopPalettes[(index-58)%rooftopPalettes.length]:index>=53?lanternPalettes[(index-53)%lanternPalettes.length]:index>=49?hollowPalettes[(index-49)%hollowPalettes.length]:index>=47?biomePalettes[index-47]:index>=42?livingPalettes[index-42]:index>=37?glowPalettes[index-37]:index>=32?junglePalettes[index-32]:index>=27?wakingPalettes[index-27]:palettes[index]||(index>=17?deepPalettes[(index-17)%deepPalettes.length]:palettes[0]);
   background(10,18,25);push();translate(ox,oy);textFont('sans-serif');textAlign(CENTER,CENTER);
   drawEscapeTiles(g,cell,palette,index);
   drawEscapeWaterSurface(g,cell,view,index);drawEscapeLightningShadows(g,cell);
   drawEscapeWet(g,cell,view);drawEscapeSway(g,cell,view);drawEscapeDapple(g,cell);
   tickEscapeCritters(g);drawEscapeTricks(g,cell,view);drawEscapePrints(g,cell);drawEscapeCritters(g,cell,view,'ground');drawEscapeReeds(g,cell,view);
-  if(g.level.kids&&typeof drawEscapeKidsGuide==='function')drawEscapeKidsGuide(g,cell);
+  if(g.level.seasonal)drawSeasonScenery(g,cell);
+  if((g.level.kids||g.level.seasonal)&&typeof drawEscapeKidsGuide==='function')drawEscapeKidsGuide(g,cell);
   if(g.level.rootWheel){const [x,y]=g.level.rootWheel,angle=g.wheelAngle;push();translate((x+.5)*cell,(y+.5)*cell);rotate(angle);noFill();stroke(106,147,76,95);strokeWeight(cell*.11);ellipse(0,0,cell*2.7,cell*2.7);for(let a=0;a<TWO_PI;a+=PI/2)line(0,0,Math.cos(a)*cell*1.35,Math.sin(a)*cell*1.35);pop();}
   for(const gate of g.gates){
     const s=gate.switch,label=gate.closingAt!==null?'!':gate.duration&&gate.open?String(Math.max(0,Math.ceil(gate.expiresAt-g.elapsed))):gate.sealed?'×':gate.open?'✓':s?gate.id==='blue'?'B':'A':'◇',gateColor=gate.sealed?[230,137,148]:gate.color;
@@ -918,7 +926,7 @@ function drawEscapeVault(){
     for(let a=-cone;a<=cone+.001;a+=cone/24){let reach=0,from=h;for(let d=step;d<=range;d+=step){const to={x:h.x+Math.cos(ang+a)*d,y:h.y+Math.sin(ang+a)*d};if(!g.clear(from,to,true))break;reach=d;from=to;}vertex((h.x+Math.cos(ang+a)*reach)*cell,(h.y+Math.sin(ang+a)*reach)*cell);}endShape(CLOSE);
   }
   if(aids&&h.kind==='toad'&&h.state==='windup'){let d=0;const dx=Math.cos(h.facing),dy=Math.sin(h.facing);while(d<5.5&&g.sightFloor(Math.floor(h.x+dx*(d+.1)),Math.floor(h.y+dy*(d+.1))))d+=.1;stroke(240,120,140,90+70*Math.sin(g.elapsed*22));strokeWeight(cell*.06);drawingContext.setLineDash([cell*.12,cell*.12]);line(h.x*cell,h.y*cell,(h.x+dx*d)*cell,(h.y+dy*d)*cell);drawingContext.setLineDash([]);}
-  if(h.kind==='toad'&&h.state==='tongue'&&h.tongueLength>0){stroke(232,110,140);strokeWeight(cell*.12);line(h.x*cell,h.y*cell,(h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell);noStroke();fill(250,150,170);ellipse((h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell,cell*.22,cell*.22);}
+  if(h.kind==='toad'&&h.state==='tongue'&&h.tongueLength>0){stroke(...(g.level.seasonal?[112,157,65]:[232,110,140]));strokeWeight(cell*.12);line(h.x*cell,h.y*cell,(h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell);noStroke();fill(250,150,170);ellipse((h.x+Math.cos(h.facing)*h.tongueLength)*cell,(h.y+Math.sin(h.facing)*h.tongueLength)*cell,cell*.22,cell*.22);}
   if(aids&&h.kind==='cricket'&&h.state==='chirp'){noFill();for(let k=0;k<3;k++){const r=((g.elapsed*3+k/3)%1);stroke(255,230,140,200*(1-r));strokeWeight(cell*.04);ellipse(h.x*cell,h.y*cell,cell*(.5+r*2.5),cell*(.5+r*2.5));}}
   // A scorpion's strike ring is always shown: bright while the tail is up, faint while it rests.
   if(aids&&h.kind==='scorpion'&&h.state!=='buried'){const up=h.tailUp||['raise','windup','sting'].includes(h.state),r=(h.reach||1.8)*2*cell;noStroke();fill(255,140,70,up?34:12);ellipse(h.x*cell,h.y*cell,r,r);noFill();stroke(255,up?150:200,up?70:150,up?200:70);strokeWeight(cell*(up?.06:.035));drawingContext.setLineDash(up?[]:[cell*.18,cell*.14]);ellipse(h.x*cell,h.y*cell,r,r);drawingContext.setLineDash([]);}
@@ -931,7 +939,7 @@ function drawEscapeVault(){
   // masonry. The rig also keeps its centreline and planted feet on open floor.
   g.hunters.filter(h=>h.kind==='moth'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))).forEach(h=>drawEscapeMoth(h,cell,g.elapsed));
   // Owls glow in the dark: their perch, eyes and look-out beam are always shown.
-  g.hunters.filter(h=>h.kind==='owl').forEach(h=>drawEscapeOwl(h,cell,g));
+  g.hunters.filter(h=>h.kind==='owl').forEach(h=>g.level.seasonal?drawSeasonGhost(h,cell,g):drawEscapeOwl(h,cell,g));
   g.hunters.filter(h=>h.kind==='magpie'&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y))||['fly','return'].includes(h.state))).forEach(h=>drawEscapeMagpie(h,cell,g));
   drawEscapeTongue(g,cell);
   drawingContext.save();drawingContext.beginPath();
@@ -941,7 +949,7 @@ function drawEscapeVault(){
   g.hunters.filter(h=>h.kind==='angler').forEach(h=>drawEscapeAngler(h,cell,g.elapsed));
   g.motion.refresh?.();
   for(const h of g.hunters)if(h.kind==='flytrap')drawEscapeDew(g,h,cell,view);
-  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='magpie'||h.kind==='angler'||h.kind==='cloudray')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}const breathing=escapeBreathe(g,h,i,cell);if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='wasp'?drawEscapeWaspNest(h,cell,g.elapsed):h.kind==='dragonfly'?drawEscapeDragonfly(h,cell,g.elapsed):h.kind==='mole'?drawEscapeMole(h,cell,g.elapsed):h.kind==='bat'?drawEscapeBat(h,cell,g.elapsed,g):h.kind==='eel'?drawEscapeEel(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='echofrog'?drawEscapeEchoFrog(h,cell,g.elapsed):h.kind==='sentinel'?drawEscapeSentinel(h,cell,g.elapsed):h.kind==='chameleon'?drawEscapeChameleon(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');if(breathing)pop();});
+  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='magpie'||h.kind==='angler'||h.kind==='cloudray')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}const breathing=escapeBreathe(g,h,i,cell);if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))g.level.seasonal&&drawSeasonCreature(h,g.motion.snakes[i],cell,g)?null:h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='wasp'?drawEscapeWaspNest(h,cell,g.elapsed):h.kind==='dragonfly'?drawEscapeDragonfly(h,cell,g.elapsed):h.kind==='mole'?drawEscapeMole(h,cell,g.elapsed):h.kind==='bat'?drawEscapeBat(h,cell,g.elapsed,g):h.kind==='eel'?drawEscapeEel(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='echofrog'?drawEscapeEchoFrog(h,cell,g.elapsed):h.kind==='sentinel'?drawEscapeSentinel(h,cell,g.elapsed):h.kind==='chameleon'?drawEscapeChameleon(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');if(breathing)pop();});
   drawingContext.save();drawingContext.globalAlpha*=g.player.hidden?.48:1;
   for(const h of g.hunters)if(h.state==='clash'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noFill();stroke(255,193,107,180);strokeWeight(cell*.035);ellipse(h.x*cell,h.y*cell,cell*(.9+Math.sin(g.elapsed*14)*.08),cell*.75);}
   // Mid-flight off a bounce cap, Sally rises over her shadow.
@@ -975,7 +983,7 @@ function drawEscapeVault(){
   drawEscapeCritters(g,cell,view,'air');drawEscapeFx(g,cell);drawEscapeMotes(g,cell);
   const place=escapePlace(g.level),mood=place?EscapeLighting.moodFor(place.key,place.step):null;
   drawEscapeCloudShadows(g,cell,mood);drawEscapeLights(g,cell,mood);
-  if(view.follow)drawEscapeFog(g,cell);
+  if(view.follow){drawEscapeFog(g,cell);drawEscapeGlowWatchers(g,cell);}
   pop();
   drawEscapeGrade(mood,g);
   // Storm: the sky darkens while thunder rumbles, then a white flash lights everything for a moment.
@@ -1113,9 +1121,19 @@ function drawEscapeEel(h,cell,clock){
 // tile is in view, so the ring can be read from a distance before the plant itself is in sight.
 // Thrown pebbles and glow mushrooms in the air (a little arc on each leg), glow mushrooms
 // lighting the ground, and, while a throw is held, the dotted line of where it will go.
+function drawEscapeGlowWatchers(g,cell){
+  // Only eyes in the mushroom's faint outer halo show through fog. Never reveal
+  // a watcher through masonry or a creature Sally has slipped away from unseen.
+  for(const h of g.hunters){
+    if(h.state!=='light-watch'||!h.glowFear?.lastSeen||g.elapsed-h.glowFear.seenAt>.2||g.visibleTile(Math.floor(h.x),Math.floor(h.y))||!g.clear(g.player,h,true))continue;
+    if(!g.lights.some(l=>l.until>g.elapsed&&Math.hypot(l.x-h.x,l.y-h.y)<=l.r+.8&&g.clear(l,h,true)))continue;
+    const dx=Math.cos(h.facing),dy=Math.sin(h.facing);noStroke();
+    for(const side of[-1,1]){const x=(h.x+dx*.2-dy*side*.065)*cell,y=(h.y+dy*.2+dx*side*.065)*cell;fill(235,206,160,35);ellipse(x,y,cell*.14,cell*.14);fill(245,220,178,190);ellipse(x,y,cell*.055,cell*.055);}
+  }
+}
 function drawEscapeThrows(g,cell){
   for(const l of g.lights||[]){const left=l.until-g.elapsed,fade=Math.min(1,left/3,(g.elapsed-l.born)*4),pulse=1+Math.sin(g.elapsed*2.2+l.x)*.04;noStroke();
-    for(const k of [1,.7,.4]){fill(111,232,212,(14+k*16)*fade);ellipse(l.x*cell,l.y*cell,l.r*2*cell*k*pulse,l.r*2*cell*k*pulse);}
+    for(const k of [1,.84,.68,.52,.36,.2]){fill(111,232,212,(5+(1-k)*18.75)*fade);ellipse(l.x*cell,l.y*cell,l.r*2*cell*k*pulse,l.r*2*cell*k*pulse);}
     fill(143,240,220,230*fade);arc(l.x*cell,l.y*cell,cell*.32,cell*.26,PI,TWO_PI,CHORD);fill(217,245,228,230*fade);rect(l.x*cell-cell*.04,l.y*cell,cell*.08,cell*.12);
     fill(255,255,255,200*fade);ellipse(l.x*cell-cell*.05,l.y*cell-cell*.06,cell*.04,cell*.04);}
   for(const f of g.flights||[]){if(!f.pos)continue;const travelled=(g.elapsed-f.start)*f.speed,leg=f.legs.find(q=>travelled<=q.end)||f.legs.at(-1),legLen=Math.hypot(leg.to.x-leg.from.x,leg.to.y-leg.from.y),t=legLen?1-(leg.end-travelled)/legLen:1,lift=Math.sin(Math.PI*Math.max(0,Math.min(1,t)))*Math.min(.5,legLen*.12)*cell;
@@ -1492,8 +1510,9 @@ function drawEscapeCompanion(p,cell,clock){
 const escapeShade=(c,amount)=>c.map(v=>Math.round(amount>0?v+(255-v)*amount:v*(1+amount)));
 let escapeSkinCache={id:null,palette:null};
 function escapeSkinPalette(){
-  const id=typeof escapeProgress!=='undefined'&&typeof EscapeWorld!=='undefined'?escapeProgress.skin(EscapeWorld.chapters):'classic';
-  if(escapeSkinCache.id===id)return escapeSkinCache.palette;const k=ESCAPE_SKINS[id]||ESCAPE_SKINS.classic;
+  const seasonal=typeof seasonProgress==='function'&&seasonProgress().data.skin&&seasonProgress().complete();
+  const id=seasonal?'copper-lantern':typeof escapeProgress!=='undefined'&&typeof EscapeWorld!=='undefined'?escapeProgress.skin(EscapeWorld.chapters):'classic';
+  if(escapeSkinCache.id===id)return escapeSkinCache.palette;const k=seasonal?EscapeSeasons.copper:ESCAPE_SKINS[id]||ESCAPE_SKINS.classic;
   const palette={body:k.body,dark:k.dark,light:k.light,spot:k.spot,leg:escapeShade(k.body,-.13),elbow:escapeShade(k.body,.12),head:escapeShade(k.body,.06),patch:escapeShade(k.light,-.02),toe:escapeShade(k.body,.15),toeLift:escapeShade(k.body,.35),nostril:escapeShade(k.spot,-.1)};
   escapeSkinCache={id,palette};return palette;
 }

@@ -739,3 +739,7 @@ body.pad-nav .pad-glyph { display:inline-block; } body.pad-nav .key-hint { displ
 .world-pad-bar { display:none; } body.pad-nav .world-pad-bar { display:flex; }
 .world-pad-bar { position:absolute; left:50%; top:16px; transform:translateX(-50%); gap:16px; align-items:center; padding:7px 16px; border-radius:999px; background:#0b1f1acc; border:1px solid #ffffff1c; color:#e8efd8; font-size:.86rem; white-space:nowrap; pointer-events:none; z-index:5; }
 .world-pad-bar span { display:inline-flex; align-items:center; }
+
+
+.kids-section-title { margin:26px 0 16px; color:#ffe58a; font-size:1.35rem; }
+.kids-guide-note { margin:10px 0 16px; opacity:.9; }

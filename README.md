@@ -1,4 +1,6 @@
-# Sally’s Escape
+# Sally's Escape
+
+**Seasonal Adventures:** A continuous campaign-style world contains Autumn Hollow's eight autumn/Halloween levels, with six themed creatures (including a roast turkey), separate progress, a completion outfit and main-menu keepsakes. Other regions preview winter, spring and summer behind seasonal weather and countdown gates. Enter from the main menu; G shows the whole seasonal world. See [the seasonal level and implementation guide](docs/SEASONS.md).
 
 A top-down stealth and exploration game in the browser. Sally, a small garden lizard, is carried
 far from home by a flood and must sneak back across the Overgrowth: 100 escapes in 21 areas, 14
@@ -18,6 +20,10 @@ as a decoy, and pink regrowth bugs grow it back. Every hunter has its own job (`
 traps, cold rooms, steam, storms and tides change the routes. Escaping on the first attempt earns a
 First try badge; earning every star in an area masters it and lends Sally its colours. About one
 escape in four, a few glow bugs drift about: free one for a little bonus treasure.
+
+**Glow mushroom shelter.** Thrown mushrooms cast a wider, soft-edged light for twelve seconds.
+Spiders and millipedes retreat into shade; a spider that watches Sally sheltering waits for the
+light to fade, then rushes her last seen spot. See [the glow mushroom guide](docs/GLOW-MUSHROOMS.md).
 
 **Sound and light.** Effects are synthesised with Web Audio; the adaptive music is composed in code
 with Tone.js; each area has its own ambience; footsteps follow the ground and caves echo
@@ -50,10 +56,10 @@ slider), A presses and B goes back. Options → Frame rate shows frames a second
 Options → Test sound plays two beeps to check where sound is lost on a device. The tool buttons show pad labels once a pad is used, and
 big moments rumble where the pad supports it.
 
-**Little Explorers.** Twenty gentle levels for young players (about 5 and up), from the title screen and
+**Little Explorers.** Twenty-six gentle levels for young players (about 5 and up), from the title screen and
 outside the campaign. Each teaches one thing (walking, keys, leaves, crouching, a button, a pebble,
 running, a maze, swimming; then digging in, the tongue, a Sally-only crack, bounce caps, spore puffs,
-camouflage, seeds, cracked walls, tunnels, and a grand tour of them all). They can't be lost: a catch is an "Oops!" that hops Sally back
+camouflage, seeds, cracked walls, tunnels, and a grand tour of them all). Six larger adventures follow: a garden, beetle courtyard, lily pond, lantern house, steamworks and a journey home. They combine familiar tricks with optional treasure, gentle new creatures and safe return routes. Supplied tools never run out; cooldowns still apply. The picker can turn guiding dots off for free exploration. They can't be lost: a catch is an "Oops!" that hops Sally back
 to the last checkpoint flag, the creatures are slow and simple, and glowing dots lead to the key and the
 door. Every level finished earns a sticker (each player's own). Levels are in `public/escape-kids.js`.
 
@@ -92,3 +98,4 @@ Design notes are in `docs/`: the story, roadmap, creatures, music, lighting, bui
 ## License
 
 Copyright (c) 2026 masadams. All rights reserved. The code, levels, story, art and music may be viewed here but not copied, modified, hosted or redistributed without written permission; see `LICENSE`. The bundled p5.js (LGPL 2.1) and Tone.js (MIT) keep their own licenses, in `public/vendor/`.
+

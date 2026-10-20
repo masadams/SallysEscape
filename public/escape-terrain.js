@@ -8,6 +8,7 @@
 const ESCAPE_TERRAIN_HASH=(x,y,s=0)=>{let h=(Math.imul(x|0,374761393)+Math.imul(y|0,668265263)+Math.imul(s|0,982451653))|0;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967296;};
 // What each place is made of: its walls and its ground.
 const ESCAPE_TERRAIN_SETS={
+  autumn:['autumn-hedge','fallen-leaves'],'autumn-dusk':['autumn-hedge','fallen-leaves'],'autumn-night':['autumn-hedge','fallen-leaves'],'autumn-mill':['wood','fallen-leaves'],'autumn-festival':['autumn-hedge','fallen-leaves'],
   meadow:['hedge','grass'],garden:['hedge','grass'],orchard:['hedge','grass'],jungle:['hedge','grass'],hollow:['hedge','grass'],home:['hedge','grass'],finale:['hedge','grass'],
   river:['hedge','earth'],marsh:['hedge','earth'],lantern:['hedge','earth'],
   ruins:['stone','flag'],quarry:['stone','flag'],gilded:['stone','flag'],
@@ -24,7 +25,7 @@ function escapeTerrainSet(g){
 }
 // Each material leans the area's colours toward its own (green hedges, brown earth, pale snow),
 // keeping the palette's brightness so dark places stay dark.
-const ESCAPE_TERRAIN_TINT={hedge:[[58,104,58],.62],grass:[[56,92,48],.5],earth:[[84,66,44],.45],sand:[[170,140,96],.5],snow:[[200,214,230],.45],ice:[[176,206,230],.5],stone:null,flag:null,rock:null,cave:null,roof:null};
+const ESCAPE_TERRAIN_TINT={'autumn-hedge':[[142,89,48],.55],'fallen-leaves':[[106,75,47],.4],wood:[[119,84,53],.55],hedge:[[58,104,58],.62],grass:[[56,92,48],.5],earth:[[84,66,44],.45],sand:[[170,140,96],.5],snow:[[200,214,230],.45],ice:[[176,206,230],.5],stone:null,flag:null,rock:null,cave:null,roof:null};
 const escapeTerrainLum=c=>.3*c[0]+.59*c[1]+.11*c[2];
 function escapeTerrainTint(c,material){const t=ESCAPE_TERRAIN_TINT[material];if(!t)return c;const [tc,k]=t,scale=escapeTerrainLum(c)/Math.max(1,escapeTerrainLum(tc));return c.map((v,i)=>Math.max(0,Math.min(255,Math.round(v*(1-k)+tc[i]*scale*k))));}
 const escapeTerrainMix=(c,k)=>c.map(v=>Math.max(0,Math.min(255,Math.round(k>0?v+(255-v)*k:v*(1+k)))));
@@ -47,7 +48,7 @@ function drawEscapeTerrainGround(g,cell,palette){
   for(let i=0;i<patches;i++){const px=ESCAPE_TERRAIN_HASH(i,1,7)*W,py=ESCAPE_TERRAIN_HASH(i,2,7)*H;if(!near(px,py))continue;
     const r=(.7+ESCAPE_TERRAIN_HASH(i,3,7)*1.3)*cell,light=ESCAPE_TERRAIN_HASH(i,4,7)<.5,c=light?escapeTerrainMix(base,.18):escapeTerrainMix(base,-.3);
     for(const [k,a] of [[1,5],[.7,6],[.42,7]]){fill(...c,a);ellipse(px*cell,py*cell,r*2*k,r*1.6*k);}}
-  const marks={grass:escapeTerrainGrass,earth:escapeTerrainEarth,flag:escapeTerrainFlag,cave:escapeTerrainCave,sand:escapeTerrainSand,snow:escapeTerrainSnow,roof:escapeTerrainRoof}[set.ground];
+  const marks={'fallen-leaves':escapeTerrainAutumn,grass:escapeTerrainGrass,earth:escapeTerrainEarth,flag:escapeTerrainFlag,cave:escapeTerrainCave,sand:escapeTerrainSand,snow:escapeTerrainSnow,roof:escapeTerrainRoof}[set.ground];
   marks?.(g,cell,base,near,W,H);
 }
 function escapeTerrainGrass(g,cell,base,near,W,H){
@@ -123,7 +124,7 @@ function drawEscapeTerrainWalls(g,cell,palette){
     if(s){fill(...face);rect(px-ox,py+cell*(1-fh)-1,cell+ow,cell*fh+1,0,0,br,bl);}
     fill(...top);rect(px-ox,py-oy,cell+ow,topH+(s?1:0)+oh,tl,tr,s?0:br,s?0:bl);
     const ctx={g,x,y,px,py,cell,top,face,edge,n,s,e,w,topH,fh,set};
-    ({hedge:escapeTerrainHedge,stone:escapeTerrainStone,rock:escapeTerrainRock,sand:escapeTerrainSandstone,ice:escapeTerrainIce})[set.wall]?.(ctx);
+    ({'autumn-hedge':escapeTerrainHedge,wood:escapeTerrainWood,hedge:escapeTerrainHedge,stone:escapeTerrainStone,rock:escapeTerrainRock,sand:escapeTerrainSandstone,ice:escapeTerrainIce})[set.wall]?.(ctx);
   }
 }
 function escapeTerrainHedge({x,y,px,py,cell,top,face,n,s,e,w,topH}){
@@ -247,3 +248,8 @@ function drawEscapeZone(keys,cell,seen,color,alpha,edgeAlpha){
       if(n)line(X+(w?r:0),Y+i,X+cell-(e?r:0),Y+i);if(s)line(X+(w?r:0),Y+cell-i,X+cell-(e?r:0),Y+cell-i);
       if(w)line(X+i,Y+(n?r:0),X+i,Y+cell-(s?r:0));if(e)line(X+cell-i,Y+(n?r:0),X+cell-i,Y+cell-(s?r:0));noStroke();}}
 }
+
+
+// Leaf litter is a visual texture on ordinary quiet floor, not the noisy gravel mechanic.
+function escapeTerrainAutumn(g,c,base,near,W,H){escapeTerrainEarth(g,c,base,near,W,H);noStroke();for(let i=0;i<W*H*2;i++){const x=ESCAPE_TERRAIN_HASH(i,101,13)*W,y=ESCAPE_TERRAIN_HASH(i,102,13)*H;if(!near(x,y))continue;push();translate(x*c,y*c);rotate(ESCAPE_TERRAIN_HASH(i,103,13)*Math.PI);fill(...[[191,114,48],[218,156,63],[160,74,45]][i%3],90);ellipse(0,0,c*.15,c*.065);pop();}}
+function escapeTerrainWood({x,y,px,py,cell,top,face,s,topH}){stroke(...escapeTerrainMix(top,-.4),150);strokeWeight(Math.max(1,cell*.025));for(let i=1;i<4;i++)line(px+cell*i/4,py,px+cell*i/4,py+topH);for(let i=0;i<4;i++){const xx=px+cell*(i+.5)/4;stroke(...escapeTerrainMix(top,.35),75);line(xx,py+cell*.13,xx,py+topH*.85);noStroke();fill(...escapeTerrainMix(face,-.3));ellipse(xx,py+cell*.08,cell*.025,cell*.025);if(s)ellipse(xx,py+topH+cell*.12,cell*.025,cell*.025);}}

@@ -29,7 +29,7 @@ function harness() {
   let now=0,seed=12345;
   const events={},storage=new Map();
   const elements={};
-  const element=id=>elements[id] ||= {style:{},value:'Tester',disabled:false,innerHTML:'',textContent:'',classList:{add(){},remove(){},toggle(){}},setAttribute(){},focus(){},appendChild(){},insertBefore(){},addEventListener(type,fn){this['on'+type]=fn}};
+  const element=id=>elements[id] ||= {id,style:{},value:'Tester',disabled:false,innerHTML:'',textContent:'',getContext(){return {...dc,createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),putImageData(){}};},classList:{add(){},remove(){},toggle(){},contains(){return false;}},setAttribute(){},focus(){},appendChild(){},insertBefore(){},addEventListener(type,fn){this['on'+type]=fn}};
   const noop=()=>{};
   const sound=()=>({playing:false,loops:0,plays:0,volume:0,volumeChanges:0,stop(){this.playing=false},loop(){this.playing=true;this.loops++},play(){this.playing=true;this.plays++},isPlaying(){return this.playing},setVolume(value){this.volume=value;this.volumeChanges++},getVolume(){return this.volume}});
   const dc={createLinearGradient:()=>({addColorStop:noop}),fillRect:noop,save:noop,restore:noop,beginPath:noop,rect:noop,clip:noop,moveTo:noop,lineTo:noop,ellipse:noop,stroke:noop,fill:noop,globalAlpha:1};
@@ -51,6 +51,7 @@ function harness() {
   for(const n of ['push','pop','background','fill','noFill','stroke','noStroke','strokeWeight','rect','triangle','ellipse','line','bezier','beginShape','endShape','curveVertex','vertex','translate','scale','image','imageMode','text','textSize','textFont','textAlign','textStyle','colorMode','arc','setShakeThreshold','resizeCanvas','rotate','blendMode','strokeCap','quad','point','circle','square','curve','ellipseMode','rectMode','strokeJoin','erase','noErase','tint','noTint','shearX','shearY']) c[n]=noop;c.ROUND='round';c.BOLD='bold';c.NORMAL='normal';
   for(const n of ['CORNER','CENTER','LEFT','RIGHT','TOP','BOTTOM','CLOSE','RGB','HSB','PIE','CHORD','OPEN','ADD','BLEND','MULTIPLY','SCREEN']) c[n]=n;
   c.UP_ARROW=38;c.DOWN_ARROW=40;c.LEFT_ARROW=37;c.RIGHT_ARROW=39;
+  c.bezierVertex=noop;
   c.createGraphics=()=>({...c,clear:noop,remove:noop});
   const context=vm.createContext(c);
   const html=fs.readFileSync(path.join(__dirname,'../public/index.html'),'utf8');
@@ -62,6 +63,41 @@ function harness() {
   run('setup();');
   return {c:context,run,el:element,events,storage,setTime:value=>now=value,tick:fps=>{c.deltaTime=1000/fps;now+=c.deltaTime;c.frameCount++}};
 }
+
+test('Little Explorers groups all 26 levels, preserves old stickers and remembers the guide choice per player',()=>{
+ const h=harness(),panel=h.el('escape-builder');panel.querySelectorAll=()=>[];panel.querySelector=()=>({focus(){}});
+ h.run('escapeKidsMark("hello-sally");openLittleExplorers();');
+ assert.equal((panel.innerHTML.match(/class="kids-stone(?: |")/g)||[]).length,26);
+ assert.match(panel.innerHTML,/Little discoveries/);assert.match(panel.innerHTML,/Bigger adventures/);assert.match(panel.innerHTML,/Stickers: 1 of 26/);
+ h.el('kids-guide-toggle').onclick();assert.equal(h.run('escapeKidsGuideOn()'),false);assert.equal(h.el('kids-guide-toggle').textContent,'Guiding dots: Off');
+ h.run('globalThis.otherPlayer=EscapePlayers.create("Explorer Two");');
+ assert.equal(h.run('EscapePlayers.storage(otherPlayer.id).getItem("sallys-escape-kids-guide")'),null);
+ assert.equal(h.run('escapeKidsDone().includes("hello-sally")'),true);
+});
+
+test('the twentieth sticker leads into the adventures; the final one returns to the sticker collection',()=>{
+ const h=harness();
+ h.run('startEscape({kidsId:"great-explorer",skipIntro:true});escapeGame.finish("won","home");showEscapeResult();');
+ assert.match(h.el('escape-next-btn').textContent,/Next adventure/);h.el('escape-next-btn').onclick();assert.equal(h.run('escapeGame.level.id'),'garden-gate');
+ h.run('startEscape({kidsId:"sallys-way-home",skipIntro:true});escapeGame.finish("won","home");showEscapeResult();');
+ assert.equal(h.el('escape-next-btn').textContent,'See your stickers');assert.equal(h.el('escape-menu-btn').textContent,'Little Explorers');
+ assert.equal(h.run('escapeKidsDone().includes("sallys-way-home")'),true);assert.equal(h.run('Object.keys(escapeProgress.data.levels).length'),0);
+});
+
+test('every kids adventure renders on desktop and touch, and supplied tools show endless supplies',()=>{
+ const h=harness();for(const id of h.run('EscapeCatalog.kids.filter(l=>l.adventure).map(l=>l.id)')){
+   h.run('startEscape({kidsId:'+JSON.stringify(id)+',skipIntro:true});draw();mobile=true;windowWidth=944;windowHeight=524;updateToolbar();draw();');
+   assert.equal(h.run('gameState'),'escape');assert.equal(h.el('touch-controls').style.display,'flex');assert.equal(h.run('escapeGame.level.unlimited'),true);
+ }
+});
+
+test('an optional trail note opens a card, freezes the real engine, and resumes without reopening in place',()=>{
+ const h=harness();h.run('globalThis.readSign=null;globalThis.signDone=null;showEscapeStory=(entry,fresh,done)=>{readSign=entry;escapeStoryOpen=entry;signDone=()=>{escapeStoryOpen=null;done();};};startEscape({kidsId:"beetle-courtyard",skipIntro:true});escapeGame.player.x=11.5;escapeGame.player.y=13.5;tickEscapeKidsSign(escapeGame);');
+ assert.equal(h.run('readSign.card.title'),'Watch the horn');assert.match(h.run('readSign.card.body[0]'),/Step sideways/);
+ const t=h.run('escapeGame.elapsed');h.run('draw();draw();');assert.equal(h.run('escapeGame.elapsed'),t,'creatures and timers wait while reading');
+ h.run('signDone();readSign=null;draw();draw();tickEscapeKidsSign(escapeGame);');assert.equal(h.run('readSign'),null,'closing the card does not instantly reopen it');
+ assert.ok(h.run('escapeGame.elapsed')>t);h.run('escapeGame.player.x=9.5;tickEscapeKidsSign(escapeGame);escapeGame.player.x=11.5;tickEscapeKidsSign(escapeGame);');assert.equal(h.run('readSign.card.title'),'Watch the horn','returning later can reread it');
+});
 test('the standalone world enters the real engine and renders the result in its existing playfield',()=>{const h=harness();h.run('showEscapeSelect();startEscape({levelId:"quiet-vault"});draw();escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.finish("won","escaped");draw();escapeMoment.hold=0;draw();');assert.equal(h.run('gameState'),'escapeResult');assert.equal(h.el('game-container').style.display,'block');assert.equal(h.el('escape-result').style.display,'block');assert.equal(h.el('escape-menu-btn').textContent,'World map');assert.equal(h.run('escapeProgress.unlocked("crumbling-hall")'),true);});
 test('Sally celebrates the finished run, keeps retry available, and resets her expression on retry',()=>{
  const h=harness();h.run('startEscape({levelId:"quiet-vault",skipIntro:true});escapeGame.elapsed=20;escapeGame.treasure=8;escapeGame.finish("won","escaped");draw();escapeMoment.hold=0;draw();');
@@ -154,4 +190,97 @@ test('Full lighting draws every area with terrain, water and small lives, and th
   assert.equal(state(),before,'the creatures never change the game');
   h.run('escapeGame.elapsed+=5;for(let i=0;i<80;i++){escapeGame.elapsed+=.05;tickEscapeCritters(escapeGame);}');
   assert.ok(['perch','gone','fly'].includes(h.run('escapeCritters.list.find(c=>c.kind==="bird").state')));
+});
+
+
+test('seasonal menu enters a continuous campaign-style map, keeps future paths locked and goes back to the title',()=>{
+ const h=harness(),panel=h.el('season-hub');panel.querySelectorAll=()=>[];panel.contains=()=>false;
+ h.el('seasons-button').onclick();assert.equal(h.run('gameState'),'seasonalHub');assert.match(panel.innerHTML,/SEASONAL ADVENTURES/);assert.match(panel.innerHTML,/A snowy path/);assert.match(panel.innerHTML,/data-season-clock="winter"/);assert.equal(h.el('game-container').style.display,'block');
+ h.run('seasonVisit("winter")');assert.equal(h.run('seasonPack'),'autumn-hollow');assert.equal(h.run('seasonWorld.areaOpen("winter")'),false);assert.match(h.el('season-prompt').textContent,/blizzard.*Christmas lights/);
+ h.run('seasonVisit("autumn-hollow")');assert.equal(h.run('seasonPack'),'autumn-hollow');assert.equal((panel.innerHTML.match(/class="world-node season-level/g)||[]).length,8);
+ h.run('seasonTogglePanel(true);escapeGoBack()');assert.equal(h.run('seasonPanelOpen'),false);assert.equal(h.run('seasonPack'),'autumn-hollow');
+ h.run('seasonToggleOverview();escapeGoBack()');assert.equal(h.run('seasonOverview'),false);h.run('escapeGoBack()');assert.equal(h.run('gameState'),'start');
+});
+
+test('every seasonal level renders in Full and Simple lighting on desktop and touch, including all six costumes',()=>{
+ const h=harness();Object.assign(h.c.drawingContext,{createRadialGradient:()=>({addColorStop(){}}),translate(){},scale(){},drawImage(){},setLineDash(){},arc(){},closePath(){}});for(const id of h.run('EscapeCatalog.seasonal.map(l=>l.id)'))for(const lighting of ['full','simple']){
+  h.run('escapeLightingMode='+JSON.stringify(lighting)+';escapeLightingAuto=false;startEscape({seasonalId:'+JSON.stringify(id)+',skipIntro:true});draw();mobile=true;windowWidth=944;windowHeight=524;updateToolbar();draw();');
+  assert.equal(h.run('escapeLightingFull()'),lighting==='full');assert.equal(h.run('gameState'),'escape');assert.match(h.el('escape-mission-name').textContent,/Lantern/);assert.equal(h.el('touch-controls').style.display,'flex');assert.ok(!h.run('escapeGame.level.unlimited'));
+ }
+});
+
+test('seasonal results, retry and leaving return to Autumn Hollow without changing campaign progress',()=>{
+ const h=harness(),panel=h.el('season-hub');panel.querySelectorAll=()=>[];panel.contains=()=>false;
+ const before=h.run('JSON.stringify(escapeProgress.data)');h.run('startEscape({seasonalId:"autumn-gardener",skipIntro:true});escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.finish("won","home");showEscapeResult();');
+ assert.equal(h.run('JSON.stringify(escapeProgress.data)'),before);assert.equal(h.run('seasonProgress().cleared()'),1);assert.match(h.el('escape-result-title').textContent,/festival lantern/);assert.equal(h.el('escape-menu-btn').textContent,'Autumn Hollow');
+ h.el('escape-retry-btn').onclick();assert.equal(h.run('escapeOptions.from'),'seasonal');assert.equal(h.run('escapeGame.level.id'),'autumn-gardener');h.run('escapeGame.elapsed=10;escapeLeaveRun()');assert.equal(h.run('gameState'),'seasonalHub');assert.equal(h.run('seasonPack'),'autumn-hollow');assert.equal(h.run('JSON.stringify(escapeProgress.data)'),before);
+});
+
+test('festival completion unlocks persistent menu keepsakes and a selectable skin; mastery adds the friendly ghost',()=>{
+ const h=harness();h.run('for(const l of EscapeCatalog.seasonal){startEscape({seasonalId:l.id,skipIntro:true});escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.treasure=escapeGame.totalTreasure;escapeGame.finish("won","home");showEscapeResult();}');
+ assert.ok(h.run('seasonProgress().complete()&&seasonProgress().mastered()'));assert.match(h.el('title-keepsakes').innerHTML,/pumpkin earned/);assert.match(h.el('title-keepsakes').innerHTML,/All festival treasure found/);assert.equal(h.el('title-keepsakes').hidden,false);
+ h.run('seasonProgress().set("skin",true)');assert.equal(h.run('escapeSkinPalette().body.join()'),'184,91,49');h.run('seasonProgress().set("display",false);renderSeasonKeepsakes()');assert.equal(h.el('title-keepsakes').hidden,true);
+ const other=h.run('EscapePlayers.create("Festival Friend").id');assert.equal(h.run('EscapePlayers.storage('+JSON.stringify(other)+').getItem(EscapeSeasons.KEY)'),null);
+});
+
+test('seasonal walking follows the hub paths, stops on collection panels and supports touch input',()=>{
+ const h=harness(),panel=h.el('season-hub');panel.querySelectorAll=()=>[];panel.contains=()=>false;h.run('openSeasonalHub();mobile=true;touchStick.x=-.5;touchStick.y=-.5');const before=h.run('JSON.stringify(seasonWorld.player)');h.run('tickSeasonHub()');assert.notEqual(h.run('JSON.stringify(seasonWorld.player)'),before);
+ h.run('seasonTogglePanel(true);touchStick.x=-1');const frozen=h.run('JSON.stringify(seasonWorld.player)');h.run('tickSeasonHub()');assert.equal(h.run('JSON.stringify(seasonWorld.player)'),frozen);
+ h.run('seasonTogglePanel(false);mobile=true;windowWidth=900;windowHeight=500;updateToolbar()');assert.equal(h.el('touch-controls').style.display,'flex');
+});
+
+test('seasonal notes pause the real engine, resume once and stay independent of collected campaign pages',()=>{
+ const h=harness();h.run('globalThis.readSeason=null;globalThis.finishSeasonNote=null;showEscapeStory=(entry,fresh,done)=>{readSeason=entry;escapeStoryOpen=entry;finishSeasonNote=()=>{escapeStoryOpen=null;done()}};startEscape({seasonalId:"autumn-mill",skipIntro:true});escapeGame.player.x=16.5;escapeGame.player.y=4.5;tickEscapeKidsSign(escapeGame);');
+ assert.equal(h.run('readSeason.card.kind'),'season-sign');assert.match(h.run('readSeason.card.title'),/roast turkey/);const time=h.run('escapeGame.elapsed');h.run('draw();draw()');assert.equal(h.run('escapeGame.elapsed'),time);h.run('finishSeasonNote();readSeason=null;tickEscapeKidsSign(escapeGame)');assert.equal(h.run('readSeason'),null);
+});
+
+test('seasonal warning aids stay visible when campaign hard mode is selected',()=>{const h=harness();h.run('escapeHardMode=true;startEscape({seasonalId:"autumn-gardener",skipIntro:true})');assert.equal(h.run('escapeAidsHidden(escapeGame)'),false);assert.equal(h.run('escapeHardMode'),true);});
+
+test('controller A enters a nearby seasonal level; View opens its list and B closes it',()=>{
+ const h=harness();for(const id of ['season-hub','season-panel']){h.el(id).querySelectorAll=()=>[];h.el(id).contains=()=>false;}
+ const pad={index:0,connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:16},()=>({pressed:false,value:0}))};h.c.navigator.getGamepads=()=>[pad];
+ h.run('openSeasonalHub();pollEscapePad();renderSeasonHUD(true)');pad.buttons[0].pressed=true;h.run('pollEscapePad()');assert.equal(h.run('gameState'),'escape');assert.equal(h.run('escapeGame.level.id'),'autumn-orchard');pad.buttons[0].pressed=false;h.run('escapeLeaveRun();pollEscapePad()');
+ pad.buttons[8].pressed=true;h.run('pollEscapePad()');assert.equal(h.run('seasonPanelOpen'),true);pad.buttons[8].pressed=false;h.run('pollEscapePad()');pad.buttons[1].pressed=true;h.run('pollEscapePad()');assert.equal(h.run('seasonPanelOpen'),false);assert.equal(h.run('seasonPack'),'autumn-hollow');pad.buttons[1].pressed=false;h.run('pollEscapePad()');pad.buttons[1].pressed=true;h.run('pollEscapePad()');assert.equal(h.run('gameState'),'start');
+});
+
+test('the earned autumn outfit participates in the ordinary world Colours cycle',()=>{
+ const h=harness();h.run('for(const l of EscapeCatalog.seasonal)seasonProgress().record({status:"won",levelId:l.id,seasonal:l.seasonal,routeRevision:l.revision,time:20,treasure:0,totalTreasure:10});showEscapeSelect();cycleEscapeSkin();');
+ assert.equal(h.run('seasonProgress().data.skin'),true);assert.match(h.el('toolbar-skin').textContent,/Copper Lantern/);h.run('cycleEscapeSkin()');assert.equal(h.run('seasonProgress().data.skin'),false);assert.match(h.el('toolbar-skin').textContent,/Colours:/);
+});
+
+test('seasonal world rendering bounds and releases terrain graphics, and leaving restores the campaign',()=>{
+ const h=harness();h.el('season-hub').querySelectorAll=()=>[];const make=h.c.createGraphics;let alive=0;h.c.createGraphics=(...args)=>{const g=make(...args);alive++;g.remove=()=>{alive--;};return g;};
+ h.run('openSeasonalHub();drawSeasonWorld()');assert.ok(h.run('seasonWorld.motion.lizard.joints.length')>8);assert.ok(h.run('seasonWorldChunks.map.size')<=16);assert.ok(alive>0);
+ h.run('seasonToggleOverview();drawSeasonWorld()');assert.ok(h.run('seasonWorldChunks.map.size')<=49);h.run('seasonToggleOverview();seasonBack()');assert.equal(alive,0);assert.equal(h.run('gameState'),'start');h.run('showEscapeSelect();draw()');assert.equal(h.run('gameState'),'escapeSelect');
+});
+
+test('switching players creates a fresh seasonal walker and loads only that player\'s lanterns',()=>{
+ const h=harness();h.el('season-hub').querySelectorAll=()=>[];h.run('openSeasonalHub();globalThis.firstSeasonWorld=seasonWorld;globalThis.nextSeasonPlayer=EscapePlayers.create("Another Walker");EscapePlayers.select(nextSeasonPlayer.id);openSeasonalHub()');assert.equal(h.run('seasonWorld===firstSeasonWorld'),false);assert.equal(h.run('seasonWorldOwner===nextSeasonPlayer.id'),true);assert.equal(h.run('seasonProgress().cleared()'),0);
+});
+
+test('seasonal launch checks the requested area, including real future levels staged before release',()=>{
+ const h=harness();h.el('season-hub').querySelectorAll=()=>[];h.run('EscapeCatalog={...EscapeCatalog,seasonal:[...EscapeCatalog.seasonal,{...EscapeCatalog.seasonal[0],id:"winter-staged-test",seasonal:"winter"}]};startEscape({seasonalId:"winter-staged-test",skipIntro:true})');assert.equal(h.run('gameState'),'seasonalHub');assert.equal(h.run('escapeGame'),null);h.run('startEscape({seasonalId:"missing-seasonal-level"})');assert.equal(h.run('gameState'),'seasonalHub');
+});
+
+test('autumn water and ambience respect motion preferences without allocating frame graphics',()=>{
+ const h=harness();h.el('season-hub').querySelectorAll=()=>[];const reduced={matches:false};h.c.window.matchMedia=()=>reduced;
+ Object.assign(h.c.drawingContext,{createRadialGradient:()=>({addColorStop(){}}),drawImage(){}});const turns=[];h.c.rotate=a=>turns.push(a);h.run('openSeasonalHub();escapeLightingMode="full";escapeLightingAuto=false;seasonWorld.elapsed=9;');
+ turns.length=0;let allocations=0;const make=h.c.createGraphics;h.c.createGraphics=(...args)=>{allocations++;return make(...args);};
+ h.run('drawSeasonWorldWater(seasonWorld,40,24,32,18,23)');assert.ok(Math.abs(turns[0]-1.98)<1e-8);assert.equal(allocations,0);
+ reduced.matches=true;turns.length=0;h.run('drawSeasonWorldWater(seasonWorld,40,24,32,18,23)');assert.equal(turns[0],0);assert.equal(h.run('seasonWorldMotion()'),false);
+ reduced.matches=false;h.run('escapeLightingMode="simple"');turns.length=0;h.run('drawSeasonWorldWater(seasonWorld,40,24,32,18,23)');assert.equal(turns[0],0);assert.equal(h.run('seasonWorldMotion()'),false);assert.equal(allocations,0);
+});
+
+test('earlier Autumn Hollow clears remain labelled and retain keepsakes without showing stale times',()=>{
+ const h=harness();h.el('season-hub').querySelectorAll=()=>[];
+ h.run('escapeStore.setItem(EscapeSeasons.KEY,JSON.stringify({version:1,records:Object.fromEntries(EscapeCatalog.seasonal.map(l=>[l.id,{revision:1,bestTime:3,treasure:10}])),skin:true}));escapeSeasonProgress=null;openSeasonalHub();renderSeasonKeepsakes();');
+ assert.equal(h.run('seasonProgress().cleared()'),8);assert.match(h.el('season-hub').innerHTML,/Earlier route cleared; new layout unplayed/);assert.match(h.el('season-route-best').textContent,/Earlier route cleared/);assert.doesNotMatch(h.el('season-route-best').textContent,/best 3/);assert.equal(h.el('title-keepsakes').hidden,false);assert.ok(h.run('seasonProgress().data.skin'));
+});
+
+test('a seasonal catch shows retry rather than a lantern award and cannot advance or alter campaign saves',()=>{
+ const h=harness();h.el('season-hub').querySelectorAll=()=>[];const campaign=h.run('JSON.stringify(escapeProgress.data)');
+ h.run('startEscape({seasonalId:"autumn-mill",skipIntro:true});escapeGame.throwSpore(0);escapeGame.elapsed=12;escapeGame.finish("caught","The turkey caught Sally.");showEscapeResult();');
+ assert.equal(h.run('gameState'),'escapeResult');assert.equal(h.el('escape-result-title').textContent,'Nearly. Try another way');assert.match(h.el('escape-result-summary').textContent,/turkey caught/);assert.match(h.el('escape-result-challenge').textContent,/Retry with fresh supplies/);assert.equal(h.el('escape-next-btn').style.display,'none');assert.equal(h.run('seasonProgress().cleared()'),0);assert.equal(h.run('JSON.stringify(escapeProgress.data)'),campaign);
+ h.el('escape-retry-btn').onclick();assert.equal(h.run('escapeGame.level.id'),'autumn-mill');assert.equal(h.run('escapeGame.status'),'playing');assert.equal(h.run('escapeGame.spores'),1);assert.equal(h.run('escapeGame.hasKey'),false);
+ h.run('escapeGame.finish("caught","caught");showEscapeResult();');h.el('escape-menu-btn').onclick();assert.equal(h.run('gameState'),'seasonalHub');assert.equal(h.run('seasonWorld.nearby().id'),'autumn-mill');assert.equal(h.run('JSON.stringify(escapeProgress.data)'),campaign);
 });

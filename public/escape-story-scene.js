@@ -47,6 +47,7 @@ function escapeStoryPage(){
 // gets a lantern in the dark; the ending is the gate and the warm stone.
 // Palette: sky top, sky bottom, far land, middle land, near ground, accent.
 const ESCAPE_STORY_LANDS={
+  autumn:['#b5b9b4','#f6d8a5','#c3a066','#ae7847','#775e3c','#ffd27a'],'autumn-dusk':['#727a9b','#d2ad91','#a48362','#825c49','#56483d','#ffc576'],'autumn-night':['#26334e','#647080','#6b7163','#655d47','#454536','#c4e6f1'],'autumn-mill':['#9bb8ba','#e1d8b7','#a19465','#8e714a','#645a3c','#ecc07b'],'autumn-festival':['#8887a5','#f2c79b','#b89564','#a47545','#73573d','#ffdb8a'],
   meadow:['#9fd0f0','#e8f6d8','#a9cf8a','#7fb066','#5a8f4a','#f6d65a'],garden:['#b5d4e6','#eef0dc','#a8bf8e','#86a66e','#617f50','#d9a066'],
   river:['#9cc9e8','#e2f2ea','#9cc49a','#6fa48c','#4f7f6a','#7cc4e4'],ruins:['#b9c7d6','#ece8dc','#a9b39a','#8a967e','#6a7460','#cfc6aa'],
   quarry:['#d8c9a8','#f3e8d2','#c9b38c','#a8916c','#7d6a4e','#e0c48a'],desert:['#f4c27a','#fbe7c2','#e7b878','#cf9a5a','#a87842','#f7e08a'],
@@ -59,7 +60,7 @@ const ESCAPE_STORY_LANDS={
   storm:['#3a4658','#7a8494','#56606e','#454e5a','#343c46','#f6f0a0'],tide:['#8ac8e6','#f2ead6','#6fb4d0','#5a98b6','#d8c690','#f0f6f8'],
   home:['#f6c890','#fdf0d8','#b8c88e','#94ac6e','#6e8a52','#ffd27a'],flood:['#3c4a5c','#6c7a88','#4e5c6a','#3e4a56','#2e3a44','#bcd6ee']
 };
-const ESCAPE_STORY_NIGHT=new Set(['glow','lantern','grotto','flood','storm']);
+const ESCAPE_STORY_NIGHT=new Set(['glow','lantern','grotto','flood','storm','autumn-night']);
 function escapeStoryLand(theme,tall){
   const [sky1,sky2,far,mid,near,acc]=ESCAPE_STORY_LANDS[theme]||ESCAPE_STORY_LANDS.meadow,night=ESCAPE_STORY_NIGHT.has(theme),id='sk'+theme;
   const tuft=(x,y,c)=>'<path d="M'+x+' '+y+'q-3-14-8-18M'+x+' '+y+'q1-16 2-22M'+x+' '+y+'q4-12 9-16" stroke="'+c+'" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
@@ -72,6 +73,7 @@ function escapeStoryLand(theme,tall){
   const cloud=(x,y,s,c)=>'<g class="story-cloud" opacity=".85"><ellipse cx="'+x+'" cy="'+y+'" rx="'+(30*s)+'" ry="'+(10*s)+'" fill="'+c+'"/><circle cx="'+(x-10*s)+'" cy="'+(y-6*s)+'" r="'+(11*s)+'" fill="'+c+'"/><circle cx="'+(x+8*s)+'" cy="'+(y-9*s)+'" r="'+(14*s)+'" fill="'+c+'"/></g>';
   const sally='<g class="story-sally" transform="translate(196 247)"><path d="M0 0c6-3 14-3 20 0c4 2 9 1 12-1c-2 4-7 6-12 5c-6 3-14 3-20 0z" fill="#5fae5a"/><path d="M-1 1c-8 1-16 4-24 2" stroke="#5fae5a" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="27" cy="-1" r="1.4" fill="#1c2a1a"/><path d="M6 3l-3 5M14 3l2 5M8-2l-2-5M16-2l3-5" stroke="#4e9a4a" stroke-width="2" stroke-linecap="round"/></g>';
   const props={
+    autumn:tree(75,250,1.2,'#c48142')+tree(335,250,1,'#b9613e')+lantern(290,250,true),'autumn-dusk':tree(65,250,1,'#c48142')+lantern(320,250,true),'autumn-night':tree(55,250,1,'#9b7152')+lantern(315,250,true),'autumn-mill':tree(60,250,1,'#b67b44')+lantern(320,250,true),'autumn-festival':lantern(70,250,true)+lantern(320,250,true)+tree(285,250,.8,'#bc8144'),
     meadow:tuft(60,262,near)+tuft(330,258,near)+'<circle cx="92" cy="246" r="4" fill="#fff"/><circle cx="92" cy="246" r="1.6" fill="'+acc+'"/><circle cx="300" cy="240" r="4" fill="#f7a6c2"/>'+tree(350,224,.9,mid),
     garden:'<path d="M30 236h90v-22h-90z" fill="#b89070"/><path d="M30 214h90" stroke="#9a7458" stroke-width="3" stroke-dasharray="14 4"/><path d="M140 236h50v-14h-12v-8h-38z" fill="#a98466"/>'+tree(330,228,.8,'#7a9a5e')+tuft(250,258,near),
     river:'<path d="M0 238q100-14 200 0t200 0v30H0z" fill="'+acc+'" opacity=".75"/><path d="M40 246q20-4 40 0M220 250q20-4 40 0" stroke="#fff" stroke-width="2" opacity=".6" fill="none"/>'+reeds(40)+reeds(330),
@@ -105,7 +107,7 @@ function escapeStoryLand(theme,tall){
     // The things in the scene gather towards the middle, so a tall picture beside the page keeps them all.
     +(tall?'<g transform="translate(200 262) scale(.72) translate(-200 -262)">'+(props[theme]||'')+'</g>':props[theme]||'')+(theme==='flood'?'':sally)+'</svg>';
 }
-function escapeStoryTheme(c){return c.id==='opening'?'flood':c.id==='after'?'coast':c.id==='finale'||c.later?'home':c.kind==='note'?'lantern':c.kind==='moment'?EscapeWorld.chapters[c.opens-1]?.theme:EscapeWorld.chapters[c.area]?.theme||'meadow';}
+function escapeStoryTheme(c){if(c.kind==='kids-sign'||c.kind==='season-sign')return c.theme||'garden';return c.id==='opening'?'flood':c.id==='after'?'coast':c.id==='finale'||c.later?'home':c.kind==='note'?'lantern':c.kind==='moment'?EscapeWorld.chapters[c.opens-1]?.theme:EscapeWorld.chapters[c.area]?.theme||'meadow';}
 // A page of a card, as markup: short paragraphs, spoken lines set apart. A page in *italics* is
 // something written down, shown as a letter on a slip of paper; a signature sits to the right.
 function escapeStoryPageHtml(text){
@@ -117,7 +119,7 @@ function escapeStoryPageHtml(text){
 // A card is a page of a storybook: the picture on one side, one page of words on the other, turned
 // with Next (or Back); the paragraphs fade in one after another and a press shows them all at once.
 function showEscapeStory(entry,fresh,onDone){
-  const page=escapeStoryPage();if(!page)return;const kindLabel={journal:'From Old Moss’s journal',map:'A field sheet of the Great Map',moment:'Along the way',note:'A note, left behind',found:entry.card?.what||'A page, found'};
+  const page=escapeStoryPage();if(!page)return;const kindLabel={'season-sign':'Autumn Hollow - trail note','kids-sign':'Little Explorers — trail note',journal:'From Old Moss’s journal',map:'A field sheet of the Great Map',moment:'Along the way',note:'A note, left behind',found:entry.card?.what||'A page, found'};
   const reduced=Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
   escapeStoryOpen=entry;escapeStoryOpenedAt=Date.now();
   const finish=()=>{if(fresh)escapeProgress.markStory(entry.id);page.style.display='none';escapeStoryOpen=null;
@@ -229,3 +231,5 @@ function openEscapeStoryBook(){
   const close=()=>{escapeBestiaryOpen=false;page.style.display='none';renderEscapeWorldTotals();};
   document.getElementById('world-bestiary-close').onclick=close;page.onkeydown=e=>{if(e.key==='Escape')close();};document.getElementById('world-bestiary-close').focus?.();
 }
+
+

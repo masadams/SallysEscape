@@ -1,4 +1,4 @@
-// Little Explorers: twenty gentle levels for young children (about 5 and up), away from the campaign.
+// Little Explorers: twenty-six gentle levels for young children (about 5 and up), away from the campaign.
 // Each teaches one thing. They can't be lost: a catch is an "Oops!" that hops Sally back to the last
 // checkpoint (`checkpoints`), the creatures are slow and simple, and a glowing trail shows the way.
 // Text maps use the same legend as the rebuilt routes (see docs/ENEMIES.md); a gate's switch and tiles
@@ -220,7 +220,7 @@
  '#X.....#..1.....#',
  '#################'],
  guards:[{spawn:[11,2],facing:0,patrol:[[10,2],[15,2],[15,4],[10,4]]}]},
-{id:'great-explorer',name:'The Great Explorer',sticker:'👑',brief:'The biggest adventure yet, with all of Sally\'s tricks!',hint:'Bounce over the pond, dig in or hide in a puff, squeeze through the crack, then run home.',
+{id:'great-explorer',name:'The Great Explorer',sticker:'👑',brief:'A bigger adventure with bouncing, hiding and a tiny secret passage!',hint:'Bounce over the pond, dig in or hide in a puff, squeeze through the crack, then run home.',
  pebbles:2,caps:[{at:[5,2],to:[11,2]}],checkpoints:[[11,2],[17,5]],
  map:[
  '#########################',
@@ -232,6 +232,572 @@
  '#X.....L........#.......#',
  '#########################'],
  guards:[{spawn:[13,1],facing:Math.PI/2,patrol:[[13,1],[13,6]]},{spawn:[20,5],facing:Math.PI,patrol:[[18,5],[23,5],[23,2],[18,2]]}]}
+,
+// Part three: six small adventures. Treasure is optional; the key never seals the way back.
+{
+  "id": "garden-gate",
+  "fieldNotes": [
+    {
+      "id": "garden-gate-sign-1",
+      "at": [3,4],
+      "title": "The blue button",
+      "body": "Step on the blue button to open the blue gate. The gate stays open, so there is no need to rush."
+    },
+    {
+      "id": "garden-gate-sign-2",
+      "at": [18,16],
+      "title": "A little way home",
+      "body": "When Sally finds the key, the little garden gate opens. Look for the new way home!"
+    }
+  ],
+  "name": "The Garden Gate",
+  "sticker": "🌷",
+  "adventure": true,
+  "kidsTheme": "garden",
+  "brief": "The garden gate is shut, and Sally has left her key beyond the hedges. Find a way in, then bring it home.",
+  "hint": "The blue button opens the garden. Watch the snake from the leaves. Finding the key opens a little path home. Treasure is just for fun!",
+  "pebbles": 3,
+  "seeds": 2,
+  "checkpoints": [
+    [12,9],
+    [27,5]
+  ],
+  "gates": [
+    {
+      "id": "garden-blue",
+      "name": "Garden",
+      "color": [106,195,236],
+      "switch": [4,3],
+      "tiles": [
+        [15,8],
+        [15,9],
+        [15,10]
+      ]
+    },
+    {
+      "id": "garden-home",
+      "name": "Home path",
+      "color": [244,192,93],
+      "tiles": [
+        [15,15],
+        [15,16]
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "garden-key",
+      "when": "key",
+      "open": [
+        "garden-home"
+      ],
+      "message": "The little garden gate swings open. A shorter way home!",
+      "objective": "Bring the key back to the green door."
+    }
+  ],
+  "guards": [
+    {
+      "spawn": [21,13],
+      "patrol": [
+        [19,12],
+        [27,12],
+        [27,15],
+        [19,15]
+      ],
+      "facing": 3.141592653589793
+    }
+  ],
+  "map": [
+    "###############################",
+    "#.............###.............#",
+    "#.1.........1.###.............#",
+    "#.............###..1.......K..#",
+    "#..........L..###....L........#",
+    "#.............###..........L..#",
+    "#..L..........###.............#",
+    "#....######...###.....####....#",
+    "#....######...........####.3..#",
+    "#..1.######.L......L..####....#",
+    "#....######...........####....#",
+    "#....######...###.............#",
+    "#.............###...NNN.......#",
+    "#..L..........###..........L..#",
+    "#..........1..###.............#",
+    "#..@..........................#",
+    "#..X..............L.1.......1.#",
+    "#.............###.............#",
+    "###############################"
+  ]
+},
+{
+  "id": "beetle-courtyard",
+  "fieldNotes": [
+    {
+      "id": "beetle-courtyard-sign-1",
+      "at": [11,13],
+      "title": "Watch the horn",
+      "body": "The beetle lowers its horn before charging. Step sideways out of its lane. It cannot turn during a charge."
+    },
+    {
+      "id": "beetle-courtyard-sign-2",
+      "at": [26,13],
+      "title": "Small enough for Sally",
+      "body": "The tiny crack is a safe way into the treasure room. Sally fits through; the beetle does not."
+    }
+  ],
+  "name": "Beetle Courtyard",
+  "sticker": "🪲",
+  "adventure": true,
+  "kidsTheme": "ruins",
+  "brief": "A beetle has made the old courtyard its playground. Sally can go round the planter, or try slipping past its charging lane.",
+  "hint": "When the beetle lowers its horn, step sideways. The south path has room to go round. A tiny crack leads to the treasure room.",
+  "pebbles": 3,
+  "spores": 2,
+  "checkpoints": [
+    [10,14],
+    [27,5]
+  ],
+  "guards": [
+    {
+      "kind": "beetle",
+      "spawn": [17,4],
+      "facing": 0,
+      "patrol": [
+        [12,4],
+        [22,4]
+      ]
+    }
+  ],
+  "map": [
+    "#################################",
+    "#########################.......#",
+    "#########.1.............#..1....#",
+    "#########....................K..#",
+    "#########............L..........#",
+    "#########..L....3..........L....#",
+    "#########...............#.....1.#",
+    "#########.....#####...o.#.......#",
+    "#########.....#####.....#########",
+    "#########..d..#####.....#########",
+    "#########.....#####.d.1.#########",
+    "#.......#.....#####.....#.......#",
+    "#....1..#...o...........#.......#",
+    "#...L................L..#.......#",
+    "#.........L.............S..L....#",
+    "#..@........1...........#....1..#",
+    "#..X....#...............#.......#",
+    "#.......#################.......#",
+    "#################################"
+  ]
+},
+{
+  "id": "lily-pond",
+  "fieldNotes": [
+    {
+      "id": "lily-pond-sign-1",
+      "at": [6,8],
+      "title": "A bouncy shortcut",
+      "body": "Step onto a bouncy mushroom and Sally flies to the landing spot. You can swim across this pond, too."
+    },
+    {
+      "id": "lily-pond-sign-2",
+      "at": [16,7],
+      "title": "The toad takes aim",
+      "body": "The toad puffs its throat before firing its tongue. Hide behind leaves or turn a corner. Its little treasure island is optional."
+    }
+  ],
+  "name": "Across the Lily Pond",
+  "sticker": "🪷",
+  "adventure": true,
+  "kidsTheme": "river",
+  "brief": "The key is on the far bank. Bounce between the islands, paddle through the pond, and see what the little island in the north is hiding.",
+  "hint": "The pond is safe to swim in. Mushrooms make the trip quicker! A toad watches the little treasure island; hide behind leaves or change direction when it aims.",
+  "pebbles": 3,
+  "tongues": 2,
+  "checkpoints": [
+    [14,8],
+    [28,12]
+  ],
+  "caps": [
+    {
+      "at": [7,7],
+      "to": [14,8]
+    },
+    {
+      "at": [20,13],
+      "to": [28,12]
+    },
+    {
+      "at": [27,15],
+      "to": [7,16]
+    }
+  ],
+  "guards": [
+    {
+      "kind": "toad",
+      "spawn": [18,2],
+      "facing": 1.5707963267948966,
+      "patrol": [
+        [18,2]
+      ]
+    }
+  ],
+  "map": [
+    "###################################",
+    "#~~~~~~~~~~~~~~.......~~~~~~~~~~~~#",
+    "#........~~~~~~.......~~~~........#",
+    "#.1......~~~~~~.L...3.~~~~........#",
+    "#........~~~~~~.......~~~~....K...#",
+    "#........~~~~~~~~~~~~~~~~~........#",
+    "#......L.~~~~~~~~~~~~~~~~~....L...#",
+    "#........~~~~.........~~~~........#",
+    "#........~~~~.L....o1.~~~~........#",
+    "#........~~~~.........~~~~......1.#",
+    "#......1.~~~~....##...~~~~........#",
+    "#...###..~~~~....##...~~~~........#",
+    "#...###..~~~~....##...~~~~..L.....#",
+    "#...###..~~~~.1.....L.~~~~........#",
+    "#........~~~~.........~~~~........#",
+    "#..L.....~~~~.........~~~~........#",
+    "#........~~~~~~~~~~~~~~~~~........#",
+    "#..@.....~~~~~~~~~~~~~~~~~.....1..#",
+    "#..X....1~~~~~~~~~~~~~~~~~........#",
+    "#........~~~~~~~~~~~~~~~~~~~~~~~~~#",
+    "###################################"
+  ]
+},
+{
+  "id": "lantern-house",
+  "fieldNotes": [
+    {
+      "id": "lantern-house-sign-1",
+      "at": [10,4],
+      "title": "A button out of reach",
+      "body": "Face the blue button across the gap and use Tongue. Sally can flick buttons as well as grab keys."
+    },
+    {
+      "id": "lantern-house-sign-2",
+      "at": [15,18],
+      "title": "Borrow a little light",
+      "body": "Throw a glow mushroom to light a dark corner. Its light can show Sally to a creature, too."
+    }
+  ],
+  "name": "The Old Lantern House",
+  "sticker": "🏮",
+  "adventure": true,
+  "kidsTheme": "ruins",
+  "brief": "There is a warm glow in the old house. Its blue button is across a gap, just within reach of Sally's tongue.",
+  "hint": "At the little gap, face the blue button and use Tongue. Throw a glow mushroom to look round dark corners. The key is in the north of the far wing.",
+  "tongues": 2,
+  "glows": 2,
+  "pebbles": 2,
+  "explore": true,
+  "dark": true,
+  "sightRadius": 5,
+  "glowPlants": [
+    [3,19],
+    [3,5],
+    [11,4],
+    [11,17],
+    [15,18],
+    [20,11],
+    [24,11],
+    [28,4],
+    [29,18]
+  ],
+  "checkpoints": [
+    [11,5],
+    [20,11],
+    [29,5]
+  ],
+  "gates": [
+    {
+      "id": "lantern-blue",
+      "name": "Lantern wing",
+      "color": [106,195,236],
+      "switch": [15,4],
+      "tiles": [
+        [22,11],
+        [22,12]
+      ]
+    }
+  ],
+  "guards": [
+    {
+      "spawn": [28,18],
+      "patrol": [
+        [24,18],
+        [30,18],
+        [30,20],
+        [24,20]
+      ],
+      "facing": 3.141592653589793
+    }
+  ],
+  "map": [
+    "#################################",
+    "#............##########.........#",
+    "#.1..........##########.........#",
+    "#............##########..1..K...#",
+    "#............__.#######.........#",
+    "#.........L..##########..L...L..#",
+    "#............##########.........#",
+    "#............##########.........#",
+    "#....#####...##########.........#",
+    "#....#####...#........#...###...#",
+    "#....#####.1.#.1......#...###...#",
+    "#....#####...#......L.....###.1.#",
+    "#....#####...#............###...#",
+    "#....#####...#...###..#...###...#",
+    "#............#...###..#.........#",
+    "#.1........L.#...###..#.........#",
+    "#............#...###..#......d..#",
+    "#..L..................#..L......#",
+    "#.....................#.........#",
+    "#..@.........#.L......#.........#",
+    "#...X........#......1.#.......3.#",
+    "#............#........#.........#",
+    "#################################"
+  ]
+},
+{
+  "id": "sleepy-steamworks",
+  "fieldNotes": [
+    {
+      "id": "sleepy-steamworks-sign-1",
+      "at": [12,13],
+      "title": "Listen for the hiss",
+      "body": "The vent hisses before it puffs. Wait for quiet before crossing, or take the longer path round."
+    },
+    {
+      "id": "sleepy-steamworks-sign-2",
+      "at": [27,14],
+      "title": "The ticking door",
+      "body": "Step on a round plate to open this treasure door. It closes after a while. A plate on each side opens it again."
+    }
+  ],
+  "name": "The Sleepy Steamworks",
+  "sticker": "⚙️",
+  "adventure": true,
+  "kidsTheme": "vents",
+  "brief": "The sleepy works puffs once in a while. Two buttons open the key room. A ticking treasure door waits in a side room.",
+  "hint": "Blue opens the workshop, amber opens the key room. The vent hisses before it puffs; wait, or go round. The treasure door can always be opened again from either side.",
+  "pebbles": 2,
+  "seeds": 2,
+  "checkpoints": [
+    [11,14],
+    [20,12],
+    [28,7]
+  ],
+  "vents": [
+    {
+      "at": [14,5],
+      "dir": [0,1],
+      "length": 7,
+      "period": 8,
+      "on": 1.3,
+      "offset": 0,
+      "warn": 1.8
+    }
+  ],
+  "gates": [
+    {
+      "id": "works-blue",
+      "name": "Workshop",
+      "color": [106,195,236],
+      "switch": [12,3],
+      "tiles": [
+        [18,8],
+        [18,9],
+        [18,10]
+      ]
+    },
+    {
+      "id": "works-amber",
+      "name": "Key room",
+      "color": [244,192,93],
+      "switch": [22,17],
+      "tiles": [
+        [25,5],
+        [26,5]
+      ]
+    },
+    {
+      "id": "works-treasure",
+      "name": "Ticking treasure",
+      "color": [191,154,230],
+      "plates": [
+        [28,16],
+        [32,16]
+      ],
+      "tiles": [
+        [29,16]
+      ],
+      "duration": 7
+    }
+  ],
+  "guards": [],
+  "map": [
+    "###################################",
+    "##########........#......##.......#",
+    "##########.1......#......##.......#",
+    "##########........#..1...##....K..#",
+    "##########......L.#......##.......#",
+    "##########.L......#...............#",
+    "##########........#......##.......#",
+    "##########........#......##.L.....#",
+    "##########.....NN........##.....1.#",
+    "##########......3...L....##.......#",
+    "##########...............##########",
+    "##########........#......##########",
+    "##########........#......##..#....#",
+    "#........#........#......##.1#....#",
+    "#.....1..#.L......#......##..#....#",
+    "#...L.............#...L..##..#..1.#",
+    "#.................#...............#",
+    "#..@.....#......1.#......##.L#..L.#",
+    "#..X.....#........#......##..#....#",
+    "#........#........#......##..#....#",
+    "###################################"
+  ]
+},
+{
+  "id": "sallys-way-home",
+  "fieldNotes": [
+    {
+      "id": "sallys-way-home-sign-1",
+      "at": [9,4],
+      "title": "Home by the pond",
+      "body": "The key opens a second gate beside the pond. Try that way back. All the treasure is just for fun."
+    },
+    {
+      "id": "sallys-way-home-sign-2",
+      "at": [28,14],
+      "title": "A cloud to hide in",
+      "body": "Throw a spore pouch. Its cloud hides Sally even while she moves. Creatures inside the cloud cannot see her."
+    }
+  ],
+  "name": "Sally's Way Home",
+  "sticker": "🏡",
+  "adventure": true,
+  "kidsTheme": "garden",
+  "brief": "One last little journey: through the garden, across the courtyard, and back by the pond. Home is waiting under the warm stone.",
+  "hint": "The garden button opens the far wing. Find the key there, then take the new pond path home. Mushrooms and tunnels make lovely shortcuts. Every treasure is optional.",
+  "pebbles": 3,
+  "seeds": 2,
+  "spores": 2,
+  "checkpoints": [
+    [14,3],
+    [34,6],
+    [23,18]
+  ],
+  "tunnels": [
+    [
+      [6,7],
+      [6,18]
+    ]
+  ],
+  "caps": [
+    {
+      "at": [23,18],
+      "to": [14,18]
+    },
+    {
+      "at": [14,14],
+      "to": [23,14]
+    }
+  ],
+  "gates": [
+    {
+      "id": "home-blue",
+      "name": "Far wing",
+      "color": [106,195,236],
+      "switch": [7,4],
+      "tiles": [
+        [25,5],
+        [26,5],
+        [25,6],
+        [26,6]
+      ]
+    },
+    {
+      "id": "home-pond",
+      "name": "Pond path",
+      "color": [244,192,93],
+      "tiles": [
+        [25,18],
+        [26,18],
+        [25,19],
+        [26,19]
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "home-key",
+      "when": "key",
+      "open": [
+        "home-pond"
+      ],
+      "message": "The pond gate opens. Sally can see the way home!",
+      "objective": "Follow the pond path back to the green door."
+    }
+  ],
+  "guards": [
+    {
+      "spawn": [8,16],
+      "patrol": [
+        [7,14],
+        [10,14],
+        [10,17],
+        [7,17]
+      ],
+      "facing": 3.141592653589793
+    },
+    {
+      "kind": "beetle",
+      "spawn": [19,9],
+      "facing": 0,
+      "patrol": [
+        [15,9],
+        [23,9]
+      ]
+    },
+    {
+      "kind": "toad",
+      "spawn": [34,17],
+      "facing": 1.5707963267948966,
+      "patrol": [
+        [34,17]
+      ]
+    }
+  ],
+  "map": [
+    "#######################################",
+    "#...........#............##...........#",
+    "#...........#.........1..##...........#",
+    "#..@........#.L........L.##..1....K...#",
+    "#...........#....####....##...........#",
+    "#..L......L......####.......L.........#",
+    "#................####.............L...#",
+    "#...........#............##...........#",
+    "#.1...L.....#..1......o..##...........#",
+    "#...........#..........L.##....####...#",
+    "#....####...#............##....####...#",
+    "#....####...##..#######..##....####...#",
+    "#....####...#............##....####...#",
+    "#...........#..~~~~~~~...##...........#",
+    "#...........#.1~~~~~~~...##...........#",
+    "#...L.....d.#..~~~~~~~...##..o........#",
+    "#........1..#..~~~~~~~...##.L.........#",
+    "#..............~~~~~~~...##...d.......#",
+    "#.............L~~~~~~~..............L.#",
+    "#..X......L.#..~~~~~~~..............3.#",
+    "#...........#..~~~~~~~1..##...........#",
+    "#...........#............##...........#",
+    "#######################################"
+  ]
+}
   ];
   root.EscapeKids=routes;
   if(typeof module!=='undefined'&&module.exports)module.exports=routes;

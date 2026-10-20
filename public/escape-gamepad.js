@@ -35,6 +35,7 @@ function pollEscapePad(){
   escapePad.x=Math.max(-1,Math.min(1,ax));escapePad.y=Math.max(-1,Math.min(1,ay));escapePad.sprint=down(ESCAPE_PAD.RT);escapePad.crawl=down(ESCAPE_PAD.LT);escapePad.dig=down(ESCAPE_PAD.B);
   if(!was.length)return;
   if(pressed(ESCAPE_PAD.START)){if(gameState==='escape')togglePause();else document.getElementById('menu-button')?.click();return;}
+  if(gameState==='seasonalHub'){if(pressed(ESCAPE_PAD.A))seasonEnter();if(pressed(ESCAPE_PAD.B))escapeGoBack();if(pressed(ESCAPE_PAD.VIEW)||pressed(ESCAPE_PAD.X))seasonTogglePanel(true);if(pressed(ESCAPE_PAD.Y))seasonToggleOverview();if(pressed(ESCAPE_PAD.LB)||pressed(ESCAPE_PAD.RB))seasonTravelStep(pressed(ESCAPE_PAD.RB)?1:-1);return;}
   if(gameState==='escapeSelect'){
     if(pressed(ESCAPE_PAD.A))escapeKeyPressed('enter',13);
     if(pressed(ESCAPE_PAD.B)&&typeof escapeGoBack==='function'){escapeGoBack();return;}
@@ -74,6 +75,7 @@ function escapePadMenu(){
   if(gameState==='escapeSelect'&&escapeLibraryOpen)return $('escape-select');
   if(gameState==='start')return $('start-menu-container');
   if(gameState==='kids')return $('escape-builder');
+  if(gameState==='seasonalHub'&&seasonPanelOpen)return $('season-panel');
   if(gameState==='escapeSelect'&&!escapeLibraryOpen&&typeof escapeWorldPanelOpen!=='undefined'&&escapeWorldPanelOpen)return $('escape-world-ui');
   return null;
 }
@@ -125,3 +127,4 @@ function escapePadRumble(events){
   try{pad?.vibrationActuator?.playEffect?.('dual-rumble',{duration,strongMagnitude:strong,weakMagnitude:weak}).catch?.(()=>{});}catch(_){}
 }
 if(typeof window!=='undefined')window.addEventListener('gamepaddisconnected',e=>{if(e.gamepad?.index===escapePad.index)escapePadForget();});
+
