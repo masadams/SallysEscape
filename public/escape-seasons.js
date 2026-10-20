@@ -27,7 +27,8 @@
  const sunshore=Object.freeze({id:'sunshore',pack:'summer',name:'Sunshore Sally',body:[84,178,170],light:[176,226,212],belly:[246,224,176],spots:[226,184,82],crest:[236,124,96],tail:[70,156,150],dark:[44,104,104],spot:[226,184,82]});
  const skins=[{...copper,pack:'autumn-hollow'},winterberry,blossom,sunshore];
  const springCreatures=Object.freeze({snake:'Ribbon Grass Snake',beetle:'Stag Gardener',mole:'Mud Mole',toad:'Lily Toad',mantis:'Blossom Mantis',ladybird:'Ladybird Lookout',moth:'Lantern Moth',spider:'Garden Weaver'});
- const creaturesFor=id=>id==='winter'?winterCreatures:id==='spring'?springCreatures:creatures;
+ const summerCreatures=Object.freeze({snake:'Sandstripe Serpent',crab:'Shellback Crab',eel:'Rockpool Eel',scorpion:'Dune Scorpion',magpie:'Harbour Gull',heron:'Reed Heron',dragonfly:'Sunskimmer',fish:'Sailfin Hunter','sea-snake':'Kelp Serpent'});
+ const creaturesFor=id=>id==='winter'?winterCreatures:id==='spring'?springCreatures:id==='summer'?summerCreatures:creatures;
  function fresh(){return {version:1,records:{},legacy:{},outfit:null,guide:false,display:true,skin:false};}
  class Progress{
   constructor(storage,levels){this.storage=storage;this.levels=levels;this.persistent=true;this.read();}
@@ -54,6 +55,6 @@
   wear(id){if(id!==null&&!this.ownedSkins().some(k=>k.id===id))return false;this.data.outfit=id;this.data.skin=id==='copper-lantern';this.save();return true;}
   set(key,value){if(!['guide','display','skin'].includes(key)||typeof value!=='boolean'||key==='skin'&&value&&!this.complete())return false;if(key==='skin')return this.wear(value?'copper-lantern':null);this.data[key]=value;this.save();return true;}
  }
- const api={KEY,packs,creatures,winterCreatures,springCreatures,creaturesFor,copper,winterberry,blossom,sunshore,skins,release,Progress};root.EscapeSeasons=api;
+ const api={KEY,packs,creatures,winterCreatures,springCreatures,summerCreatures,creaturesFor,copper,winterberry,blossom,sunshore,skins,release,Progress};root.EscapeSeasons=api;
  if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

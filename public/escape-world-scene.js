@@ -470,7 +470,7 @@ function drawEscapeRegionCloud(c,i,cell,clock){
 // The courtyard locals: a tortoise, snail, frog or beetle each, drawn with a soft shadow, a darker
 // outline, a highlight and bright eyes, plus one thing of their own (Old Moss's scarf and spectacles,
 // Wick's lantern, Rivet's coil of wire, Granny Sedge's shawl...). They breathe and glance about.
-const ESCAPE_NPC_EXTRA={'Old Moss':'scarf','Wick':'lantern','Rivet':'wire','Granny Sedge':'shawl','Shelly':'shell','Gale':'scarf','Flurry':'scarf','Pip':'bracket','Briar':'leaf','Coral':'shell','Morel':'cap','Glimmer':'glow','Reed':'reed','Murk':'leaf','Fern':'leaf','Husk':'leaf','Tiles':'feather','Pincer':'crumb','Dusty':'cloth','Brass':'bracket','Gravel':'pebble'};
+const ESCAPE_NPC_EXTRA={'Old Moss':'scarf','Wick':'lantern','Rivet':'wire','Granny Sedge':'shawl','Shelly':'shell','Gale':'scarf','Flurry':'scarf','Pip':'bracket','Briar':'leaf','Coral':'shell','Morel':'cap','Glimmer':'glow','Reed':'reed','Murk':'leaf','Fern':'leaf','Husk':'leaf','Tiles':'feather','Pincer':'crumb','Dusty':'cloth','Brass':'bracket','Gravel':'pebble','Clover':'leaf','Marina':'shell'};
 function drawEscapeWorldNpc(npc,cell,clock){
   const x=(npc.x+.5)*cell,base=(npc.y+.5)*cell,breathe=1+.03*Math.sin(clock*2.2+npc.chapter),bob=Math.sin(clock*2+npc.chapter)*cell*.03,y=base+bob,u=cell*1.85,glance=Math.sin(clock*.7+npc.chapter*1.3)*u*.03;
   const ink=[38,32,24],extra=ESCAPE_NPC_EXTRA[npc.name];noStroke();
