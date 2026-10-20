@@ -48,7 +48,7 @@ function harness() {
     createCanvas:()=>({parent:noop}),pixelDensity:()=>1,displayDensity:()=>1,
     random:(a,b)=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;const n=seed/4294967296;return Array.isArray(a)?a[Math.floor(n*a.length)]:a===undefined?n:b===undefined?n*a:a+n*(b-a)},
     keyIsDown:()=>false,fetch:async()=>({ok:true,json:async()=>[]})};
-  for(const n of ['push','pop','background','fill','noFill','stroke','noStroke','strokeWeight','rect','triangle','ellipse','line','bezier','beginShape','endShape','curveVertex','vertex','translate','scale','image','imageMode','text','textSize','textFont','textAlign','textStyle','colorMode','arc','setShakeThreshold','resizeCanvas','rotate','blendMode','strokeCap','quad','point','circle','square','curve','ellipseMode','rectMode','strokeJoin','erase','noErase','tint','noTint','shearX','shearY']) c[n]=noop;c.ROUND='round';c.BOLD='bold';c.NORMAL='normal';
+  for(const n of ['push','pop','background','fill','noFill','stroke','noStroke','strokeWeight','rect','triangle','ellipse','line','bezier','beginShape','endShape','curveVertex','vertex','translate','scale','image','imageMode','text','textSize','textFont','textAlign','textStyle','colorMode','arc','setShakeThreshold','resizeCanvas','rotate','blendMode','strokeCap','quad','point','circle','square','curve','ellipseMode','rectMode','strokeJoin','erase','noErase','tint','noTint','shearX','shearY']) c[n]=noop;c.textWidth=s=>String(s).length*6;c.ROUND='round';c.BOLD='bold';c.NORMAL='normal';
   for(const n of ['CORNER','CENTER','LEFT','RIGHT','TOP','BOTTOM','CLOSE','RGB','HSB','PIE','CHORD','OPEN','ADD','BLEND','MULTIPLY','SCREEN']) c[n]=n;
   c.UP_ARROW=38;c.DOWN_ARROW=40;c.LEFT_ARROW=37;c.RIGHT_ARROW=39;
   c.bezierVertex=noop;

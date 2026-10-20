@@ -38,7 +38,10 @@
       this.hiddenNodes=(catalog.hidden||[]).map((level,i)=>({id:level.id,hidden:true,index:i,x:[31,36,41][i],y:[5,3,5][i],name:level.name})).filter(n=>!catalog.hidden[n.index].bonus&&!catalog.hidden[n.index].secret);
       // Bonus escapes are no secret: their grove is always on the map, behind a hedge that opens
       // once the areas before it are mastered. The Bramble Maze sits north of the Deep Trials.
-      this.bonusOpen=bonusOpen;this.secretOpen=secretOpen;this.onSecretBump=null;
+      this.bonusOpen=bonusOpen;this.onSecretBump=null;
+      // Progress checks are costly and floor() runs many times a frame, so within one advance (or one
+      // drawing, see held()) secret states and the tiles still locked are worked out once and kept.
+      this.secretOpen=id=>{if(!this.holding)return Boolean(secretOpen(id));const c=this.secretCache||(this.secretCache=new Map());if(!c.has(id))c.set(id,Boolean(secretOpen(id)));return c.get(id);};
       this.bonusNodes=(catalog.hidden||[]).map((level,i)=>({id:level.id,hidden:true,bonus:level.bonus,index:i,name:level.name})).filter(n=>n.bonus).map((n,k)=>({...n,...[{x:101,y:4,lock:{x:101,y:9},sign:{x:99,y:11}},{x:14,y:30,lock:{x:14,y:35},sign:{x:12,y:37}}][k]}));
       this.rng=Math.random;this.fly=null;this.flyAt=10;this.onFly=null;this.lick=null;this.unlocked=unlocked;this.hunters=[];this.elapsed=0;this.target=null;this.accumulator=0;
       const spots=[[-6,3],[-4,-2],[0,-4],[4,-1],[6,4],[0,6]],
@@ -84,7 +87,7 @@
           queue.push([nx,ny]);}}
       return null;
     }
-    refreshRegions(){this.openRegions=this.chapters.map((_,i)=>this.nodes.some(n=>n.chapter===i&&this.unlocked(n.id)));if(!this.hiddenCarved&&this.hiddenNodes.length&&this.hiddenOpen())this.carveHidden();}
+    refreshRegions(){this.secretCache=null;this.locked=null;this.openRegions=this.chapters.map((_,i)=>this.nodes.some(n=>n.chapter===i&&this.unlocked(n.id)));if(!this.hiddenCarved&&this.hiddenNodes.length&&this.hiddenOpen())this.carveHidden();}
     carveHidden(){
       const room=(x1,y1,x2,y2)=>{for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)this.grid[y][x]='.';};
       room(28,1,44,8);room(35,9,37,10);for(const [x,y] of [[29,2],[43,2],[29,7],[43,7]])this.grid[y][x]='L';
@@ -93,7 +96,17 @@
     // Where Sally stands for an escape: its node, or a bonus or hidden grove (a hidden one only once carved).
     spotFor(id){return id?this.nodes.find(n=>n.id===id)||this.bonusNodes.find(n=>n.id===id)||this.secretNodes?.find(n=>n.id===id)||(this.hiddenCarved?this.hiddenNodes.find(n=>n.id===id):null):null;}
     regionOpen(i){return Boolean(this.openRegions?.[i]);}
-    floor(x,y){x=Math.floor(x);y=Math.floor(y);if(!['.','L'].includes(this.grid[y]?.[x]))return false;for(const [i,c]of chapters.entries())if(Math.abs(x-c.x)<=8&&Math.abs(y-c.y)<=7&&!this.regionOpen(i))return false;if(this.bonusNodes.some(n=>x===n.lock.x&&y===n.lock.y&&!this.bonusOpen(n.id)))return false;if(this.secretDoors?.some(d=>x===d.x&&y===d.y&&!this.secretOpen(d.id)))return false;return !this.gates.some(g=>!this.regionOpen(g.chapter)&&(g.vertical?y===g.y&&Math.abs(x-g.x)<=1:x===g.x&&Math.abs(y-g.y)<=1));}
+    floor(x,y){x=Math.floor(x);y=Math.floor(y);if(!['.','L'].includes(this.grid[y]?.[x]))return false;if(this.holding)return !this.lockedTiles().has(y*this.width+x);for(const [i,c]of chapters.entries())if(Math.abs(x-c.x)<=8&&Math.abs(y-c.y)<=7&&!this.regionOpen(i))return false;if(this.bonusNodes.some(n=>x===n.lock.x&&y===n.lock.y&&!this.bonusOpen(n.id)))return false;if(this.secretDoors?.some(d=>x===d.x&&y===d.y&&!this.secretOpen(d.id)))return false;return !this.gates.some(g=>!this.regionOpen(g.chapter)&&(g.vertical?y===g.y&&Math.abs(x-g.x)<=1:x===g.x&&Math.abs(y-g.y)<=1));}
+    held(fn){if(this.holding)return fn();this.holding=true;try{return fn();}finally{this.holding=false;this.secretCache=null;this.locked=null;}}
+    // Closed regions, hedges and gates, as one set of tile numbers.
+    lockedTiles(){
+      if(this.locked)return this.locked;const set=new Set(),add=(x,y)=>set.add(y*this.width+x);
+      for(const [i,c] of chapters.entries())if(!this.regionOpen(i))for(let y=c.y-7;y<=c.y+7;y++)for(let x=c.x-8;x<=c.x+8;x++)add(x,y);
+      for(const n of this.bonusNodes)if(!this.bonusOpen(n.id))add(n.lock.x,n.lock.y);
+      for(const d of this.secretDoors||[])if(!this.secretOpen(d.id))add(d.x,d.y);
+      for(const g of this.gates)if(!this.regionOpen(g.chapter))for(let k=-1;k<=1;k++)g.vertical?add(g.x+k,g.y):add(g.x,g.y+k);
+      return this.locked=set;
+    }
     route(to,from=this.player,ignoreLocks=false){const sx=Math.floor(from.x),sy=Math.floor(from.y),tx=Math.floor(to.x),ty=Math.floor(to.y),queue=[[sx,sy]],previous=new Map([[sx+','+sy,null]]);for(let i=0;i<queue.length;i++){const [x,y]=queue[i];if(x===tx&&y===ty){const out=[];let p=[x,y];while(p){out.unshift({x:p[0]+.5,y:p[1]+.5});p=previous.get(p.join(','));}out.shift();return out;}for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy,k=nx+','+ny;if((ignoreLocks?['.','L'].includes(this.grid[ny]?.[nx]):this.floor(nx,ny))&&!previous.has(k)){previous.set(k,[x,y]);queue.push([nx,ny]);}}}return null;}
     chapterAt(p=this.player){return chapters.reduce((best,c,i)=>Math.hypot(c.x-p.x,c.y-p.y)<Math.hypot(chapters[best].x-p.x,chapters[best].y-p.y)?i:best,0);}
     nearbyNpc(){return this.npcs.find(n=>this.regionOpen(n.chapter)&&Math.hypot(n.x+.5-this.player.x,n.y+.5-this.player.y)<=1.8)||null;}
@@ -140,7 +153,7 @@
     travel(chapter){this.refreshRegions();const c=chapters[chapter];if(!c||!this.regionOpen(chapter))return false;const node=this.nodes.filter(n=>n.chapter===chapter).find(n=>this.unlocked(n.id))||this.nodes[c.start];this.player.x=node.x;this.player.y=node.y+1;this.player.facing={x:0,y:-1};this.target=null;this.accumulator=0;this.motion.resetPlayer(this.player);return true;}
     advance(seconds,input={}){
       if(!Number.isFinite(seconds)||seconds<=0)return;this.refreshRegions();this.accumulator+=Math.min(.1,seconds);
-      while(this.accumulator+1e-10>=1/120){this.accumulator-=1/120;this.step(1/120,input);}
+      const run=()=>{while(this.accumulator+1e-10>=1/120){this.accumulator-=1/120;this.step(1/120,input);}};this.held?this.held(run):run();
     }
     step(dt,input){
       this.elapsed+=dt;let x=Number(input.x)||0,y=Number(input.y)||0;
@@ -151,7 +164,7 @@
       const max=this.target?Math.hypot(this.target[0].x-this.player.x,this.target[0].y-this.player.y):Infinity;
       const step=Math.min(speed,max);const nx=this.player.x+x*step,ny=this.player.y+y*step;if(this.floor(nx-.2,this.player.y)&&this.floor(nx+.2,this.player.y))this.player.x=nx;if(this.floor(this.player.x,ny-.2)&&this.floor(this.player.x,ny+.2))this.player.y=ny;
       // Pushing into a cracked hedge breaks it open.
-      if(length){const d=this.secretDoors.find(d=>!this.secretOpen(d.id)&&Math.hypot(d.x+.5-this.player.x,d.y+.5-this.player.y)<=1.05);if(d)this.onSecretBump?.(d);}
+      if(length){const d=this.secretDoors.find(d=>!this.secretOpen(d.id)&&Math.hypot(d.x+.5-this.player.x,d.y+.5-this.player.y)<=1.05);if(d){this.onSecretBump?.(d);this.secretCache=null;this.locked=null;}}
       const cache=this.nearbyCache();if(cache){this.found.add(cache.id);this.onCache?.(cache);}
       if(this.revealed()){
         const item=this.lostItems.find(i=>!this.itemsFound.has(i.id)&&Math.hypot(i.x+.5-this.player.x,i.y+.5-this.player.y)<=.8);if(item){this.itemsFound.add(item.id);this.onItem?.(item);}

@@ -70,6 +70,11 @@ to three notes on open floor, each with a title, words and an optional signature
 read the same way, kept for that run only. Opening an official escape in the builder brings its story
 page, so it can be moved or reworded with the rest of an edit.
 
+The map shows it too: a twig across a groove with a snail's silver trail by Old Moss once the Garden
+Ruins open; at stage 1 the orchard waymark warm again; at 2 Wick's lantern lit, with the path marks it
+reaches; at 3 Frost Hollow's sentinel at rest beside Flurry, head bowed to a thin lit line; at 4 a
+lantern glowing beside every local.
+
 ## Still to build
 
-The world map's recovery art and narration for five scenes (`NARRATION-SCRIPTS.md`).
+Narration for five scenes (`NARRATION-SCRIPTS.md`).
