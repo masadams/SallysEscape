@@ -212,18 +212,21 @@
   ]
  },
  {
-  id:'spring-lanterns',name:'Lanterns After Rain',index:6,revision:1,difficulty:'Medium',seasonalTheme:'spring-dusk',cunning:0,
-  pebbles:2,tongues:1,glows:2,
-  brief:'Twilight in three hedge rooms: a lantern moth over the leaves and a weaver in the alley.',
-  hint:'Cross the middle room while the moth is at the far end of its loop; its light shows you even in leaves. At the bottom alley, throw a glow mushroom ahead: the weaver backs out of the light. Take the key in the light and come back through the alley; the key opens the low gate home.',
+  id:'spring-lanterns',name:'Lanterns After Rain',index:6,revision:1,difficulty:'Hard',seasonalTheme:'spring-dusk',cunning:3,
+  pebbles:1,tongues:1,glows:2,
+  brief:'Twilight in three hedge rooms: a lantern moth over the leaves, a weaver and a serpent by the key, and a toad on the way home.',
+  hint:'Cross the middle room while the moth is at the far end of its loop; its light shows you even in leaves. At the bottom alley, throw a glow mushroom ahead: the weaver backs out of the light. A serpent sweeps the room above the key, and in the glow it sees you from further off: go in while it heads away east. Take the key and come back through the alley; the key opens the low gate home. A toad watches the last stretch, and crawling does not fool it. You have one pebble: toss it past the toad from the low gate and slip home while it hops after the sound.',
   gates:[{id:'home-gate',name:'home gate',tiles:[[6,12]],color:[236,170,196]}],
   guards:[
    {kind:'moth',spawn:[9,6],patrol:[[9,6],[12,9]],facing:0},
-   {kind:'spider',spawn:[18,12],patrol:[[18,12],[20,10]],facing:Math.PI}
+   {kind:'spider',spawn:[18,12],patrol:[[18,12],[20,10]],facing:Math.PI},
+   {kind:'snake',spawn:[21,9],patrol:[[21,9],[16,9]],facing:Math.PI},
+   {kind:'toad',spawn:[2,9],patrol:[[2,9]],facing:Math.PI/2}
   ],
   reactions:[{id:'lantern-key',when:'key',open:['home-gate'],message:'The low gate opens. Back through the alley and straight home.'}],
   fieldNotes:[
-   {id:'spring-lanterns-note-0',at:[3,1],title:'After the rain',body:'At dusk the lantern moth comes out. Its glow finds you even in the leaves, so watch its loop and go when it is far. The weaver in the alley hates light: throw a glow mushroom past it and it backs off until the glow fades. Other hunters can still see you in that light. - Clover'}
+   {id:'spring-lanterns-note-0',at:[3,1],title:'After the rain',body:'At dusk the lantern moth comes out. Its glow finds you even in the leaves, so watch its loop and go when it is far. The weaver in the alley hates light: throw a glow mushroom past it and it backs off until the glow fades. Other hunters can still see you in that light. - Clover'},
+   {id:'spring-lanterns-note-1',at:[12,13],title:'Home stretch',body:'A toad sits by the way home tonight, staring down at the way out. A toad sees a crawl as well as a walk, but it cannot resist a pebble landing near it. Save yours for this. - Clover'}
   ],
   props:[{at:[5,1],kind:'flowerlantern'},{at:[11,1],kind:'flowerlantern'},{at:[21,1],kind:'flowerlantern'},{at:[1,10],kind:'flowerpot'},{at:[21,6],kind:'blossom'}],
   map:[
