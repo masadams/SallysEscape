@@ -65,6 +65,11 @@ official level at the revision it was placed for, and only on open floor. Findin
 treasure, stars or unlocks: an area's little sketch is whole once both its pages are found, and the
 journal's border gains a leaf, a lantern and a path at 14, 28 and 42 pages.
 
+Builder and community levels can carry pages of their own: the builder's 📜 Page tool (Extras) puts up
+to three notes on open floor, each with a title, words and an optional signature. They are found and
+read the same way, kept for that run only. Opening an official escape in the builder brings its story
+page, so it can be moved or reworded with the rest of an edit.
+
 ## Still to build
 
 The world map's recovery art and narration for five scenes (`NARRATION-SCRIPTS.md`).

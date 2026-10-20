@@ -79,3 +79,16 @@ test('old saved and shared levels still load, and painting a wall clears what st
   const m=walled();B.addTrigger(m,'plate',5,3);B.toggleLink(m,B.triggerAt(m,5,3).id,'d0');B.paint(m,5,3,'#');assert.equal(m.triggers.length,0);assert.deepEqual(m.links,[]);
   B.paint(m,10,6,'.');assert.equal(m.doors.length,0,'painting over a door tile removes it');
 });
+
+test('pages: up to three notes on open floor, carried through save, share and play, and an official escape brings its story page',()=>{
+  const B=require('../public/escape-builder.js');require('../public/escape-notes.js');const {escapeBuildCustom,EscapeCatalog}=require('../public/escape-levels.js');const {EscapeAdventure}=require('../public/escape-engine.js');
+  const m=B.blank();assert.equal(B.addPage(m,0,0),false,'not in a wall');
+  for(const x of [3,4,5])assert.equal(B.addPage(m,x,5),true);assert.equal(B.addPage(m,6,5),false,'three at most');
+  B.setPage(m,0,{title:'  Hello  there ',body:'Look under the leaves.',author:'Pip'});B.setPage(m,1,{body:'x'.repeat(500)});
+  assert.equal(m.pages[0].title,'Hello there');assert.equal(m.pages[1].body.length,320);
+  const route=B.toRoute(m);assert.equal(route.pages.length,2,'a page with no words is left out');
+  assert.deepEqual(new EscapeAdventure({level:escapeBuildCustom(route)}).level.pages,route.pages);
+  assert.deepEqual(B.sanitize(JSON.parse(JSON.stringify(m))).pages,m.pages);
+  assert.equal(B.removeExtraAt(m,4,5),true);assert.equal(m.pages.length,2);
+  const official=B.fromRoute(EscapeCatalog.levels[0]);assert.equal(official.pages.length,1);assert.equal(official.pages[0].id,'level-note:meadow:1');
+});

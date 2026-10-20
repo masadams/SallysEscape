@@ -743,3 +743,4 @@ body.pad-nav .pad-glyph { display:inline-block; } body.pad-nav .key-hint { displ
 
 .kids-section-title { margin:26px 0 16px; color:#ffe58a; font-size:1.35rem; }
 .kids-guide-note { margin:10px 0 16px; opacity:.9; }
+.builder-inspector textarea { display:block; width:100%; box-sizing:border-box; margin-top:4px; }
