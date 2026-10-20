@@ -1,7 +1,12 @@
 // The campaign's terrain painter and Sally rig, on a separate seasonal world model.
-const SEASON_WORLD_PALETTES={autumn:[[151,125,78],[111,66,42],[226,160,67]],frost:[[193,216,229],[94,129,144],[236,246,250]],garden:[[128,167,109],[57,99,71],[225,179,195]],coast:[[185,178,112],[66,119,99],[238,213,139]]};
+const SEASON_WORLD_PALETTES={autumn:[[151,125,78],[111,66,42],[226,160,67]],frost:[[193,216,229],[94,129,144],[236,246,250]],garden:[[128,167,109],[57,99,71],[225,179,195]],coast:[[214,192,138],[96,128,104],[244,220,150]]};
 // Painted chunks are kept per drawing size (the close view and the overview each keep their own), so
 // switching between them does not repaint the world; a few new chunks are painted each frame at most.
+// How each pond is painted: autumn's mill pond, spring's lily pond, summer's lagoon and the open sea.
+const SEASON_WATER={autumn:{from:[25,19],to:[29,23],stops:['#4c9191','#2c697b','#205166','#4b8384'],bank:[171,153,102],lip:[139,184,156,150],reeds:true},
+ garden:{from:[59,52],to:[63,59],stops:['#8cc4ae','#56a094','#3d8283','#7db8a2'],bank:[118,146,92],lip:[196,226,190,160],reeds:true},
+ coast:{from:[16,53],to:[22,58],stops:['#8fe0d2','#4ab4b8','#2a8ba3','#7ccdc6'],bank:[238,220,172],lip:[255,255,255,180],shells:true},
+ sea:{from:[0,63.5],to:[0,66],stops:['#86d8cf','#3ea6b5','#226b8e'],bank:[238,220,172],lip:[255,255,255,200],shells:true}};
 let seasonWorldChunks={world:null,byBase:new Map()},seasonWorldCamera=null;
 function clearSeasonWorldArt(){for(const m of seasonWorldChunks.byBase.values())for(const g of m.values())g.remove?.();seasonWorldChunks={world:null,byBase:new Map()};seasonWorldCamera=null;}
 function seasonPaintTerrain(w,c,x1,x2,y1,y2){
@@ -20,18 +25,31 @@ function seasonPaintTerrain(w,c,x1,x2,y1,y2){
 }
 function paintSeasonWorldDetails(d,w,c,x1,x2,y1,y2){
  const inside=(x,y,r=2)=>x>=x1-r&&x<=x2+r&&y>=y1-r&&y<=y2+r;
- // Painted shallows, a dark bed, shore stones and reeds stay attractive in Simple mode.
- for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)if(w.grid[y][x]==='P'&&w.areaAt({x,y}).theme==='autumn'){
-  const px=x*c,py=y*c;d.noStroke();d.fill(38,91,104);
-  // One world-space depth gradient runs across the pond, without repeating tile pools.
-  const dc=d.drawingContext;if(dc?.createLinearGradient){dc.save();const water=dc.createLinearGradient(25*c,19*c,29*c,23*c);water.addColorStop(0,'#4c9191');water.addColorStop(.45,'#2c697b');water.addColorStop(.72,'#205166');water.addColorStop(1,'#4b8384');dc.fillStyle=water;dc.fillRect(px,py,c+.5,c+.5);dc.restore();}else d.rect(px,py,c+.5,c+.5);
-  for(const [dx,dy]of [[-1,0],[1,0],[0,-1],[0,1]])if(w.grid[y+dy]?.[x+dx]!== 'P'){
+ // Painted shallows, a dark bed, shore stones and reeds stay attractive in Simple mode. Each pond has
+ // one world-space depth gradient, so no tile pools repeat; spring's lily pads are stepping stones on it.
+ for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++){
+  const pad=w.lilyPads?.has(x+','+y),deck=w.decks?.has(x+','+y),water=(a,b)=>w.grid[b]?.[a]==='P'||w.lilyPads?.has(a+','+b)||w.decks?.has(a+','+b);if(w.grid[y][x]!=='P'&&!pad&&!deck)continue;
+  const theme=w.areaAt({x,y}).theme,sea=theme==='coast'&&y>=64,look=SEASON_WATER[sea?'sea':theme];if(!look)continue;
+  const px=x*c,py=y*c;d.noStroke();
+  // Spring and summer water rounds off its outer corners, with the bank and a pale lip following the curve.
+  if(theme!=='autumn'){const open=(dx,dy)=>!water(x+dx,y+dy)&&!(sea&&w.grid[y+dy]?.[x+dx]==='#'),r=k=>k?c*.95:0,tl=r(open(-1,0)&&open(0,-1)),tr=r(open(1,0)&&open(0,-1)),br=r(open(1,0)&&open(0,1)),bl=r(open(-1,0)&&open(0,1));
+   const grow=(e,col)=>{d.fill(...col);const l=open(-1,0)?e:0,t=open(0,-1)?e:0,rr=open(1,0)?e:0,b=open(0,1)?e:0;d.rect(px-l,py-t,c+.5+l+rr,c+.5+t+b,tl&&tl+e,tr&&tr+e,br&&br+e,bl&&bl+e);};
+   grow(c*.13,look.bank);grow(c*.05,look.lip);
+   const dc=d.drawingContext;if(dc?.createLinearGradient){const g=dc.createLinearGradient(look.from[0]*c,look.from[1]*c,look.to[0]*c,look.to[1]*c);look.stops.forEach((col,i)=>g.addColorStop(i/(look.stops.length-1),col));const keep=dc.fillStyle;d.fill(0);dc.fillStyle=g;d.rect(px,py,c+.5,c+.5,tl,tr,br,bl);dc.fillStyle=keep;}else{d.fill(56,140,150);d.rect(px,py,c+.5,c+.5,tl,tr,br,bl);}
+  }else{d.fill(38,91,104);
+  const dc=d.drawingContext;if(dc?.createLinearGradient){dc.save();const g=dc.createLinearGradient(look.from[0]*c,look.from[1]*c,look.to[0]*c,look.to[1]*c);look.stops.forEach((col,i)=>g.addColorStop(i/(look.stops.length-1),col));dc.fillStyle=g;dc.fillRect(px,py,c+.5,c+.5);dc.restore();}else d.rect(px,py,c+.5,c+.5);}
+  for(const [dx,dy]of [[-1,0],[1,0],[0,-1],[0,1]])if(!water(x+dx,y+dy)&&w.grid[y+dy]?.[x+dx]!=='#'){
    const ax=px+(dx<0?0:dx>0?1:.5)*c,ay=py+(dy<0?0:dy>0?1:.5)*c;
-   d.stroke(171,153,102);d.strokeWeight(c*.12);d.line(ax+(dy?-.48:0)*c,ay+(dx?-.48:0)*c,ax+(dy?.48:0)*c,ay+(dx?.48:0)*c);
-   d.stroke(139,184,156,150);d.strokeWeight(c*.04);d.line(ax-dx*c*.1+(dy?-.4:0)*c,ay-dy*c*.1+(dx?-.4:0)*c,ax-dx*c*.1+(dy?.4:0)*c,ay-dy*c*.1+(dx?.4:0)*c);
-   if((x+y)%3===0){d.noStroke();d.fill(119,126,97);d.ellipse(ax,ay,c*.22,c*.13);d.stroke(109,133,74);d.strokeWeight(c*.035);for(let k=-1;k<=1;k++)d.line(ax+k*c*.06,ay,ax+k*c*.1,ay-c*(.25+.08*(k+1)));}
+   if(theme==='autumn'){d.stroke(...look.bank);d.strokeWeight(c*.12);d.line(ax+(dy?-.48:0)*c,ay+(dx?-.48:0)*c,ax+(dy?.48:0)*c,ay+(dx?.48:0)*c);
+   d.stroke(...look.lip);d.strokeWeight(c*.04);d.line(ax-dx*c*.1+(dy?-.4:0)*c,ay-dy*c*.1+(dx?-.4:0)*c,ax-dx*c*.1+(dy?.4:0)*c,ay-dy*c*.1+(dx?.4:0)*c);}
+   if(look.reeds&&(x+y)%3===0){d.noStroke();d.fill(119,126,97);d.ellipse(ax,ay,c*.22,c*.13);d.stroke(109,133,74);d.strokeWeight(c*.035);for(let k=-1;k<=1;k++)d.line(ax+k*c*.06,ay,ax+k*c*.1,ay-c*(.25+.08*(k+1)));}
+   if(look.shells&&(x*3+y)%4===0){d.noStroke();d.fill(250,236,214);d.ellipse(ax+c*.18,ay+c*.05,c*.09,c*.07);d.fill(232,170,150);d.ellipse(ax-c*.2,ay-c*.03,c*.08,c*.06);}
   }
+  if(pad){const r=.36+((x*7)%3)*.03,cx=px+c*(.5+((x*13)%5-2)*.03),cy=py+c*.5;d.noStroke();d.fill(40,92,74,90);d.ellipse(cx+c*.04,cy+c*.05,c*r*2,c*r*1.8);d.fill(92,152,86);d.arc(cx,cy,c*r*2,c*r*1.8,.45+x,Math.PI*2-.1+x,PIE);d.stroke(130,184,110);d.strokeWeight(c*.02);for(let k=0;k<4;k++){const a=x+1.3+k*1.25;d.line(cx,cy,cx+Math.cos(a)*c*r*.85,cy+Math.sin(a)*c*r*.75);}
+   if(x%2===0){d.noStroke();d.fill(246,200,214);for(let k=0;k<5;k++){const a=k*1.2566;d.ellipse(cx+c*.12+Math.cos(a)*c*.06,cy-c*.1+Math.sin(a)*c*.06,c*.09,c*.09);}d.fill(252,224,120);d.ellipse(cx+c*.12,cy-c*.1,c*.06,c*.06);}}
  }
+ // Past Sunshore's beach the open sea runs on to the edge of the map, deepening as it goes.
+ for(let y=Math.max(y1,66);y<=y2;y++)for(let x=x1;x<=Math.min(x2,36);x++){if(w.grid[y][x]!=='#'||w.areaAt({x,y}).theme!=='coast')continue;d.noStroke();d.fill(...[[34,107,142],[30,96,130],[26,86,118]][Math.min(2,Math.floor((y-66)/3))]);d.rect(x*c,y*c,c+.5,c+.5);if((x*7+y*3)%5===0){d.stroke(200,236,240,90);d.strokeWeight(c*.04);d.line((x+.2)*c,(y+.5)*c,(x+.6)*c,(y+.45)*c);d.noStroke();}}
  // These still props are baked into terrain chunks, including snow/petal/summer silhouettes.
  for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++){
   const area=w.areaAt({x,y}),hash=(x*7919+y*104729)%211;if(w.grid[y][x]!=='.'||escapeWorldBusy(w).has(x+','+y)||hash%9)continue;
@@ -63,7 +81,7 @@ function seasonLightPool(x,y,r,color,alpha){
 }
 function drawSeasonWorldWater(w,c,x1,x2,y1,y2){
  const full=escapeLightingFull(),t=seasonWorldMotion()?w.elapsed:0;
- if(full)for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)if(w.grid[y][x]==='P'&&w.areaAt({x,y}).theme==='autumn'){
+ if(full)for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)if(w.grid[y][x]==='P'&&SEASON_WATER[w.areaAt({x,y}).theme]){
   // Every glint stays in its water tile, leaving shore collision and trails clear.
   noFill();strokeWeight(c*.018);
   for(let k=0;k<3;k++){const u=((x*.27+y*.17+k*.31+t*.055)%1),v=.18+k*.28+Math.sin(t*.6+x+k)*.035;stroke(169,201,164,60+Math.sin(t+x+y+k)*25);line((x+u*.65+.05)*c,(y+v)*c,(x+u*.65+.27)*c,(y+v)*c);}

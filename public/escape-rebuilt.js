@@ -745,23 +745,23 @@
  "#X......................T......2#",
  "#################################"]},
 // Sun and Sea
-{explore:false,tailDrop:true,id:"sunken-caravan",name:"The Sunken Caravan",brief:"A canyon yard of wrecked wagons. Its hunters do not share their ground.",hint:"The snake and the scorpion fight if they meet: a pebble between them helps. Taking the key brings down the caravan arch; the high canyon runs home along the rim to a crack only you can fit through. Bring four treasure.",biome:"desert",pebbles:3,tongues:1,requiredTreasure:4,rivalries:[["dune-snake","canyon-scorpion"]],gates:[{id:"caravan-gate",name:"Caravan arch",color:[230,169,91],initialOpen:true,tiles:[[7,11]]},{id:"rim-gate",name:"Rim",color:[230,169,91],tiles:[[23,1]]}],reactions:[{id:"sandfall",when:"key",close:["caravan-gate"],open:["rim-gate"],message:"The caravan arch collapses. Sand pours from the rim, opening the high canyon.",objective:"Run the high canyon west and slip through the crack to the hatch. Bring four treasure."}],guards:[{id:"dune-snake",kind:"snake",spawn:[14,6],facing:0,patrol:[[9,6],[18,6],[18,12],[13,12]]},{id:"canyon-scorpion",kind:"scorpion",spawn:[17,11],facing:PI,patrol:[[17,11]]},{id:"oasis-scorpion",kind:"scorpion",spawn:[25,3],facing:PI/2,patrol:[[25,3]]},{id:"oasis-cricket",kind:"cricket",spawn:[26,7],facing:PI,patrol:[[25,7],[28,6]]}],map:[
+{explore:false,tailDrop:true,id:"sunken-caravan",name:"The Sunken Caravan",brief:"A canyon yard of wrecked wagons. Its hunters do not share their ground.",hint:"The snake and the scorpion fight if they meet: a pebble between them helps. Taking the key brings down the caravan arch; the high canyon runs home along the rim to a crack only you can fit through. Soft sand drifts slow Sally down and keep her tracks. Bring four treasure.",biome:"desert",pebbles:3,tongues:1,requiredTreasure:4,rivalries:[["dune-snake","canyon-scorpion"]],gates:[{id:"caravan-gate",name:"Caravan arch",color:[230,169,91],initialOpen:true,tiles:[[7,11]]},{id:"rim-gate",name:"Rim",color:[230,169,91],tiles:[[23,1]]}],reactions:[{id:"sandfall",when:"key",close:["caravan-gate"],open:["rim-gate"],message:"The caravan arch collapses. Sand pours from the rim, opening the high canyon.",objective:"Run the high canyon west and slip through the crack to the hatch. Bring four treasure."}],guards:[{id:"dune-snake",kind:"snake",spawn:[14,6],facing:0,patrol:[[9,6],[18,6],[18,12],[13,12]]},{id:"canyon-scorpion",kind:"scorpion",spawn:[17,11],facing:PI,patrol:[[17,11]]},{id:"oasis-scorpion",kind:"scorpion",spawn:[25,3],facing:PI/2,patrol:[[25,3]]},{id:"oasis-cricket",kind:"cricket",spawn:[26,7],facing:PI,patrol:[[25,7],[28,6]]}],map:[
  "###############################",
  "#X...S.......L...1..........K.#",
  "#....###################....N.#",
- "#....###..........L....#......#",
+ "#....###.ssss.....L....#......#",
  "#...1###..###...N..##..#..~~..#",
  "########..###......##.....~~..#",
  "########.....1.....##..#......#",
  "########.L...N.........#.L....#",
  "########.......###.....#.....3#",
  "#......#.......###....L########",
- "#.@....#..##...........########",
+ "#.@sss.#..##...........########",
  "#.........##.......###.########",
  "#.L....#..##..L........########",
- "#1.....#1............N2########",
+ "#1.....#1...sssss....N2########",
  "###############################"]},
-{explore:false,tailDrop:true,id:"tideglass-lagoon",name:"Tideglass Lagoon",brief:"Three islands in a warm lagoon. The shells on the beaches are not all empty.",hint:"Fish cannot follow you ashore; the sea snake can. Hermit crabs guard the beaches: cross their lanes at a sprint, while they are tucked in, or after a pebble. Bring four treasure.",biome:"lagoon",pebbles:3,tongues:1,requiredTreasure:4,reactions:[{id:"tide-den",when:"key",spawn:["tide-snake"],message:"Ripples gather by the southern reef. Something is surfacing there.",objective:"Cross back to the hatch on the west island."}],reinforcements:[{id:"tide-snake",kind:"sea-snake",spawn:[21,12],facing:PI,patrol:[[20,12],[23,12],[23,4],[20,4]]}],guards:[{kind:"crab",spawn:[13,8],facing:0,patrol:[[13,8]],axis:"y",range:3},{kind:"crab",spawn:[24,6],facing:0,patrol:[[24,6]],axis:"y",range:3},{kind:"crab",spawn:[6,8],facing:0,patrol:[[6,8]],axis:"x",range:3},{id:"silver-fish",kind:"fish",spawn:[10,10],facing:0,patrol:[[9,9],[12,12]]},{id:"deep-fish",kind:"fish",spawn:[21,5],facing:PI/2,patrol:[[20,2],[23,7]]},{id:"reef-snake",kind:"sea-snake",spawn:[17,4],facing:PI,patrol:[[14,3],[18,3],[18,10],[14,10]]}],map:[
+{explore:false,tailDrop:true,id:"tideglass-lagoon",name:"Tideglass Lagoon",brief:"Three islands in a warm lagoon. The shells on the beaches are not all empty.",hint:"Fish cannot follow you ashore; the sea snake can. Hermit crabs guard the beaches: cross their lanes at a sprint, while they are tucked in, or after a pebble. Bouncy caps on the beaches fling Sally over the west channel and back. Bring four treasure.",biome:"lagoon",caps:[{at:[7,4],to:[14,4]},{at:[14,10],to:[7,10]}],pebbles:3,tongues:1,requiredTreasure:4,reactions:[{id:"tide-den",when:"key",spawn:["tide-snake"],message:"Ripples gather by the southern reef. Something is surfacing there.",objective:"Cross back to the hatch on the west island."}],reinforcements:[{id:"tide-snake",kind:"sea-snake",spawn:[21,12],facing:PI,patrol:[[20,12],[23,12],[23,4],[20,4]]}],guards:[{kind:"crab",spawn:[13,8],facing:0,patrol:[[13,8]],axis:"y",range:3},{kind:"crab",spawn:[24,6],facing:0,patrol:[[24,6]],axis:"y",range:3},{kind:"crab",spawn:[6,8],facing:0,patrol:[[6,8]],axis:"x",range:3},{id:"silver-fish",kind:"fish",spawn:[10,10],facing:0,patrol:[[9,9],[12,12]]},{id:"deep-fish",kind:"fish",spawn:[21,5],facing:PI/2,patrol:[[20,2],[23,7]]},{id:"reef-snake",kind:"sea-snake",spawn:[17,4],facing:PI,patrol:[[14,3],[18,3],[18,10],[14,10]]}],map:[
  "#################################",
  "#.X....L.~~2~#######~~~~........#",
  "#........~~~~......1~~~~......K.#",
@@ -1041,7 +1041,7 @@
  "#.L........N..S.............#",
  "#@.........................1#",
  "#############################"]},
-{explore:false,tailDrop:true,id:"marching-tunnels",name:"Marching Tunnels",brief:"Two columns march through the same hall in opposite loops.",hint:"The two columns loop the central hall in opposite directions. Wait in a side tunnel for a gap in both. Tangle vines grow where the columns cross.",pebbles:2,tongues:1,antTrails:[{path:[[12,5],[18,5],[18,9],[12,9]],groups:2,size:4,speed:1.7},{path:[[11,3],[11,11],[19,11],[19,3]],groups:2,size:4,speed:1.5}],guards:[{kind:"spider",spawn:[5,2],facing:0,patrol:[[2,2],[9,3]]},{kind:"spider",spawn:[25,12],facing:PI,patrol:[[21,12],[28,11]]},{spawn:[23,2],facing:PI,patrol:[[21,1],[28,3]]}],map:[
+{explore:false,tailDrop:true,id:"marching-tunnels",name:"Marching Tunnels",brief:"Two columns march through the same hall in opposite loops.",hint:"The two columns loop the central hall in opposite directions. Wait in a side tunnel for a gap in both. Tangle vines grow where the columns cross. Or use the tunnel kit: dig an entrance (T), dig the way out somewhere else, then burrow under the columns.",diggers:1,pebbles:2,tongues:1,antTrails:[{path:[[12,5],[18,5],[18,9],[12,9]],groups:2,size:4,speed:1.7},{path:[[11,3],[11,11],[19,11],[19,3]],groups:2,size:4,speed:1.5}],guards:[{kind:"spider",spawn:[5,2],facing:0,patrol:[[2,2],[9,3]]},{kind:"spider",spawn:[25,12],facing:PI,patrol:[[21,12],[28,11]]},{spawn:[23,2],facing:PI,patrol:[[21,1],[28,3]]}],map:[
  "###############################",
  "#1.............2.............1#",
  "#.L.....N....#####..........L.#",
@@ -1092,7 +1092,7 @@
  "#1...............................1#",
  "###################################"]},
 // Frost Hollow
-{explore:false,tailDrop:true,id:"frostbite-steps",name:"Frostbite Steps",brief:"One frozen hall between Sally and the key. Warm stones glow in the ice.",hint:"The hall is freezing: stop on warm stones to thaw. The snow fox hunts by ear; crunchy snow carries every step, so walk round it, and stand still if it comes close.",pebbles:2,tongues:1,cold:[[8,1,18,13]],guards:[{kind:"fox",spawn:[13,9],facing:PI,patrol:[[10,3],[16,3],[16,11],[10,11]]},{spawn:[22,12],facing:PI,patrol:[[20,12],[24,11]]},{kind:"beetle",spawn:[22,2],facing:PI,patrol:[[20,2],[24,3]]}],map:[
+{explore:false,tailDrop:true,id:"frostbite-steps",name:"Frostbite Steps",brief:"One frozen hall between Sally and the key. Warm stones glow in the ice.",hint:"The hall is freezing: stop on warm stones to thaw. The snow fox hunts by ear; crunchy snow carries every step, so walk round it, and stand still if it comes close. The lanes either side of the gravel are frozen: Sally slides on them, so line up before stepping on and crawl to brake.",slippery:[[10,5],[11,5],[12,5],[13,5],[14,5],[15,5],[16,5],[10,9],[11,9],[12,9],[13,9],[14,9],[15,9],[16,9]],pebbles:2,tongues:1,cold:[[8,1,18,13]],guards:[{kind:"fox",spawn:[13,9],facing:PI,patrol:[[10,3],[16,3],[16,11],[10,11]]},{spawn:[22,12],facing:PI,patrol:[[20,12],[24,11]]},{kind:"beetle",spawn:[22,2],facing:PI,patrol:[[20,2],[24,3]]}],map:[
  "###########################",
  "#1.......................2#",
  "#..L..................L...#",

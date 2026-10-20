@@ -26,7 +26,10 @@
    room(17,36,57,38);room(36,36,38,57);room(19,29,21,56);room(54,29,56,38);room(36,54,44,56);room(34,34,40,40);
    // Autumn's loop winds round an ancient oak and a mill pond. The other regions are real
    // terrain behind their gates, ready to accept future packs without changing the map.
-   room(19,19,21,21,'#');room(25,19,29,22,'P');room(25,19,25,19);room(29,22,29,22);room(53,17,56,18);for(const [a,b,c,d]of [[53,17,56,18],[50,24,57,26]])for(let y=b;y<=d;y++)for(let x=a;x<=c;x++)this.slippery.add(x+','+y);room(54,19,56,21,'#');room(45,11,48,12,'#');room(61,11,64,12,'#');room(65,18,66,20,'#');room(57,54,59,56,'P');room(17,54,20,56,'P');
+   room(19,19,21,21,'#');room(25,19,29,22,'P');room(25,19,25,19);room(29,22,29,22);room(53,17,56,18);for(const [a,b,c,d]of [[53,17,56,18],[50,24,57,26]])for(let y=b;y<=d;y++)for(let x=a;x<=c;x++)this.slippery.add(x+','+y);room(54,19,56,21,'#');room(45,11,48,12,'#');room(61,11,64,12,'#');room(65,18,66,20,'#');// Blossom Hollow: a mill pond with a lily-pad trail across it, a greenhouse and beehives.
+   room(59,52,62,58,'P');this.lilyPads=new Set();this.decks=new Set();for(let x=59;x<=62;x++){this.grid[55][x]='.';this.lilyPads.add(x+',55');}room(64,45,66,46,'#');room(44,46,45,46,'#');
+   // Sunshore Cove: a lagoon round the lighthouse rock, the open sea along the south shore with a pier, beach huts and a kite lawn.
+   room(16,53,21,57,'P');room(8,64,32,65,'P');room(26,64,26,65);this.decks=new Set(['26,64','26,65']);room(9,45,13,45,'#');this.kiteLawn={x1:28,y1:45,x2:32,y2:48};
    const paths=[[{x:20,y:30},{x:20,y:37},{x:37,y:37}],[{x:37,y:37},{x:55,y:37},{x:55,y:30}],[{x:37,y:37},{x:37,y:55},{x:43,y:55}],[{x:20,y:37},{x:20,y:45}]];
    for(const points of paths)this.tracks.push({points:points.map(p=>({x:p.x+.5,y:p.y+.5})),side:false});
    for(const a of AREAS){const ns=this.nodes.filter(n=>AREAS[n.chapter]===a);for(let i=1;i<ns.length;i++){const points=this.route(ns[i],ns[i-1],true);if(points)this.tracks.push({from:ns[i-1].id,to:ns[i].id,points:[{x:ns[i-1].x+.5,y:ns[i-1].y+.5},...points],side:false});}}
@@ -39,6 +42,8 @@
   chapterAt(p=this.player){return AREAS.reduce((best,a,i)=>Math.hypot(a.x-p.x,a.y-p.y)<Math.hypot(AREAS[best].x-p.x,AREAS[best].y-p.y)?i:best,0);}
   areaAt(p=this.player){return AREAS[this.chapterAt(p)];}
   floor(x,y){x=Math.floor(x);y=Math.floor(y);if(!['.','L'].includes(this.grid[y]?.[x]))return false;for(const a of AREAS){if(this.areaOpen(a.id))continue;if(Math.abs(x-a.x)<=a.rx&&Math.abs(y-a.y)<=a.ry)return false;const g=a.gate;if(g.axis==='x'?x===g.x&&Math.abs(y-g.y)<=1:y===g.y&&Math.abs(x-g.x)<=1)return false;}return true;}
+  // What Sally's feet are on, for footstep sounds: snow and ice in winter, lily pads in spring, sand by the sea.
+  surfaceAt(p=this.player){const k=Math.floor(p.x)+','+Math.floor(p.y),id=this.areaAt(p).id;if(id==='winter')return this.sled.riding||this.slippery.has(k)?'ice':'snow';if(this.lilyPads.has(k))return 'lily';if(id==='summer')return this.grid[Math.floor(p.y)]?.[Math.floor(p.x)]==='.'&&Math.floor(p.x)===26&&Math.floor(p.y)>=64?'boards':'sand';return 'floor';}
   route(to,from=this.player,ignoreLocks=false){return World.prototype.route.call(this,to,from,ignoreLocks);}
   spotFor(id){return this.nodes.find(n=>n.id===id)||null;}
   nearby(){return this.nodes.find(n=>this.areaOpen(n.level.seasonal)&&Math.hypot(n.x-this.player.x,n.y-this.player.y)<=1.6)||null;}

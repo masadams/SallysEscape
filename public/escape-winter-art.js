@@ -13,23 +13,77 @@ function drawWinterCreature(h,model,c,g){
  if(!EscapeSeasons.winterCreatures[h.kind]||h.kind==='owl')return false;
  if(h.kind==='snake'){if(!model?.joints)return true;const j=model.joints;push();noFill();stroke(77,46,53);strokeWeight(c*.18);beginShape();j.forEach(p=>vertex(p.x*c,p.y*c));endShape();for(let i=j.length-1;i>0;i--){stroke(...(i%3===0?[195,58,72]:[247,238,215]));strokeWeight(c*Math.max(.045,model.widths?.[i]||.14));line(j[i].x*c,j[i].y*c,j[i-1].x*c,j[i-1].y*c);}const p=j[0];translate(p.x*c,p.y*c);rotate(model.headAngle);noStroke();fill(244,236,214);ellipse(c*.05,0,c*.47,c*.29);fill(186,47,66);rect(c*.03,-c*.13,c*.08,c*.26);fill(32,78,67);ellipse(c*.15,-c*.08,c*.06,c*.05);ellipse(c*.15,c*.08,c*.06,c*.05);pop();return true;}
  if(h.kind==='sentinel')drawEscapeSentinel(h,c,g.elapsed);
- push();translate(h.x*c,h.y*c);rotate(h.facing+Math.PI/2);scale(c);const hot=['windup','charge','crouch','pounce','reveal','tongue','glare'].includes(h.state),stride=Math.sin(h.distanceMoved*9);noStroke();fill(12,31,42,90);ellipse(0,.23,.9,.42);
+ push();translate(h.x*c,h.y*c);rotate(h.facing+Math.PI/2);scale(c);const hot=['windup','charge','crouch','pounce','reveal','tongue','glare'].includes(h.state),stride=Math.sin(h.distanceMoved*9);noStroke();fill(12,31,42,90);ellipse(0,.05,.92,.72);
+ // Every costume is drawn from above, like Sally: the front of the creature is up (-y), its feet underneath.
+ const t=g.elapsed,f=stride*.15,eye=hot?[214,52,52]:[33,59,68];
  if(h.kind==='beetle'){
-  fill(205,226,228);ellipse(-.2,.36+stride*.04,.31,.2);ellipse(.2,.36-stride*.04,.31,.2);fill(230,241,237);ellipse(0,-.01,.76,.8);fill(174,207,216);ellipse(0,.07,.43,.39);stroke(224,238,235);strokeWeight(.2);for(const side of[-1,1]){line(side*.26,-.23,side*.45,hot?-.59:.12+stride*.04);line(side*.45,hot?-.59:.12+stride*.04,side*.3,hot?-.72:.27);}noStroke();fill(240,246,235);ellipse(0,-.4,.52,.44);fill(89,128,148);ellipse(0,-.36,.32,.2);fill(23,58,78);ellipse(-.08,-.38,.055,hot?.11:.06);ellipse(.08,-.38,.055,hot?.11:.06);fill(250,235,184);triangle(-.06,-.3,0,-.35,.06,-.3);
+  // Yeti: a shaggy white back, blue face at the front, big arms that swing as it walks and go up for the charge.
+  fill(205,226,228);ellipse(-.2,.08+f,.24,.32);ellipse(.2,.08-f,.24,.32);
+  for(const s of[-1,1]){const ex=hot?s*.4:s*.5,ey=hot?-.62:.04+s*stride*.12;stroke(224,238,235);strokeWeight(.2);line(s*.3,-.08,ex,ey);noStroke();fill(240,246,240);ellipse(ex,ey,.22,.22);fill(89,128,148);for(const k of[-1,0,1])ellipse(ex+k*.06,ey-.09,.04,.06);}
+  noStroke();fill(214,232,232);ellipse(0,0,.84,.72);fill(240,246,242);for(let i=0;i<12;i++){const a=i*Math.PI/6;ellipse(Math.cos(a)*.36,Math.sin(a)*.3,.17,.15);}fill(230,241,237);ellipse(0,0,.66,.56);
+  fill(246,250,246);ellipse(0,-.22,.44,.38);fill(89,128,148);ellipse(0,-.33,.3,.15);fill(...eye);ellipse(-.07,-.35,.055,hot?.09:.05);ellipse(.07,-.35,.055,hot?.09:.05);fill(250,235,184);triangle(-.05,-.4,0,-.36,.05,-.4);
  }else if(h.kind==='fox'){
-  fill(96,72,49);ellipse(.24,.14,.5,.58);fill(98,143,77);ellipse(0,-.03,.54,.65);fill(42,91,67);rect(-.25,.04,.5,.24,.08);fill(222,223,161);ellipse(0,-.37,.43,.32);fill(79,133,76);triangle(-.29,-.47,.21,-.47,-.18,-.81);fill(215,67,74);rect(-.23,-.5,.47,.09,.03);fill(251,232,191);ellipse(-.18,-.78,.12,.12);fill(35,70,55);ellipse(-.08,-.37,.055,.07);ellipse(.08,-.37,.055,.07);stroke(52,90,52);strokeWeight(.025);noFill();arc(0,-.29,.2,.1,0,Math.PI);noStroke();fill(50,85,58);ellipse(-.18,.35+stride*.04,.25,.13);ellipse(.18,.35-stride*.04,.25,.13);
+  // Gift snatcher: an elf with a stolen sack on its back, pointed hat flopping behind, hands out to grab.
+  fill(50,85,58);ellipse(-.12,f,.13,.24);ellipse(.12,-f,.13,.24);fill(96,72,49);ellipse(0,.26,.52,.42);fill(120,92,62);ellipse(0,.24,.32,.24);stroke(70,52,36);strokeWeight(.03);line(-.08,.08,.08,.08);
+  const grab=['crouch','pounce'].includes(h.state);for(const s of[-1,1]){stroke(98,143,77);strokeWeight(.1);line(s*.22,-.04,s*(grab?.2:.3),grab?-.42:.12);noStroke();fill(222,223,161);ellipse(s*(grab?.2:.3),grab?-.46:.16,.1,.1);}
+  noStroke();fill(98,143,77);ellipse(0,0,.5,.34);fill(222,223,161);for(const s of[-1,1])triangle(s*.13,-.16,s*.13,-.06,s*.3,-.16);ellipse(0,-.12,.3,.28);
+  fill(79,133,76);ellipse(0,-.1,.3,.26);triangle(-.1,-.06,.1,-.06,.16+Math.sin(t*3+h.x)*.04,.36);fill(251,232,191);ellipse(.16+Math.sin(t*3+h.x)*.04,.38,.1,.1);noFill();stroke(215,67,74);strokeWeight(.05);ellipse(0,-.1,.32,.28);noStroke();fill(...eye);ellipse(-.06,-.25,.05,.045);ellipse(.06,-.25,.05,.045);
  }else if(h.kind==='spider'){
-  stroke(54,47,63);strokeWeight(.1);for(const side of[-1,1]){line(side*.15,.12,side*.26,.38+stride*.04);line(side*.22,-.12,side*.45,.07);}noStroke();fill(93,58,69);ellipse(0,.03,.59,.66);fill(123,91,79);ellipse(0,-.35,.44,.4);stroke(223,208,172);strokeWeight(.06);noFill();for(const side of[-1,1])bezier(side*.14,-.48,side*.4,-.7,side*.26,-.9,side*.12,-.76);noStroke();fill(238,205,110);ellipse(-.17,.08,.095,.11);ellipse(.17,.08,.095,.11);fill(231,225,194);triangle(-.18,-.2,0,.03,.18,-.2);fill(h.glowFear?123:248,h.glowFear?199:197,125);ellipse(-.08,-.36,.07,.08);ellipse(.08,-.36,.07,.08);fill(53,43,55);ellipse(0,-.27,.1,.07);
+  // Krampus: dark shaggy shoulders, curling horns, a birch switch in one hand and a long red tongue on the tell.
+  fill(54,47,63);ellipse(-.14,.06+f,.15,.22);ellipse(.14,.06-f,.15,.22);
+  for(const s of[-1,1]){const ex=hot?s*.34:s*.42,ey=hot?-.5:.14+s*stride*.1;stroke(54,47,63);strokeWeight(.11);line(s*.26,-.04,ex,ey);stroke(231,225,194);strokeWeight(.025);for(const k of[-1,0,1])line(ex,ey,ex+k*.05,ey-.09);}
+  stroke(140,110,80);strokeWeight(.02);const sx=hot?.34:.42,sy=hot?-.5:.14-stride*.1;for(const k of[-2,-1,0,1,2])line(sx,sy,sx+.24+k*.03,sy+.18-k*.04);
+  noStroke();fill(93,58,69);ellipse(0,.04,.68,.5);fill(72,44,56);for(let i=0;i<9;i++){const a=i*.7+.3;ellipse(Math.cos(a)*.28,.04+Math.sin(a)*.2,.12,.1);}fill(238,205,110);ellipse(-.17,.12,.08,.09);ellipse(.17,.12,.08,.09);
+  fill(123,91,79);ellipse(0,-.2,.36,.34);stroke(223,208,172);strokeWeight(.065);noFill();for(const s of[-1,1])bezier(s*.12,-.26,s*.38,-.24,s*.48,-.04,s*.36,.08);noStroke();
+  if(hot){fill(196,50,60);ellipse(0,-.42,.08,.16);}fill(...(h.glowFear?[123,199,125]:hot?[232,60,52]:[248,197,125]));ellipse(-.08,-.32,.065,.06);ellipse(.08,-.32,.065,.06);fill(231,225,194);triangle(-.05,-.36,0,-.3,.05,-.36);
  }else if(h.kind==='toad'){
-  fill(213,231,233);ellipse(0,.13,.84,.64);fill(249,247,233);ellipse(-.05,.04,.68,.57);fill(227,240,239);ellipse(0,-.32,.52,.5);fill(38,59,67);rect(-.32,-.53,.64,.08,.02);rect(-.2,-.79,.4,.27,.025);fill(191,66,75);rect(-.2,-.56,.4,.07);fill(235,140,65);triangle(0,-.35,.29,-.29,0,-.23);fill(33,59,68);ellipse(-.09,-.36,.055,hot?.1:.06);ellipse(.09,-.36,.055,hot?.1:.06);ellipse(0,.08,.065,.065);ellipse(0,.24,.065,.065);fill(167,49,66);rect(-.26,-.12,.52,.1,.02);rect(.13,-.09,.1,.3,.02);
-  // A twig arm; on the wind-up it rises with a snowball ready to throw.
-  stroke(104,74,52);strokeWeight(.05);const up=h.state==='windup';line(.36,.02,up?.5:.62,up?-.38:-.06);noStroke();if(up){fill(250,253,255);stroke(176,214,232);strokeWeight(.03);ellipse(.52,-.46,.24,.24);noStroke();}
+  // Grouchy snowman from above: big bottom ball, top hat over the head, carrot pointing where it looks, twig arms out.
+  // On the wind-up the right arm comes forward with a snowball.
+  fill(213,231,233);ellipse(0,.08,.86,.8);fill(249,247,233);ellipse(-.03,.05,.78,.72);fill(227,240,239);ellipse(0,-.04,.62,.56);fill(246,250,248);ellipse(-.02,-.06,.54,.48);fill(33,59,68);ellipse(0,-.31,.05,.05);ellipse(0,.33,.06,.06);
+  const up=h.state==='windup';stroke(104,74,52);strokeWeight(.05);line(-.27,-.03,-.6,.06);line(-.5,.03,-.6,-.06);if(up){line(.27,-.03,.44,-.4);}else{line(.27,-.03,.6,.04);line(.5,.01,.6,-.08);}noStroke();if(up){fill(250,253,255);stroke(176,214,232);strokeWeight(.03);ellipse(.46,-.48,.24,.24);noStroke();}
+  fill(167,49,66);rect(.06,-.08,.1,.34,.03);noFill();stroke(167,49,66);strokeWeight(.08);ellipse(0,-.13,.42,.38);noStroke();fill(240,246,245);ellipse(0,-.14,.36,.34);
+  fill(235,140,65);triangle(-.04,-.27,.04,-.27,0,-.46);fill(...eye);ellipse(-.09,-.27,.05,hot?.08:.05);ellipse(.09,-.27,.05,hot?.08:.05);
+  fill(38,59,67);ellipse(0,-.1,.38,.34);fill(191,66,75);ellipse(0,-.1,.27,.24);fill(52,76,86);ellipse(0,-.1,.22,.19);
  }else if(h.kind==='mimic'){
-  const open=h.state!=='rooted';fill(40,91,78);rect(-.38,-.18,.76,.57,.04);fill(69,130,113);rect(-.32,-.13,.32,.47);fill(225,73,82);rect(-.055,-.19,.11,.58);rect(-.4,open?-.48:-.26,.8,.11,.02);stroke(229,189,109);strokeWeight(.045);noFill();ellipse(-.14,open?-.55:-.33,.29,.17);ellipse(.14,open?-.55:-.33,.29,.17);if(open){noStroke();fill(31,48,61);rect(-.3,-.06,.6,.21);fill(255,228,156);ellipse(-.15,-.01,.075,.075);ellipse(.15,-.01,.075,.075);for(let i=-2;i<=2;i++)triangle(i*.1,.1,i*.1+.07,.1,i*.1+.035,.17);}
+  // Suspicious present from above: ribbon cross and bow; when it wakes the lid lifts back off a mouth of teeth.
+  const open=h.state!=='rooted',lid=open?.2:0;fill(28,64,55);rect(-.38,-.38,.76,.76,.05);
+  if(open){fill(31,48,61);rect(-.33,-.33,.66,.66,.04);fill(255,228,156);ellipse(-.14,-.2,.08,.08);ellipse(.14,-.2,.08,.08);fill(253,240,214);for(let i=-3;i<3;i++)triangle(i*.1+.02,-.33,i*.1+.1,-.33,i*.1+.06,-.25);}
+  push();translate(0,lid);rotate(open?Math.sin(t*9)*.05:0);fill(40,91,78);rect(-.36,-.36,.72,open?.5:.72,.05);fill(69,130,113);rect(-.3,-.3,.6,open?.38:.6,.04);fill(225,73,82);rect(-.055,-.36,.11,open?.5:.72);rect(-.36,-.055,.72,.11);stroke(229,189,109);strokeWeight(.045);noFill();ellipse(-.1,0,.2,.13);ellipse(.1,0,.2,.13);noStroke();fill(229,189,109);ellipse(0,0,.08,.08);pop();
  }else if(h.kind==='sentinel'){
-  fill(68,47,58);rect(-.23,-.69,.46,.31,.04);fill(224,191,112);rect(-.27,-.47,.54,.08);fill(230,204,168);rect(-.19,-.39,.38,.3,.025);fill(161,50,69);rect(-.28,-.09,.56,.43,.04);fill(237,194,103);rect(-.025,-.05,.05,.34);for(const y of[0,.13,.26]){ellipse(-.12,y,.05,.05);ellipse(.12,y,.05,.05);}fill(39,57,70);ellipse(-.08,-.3,.055,.06);ellipse(.08,-.3,.055,.06);stroke(96,64,54);strokeWeight(.04);line(-.12,-.18,.12,-.18);noStroke();fill(41,55,65);rect(-.2,.32,.15,.19);rect(.05,.32,.15,.19);
+  // Nutcracker from above: tall black shako with a white plume, gold epaulettes, white gloves at its sides.
+  fill(41,55,65);ellipse(-.12,.04,.14,.24);ellipse(.12,.04,.14,.24);fill(161,50,69);for(const s of[-1,1])ellipse(s*.33,.05,.14,.32);fill(246,244,236);ellipse(-.34,.22,.1,.1);ellipse(.34,.22,.1,.1);
+  fill(161,50,69);ellipse(0,.04,.6,.38);fill(237,194,103);for(const s of[-1,1]){ellipse(s*.25,-.01,.17,.13);for(const k of[-1,0,1])ellipse(s*.3+k*.04,.06,.025,.06);}
+  fill(230,204,168);ellipse(0,-.24,.26,.12);fill(246,244,236);rect(-.09,-.31,.18,.04,.02);fill(...(h.state==='glare'||hot?[214,52,52]:[39,57,70]));ellipse(-.06,-.27,.05,.05);ellipse(.06,-.27,.05,.05);
+  fill(68,47,58);ellipse(0,-.07,.34,.32);noFill();stroke(224,191,112);strokeWeight(.04);ellipse(0,-.07,.3,.28);noStroke();fill(246,244,236);ellipse(0,-.07,.13,.13);fill(224,191,112);ellipse(0,-.07,.05,.05);
  }
  pop();return true;
+}
+const winterHash=(x,y,s)=>{const v=Math.sin(x*127.1+y*311.7+s*74.7)*43758.5453;return v-Math.floor(v);};
+// The ice is one glassy sheet: deep blue with a frosted rim where it meets the floor, and scratches and
+// frozen bubbles scattered by hash (not per tile) so no grid shows through. Painted once into d.
+function paintWinterIce(d,g,c){
+  const ice=new Set((g.level.slippery||[]).map(k=>k.join(','))),h=winterHash;
+  for(const [x,y]of g.level.slippery||[])if(g.floor(x,y)&&g.grid[y][x]!=='c'){d.noStroke();d.fill(118,178,204,225);d.rect(x*c,y*c,c+.5,c+.5);d.fill(150,204,224,90);d.ellipse((x+h(x,y,1))*c,(y+h(x,y,2))*c,c*1.4,c*.9);
+   for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])if(!ice.has((x+dx)+','+(y+dy))){d.fill(226,242,246,120);d.rect((x+(dx>0?.86:0))*c,(y+(dy>0?.86:0))*c,dx?c*.14:c+.5,dy?c*.14:c+.5);}}
+  for(const [x,y]of g.level.slippery||[])if(g.floor(x,y)&&g.grid[y][x]!=='c'){if(h(x,y,3)<.55){const a=h(x,y,4)*Math.PI,l=.3+h(x,y,5)*.7,sx=x+h(x,y,6),sy=y+h(x,y,7);d.stroke(238,250,252,90);d.strokeWeight(c*.016);d.line(sx*c,sy*c,(sx+Math.cos(a)*l)*c,(sy+Math.sin(a)*l)*c);if(h(x,y,8)<.4)d.line((sx+Math.cos(a)*l*.5)*c,(sy+Math.sin(a)*l*.5)*c,(sx+Math.cos(a)*l*.5+Math.cos(a+.7)*.25)*c,(sy+Math.sin(a)*l*.5+Math.sin(a+.7)*.25)*c);}
+   if(h(x,y,9)<.3){d.noStroke();d.fill(236,248,252,110);for(let i=0;i<3;i++)d.ellipse((x+h(x,y,10+i))*c,(y+h(x,y,20+i))*c,c*.05,c*.05);}}
+}
+// What moves on the ice each frame: a travelling glint, Sally's reflection, spray while she slides and a flash when she hits a wall.
+function drawWinterIceLive(g,c,t,moving){
+ // A slow glint travels across the ice, and Sally shows a faint reflection while she is on it.
+ if(moving&&g.slippery.size){noStroke();for(const k of g.slippery){const [x,y]=k.split(',').map(Number),s=((x+y-t*1.3)%16+16)%16;if(s>1.6)continue;fill(255,255,255,46*(1-Math.abs(s-.8)/.8));quad((x+s*.3)*c,y*c,(x+s*.3+.35)*c,y*c,(x+s*.3-.05)*c,(y+1)*c,(x+s*.3-.4)*c,(y+1)*c);}}
+ if(g.slippery.has(g.tileKey(g.player))){noStroke();fill(214,240,250,70);ellipse(g.player.x*c,(g.player.y+.32)*c,c*.7,c*.26);}
+ if(g.player.sliding){const p=g.player,v=g.slideVelocity,sp=Math.hypot(v.x,v.y),ux=v.x/(sp||1),uy=v.y/(sp||1);noFill();stroke(237,252,251,110);strokeWeight(c*.025);for(const k of[-.14,.14])line((p.x-uy*k-v.x*.28)*c,(p.y+ux*k-v.y*.28)*c,(p.x-uy*k)*c,(p.y+ux*k)*c);
+  // Ice spray kicks up from the claws, more the faster she goes (fewer flecks on TV boxes).
+  noStroke();const n=typeof isTvDevice==='function'&&isTvDevice()?3:7;for(let i=0;i<n;i++){const f=(g.elapsed*3.7+i/n)%1,side=i%2?1:-1,d=f*(.25+sp*.08);fill(240,252,255,(1-f)*170);ellipse((p.x-ux*d-uy*side*(.15+f*.25))*c,(p.y-uy*d+ux*side*(.15+f*.25))*c,c*.06*(1-f*.5),c*.06*(1-f*.5));}}
+ // A hard knock off a wall on the ice: a brief white flash where she hit.
+ if(g.iceBumpAt!==undefined&&g.elapsed-g.iceBumpAt<.25){const a=1-(g.elapsed-g.iceBumpAt)/.25;noFill();stroke(250,255,255,200*a);strokeWeight(c*.05);ellipse(g.player.x*c,g.player.y*c,c*(.7+.6*(1-a)),c*(.7+.6*(1-a)));}}
+// Campaign levels with ice (Frost Hollow) use the same sheet and effects, without the winter snow.
+let campaignIceCache=null;
+function drawCampaignIce(g,c){
+ let k=campaignIceCache;if(!k||k.game!==g||k.cell!==c){k?.image.remove?.();const d=createGraphics(Math.ceil(g.width*c),Math.ceil(g.height*c));d.pixelDensity(1);d.clear();paintWinterIce(d,g,c);campaignIceCache=k={game:g,cell:c,image:d};}
+ image(k.image,0,0);for(const [x,y]of g.level.slippery||[])if(g.grid[y][x]==='c'){noStroke();fill(155,205,222);rect(x*c,y*c,c,c);}
+ const moving=winterMoving();drawWinterIceLive(g,c,moving?g.elapsed:0,moving);
 }
 let winterMotionQuery;
 function winterMoving(){winterMotionQuery??=window.matchMedia?.('(prefers-reduced-motion: reduce)')||{matches:false};return escapeLightingFull()&&!winterMotionQuery.matches;}
@@ -37,11 +91,7 @@ function drawWinterScenery(g,c){
  let cached=seasonSceneryCache;if(!cached||cached.game!==g||cached.cell!==c){cached?.image.remove?.();const d=createGraphics(Math.ceil(g.width*c),Math.ceil(g.height*c));d.pixelDensity(1);d.clear();
   // The ice is one glassy sheet: deep blue with a frosted rim where it meets snow, and scratches and
   // frozen bubbles scattered by hash (not per tile) so no grid shows through.
-  const ice=new Set((g.level.slippery||[]).map(k=>k.join(','))),h=(x,y,s)=>{const v=Math.sin(x*127.1+y*311.7+s*74.7)*43758.5453;return v-Math.floor(v);};
-  for(const [x,y]of g.level.slippery||[])if(g.floor(x,y)&&g.grid[y][x]!=='c'){d.noStroke();d.fill(118,178,204,225);d.rect(x*c,y*c,c+.5,c+.5);d.fill(150,204,224,90);d.ellipse((x+h(x,y,1))*c,(y+h(x,y,2))*c,c*1.4,c*.9);
-   for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])if(!ice.has((x+dx)+','+(y+dy))){d.fill(226,242,246,120);d.rect((x+(dx>0?.86:0))*c,(y+(dy>0?.86:0))*c,dx?c*.14:c+.5,dy?c*.14:c+.5);}}
-  for(const [x,y]of g.level.slippery||[])if(g.floor(x,y)&&g.grid[y][x]!=='c'){if(h(x,y,3)<.55){const a=h(x,y,4)*Math.PI,l=.3+h(x,y,5)*.7,sx=x+h(x,y,6),sy=y+h(x,y,7);d.stroke(238,250,252,90);d.strokeWeight(c*.016);d.line(sx*c,sy*c,(sx+Math.cos(a)*l)*c,(sy+Math.sin(a)*l)*c);if(h(x,y,8)<.4)d.line((sx+Math.cos(a)*l*.5)*c,(sy+Math.sin(a)*l*.5)*c,(sx+Math.cos(a)*l*.5+Math.cos(a+.7)*.25)*c,(sy+Math.sin(a)*l*.5+Math.sin(a+.7)*.25)*c);}
-   if(h(x,y,9)<.3){d.noStroke();d.fill(236,248,252,110);for(let i=0;i<3;i++)d.ellipse((x+h(x,y,10+i))*c,(y+h(x,y,20+i))*c,c*.05,c*.05);}}
+  const ice=new Set((g.level.slippery||[]).map(k=>k.join(','))),h=winterHash;paintWinterIce(d,g,c);
   // Snow heaped against the foot of every wall (and a little on the sides), painted once.
   const wall=(x,y)=>g.grid[y]?.[x]==='#';d.noStroke();
   for(let y=1;y<g.height-1;y++)for(let x=1;x<g.width-1;x++){if(!g.floor(x,y)||ice.has(x+','+y))continue;const r=h(x,y,30);
@@ -54,9 +104,7 @@ function drawWinterScenery(g,c){
  for(const [x,y]of g.level.slippery||[])if(g.grid[y][x]==='c'){noStroke();fill(155,205,222);rect(x*c,y*c,c,c);stroke(246,252,250);strokeWeight(c*.025);line(x*c,(y+.7)*c,(x+.7)*c,(y+.2)*c);}
  for(const flow of g.currents.filter(c=>c.surface==='ground'))drawWinterFlow(flow,c);
  const moving=winterMoving(),t=moving?g.elapsed:0;
- // A slow glint travels across the ice, and Sally shows a faint reflection while she is on it.
- if(moving&&g.slippery.size){noStroke();for(const k of g.slippery){const [x,y]=k.split(',').map(Number),s=((x+y-t*1.3)%16+16)%16;if(s>1.6)continue;fill(255,255,255,46*(1-Math.abs(s-.8)/.8));quad((x+s*.3)*c,y*c,(x+s*.3+.35)*c,y*c,(x+s*.3-.05)*c,(y+1)*c,(x+s*.3-.4)*c,(y+1)*c);}}
- if(g.slippery.has(g.tileKey(g.player))){noStroke();fill(214,240,250,70);ellipse(g.player.x*c,(g.player.y+.32)*c,c*.7,c*.26);}
+ drawWinterIceLive(g,c,t,moving);
  // Snowfall in two layers: many small far flakes drifting slowly, a few big near ones falling faster,
  // all swaying in slow gusts (fewer flakes on TV boxes). Glints wink on the snow now and then.
  if(moving){const tv=typeof isTvDevice==='function'&&isTvDevice(),gust=Math.sin(t*.23)*.5+Math.sin(t*.61)*.25;noStroke();
@@ -64,11 +112,6 @@ function drawWinterScenery(g,c){
   for(let i=0,n=tv?6:14;i<n;i++){const x=((i*7.31+t*(.22+gust*.25)+Math.sin(t*1.3+i*2)*.45)%g.width+g.width)%g.width,y=((i*4.91+t*.85)%g.height);fill(255,255,255,190);ellipse(x*c,y*c,c*.075,c*.075);}
   if(!tv)for(let i=0;i<8;i++){const k=Math.floor(t*.7+i*13.7),x=(k*7919)%g.width,y=(k*104729)%g.height,a=Math.max(0,Math.sin((t*.7+i*13.7)%1*Math.PI));if(!g.floor(x,y))continue;fill(255,255,255,200*a);const gx=(x+.3+(k%5)*.1)*c,gy=(y+.3+(k%3)*.15)*c;ellipse(gx,gy,c*.05*a,c*.05*a);stroke(255,255,255,140*a);strokeWeight(c*.012);line(gx-c*.08*a,gy,gx+c*.08*a,gy);line(gx,gy-c*.08*a,gx,gy+c*.08*a);noStroke();}}
  if(g.level.millWheel){push();translate((g.level.millWheel[0]+.5)*c,(g.level.millWheel[1]+.5)*c);rotate(t*.22);noFill();stroke(133,115,83);strokeWeight(c*.12);ellipse(0,0,c*1.65,c*1.65);for(let i=0;i<8;i++){const a=i*Math.PI/4;line(0,0,Math.cos(a)*c*.82,Math.sin(a)*c*.82);}pop();}
- if(g.player.sliding){const p=g.player,v=g.slideVelocity,sp=Math.hypot(v.x,v.y),ux=v.x/(sp||1),uy=v.y/(sp||1);noFill();stroke(237,252,251,110);strokeWeight(c*.025);for(const k of[-.14,.14])line((p.x-uy*k-v.x*.28)*c,(p.y+ux*k-v.y*.28)*c,(p.x-uy*k)*c,(p.y+ux*k)*c);
-  // Ice spray kicks up from the claws, more the faster she goes (fewer flecks on TV boxes).
-  noStroke();const n=typeof isTvDevice==='function'&&isTvDevice()?3:7;for(let i=0;i<n;i++){const f=(g.elapsed*3.7+i/n)%1,side=i%2?1:-1,d=f*(.25+sp*.08);fill(240,252,255,(1-f)*170);ellipse((p.x-ux*d-uy*side*(.15+f*.25))*c,(p.y-uy*d+ux*side*(.15+f*.25))*c,c*.06*(1-f*.5),c*.06*(1-f*.5));}}
- // A hard knock off a wall on the ice: a brief white flash where she hit.
- if(g.iceBumpAt!==undefined&&g.elapsed-g.iceBumpAt<.25){const a=1-(g.elapsed-g.iceBumpAt)/.25;noFill();stroke(250,255,255,200*a);strokeWeight(c*.05);ellipse(g.player.x*c,g.player.y*c,c*(.7+.6*(1-a)),c*(.7+.6*(1-a)));}
 }
 function drawWinterSnowball(log,c,g){
  stroke(161,214,235,log.warning?170+70*Math.sin(g.elapsed*12):55);strokeWeight(c*.045);drawingContext.setLineDash([c*.13,c*.15]);line(log.from.x*c,log.from.y*c,log.to.x*c,log.to.y*c);drawingContext.setLineDash([]);if(!log.pos)return;push();translate(log.pos.x*c,log.pos.y*c);rotate(winterMoving()?g.elapsed*5:0);noStroke();fill(16,43,62,70);ellipse(c*.07,c*.12,c*1.1,c*.8);fill(199,224,233);ellipse(0,0,c,c);fill(245,250,244);ellipse(-c*.12,-c*.15,c*.69,c*.65);stroke(132,184,206,110);strokeWeight(c*.035);noFill();arc(0,0,c*.6,c*.55,.2,Math.PI*1.25);pop();

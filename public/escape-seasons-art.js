@@ -9,23 +9,32 @@ function drawSeasonGhost(h,c,g){if(['spring','summer'].includes(g.level.seasonal
  fill(45,68,88);ellipse(-.12,-.16,.075,warn?.16:.1);ellipse(.12,-.16,.075,warn?.16:.1);ellipse(0,.02,.08,warn?.13:.045);
  stroke(132,191,199);strokeWeight(.035);noFill();line(.26,0,.48,.08);arc(.49,.14,.19,.25,Math.PI,Math.PI*2);fill(warn?255:174,warn?200:230,236);rect(.39,.14,.21,.27,.04);line(.39,.15,.6,.15);pop();
 }
+// Whether a seasonal creature walked in the last moment (drawing only; it never touches the hunter).
+const seasonGait=new WeakMap();
+function seasonMoving(h,t){let s=seasonGait.get(h);const d=h.distanceMoved||0;if(!s){s={d,at:-9};seasonGait.set(h,s);}if(d!==s.d){s.d=d;s.at=t;}return t-s.at<.25;}
 function drawSeasonCreature(h,model,c,g){if((g.level.seasonal||g.level.costume)==='summer')return drawSummerCreature(h,model,c,g);if((g.level.seasonal||g.level.costume)==='spring')return drawSpringCreature(h,model,c,g);if((g.level.seasonal||g.level.costume)==='winter')return drawWinterCreature(h,model,c,g);
  if(!EscapeSeasons.creatures[h.kind]||h.kind==='owl')return false;
  if(h.kind==='snake'){drawSeasonBones(h,model,c,g.elapsed);return true;}
  push();translate(h.x*c,h.y*c);rotate(h.facing+Math.PI/2);scale(c);const t=g.elapsed,hot=['windup','reveal','crouch','charge','lunge','pounce'].includes(h.state),stride=Math.sin(h.distanceMoved*10);
- noStroke();fill(6,16,16,100);ellipse(0,.16,.85,.5);
+ noStroke();fill(6,16,16,100);ellipse(0,.04,.86,.7);
  if(h.kind==='beetle'){
-  // A little scarecrow gardener: two booted feet and jointed, rising arms make the charge readable.
-  stroke(63,64,62);strokeWeight(.13);line(-.14,.1,-.17,.4+stride*.04);line(.14,.1,.17,.4-stride*.04);noStroke();fill(58,42,34);ellipse(-.18,.42+stride*.04,.2,.13);ellipse(.18,.42-stride*.04,.2,.13);
-  fill(95,114,78);rect(-.24,-.2,.48,.43,.08);fill(122,68,61);rect(-.2,-.15,.15,.24,.02);stroke(154,177,120);strokeWeight(.095);
-  for(const side of[-1,1]){const yy=hot?-.45:-.03+stride*.04;line(side*.21,-.13,side*.39,yy);line(side*.39,yy,side*.24,hot?-.65:yy-.12);}noStroke();fill(hot?191:162,hot?198:180,119);rect(-.2,-.55,.4,.35,.09);fill(64,48,43);rect(-.31,-.57,.62,.075,.02);rect(-.19,-.72,.38,.17,.03);fill(242,216,124);ellipse(-.075,-.39,.065,.08);ellipse(.085,-.39,.065,.08);stroke(83,100,62);strokeWeight(.02);line(-.06,-.27,.1,-.3);
+  // The zombie gardener seen from above. Walking, both arms reach out in front; standing, it sways and nearly topples, then catches itself.
+  const walk=seasonMoving(h,t),f=walk?stride*.16:0,lurch=walk?0:Math.pow(Math.max(0,Math.sin(t*.55+h.y*1.7)),6),lx=walk?0:Math.sin(t*1.3+h.x)*.07,ly=walk?-.03:-lurch*.2-Math.abs(lx)*.3,skin=hot?[191,198,119]:[162,180,119];
+  fill(58,42,34);ellipse(-.14,f,.15,.24);ellipse(.14,-f,.15,.24);translate(lx,ly);
+  for(const s of[-1,1]){let hx,hy;if(walk||hot){const wob=Math.sin(t*(hot?20:6)+s)*.03;hx=s*(hot?.27:.17)+wob;hy=hot?-.64:-.52;}else{hx=s*.36+Math.sin(t*1.3+h.x+s)*.05;hy=.23;}stroke(95,114,78);strokeWeight(.12);line(s*.25,-.01,(s*.25+hx)/2,(hy-.01)/2);stroke(...skin);strokeWeight(.09);line((s*.25+hx)/2,(hy-.01)/2,hx,hy);noStroke();fill(...skin);ellipse(hx,hy-.02,.13,.12);}
+  noStroke();fill(76,92,62);ellipse(0,.04,.72,.42);fill(95,114,78);ellipse(0,.03,.64,.34);fill(122,68,61);rect(.12,-.02,.13,.12,.02);fill(76,92,62);ellipse(-.2,.08,.1,.06);
+  translate(lx*.8,ly*.6);fill(...skin);ellipse(0,-.1,.34,.32);fill(hot?232:242,hot?60:216,hot?52:124);ellipse(-.07,-.25,.065,.055);ellipse(.07,-.25,.065,.055);
+  fill(202,170,96);ellipse(0,-.02,.4,.34);stroke(232,204,128);strokeWeight(.02);for(let i=0;i<7;i++){const a=i*.9+.4;line(Math.cos(a)*.17,-.02+Math.sin(a)*.15,Math.cos(a)*.24,-.02+Math.sin(a)*.2);}noStroke();fill(176,140,72);ellipse(0,0,.22,.19);fill(122,68,61);rect(-.11,-.015,.22,.035);
  }else if(h.kind==='toad'){
   const pulse=hot?1+Math.sin(t*15)*.08:1;scale(pulse);stroke(100,137,65);strokeWeight(.05);noFill();for(const s of[-1,1])bezier(0,.1,s*.55,.5,s*.7,-.1,s*.39,-.13);noStroke();fill(184,83,34);ellipse(0,0,.83,.68);fill(216,111,35);ellipse(0,0,.6,.69);fill(233,140,45);ellipse(0,0,.3,.67);stroke(94,130,63);strokeWeight(.07);line(0,-.3,.06,-.48);noStroke();fill(hot?255:248,hot?243:203,hot?177:104);triangle(-.28,-.06,-.12,-.19,-.07,.02);triangle(.28,-.06,.12,-.19,.07,.02);beginShape();vertex(-.23,.14);vertex(-.08,.19);vertex(0,.13);vertex(.08,.19);vertex(.23,.14);vertex(.1,.3);vertex(-.1,.3);endShape(CLOSE);
  }else if(h.kind==='mimic'){
+  // A treat basket seen from above: handle across the top, sweets inside, until the sweets part for eyes and teeth.
   const open=h.state!=='rooted',twitch=!open&&Math.sin(t*2+h.x)>.9?Math.sin(t*27)*.025:0;translate(twitch,0);
-  stroke(177,126,69);strokeWeight(.055);noFill();arc(0,-.22,.6,.65,Math.PI,Math.PI*2);noStroke();fill(106,67,40);rect(-.39,-.15,.78,.52,.1);stroke(178,119,67);strokeWeight(.025);for(let y=-.08;y<.36;y+=.1)line(-.34,y,.34,y);for(let x=-.25;x<.35;x+=.13)line(x,-.12,x,.33);
-  noStroke();fill(233,173,99);rect(-.42,open?-.48:-.23,.84,.12,.04);fill(99,152,99);ellipse(-.2,-.25,.14,.13);fill(184,111,147);ellipse(.18,-.26,.15,.14);fill(246,222,145);ellipse(0,-.26,.12,.12);
-  if(open||twitch){fill(255,223,147);ellipse(-.14,.01,.07,.07);ellipse(.14,.01,.07,.07);fill(39,31,42);rect(-.25,.1,.5,.14,.07);fill(253,236,186);for(let x=-.18;x<.2;x+=.12)triangle(x,.1,x+.07,.1,x+.03,.18);}
+  fill(106,67,40);ellipse(0,0,.82,.72);stroke(178,119,67);strokeWeight(.022);noFill();for(let i=0;i<14;i++){const a=i*Math.PI/7;line(Math.cos(a)*.3,Math.sin(a)*.25,Math.cos(a)*.4,Math.sin(a)*.35);}
+  noStroke();fill(open?39:84,open?31:52,open?42:32);ellipse(0,0,.64,.54);
+  if(open||twitch){fill(255,223,147);ellipse(-.13,-.1,.08,.08);ellipse(.13,-.1,.08,.08);fill(253,236,186);for(let a=-2.6;a<=-.5;a+=.35)triangle(Math.cos(a)*.3,Math.sin(a)*.25,Math.cos(a+.17)*.3,Math.sin(a+.17)*.25,Math.cos(a+.08)*.22,Math.sin(a+.08)*.18);for(const [x,y,col]of[[-.18,.12,[99,152,99]],[.16,.13,[184,111,147]],[0,.17,[246,222,145]]]){fill(...col);ellipse(x,y,.11,.1);}}
+  else for(const [x,y,col]of[[-.17,-.06,[99,152,99]],[.15,-.08,[184,111,147]],[0,.04,[246,222,145]],[-.08,.15,[226,120,70]],[.13,.12,[140,96,180]]]){fill(...col);ellipse(x,y,.15,.14);}
+  stroke(177,126,69);strokeWeight(.06);line(-.4,0,.4,0);noStroke();
  }else if(h.kind==='fox'){
   // Roast turkey on a tiny platter: animated drumsticks, paper frills and a herb crest.
   const crouch=h.state==='crouch',lift=crouch?.1:Math.abs(stride)*.025;translate(0,lift);fill(154,165,161);ellipse(0,.07,1.02,.75);fill(205,216,199);ellipse(0,.02,.88,.63);fill(hot?193:169,hot?106:84,47);ellipse(0,-.06,.65,.67);fill(206,129,64);ellipse(-.07,-.13,.38,.45);
@@ -39,7 +48,7 @@ function drawSeasonBones(h,model,c,t){if(!model?.joints)return;const j=model.joi
  const head=j[0];translate(head.x*c,head.y*c);rotate(model.headAngle);noStroke();fill(239,231,191);ellipse(c*.04,0,c*.47,c*.3);rect(c*.15,-c*.12,c*.2,c*.24,c*.04);fill(49,52,44);ellipse(c*.13,-c*.07,c*.1,c*.08);ellipse(c*.13,c*.07,c*.1,c*.08);fill(136,72,69);for(let i=0;i<3;i++)rect(c*(.22+i*.035),-c*.06,c*.013,c*.12);pop();
 }
 let seasonSceneryCache=null,seasonSceneryMotionQuery;
-function clearSeasonScenery(){if(typeof clearSpringScenery==='function')clearSpringScenery();if(typeof clearSummerScenery==='function')clearSummerScenery();seasonSceneryCache?.image.remove?.();seasonSceneryCache=null;}
+function clearSeasonScenery(){if(typeof clearSpringScenery==='function')clearSpringScenery();if(typeof clearSummerScenery==='function')clearSummerScenery();seasonSceneryCache?.image.remove?.();seasonSceneryCache=null;if(typeof campaignIceCache!=="undefined"&&campaignIceCache){campaignIceCache.image.remove?.();campaignIceCache=null;}}
 function drawSeasonScenery(g,c){if((g.level.seasonal||g.level.costume)==='summer')return drawSummerScenery(g,c);if((g.level.seasonal||g.level.costume)==='spring')return drawSpringScenery(g,c);if((g.level.seasonal||g.level.costume)==='winter')return drawWinterScenery(g,c);
  // Static decorations are painted once per run/cell size, never per tile per frame.
  let cached=seasonSceneryCache;if(!cached||cached.game!==g||cached.cell!==c){cached?.image.remove?.();const art=createGraphics(Math.ceil(g.width*c),Math.ceil(g.height*c));art.pixelDensity(1);art.clear();

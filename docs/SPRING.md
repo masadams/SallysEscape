@@ -48,8 +48,11 @@ drawings. Every tell, red-eye warning and collision shape is the campaign's own.
 
 On the seasonal world map (`paintSpringWorldDetails`, `drawSpringWorld`): little blossom trees and
 flower beds baked into the terrain; a central blossom tree that flowers one cluster per flower token
-home; eight flower lanterns round it, one lit per token; a waterwheel by the pond that turns once all
-eight are home; drifting petals (fewer on TV, none with reduced motion). **Clover**, a garden snail,
+home; eight flower lanterns round it, one lit per token; a mill pond with rounded banks and reeds, and a
+waterwheel on its south bank that turns once all eight are home. A **lily-pad trail** crosses the pond:
+Sally can walk it, each pad plips under her feet and rings spread round her. A greenhouse full of
+flowers stands in the north-east corner, two straw beehives (with drifting bees) in the north-west,
+and a white picket fence runs along the top. Drifting petals (fewer on TV, none with reduced motion). **Clover**, a garden snail,
 stands by the entrance. Locals are drawn only once their area is open.
 
 ## Builder

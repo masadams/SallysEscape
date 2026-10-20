@@ -30,7 +30,7 @@ test('the builder can place every extra the game has, and the game plays them',(
   B.setSettings(m,{hawk:{every:9,warn:2,first:12},storm:{every:9,warn:1.6,first:8},tide:{period:14,high:6,offset:0},tailDrop:true,timeLimit:90,camos:2,seeds:1,dark:true});
   B.toggleLink(m,'enter:'+area,snake.id);B.setMessage(m,'enter:'+area,'Something wakes.','Run.');
   assert.deepEqual(B.validate(m),[]);
-  const route=B.toRoute(m);for(const k of ['wind','caps','antTrails','seedCrossings','rootWheel','shade','glowPlants','regrowth','rivalries','hawk','storm','tide','timeLimit','camos','seeds','dark'])assert.ok(route[k]!==undefined,k);
+  const route=B.toRoute(m);for(const k of ['wind','caps','antTrails','seedCrossings','rootWheel','shade','glowPlants','regrowth','slippery','rivalries','hawk','storm','tide','timeLimit','camos','seeds','dark'])assert.ok(route[k]!==undefined,k);
   assert.equal(route.reactions[0].when,'enter');assert.equal(route.reactions[0].requiresKey,true);assert.deepEqual(route.reactions[0].spawn,[snake.id]);assert.equal(route.reactions[0].message,'Something wakes.');
   const again=B.sanitize(JSON.parse(JSON.stringify(m)));assert.deepEqual(B.toRoute(again),route,'saving and loading keeps every extra');
   const g=new EscapeAdventure({level:escapeBuildCustom(route)});for(let i=0;i<240;i++)g.advance(1/120,{});assert.ok(['playing','caught'].includes(g.status));
