@@ -8,12 +8,27 @@ Pip's Christmas tree has lost its star. Each escape lights an ornament on the vi
 | --- | --- | --- | --- |
 | 1 | The Snowy Welcome | Easy | Switch, return gate, small practice ice patch, Candy Cane Serpent |
 | 2 | The Skating Pond | Easy | Acceleration, braking, snowy islands, Grouchy Snowman |
-| 3 | Snowball Alley | Easy-medium | Rumble warning, rolling snowball lane, switch detour |
-| 4 | The Missing Presents | Easy-medium | Three workshop switches, Suspicious Present, Gift Snatcher, quiet movement |
-| 5 | The Frozen Mill | Easy-medium | Tongue-operated bridge, genuine open millrace, loft key, return bridge |
-| 6 | The Yeti's Pass | Medium | Warned charge, stone cover, icicle rhythm, mountain ice |
-| 7 | Bells in the Blizzard | Medium | Light-shy Krampus, Winter Wisp, warmth shelters, gusts, optional thin ice |
-| 8 | The Christmas Star | Medium | Nutcracker beam, remote switch, serpent slits, combined return route, Yeti side passage |
+| 3 | Snowball Alley | Easy–medium | Rumble warning, rolling snowball lane, switch detour |
+| 4 | The Missing Presents | Medium | Three workshop switches, Suspicious Present, Gift Snatcher, quiet movement |
+| 5 | The Frozen Mill | Medium | Tongue-operated bridge, genuine open millrace, loft key, return bridge |
+| 6 | The Yeti's Pass | Medium–hard | Warned charge, stone cover, icicle rhythm, mountain ice |
+| 7 | Bells in the Blizzard | Hard | Light-shy Krampus, Winter Wisp, warmth shelters, gusts, optional thin ice |
+| 8 | The Christmas Star | Hard | Nutcracker beam, remote switch, serpent slits, combined return route, Yeti side passage |
+
+## Difficulty
+
+The pack runs from easy to hard. Cunning is how sharp the creatures are (0 to 3): higher means they
+read where Sally is going, react sooner and search longer.
+
+| # | Cunning | What makes it harder |
+| --- | --- | --- |
+| 1–2 | 0 | — |
+| 3 | 1 | — |
+| 4 | 2 | A second Gift Snatcher in the workshop |
+| 5 | 2 | A Candy Cane Serpent in the mill yard |
+| 6 | 2 | A snowman in the far garden; the far gate wakes a serpent |
+| 7 | 3 | A serpent on the upper trail; the bells wake a Gift Snatcher; two snowballs |
+| 8 | 3 | The key wakes a serpent and a Gift Snatcher by the hatch; two snowballs |
 
 ## Ice and hazards
 

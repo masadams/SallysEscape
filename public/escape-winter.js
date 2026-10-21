@@ -1111,7 +1111,7 @@
       ]
     ],
     "brief": "Three workshop switches, a suspicious parcel and a thief with very good ears.",
-    "hint": "Blue, green, then red opens the delivery route. A twitching present deserves a snowball. Creep past the Gift Snatcher. The key opens the upper doors home.",
+    "hint": "Blue, green, then red opens the delivery route. A twitching present deserves a snowball. Two Gift Snatchers listen in the workshop: creep past them on quiet ground. The key opens the upper doors home.",
     "foxWarn": 1.05,
     "reactions": [
       {
@@ -1460,7 +1460,7 @@
       ]
     ],
     "brief": "Wake the mill bridges, cross the unfrozen channel and find the key in the loft.",
-    "hint": "Tongue the blue switch from the west bank. The loft switch is in the lower mill yard. Ice is slippery; the wooden bridge ends are good braking places.",
+    "hint": "Tongue the blue switch from the west bank. The loft switch is in the lower mill yard. Ice is slippery; the wooden bridge ends are good braking places. A Candy Cane Serpent patrols the yard by the race.",
     "millWheel": [
       14,
       7
@@ -1881,7 +1881,7 @@
       ]
     ],
     "brief": "A mountain gardener has become a very determined Yeti.",
-    "hint": "Blue opens the pass; green opens the far garden. The Yeti raises its arms before charging. Step behind the stone beds, then move while it recovers.",
+    "hint": "Blue opens the pass; green opens the far garden. The Yeti raises its arms before charging. Step behind the stone beds, then move while it recovers. A snowman guards the far garden, and the far gate wakes a serpent in the low garden.",
     "reactions": [
       {
         "id": "yeti-key",
@@ -2302,7 +2302,7 @@
     ],
     "glows": 2,
     "brief": "Follow the bells between warm shelters. Something in the snow dislikes your light.",
-    "hint": "Blue then violet opens the upper trail. Krampus waits among the lower drifts; a glow mushroom makes him shrink back. The wisp shows where it means to swoop.",
+    "hint": "Blue then violet opens the upper trail. Krampus waits among the lower drifts; a glow mushroom makes him shrink back. The wisp shows where it means to swoop. A serpent winds along the upper trail, and the bells wake a Gift Snatcher in the west yard.",
     "reactions": [
       {
         "id": "bell-key",
@@ -2868,7 +2868,7 @@
     "glows": 2,
     "seeds": 1,
     "brief": "Bring the last ornament home and wake the Christmas star.",
-    "hint": "Open the orchard and courtyard gates. The Nutcracker watches with a cold spotlight; use corners and leave its glint before it freezes you. The key opens the lower route home.",
+    "hint": "Open the orchard and courtyard gates. The Nutcracker watches with a cold spotlight; use corners and leave its glint before it freezes you. The key opens the lower route home, but it wakes a serpent in the low garden and a Gift Snatcher by the hatch: crawl the last stretch.",
     "reactions": [
       {
         "id": "star-key",
