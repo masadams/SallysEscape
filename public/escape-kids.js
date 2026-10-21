@@ -797,6 +797,839 @@
     "#...........#............##...........#",
     "#######################################"
   ]
+},
+// Part four: five braver adventures. Each is a step harder: more creatures, longer trails, a second area.
+{
+  "id": "seashell-beach",
+  "fieldNotes": [
+    {
+      "id": "seashell-beach-sign-1",
+      "at": [5,3],
+      "title": "Sandy feet",
+      "body": "Soft sand is slow to walk on. Snakes are slow on it too. Wait in the beach grass until the snake slides away."
+    },
+    {
+      "id": "seashell-beach-sign-2",
+      "at": [25,12],
+      "title": "Snakes cannot swim",
+      "body": "The lagoon is safe for Sally. Swim home, or follow the boardwalk. The crab only pinches near its rock pool."
+    }
+  ],
+  "name": "Seashell Beach",
+  "sticker": "🐚",
+  "adventure": true,
+  "kidsTheme": "coast",
+  "gentle": 0.64,
+  "brief": "A sunny beach day! Sally's key is in the sandcastle. A button by the lagoon opens its door.",
+  "hint": "Press the blue button by the water, then slip into the sandcastle. The key opens its back door. Swim home: snakes cannot swim! Treasure is just for fun.",
+  "pebbles": 3,
+  "spores": 2,
+  "checkpoints": [
+    [10,4],
+    [26,5],
+    [28,12]
+  ],
+  "caps": [
+    {
+      "at": [12,12],
+      "to": [16,14]
+    },
+    {
+      "at": [17,16],
+      "to": [20,12]
+    }
+  ],
+  "gates": [
+    {
+      "id": "beach-blue",
+      "name": "Sandcastle",
+      "color": [106,195,236],
+      "switch": [22,11],
+      "tiles": [
+        [24,4],
+        [24,5]
+      ]
+    },
+    {
+      "id": "beach-back",
+      "name": "Back door",
+      "color": [244,192,93],
+      "tiles": [
+        [29,11]
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "beach-key",
+      "when": "key",
+      "open": [
+        "beach-back"
+      ],
+      "message": "The sandcastle's back door opens onto the beach!",
+      "objective": "Swim or walk the boardwalk back to the green door."
+    }
+  ],
+  "guards": [
+    {
+      "spawn": [14,6],
+      "patrol": [
+        [10,6],
+        [23,6]
+      ],
+      "facing": 0
+    },
+    {
+      "spawn": [30,14],
+      "patrol": [
+        [26,14],
+        [32,14]
+      ],
+      "facing": 3.141592653589793
+    },
+    {
+      "kind": "crab",
+      "spawn": [32,16],
+      "axis": "y",
+      "range": 2,
+      "patrol": [
+        [32,16]
+      ],
+      "facing": 3.141592653589793
+    }
+  ],
+  "map": [
+    "###################################",
+    "#.......#..........1....###########",
+    "#.1.....#..............L#...#....##",
+    "#..............L........#.L.#..2.##",
+    "#...........ss..............#....##",
+    "#.........L.ss......L............##",
+    "#...L...#.......o.......#...#..K.##",
+    "#.......#..##....ss.....#...#....##",
+    "#.......#..##....ss.....#........##",
+    "#..ss...#.......##....L.#.L....L.##",
+    "#..ss...#.....L.##......#........##",
+    "#.......#.1.............#####.#####",
+    "#.......#.........................#",
+    "#.L.....#~~~~~~~~~~~~~~~~..L......#",
+    "#.......#~~~~~~...~~~~~~~.........#",
+    "#.......#~~~~~~.3.~~~~~~~.........#",
+    "#.......#~~~~~~...~~~~~~~..o......#",
+    "#..@....#~~~~~~~~~~~~~~~~.......2.#",
+    "#..X........L......L.sss..L.......#",
+    "#..............................L..#",
+    "###################################"
+  ]
+},
+{
+  "id": "snowy-hilltop",
+  "fieldNotes": [
+    {
+      "id": "snowy-hilltop-sign-1",
+      "at": [33,16],
+      "title": "Behind the snowy rocks",
+      "body": "The snake slides along the top of this slope. Walk along the bottom, behind the rocks, and wait in a bush when it comes back."
+    },
+    {
+      "id": "snowy-hilltop-sign-2",
+      "at": [9,12],
+      "title": "An icy gap",
+      "body": "The blue switch is across the icy gap. Stand here, face the switch and use Tongue to flick it."
+    }
+  ],
+  "name": "The Snowy Hilltop",
+  "sticker": "⛄",
+  "adventure": true,
+  "kidsTheme": "frost",
+  "gentle": 0.66,
+  "brief": "Snow on the hill! Sally's key is in the hut at the very top. Climb the slopes past a snake and a beetle.",
+  "hint": "Tongue the blue switch across the icy gap. Step out of the beetle's lane. The amber button opens the hut. The key opens a sled run home. Wheee!",
+  "tongues": 2,
+  "pebbles": 3,
+  "checkpoints": [
+    [33,17],
+    [4,13],
+    [27,8],
+    [25,5]
+  ],
+  "tunnels": [
+    [
+      [12,22],
+      [16,20]
+    ]
+  ],
+  "caps": [
+    {
+      "at": [35,1],
+      "to": [6,22]
+    }
+  ],
+  "gates": [
+    {
+      "id": "snow-blue",
+      "name": "Upper slope",
+      "color": [106,195,236],
+      "switch": [7,9],
+      "tiles": [
+        [1,11],
+        [2,11],
+        [3,11]
+      ]
+    },
+    {
+      "id": "snow-amber",
+      "name": "Hut door",
+      "color": [244,192,93],
+      "switch": [2,2],
+      "tiles": [
+        [17,3]
+      ]
+    },
+    {
+      "id": "snow-sled",
+      "name": "Sled run",
+      "color": [191,154,230],
+      "tiles": [
+        [34,1]
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "snow-key",
+      "when": "key",
+      "open": [
+        "snow-sled"
+      ],
+      "message": "The sled run is open! A quick way home.",
+      "objective": "Ride the sled run, or walk down, to the green door."
+    }
+  ],
+  "guards": [
+    {
+      "spawn": [18,13],
+      "patrol": [
+        [4,13],
+        [33,13]
+      ],
+      "facing": 3.141592653589793
+    },
+    {
+      "kind": "beetle",
+      "spawn": [17,10],
+      "facing": 0,
+      "patrol": [
+        [24,10],
+        [11,10]
+      ]
+    },
+    {
+      "spawn": [7,3],
+      "patrol": [
+        [7,1],
+        [7,5]
+      ],
+      "facing": -1.5707963267948966
+    }
+  ],
+  "map": [
+    "#####################################",
+    "#.........L..#...K..2#..............#",
+    "#............#.......#........L...###",
+    "#............####.####..............#",
+    "#..L................................#",
+    "#...........L.......................#",
+    "##########################...########",
+    "#....L.......L........L.......#...2.#",
+    "#.......##......##............#.....#",
+    "#.......##......##............S.....#",
+    "#......_............L.........#..1..#",
+    "#...###_#############################",
+    "#..................2................#",
+    "#.................................L.#",
+    "#.....###....###....###....###......#",
+    "#...L.###....###....###....###......#",
+    "#...................................#",
+    "#.........L......L......L......L....#",
+    "################################....#",
+    "#..........L...#####................#",
+    "#..............#.2.#.....L..........#",
+    "#..@..L........#####................#",
+    "#..X................................#",
+    "#.................1.................#",
+    "#####################################"
+  ]
+},
+{
+  "id": "glow-garden",
+  "fieldNotes": [
+    {
+      "id": "glow-garden-sign-1",
+      "at": [7,16],
+      "title": "A garden at night",
+      "body": "In the dark Sally only sees what is near. Glowing mushrooms light the way. Throw one to peek round a corner."
+    },
+    {
+      "id": "glow-garden-sign-2",
+      "at": [17,2],
+      "title": "The lily rock",
+      "body": "The amber switch sits on a rock in the pond. Face it from the bank and use Tongue, or swim out to it."
+    }
+  ],
+  "name": "The Glow-Worm Garden",
+  "sticker": "✨",
+  "adventure": true,
+  "kidsTheme": "lantern",
+  "gentle": 0.68,
+  "brief": "Night has fallen on the garden. Glowing mushrooms light the paths. Two switches open the way to the moon garden.",
+  "hint": "The blue switch is in the rose garden; the amber one is on a rock in the pond. Snakes see only nearby. Moths follow glowing footprints. The key opens the garden gate home.",
+  "pebbles": 3,
+  "tongues": 2,
+  "glows": 2,
+  "spores": 2,
+  "explore": true,
+  "dark": true,
+  "sightRadius": 5,
+  "glowPlants": [
+    [2,16],
+    [8,20],
+    [3,12],
+    [14,10],
+    [16,3],
+    [26,11],
+    [28,3],
+    [37,6],
+    [29,12],
+    [36,16],
+    [26,16],
+    [12,19]
+  ],
+  "checkpoints": [
+    [5,12],
+    [16,2],
+    [28,2],
+    [29,12],
+    [26,19]
+  ],
+  "gates": [
+    {
+      "id": "glow-blue",
+      "name": "Orchard",
+      "color": [106,195,236],
+      "switch": [13,1],
+      "tiles": [
+        [27,1],
+        [27,2]
+      ]
+    },
+    {
+      "id": "glow-amber",
+      "name": "Moon garden",
+      "color": [244,192,93],
+      "switch": [21,5],
+      "tiles": [
+        [28,10],
+        [29,10]
+      ]
+    },
+    {
+      "id": "glow-home",
+      "name": "Garden gate",
+      "color": [191,154,230],
+      "tiles": [
+        [10,18],
+        [10,19]
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "glow-key",
+      "when": "key",
+      "open": [
+        "glow-home"
+      ],
+      "message": "Click! The little garden gate opens. Home is close.",
+      "objective": "Follow the south garden back to the green door."
+    }
+  ],
+  "guards": [
+    {
+      "spawn": [4,9],
+      "patrol": [
+        [4,3],
+        [11,3],
+        [11,9],
+        [4,9]
+      ],
+      "facing": -1.5707963267948966
+    },
+    {
+      "spawn": [36,13],
+      "patrol": [
+        [36,20],
+        [36,12]
+      ],
+      "facing": 1.5707963267948966
+    },
+    {
+      "spawn": [33,5],
+      "patrol": [
+        [28,5],
+        [37,5]
+      ],
+      "facing": 3.141592653589793
+    },
+    {
+      "kind": "moth",
+      "spawn": [19,15],
+      "patrol": [
+        [13,15],
+        [25,15]
+      ],
+      "facing": 0
+    }
+  ],
+  "map": [
+    "#######################################",
+    "#1..........L.....L............o.....1#",
+    "#...................................L.#",
+    "#..............#..........L#..#....#..#",
+    "#....######....#.~~~~~~~~~.#..#....#..#",
+    "#....######....#.~~~~.~~~~.#.o........#",
+    "#.L..######....#.~~~~~~~~~.#..........#",
+    "#....######....#.~~~~~~~~~.#.......#..#",
+    "#....######....#.~~~~~~~~~.#...L......#",
+    "#............L.#.~~~~~~~~~.#..........#",
+    "#..............#.~~~~~~~~~.#..#########",
+    "#.1............#...........#..........#",
+    "#..L...........#....2..L...#..........#",
+    "####...#####################...L......#",
+    "####...#####################...##.....#",
+    "#.........#................#...##.....#",
+    "#.........#...LLLLLLLLLL...#..........#",
+    "#.........#............2...#......K...#",
+    "#...@.................................#",
+    "#...X...............................L.#",
+    "#......L..#.............L..#..........#",
+    "#.........#.1...L..........#.........2#",
+    "#######################################"
+  ]
+},
+{
+  "id": "ant-city",
+  "fieldNotes": [
+    {
+      "id": "ant-city-sign-1",
+      "at": [7,2],
+      "title": "Busy ants",
+      "body": "Ants march round and round the food store. They never stop to look. Wait for a gap between the groups, then cross."
+    },
+    {
+      "id": "ant-city-sign-2",
+      "at": [33,11],
+      "title": "A sticky gap",
+      "body": "The amber switch is across the sticky honey. Stand at the edge, face the switch and use Tongue. The queen's door opens."
+    }
+  ],
+  "name": "Busy Ant City",
+  "sticker": "🐜",
+  "adventure": true,
+  "kidsTheme": "ants",
+  "gentle": 0.7,
+  "brief": "Deep in the busy ant city, the queen is keeping Sally's key. Cross the marching ants and find the way to her chamber.",
+  "hint": "Cross the ant column in a gap. The blue button is in the food store; the amber switch is past the honey. The key opens a secret ant tunnel home.",
+  "pebbles": 3,
+  "tongues": 2,
+  "spores": 2,
+  "checkpoints": [
+    [11,3],
+    [19,6],
+    [30,10],
+    [33,8],
+    [37,6]
+  ],
+  "antTrails": [
+    {
+      "path": [
+        [12,5],
+        [27,5],
+        [27,17],
+        [12,17]
+      ],
+      "groups": 3,
+      "size": 3,
+      "speed": 1.2
+    }
+  ],
+  "tunnels": [
+    [
+      [32,1],
+      [6,5]
+    ]
+  ],
+  "gates": [
+    {
+      "id": "ant-blue",
+      "name": "Great hall",
+      "color": [106,195,236],
+      "switch": [22,9],
+      "tiles": [
+        [31,12],
+        [31,13]
+      ]
+    },
+    {
+      "id": "ant-amber",
+      "name": "Queen's door",
+      "color": [244,192,93],
+      "switch": [39,11],
+      "tiles": [
+        [35,5],
+        [36,5]
+      ]
+    },
+    {
+      "id": "ant-tunnel",
+      "name": "Secret tunnel",
+      "color": [191,154,230],
+      "tiles": [
+        [33,1]
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "ant-key",
+      "when": "key",
+      "open": [
+        "ant-tunnel"
+      ],
+      "message": "A secret ant tunnel opens in the corner! It leads home.",
+      "objective": "Hop into the ant tunnel, or walk back, to the green door."
+    }
+  ],
+  "guards": [
+    {
+      "kind": "beetle",
+      "spawn": [20,13],
+      "facing": 0,
+      "patrol": [
+        [23,13],
+        [16,13]
+      ]
+    },
+    {
+      "spawn": [20,19],
+      "patrol": [
+        [13,19],
+        [29,19]
+      ],
+      "facing": 3.141592653589793
+    },
+    {
+      "spawn": [34,17],
+      "patrol": [
+        [34,20],
+        [34,7]
+      ],
+      "facing": 1.5707963267948966
+    },
+    {
+      "kind": "ladybird",
+      "spawn": [26,2],
+      "facing": 0,
+      "patrol": [
+        [22,2],
+        [29,3]
+      ]
+    }
+  ],
+  "map": [
+    "#########################################",
+    "#........#...................2.#........#",
+    "#..............................##....K..#",
+    "#..@........L...L......L.......##.......#",
+    "#..X...........................##.1.....#",
+    "#........#.....................####..####",
+    "#.L......#.....................#........#",
+    "##########....#####..#####.....#.L......#",
+    "##########....#..........#.....#.......1#",
+    "##########....#.........L#..L..#........#",
+    "##########...o#..........#.....#.....####",
+    "##########....#...#..#...#.....#.....__.#",
+    "##########.L..#...#..#...#.......L...####",
+    "##########....#..........#o.............#",
+    "##########....#2........1#.....#........#",
+    "##########....############.....#........#",
+    "##########.....................#...##...#",
+    "##########.....................#...##...#",
+    "##########.....................#...##...#",
+    "##########......d.....d.....L..#......L.#",
+    "##########.....................#........#",
+    "##########1....................#.......2#",
+    "#########################################"
+  ]
+},
+{
+  "id": "treasure-island",
+  "name": "Treasure Island",
+  "sticker": "🏝️",
+  "adventure": true,
+  "kidsTheme": "beach",
+  "gentle": 0.72,
+  "brief": "The biggest adventure of all! Sally's key is hidden in a cove on Treasure Island. Hop across the lagoon, find the island button and the jungle switch, and bring the key home.",
+  "hint": "Bounce caps cross the lagoon (or swim it). The blue button on the island opens the jungle; the amber switch past the rock pool opens the key cove. The key opens a secret tunnel home.",
+  "pebbles": 3,
+  "tongues": 2,
+  "spores": 2,
+  "fieldNotes": [
+    {
+      "id": "treasure-island-sign-1",
+      "at": [
+        5,
+        4
+      ],
+      "title": "Over the lagoon",
+      "body": "Step on the bouncy cap and fly over the lagoon. You can swim it too. Another cap on the island brings you back."
+    },
+    {
+      "id": "treasure-island-sign-2",
+      "at": [
+        36,
+        18
+      ],
+      "title": "The rock pool",
+      "body": "The amber switch sits in a nook across the rock pool. Stand on this side, face it and use Tongue. The cove door opens."
+    }
+  ],
+  "checkpoints": [
+    [
+      6,
+      4
+    ],
+    [
+      15,
+      4
+    ],
+    [
+      21,
+      11
+    ],
+    [
+      33,
+      18
+    ],
+    [
+      40,
+      12
+    ]
+  ],
+  "caps": [
+    {
+      "at": [
+        7,
+        4
+      ],
+      "to": [
+        15,
+        4
+      ]
+    },
+    {
+      "at": [
+        14,
+        19
+      ],
+      "to": [
+        6,
+        19
+      ]
+    }
+  ],
+  "tunnels": [
+    [
+      [
+        41,
+        1
+      ],
+      [
+        5,
+        2
+      ]
+    ]
+  ],
+  "gates": [
+    {
+      "id": "island-blue",
+      "name": "Jungle gate",
+      "color": [
+        106,
+        195,
+        236
+      ],
+      "switch": [
+        17,
+        21
+      ],
+      "tiles": [
+        [
+          22,
+          11
+        ]
+      ]
+    },
+    {
+      "id": "island-amber",
+      "name": "Cove door",
+      "color": [
+        244,
+        192,
+        93
+      ],
+      "switch": [
+        38,
+        13
+      ],
+      "tiles": [
+        [
+          40,
+          11
+        ]
+      ]
+    },
+    {
+      "id": "island-tunnel",
+      "name": "Secret tunnel",
+      "color": [
+        191,
+        154,
+        230
+      ],
+      "tiles": [
+        [
+          40,
+          1
+        ],
+        [
+          41,
+          2
+        ]
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "island-key",
+      "when": "key",
+      "open": [
+        "island-tunnel"
+      ],
+      "message": "A secret tunnel opens in the corner of the cove! It leads all the way home.",
+      "objective": "Hop into the tunnel, or walk back, to the green door."
+    }
+  ],
+  "guards": [
+    {
+      "spawn": [18,9],
+      "facing": 1.5707963267948966,
+      "patrol": [[18,7],[18,14]]
+    },
+    {
+      "kind": "crab",
+      "spawn": [
+        18,
+        18
+      ],
+      "facing": 0,
+      "patrol": [
+        [
+          18,
+          18
+        ]
+      ],
+      "axis": "x",
+      "range": 3
+    },
+    {
+      "kind": "beetle",
+      "spawn": [
+        28,
+        12
+      ],
+      "facing": 0,
+      "patrol": [
+        [
+          24,
+          12
+        ],
+        [
+          32,
+          12
+        ]
+      ]
+    },
+    {
+      "kind": "ladybird",
+      "spawn": [
+        28,
+        2
+      ],
+      "facing": 0,
+      "patrol": [
+        [
+          25,
+          2
+        ],
+        [
+          31,
+          3
+        ]
+      ]
+    },
+    {
+      "kind": "toad",
+      "spawn": [
+        36,
+        6
+      ],
+      "facing": 1.5707963267948966,
+      "patrol": [
+        [
+          36,
+          6
+        ]
+      ]
+    }
+  ],
+  "map": [
+      "###########################################",
+      "#.......~~~~~~........#...........#.......#",
+      "#..@....~~~~~~.....2..#...........#.......#",
+      "#..X....~~~~~~....L...#...........#....K..#",
+      "#.......~~~~~~........#.....1.....#..##...#",
+      "#.......~~~~~~.###....#..L........#..##...#",
+      "####....~~~~~~........#...........#.......#",
+      "#.......~~~~~~.#......#...........#.......#",
+      "#.......~~~~~~.#......########.####.....L.#",
+      "#...L...~~~~~~.#......#L..........#.2.....#",
+      "#.......~~~~~~.#......#...........#.......#",
+      "#.......~~~~~~.#..###...........L.######.##",
+      "#.......~~~~~~.#L.....#.......o...#..###..#",
+      "#.......~~~~~~.#......#...........#..#.#..#",
+      "#.......~~~~~~.#......#...........#..~~~..#",
+      "#..L....~~~~~~.#...o..######.######..~~~..#",
+      "#.......~~~~~~.##.....#...........#.......#",
+      "#.......~~~~~~.##.....#...................#",
+      "#.......~~~~~~........#...................#",
+      "#.......~~~~~~........#...L...............#",
+      "#....L..~~~~~~......L.#...........#.L.....#",
+      "#.......~~~~~~........#.o.........#.......#",
+      "#.1.....~~~~~~.1......#.......2...#......1#",
+      "#.......~~~~~~........#...........#.......#",
+      "###########################################"
+  ]
 }
   ];
   root.EscapeKids=routes;

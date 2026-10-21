@@ -1,6 +1,6 @@
-# Little Explorers: six bigger adventures
+# Little Explorers: eleven bigger adventures
 
-The original twenty levels introduce individual tricks. Adventures 21–26 give children longer journeys with connected rooms, optional detours and a return home. Every level is available immediately. Each completion earns its own sticker, and the existing Next adventure button links all twenty-six.
+The original twenty levels introduce individual tricks. Adventures 21–26 give children longer journeys with connected rooms, optional detours and a return home. Adventures 27–31 are full games a step above those, for children who have finished the first six. Every level is available immediately. Each completion earns its own sticker, and the existing Next adventure button links all thirty-one.
 
 The goal is always the key and the green exit. Treasure is optional. Main routes never seal behind Sally, use a one-way crumbling crossing, require a treasure quota, or run against a clock. Hunters use cunning 0 and the existing 60% movement pace. A catch returns Sally to a checkpoint, with the existing protection period, keeping her key and collected treasure.
 
@@ -15,11 +15,23 @@ The goal is always the key and the green exit. Treasure is optional. Main routes
 | 25 | The Sleepy Steamworks | Blue opens the workshop; amber opens the key room. One slow vent has an always-available route around it. | A separate timed treasure door opens repeatedly from plates on both sides. Seeds can brace it. No enemy also covers the steam crossing. | 11,14; 20,12; 28,7 |
 | 26 | Sally's Way Home | Open the far wing from the garden, pass the courtyard, find the key and return through the newly opened pond gate. | Three separated encounters, a garden tunnel, bounce shortcuts and treasure that rewards using spore cover. The main route can avoid the toad's side of the far wing. | 14,3; 34,6; 23,18 |
 
+## A step harder: the full games
+
+These five have bigger maps with four or five checkpoints, two switches to find, more creatures at once and a secret way home that the key opens. Hunters still use cunning 0 but move a little faster in each one: 64% of the normal pace at Seashell Beach, rising to 72% at Treasure Island (the first six use 60%). A catch still only returns Sally to the last checkpoint, and she keeps her key and treasure. A test checks this order: all five must be quicker than the first six, and the last must be both the quickest and the largest.
+
+| No. | Adventure | Main journey | Optional exploration | Checkpoints |
+| --- | --- | --- | --- | --- |
+| 27 | Seashell Beach | Press the blue button by the lagoon, slip into the sandcastle for the key and swim home: snakes cannot swim. | Soft sand slows Sally and the two snakes, and beach grass hides her. A crab pinches only near its rock pool. | 10,4; 26,5; 28,12 |
+| 28 | The Snowy Hilltop | Climb past two snakes and a charging beetle, tongue the blue switch across an icy gap and press amber to open the hut at the top. The key opens a sled run home. | Treasure along the slopes and behind snowy rocks. | 33,17; 4,13; 27,8; 25,5 |
+| 29 | The Glow-Worm Garden | In a night garden, find the blue switch in the rose garden and tongue the amber one on a pond rock to reach the moon garden and the key. | Snakes see only nearby in the dark, and a moth follows glowing footprints. Glow mushrooms light corners. | 5,12; 16,2; 28,2; 29,12; 26,19 |
+| 30 | Busy Ant City | Cross the marching ant column in a gap, press blue in the food store and tongue amber across the honey to open the queen's chamber. The key opens a secret ant tunnel home. | Two snakes, a beetle and a ladybird patrol the tunnels and treasure. | 11,3; 19,6; 30,10; 33,8; 37,6 |
+| 31 | Treasure Island | The biggest map. Bounce (or swim) across the lagoon, press blue on the island to open the jungle and tongue amber over the rock pool to open the key cove. The key opens a tunnel home. | A snake, a crab, a beetle, a ladybird and a toad guard the jungle and the chests. | 6,4; 15,4; 21,11; 33,18; 40,12 |
+
 Coordinates above are zero-based text-map tiles. [The exact map atlas](LEVELS.svg) shows starts, keys, exits, creatures, doors, checkpoints, bounce flights and notes. It is a layout diagram, not a screenshot of the game. Regenerate it with `node scripts/kids-level-atlas.cjs`.
 
 ## Reading and guidance
 
-Each new adventure has two short, optional trail notes explaining nearby objects. Stand by a paper sign and press A, Enter or Space (or tap Read) to read it; signs no longer pop up on their own. The existing story-card controls work with keyboard, mouse, touch, controller and Android Back. All simulation, including timers and hunters, waits while the card is open. Close it, leave the spot, and return to reread it. [All twelve texts and placements](TRAIL-NOTES.md) are listed separately.
+Each new adventure has two short, optional trail notes explaining nearby objects. Stand by a paper sign and press A, Enter or Space (or tap Read) to read it; signs no longer pop up on their own. The existing story-card controls work with keyboard, mouse, touch, controller and Android Back. All simulation, including timers and hunters, waits while the card is open. Close it, leave the spot, and return to reread it. [All twenty-two texts and placements](TRAIL-NOTES.md) are listed separately.
 
 These notes do not join the campaign's collection of 42 story pages or change campaign unlocks. They are local reading spots rather than a second collection requirement. Opening hints remain available even when the guiding dots are off.
 
@@ -27,11 +39,11 @@ The picker has a per-player Guiding dots toggle. Dots remain on by default for b
 
 ## Supplies and recovery
 
-All twenty-six kids levels use the existing unlimited-supply mode. Only tools supplied by that level appear; their HUD shows endless supplies, and cooldowns and effect durations still apply. Wasting a tongue grab or burrow cannot make a lesson impossible. Ordinary campaign supplies are unchanged. Existing player names, stickers and level IDs remain intact; no save-era reset is added.
+All thirty-one kids levels use the existing unlimited-supply mode. Only tools supplied by that level appear; their HUD shows endless supplies, and cooldowns and effect durations still apply. Wasting a tongue grab or burrow cannot make a lesson impossible. Ordinary campaign supplies are unchanged. Existing player names, stickers and level IDs remain intact; no save-era reset is added.
 
 ## Reproducible verification
 
-`tests/fixtures/escape-kids-adventures.json` contains twelve legal input recordings: a main escape and an all-treasure tour for each adventure. `tests/escape-kids-adventures.cjs` replays them against fresh instances of the real engine, with every authored creature, trap and timer active. All twelve finish without an Oops. Tests also check changed starting phases for the main runs, two-frame simulation batches, fifteen-second start safety, repeatable treasure plates, endless supplies with cooldowns, recovery after the key, and guide actions.
+`tests/fixtures/escape-kids-adventures.json` contains twenty-two legal input recordings: a main escape and an all-treasure tour for each adventure. `tests/escape-kids-adventures.cjs` replays them against fresh instances of the real engine, with every authored creature, trap and timer active. All twenty-two finish without an Oops. Tests also check changed starting phases for the main runs, two-frame simulation batches, fifteen-second start safety, repeatable treasure plates, endless supplies with cooldowns, recovery after the key, and guide actions.
 
 The UI checks cover the twenty-to-twenty-one transition, the final sticker screen, preservation of earlier stickers, per-player guidance preference, desktop/touch rendering, endless-tool HUD and reading-card pause/resume. Level data checks include rectangular maps, valid checkpoint/patrol/note tiles, optional treasure totals and short note text.
 
@@ -41,7 +53,7 @@ node scripts/record-kids-adventures.cjs
 node scripts/record-kids-adventures.cjs --write
 ```
 
-The recorder uses authored waypoints and the engine's walking route, producing ordinary analogue movement and tool inputs. It never disables a creature, edits the player position or grants a key. Tests replay saved inputs independently; they do not call the recorder. Practised main runs take about 26–52 seconds, treasure tours about 43–78 seconds. These are reproducible witnesses, not estimates of children's play time or success rates.
+The recorder uses authored waypoints and the engine's walking route, producing ordinary analogue movement and tool inputs. It never disables a creature, edits the player position or grants a key. Tests replay saved inputs independently; they do not call the recorder. Practised main runs take about 26–82 seconds, treasure tours about 43–137 seconds. These are reproducible witnesses, not estimates of children's play time or success rates.
 
 ## Review with children
 

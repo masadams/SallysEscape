@@ -15,9 +15,9 @@ function replay(record,delay=0,batch=1){
   return {g,events};
 }
 
-test('six adventures follow the original twenty, with ten optional treasure and reversible main routes',()=>{
-  assert.deepEqual(EscapeCatalog.kids.slice(20).map(l=>l.id),['garden-gate','beetle-courtyard','lily-pond','lantern-house','sleepy-steamworks','sallys-way-home']);
-  assert.equal(adventures.length,6);assert.equal(recordings.length,12);
+test('eleven adventures follow the original twenty, with ten optional treasure and reversible main routes',()=>{
+  assert.deepEqual(EscapeCatalog.kids.slice(20).map(l=>l.id),['garden-gate','beetle-courtyard','lily-pond','lantern-house','sleepy-steamworks','sallys-way-home','seashell-beach','snowy-hilltop','glow-garden','ant-city','treasure-island']);
+  assert.equal(adventures.length,11);assert.equal(recordings.length,22);
   for(const l of adventures){
     assert.equal(l.loot.reduce((n,p)=>n+p[2],0),10,l.id);assert.ok(!l.requiredTreasure&&!l.timeLimit,l.id);
     assert.ok(!l.reactions?.some(r=>r.close?.length||r.spawn?.length),'no surprise closures or reinforcements');
@@ -83,4 +83,11 @@ test('the lantern-house guide points to the remote switch before it points into 
 test('the steamworks treasure door can be reopened from either side after its timer expires',()=>{
   const g=new EscapeAdventure({kidsId:'sleepy-steamworks'}),gate=g.gates.find(g=>g.id==='works-treasure');
   for(const at of [[28,16],[32,16]]){g.player.x=at[0]+.5;g.player.y=at[1]+.5;run(g,.1);assert.equal(gate.open,true);g.player.y=14.5;run(g,9);assert.equal(gate.open,false);assert.equal(gate.sealed,false);}
+});
+
+test('the last five adventures are a step harder: bigger, busier and less forgiving, but still gentle',()=>{
+  const first=adventures.slice(0,6),last=adventures.slice(6),hunters=l=>(l.guards||[]).length+(l.antTrails||[]).length;
+  assert.ok(last.every(l=>hunters(l)>=3),'at least three creatures or a column');assert.ok(last.every(l=>l.gentle>Math.max(...first.map(f=>f.gentle))),'creatures move a little quicker');assert.equal(Math.max(...last.map(l=>l.gentle)),last.at(-1).gentle,'the finale is the quickest');
+  assert.ok(last.every(l=>l.checkpoints.length>=3),'checkpoints before each tricky part');assert.ok(Math.max(...last.map(l=>l.width*l.height))>Math.max(...first.map(l=>l.width*l.height)),'the finale is the biggest');
+  assert.equal(last.at(-1).id,'treasure-island');
 });

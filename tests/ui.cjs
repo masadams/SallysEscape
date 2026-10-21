@@ -64,11 +64,11 @@ function harness() {
   return {c:context,run,el:element,events,storage,setTime:value=>now=value,tick:fps=>{c.deltaTime=1000/fps;now+=c.deltaTime;c.frameCount++}};
 }
 
-test('Little Explorers groups all 26 levels, preserves old stickers and remembers the guide choice per player',()=>{
+test('Little Explorers groups all 31 levels, preserves old stickers and remembers the guide choice per player',()=>{
  const h=harness(),panel=h.el('escape-builder');panel.querySelectorAll=()=>[];panel.querySelector=()=>({focus(){}});
  h.run('escapeKidsMark("hello-sally");openLittleExplorers();');
- assert.equal((panel.innerHTML.match(/class="kids-stone(?: |")/g)||[]).length,26);
- assert.match(panel.innerHTML,/Little discoveries/);assert.match(panel.innerHTML,/Bigger adventures/);assert.match(panel.innerHTML,/Stickers: 1 of 26/);
+ assert.equal((panel.innerHTML.match(/class="kids-stone(?: |")/g)||[]).length,31);
+ assert.match(panel.innerHTML,/Little discoveries/);assert.match(panel.innerHTML,/Bigger adventures/);assert.match(panel.innerHTML,/Stickers: 1 of 31/);
  h.el('kids-guide-toggle').onclick();assert.equal(h.run('escapeKidsGuideOn()'),false);assert.equal(h.el('kids-guide-toggle').textContent,'Guiding dots: Off');
  h.run('globalThis.otherPlayer=EscapePlayers.create("Explorer Two");');
  assert.equal(h.run('EscapePlayers.storage(otherPlayer.id).getItem("sallys-escape-kids-guide")'),null);
@@ -80,8 +80,10 @@ test('the twentieth sticker leads into the adventures; the final one returns to 
  h.run('startEscape({kidsId:"great-explorer",skipIntro:true});escapeGame.finish("won","home");showEscapeResult();');
  assert.match(h.el('escape-next-btn').textContent,/Next adventure/);h.el('escape-next-btn').onclick();assert.equal(h.run('escapeGame.level.id'),'garden-gate');
  h.run('startEscape({kidsId:"sallys-way-home",skipIntro:true});escapeGame.finish("won","home");showEscapeResult();');
+ assert.match(h.el('escape-next-btn').textContent,/Next adventure/);h.el('escape-next-btn').onclick();assert.equal(h.run('escapeGame.level.id'),'seashell-beach','the bigger adventures carry on');
+ h.run('startEscape({kidsId:"treasure-island",skipIntro:true});escapeGame.finish("won","home");showEscapeResult();');
  assert.equal(h.el('escape-next-btn').textContent,'See your stickers');assert.equal(h.el('escape-menu-btn').textContent,'Little Explorers');
- assert.equal(h.run('escapeKidsDone().includes("sallys-way-home")'),true);assert.equal(h.run('Object.keys(escapeProgress.data.levels).length'),0);
+ assert.equal(h.run('escapeKidsDone().includes("sallys-way-home")'),true);assert.equal(h.run('escapeKidsDone().includes("treasure-island")'),true);assert.equal(h.run('Object.keys(escapeProgress.data.levels).length'),0);
 });
 
 test('every kids adventure renders on desktop and touch, and supplied tools show endless supplies',()=>{
