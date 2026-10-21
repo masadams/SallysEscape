@@ -82,6 +82,9 @@ Sally takes that. (Plates and levers work doors; only the key and chests wake en
   cover the key, the exit, a switch, plate or gate, water or a creature; one pushed into a gap drops in and
   makes a way across, and one pushed onto ice slides until something stops it. Winter levels draw them as
   snow blocks, autumn as hay bales.
+- **Bounce caps** (Extras: click the cap, then its landing) throw Sally along a marked arc. Select one to make it
+  **springy** (+1 to +3): a sprint onto it carries her that many tiles further along the same line, onto open
+  floor only; she lands with a little skid, and landing on another cap bounces her straight on.
 - **Ice** (Layers) is the same glide ice as the game's: Sally keeps her speed, overshoots, coasts and
   crashes into walls, and only Crawl brakes. Only the marked tiles are slippery.
 - **❄ Cold** ground chills Sally; a **◍ Warm stone** thaws her.
