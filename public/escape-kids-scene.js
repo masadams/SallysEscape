@@ -63,17 +63,24 @@ function drawEscapeKidsGuide(g,cell){
 }
 
 // Trail notes are optional reading spots, independent of the campaign's collectable story pages.
-// Step on a note to read it. The existing story card supports mouse, touch, A/B and Android Back.
-const escapeKidsSignVisits=new WeakMap();
+// Standing by a note shows a small "Read" prompt; A, Enter, Space or the touch Read button opens it.
+// The existing story card supports mouse, touch, A/B and Android Back.
+let escapeNearSign=null;
 function tickEscapeKidsSign(g){
-  if(!(g?.level.kids||g?.level.seasonal)||g.status!=='playing'||paused||escapeIntroOpen||escapeStoryOpen||g.player.flight||g.player.underground)return;
-  const notes=g.level.fieldNotes||[],near=notes.find(n=>Math.hypot(g.player.x-n.at[0]-.5,g.player.y-n.at[1]-.5)<.65);
-  const last=escapeKidsSignVisits.get(g);if(!near){if(last&&!notes.some(n=>n.id===last&&Math.hypot(g.player.x-n.at[0]-.5,g.player.y-n.at[1]-.5)<1.5))escapeKidsSignVisits.delete(g);return;}
-  if(last===near.id)return;escapeKidsSignVisits.set(g,near.id);clearTouchInput();suppressHeldKeys();g.paused=true;
+  const ok=(g?.level.kids||g?.level.seasonal)&&g.status==='playing'&&!g.player.flight&&!g.player.underground;
+  const near=ok?(g.level.fieldNotes||[]).find(n=>Math.hypot(g.player.x-n.at[0]-.5,g.player.y-n.at[1]-.5)<.8)||null:null;
+  if(near!==escapeNearSign){escapeNearSign=near;if(typeof renderEscapeHUD==='function')renderEscapeHUD(true);}
+}
+function readEscapeNearSign(){
+  const g=escapeGame,near=escapeNearSign;if(!g||!near||gameState!=='escape'||paused||escapeIntroOpen||escapeStoryOpen)return false;
+  clearTouchInput();suppressHeldKeys();g.paused=true;
   showEscapeStory({id:near.id,card:{id:near.id,kind:g.level.seasonal?'season-sign':'kids-sign',theme:g.level.seasonalTheme||g.level.kidsTheme,title:near.title,body:[near.body]}},false,()=>{clearTouchInput();suppressHeldKeys();g.paused=paused;skipSimulationFrame=true;});
+  return true;
 }
 function drawEscapeKidsSigns(g,cell){
   for(const n of g.level.fieldNotes||[]){const [x,y]=n.at;if(!g.visibleTile(x,y))continue;push();translate((x+.5)*cell,(y+.5)*cell);noStroke();
     fill(82,60,35);rect(-cell*.04,0,cell*.08,cell*.38);fill(252,238,193);rect(-cell*.3,-cell*.25,cell*.6,cell*.4,cell*.04);
-    stroke(111,87,48);strokeWeight(cell*.03);line(-cell*.19,-cell*.12,cell*.19,-cell*.12);line(-cell*.19,-cell*.02,cell*.1,-cell*.02);pop();}
+    stroke(111,87,48);strokeWeight(cell*.03);line(-cell*.19,-cell*.12,cell*.19,-cell*.12);line(-cell*.19,-cell*.02,cell*.1,-cell*.02);
+    if(n===escapeNearSign){const label=(typeof escapeInputMode==='function'&&escapeInputMode()==='pad'?'A':typeof escapeInputMode==='function'&&escapeInputMode()==='touch'?'Tap Read':'Enter')+' · Read';noStroke();textAlign(CENTER,CENTER);textSize(Math.max(11,cell*.24));const w=textWidth(label)+cell*.3;fill(30,36,32,215);rect(-w/2,-cell*.92,w,cell*.38,cell*.12);fill(255,240,200);text(label,0,-cell*.73);}
+    pop();}
 }

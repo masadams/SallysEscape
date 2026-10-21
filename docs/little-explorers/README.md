@@ -19,7 +19,7 @@ Coordinates above are zero-based text-map tiles. [The exact map atlas](LEVELS.sv
 
 ## Reading and guidance
 
-Each new adventure has two short, optional trail notes explaining nearby objects. Step onto a paper sign to read it. The existing story-card controls work with keyboard, mouse, touch, controller and Android Back. All simulation, including timers and hunters, waits while the card is open. Close it, leave the spot, and return to reread it. [All twelve texts and placements](TRAIL-NOTES.md) are listed separately.
+Each new adventure has two short, optional trail notes explaining nearby objects. Stand by a paper sign and press A, Enter or Space (or tap Read) to read it; signs no longer pop up on their own. The existing story-card controls work with keyboard, mouse, touch, controller and Android Back. All simulation, including timers and hunters, waits while the card is open. Close it, leave the spot, and return to reread it. [All twelve texts and placements](TRAIL-NOTES.md) are listed separately.
 
 These notes do not join the campaign's collection of 42 story pages or change campaign unlocks. They are local reading spots rather than a second collection requirement. Opening hints remain available even when the guiding dots are off.
 

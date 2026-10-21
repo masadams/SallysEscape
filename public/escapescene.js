@@ -256,7 +256,7 @@ function drawEscapeHawk(k,cell,clock){
     const a=clock*2.2,bx=x+Math.cos(a)*cell*(2.2-1.8*t),by=y-cell*(2.2-1.8*t)+Math.sin(a)*cell*.6;push();translate(bx,by);rotate(Math.cos(a)*.3);noStroke();fill(70,50,36,220);triangle(-cell*.6,0,0,-cell*.12,0,cell*.12);triangle(cell*.6,0,0,-cell*.12,0,cell*.12);ellipse(0,0,cell*.24,cell*.5);pop();}
   if(k.lastStrike&&clock-k.lastStrike.at<.5){noFill();stroke(...(k.lastStrike.hit?[255,90,70]:[200,230,200]),255*(1-(clock-k.lastStrike.at)/.5));strokeWeight(cell*.08);ellipse(k.lastStrike.x*cell,k.lastStrike.y*cell,k.radius*cell*2*(1+(clock-k.lastStrike.at)),k.radius*cell*1.6*(1+(clock-k.lastStrike.at)));}
 }
-function useEscapeLook(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.lookBack();renderEscapeHUD(true);}}
+function useEscapeLook(){if(gameState==='escape'&&!paused&&escapeGame){if(typeof readEscapeNearSign==='function'&&readEscapeNearSign())return;escapeGame.lookBack();renderEscapeHUD(true);}}
 function useEscapeDig(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.digTunnel();renderEscapeHUD(true);}}
 function useEscapeSeed(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.plantSeed();renderEscapeHUD(true);}}
 function escapeKeyPressed(k=String(key).toLowerCase(),code=keyCode){
@@ -272,6 +272,7 @@ function escapeKeyPressed(k=String(key).toLowerCase(),code=keyCode){
   if(gameState==='escape'&&['-','_','=','+'].includes(k)){escapeZoom(k==='-'||k==='_'?-1:1);return;}
   if(gameState!=='escape'||paused)return;
   if(escapeIntroOpen){if(k==='h'&&revealEscapeHint())return;hideEscapeIntro();return;}
+  if((code===13||k==='enter')&&typeof readEscapeNearSign==='function'&&readEscapeNearSign())return;
   if(k==='x')useEscapeCamo();
   if(k==='e')useEscapeBurrow();
   if(k==='q')startEscapeCharge('pebble');
