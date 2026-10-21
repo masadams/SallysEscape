@@ -2,11 +2,12 @@
 (function(root){const routes=[
   {
     "id": "autumn-orchard",
+    "wind": [{"area": [1, 1, 5, 3], "dir": [1, 0], "period": 5, "on": 5, "offset": 0, "strength": 1.1}],
     "name": "The Orchard Gate",
     "difficulty": "Easy",
     "seasonalTheme": "autumn",
     "brief": "An orchard switch, a patrolling serpent and a little gate home.",
-    "hint": "The amber switch is in the north orchard. The key opens the lower return gate. Leaf pockets and corners break the serpent's sight.",
+    "hint": "The amber switch is in the north orchard. The key opens the lower return gate. Leaf pockets and corners break the serpent's sight. A steady breeze blows leaves east through the north-west room; a pebble thrown across it lands downwind.",
     "index": 0,
     "revision": 2,
     "cunning": 0,
