@@ -85,6 +85,9 @@
       this.carried=[];this.thefts=0;this.recoveries=0;this.stolen=0;
       // Frost Hollow: only marked rooms are cold; warm stones thaw Sally quickly.
       this.slippery=new Set((this.level.slippery||[]).map(p=>p.join(',')));
+      // Wet ground (rain-slick stone, wet boards, mossy banks) is a gentler slide than ice: Sally keeps some
+      // speed and turns wide, and a slope underneath carries her on down; Crawl grips.
+      this.wet=new Set((this.level.wet||[]).map(p=>p.join(',')));
       // Thin ice cracks under Sally (fastest when she stands or runs, barely when she crawls) and gives way to water.
       this.thinIce=new Map((this.level.thinIce||[]).filter(([x,y])=>this.floor(x,y)&&this.grid[y][x]!=='U').map(([x,y])=>[x+','+y,{x,y,crack:0,broken:false,warned:false}]));this.softSand=new Set((this.level.softSand||[]).map(p=>p.join(',')));this.slideVelocity={x:0,y:0};
       this.cold=new Set();for(const [x1,y1,x2,y2] of this.level.cold||[])for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)this.cold.add(x+','+y);
@@ -797,24 +800,27 @@
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
       if(this.cold.size)this.updateWarmth(dt);
       const crawl=Boolean(input.crawl&&!this.water(p)),sprint=!crawl&&Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',sand=!p.swimming&&this.softSand.has(this.tileKey(p)),speed=(sprint?4:crawl?1.25:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72*(1-.5*(p.sink||0)):sand?.7:1)*(this.water(p)?.55:1);
-      const onIce=this.slippery.has(this.tileKey(p)),special=p.flight||p.underground||p.dig||this.heldBy;
+      const onIce=this.slippery.has(this.tileKey(p)),onWet=!onIce&&this.wet.size>0&&this.wet.has(this.tileKey(p))&&!p.swimming,special=p.flight||p.underground||p.dig||this.heldBy;
       if(special){this.slideVelocity.x=0;this.slideVelocity.y=0;}
       // Stepping onto ice keeps the speed Sally arrived with; from there the glide builds past a
       // walk and steering is weak, so a run onto the ice feels like losing control, not stalling.
-      if(onIce&&!special&&!this.wasOnIce&&Math.hypot(this.slideVelocity.x,this.slideVelocity.y)<.05&&this.playerVelocity){this.slideVelocity.x=this.playerVelocity.x;this.slideVelocity.y=this.playerVelocity.y;}
-      this.wasOnIce=onIce&&!special;
-      const skating=!special&&(onIce||Math.hypot(this.slideVelocity.x,this.slideVelocity.y)>.018);
-      const travel=skating?Ice.steer(this.slideVelocity,{x:dx,y:dy},speed,dt,{ice:onIce,brake:crawl,glide:onIce}):{x:dx*speed*dt,y:dy*speed*dt};
+      if((onIce||onWet)&&!special&&!this.wasOnIce&&Math.hypot(this.slideVelocity.x,this.slideVelocity.y)<.05&&this.playerVelocity){this.slideVelocity.x=this.playerVelocity.x;this.slideVelocity.y=this.playerVelocity.y;}
+      this.wasOnIce=(onIce||onWet)&&!special;
+      const skating=!special&&(onIce||onWet||Math.hypot(this.slideVelocity.x,this.slideVelocity.y)>.018);
+      const travel=skating?Ice.steer(this.slideVelocity,{x:dx,y:dy},speed,dt,onWet?{ice:true,brake:crawl,grip:1.7,drag:crawl?9:2.4}:{ice:onIce,brake:crawl,glide:onIce}):{x:dx*speed*dt,y:dy*speed*dt};
       // On ice a wall knocks Sally back a little instead of stopping her dead.
       for(const axis of ['x','y']){const next={...p,[axis]:p[axis]+travel[axis]};if(this.fits(next)&&!(this.vents.length&&this.inJet(next)&&!this.inJet(p)))p[axis]=next[axis];else{if(this.crates.length&&!skating&&!crawl&&travel[axis])this.leanOnCrate(axis,Math.sign(travel[axis]),dt);const hit=this.slideVelocity[axis];this.slideVelocity[axis]=onIce?-hit*.35:0;if(onIce&&Math.abs(hit)>1.6){this.events.push('scrape');this.iceBumpAt=this.elapsed;}}}
       p.sliding=onIce&&Math.hypot(this.slideVelocity.x,this.slideVelocity.y)>.12;
-      if(!onIce&&Math.hypot(this.slideVelocity.x-dx*speed,this.slideVelocity.y-dy*speed)<.04){this.slideVelocity.x=0;this.slideVelocity.y=0;}
+      if(!onIce&&!onWet&&Math.hypot(this.slideVelocity.x-dx*speed,this.slideVelocity.y-dy*speed)<.04){this.slideVelocity.x=0;this.slideVelocity.y=0;}
       if(this.wind.length&&!p.flight){const gust=this.wind.find(w=>this.gustPhase(w).active&&w.keys.has(this.tileKey(p)));if(gust)for(const [axis,d] of [['x',gust.dir[0]],['y',gust.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*gust.strength*(crawl?.45:1)*dt};if(this.fits(next))p[axis]=next[axis];
         // A gust that shoves Sally against a ledge over a gap blows her off it.
         else if(this.grid[Math.floor(next.y+d*(axis==='y'?.3:0))]?.[Math.floor(next.x+d*(axis==='x'?.3:0))]==='P'&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(null)){this.finish('caught','A gust blew Sally off the ledge. Watch the streaks: when they thicken, get out of the lane or brace against a wall.');return;}}}
       if(this.currents.length&&!p.underground&&!p.flight){const c=Ice.currentAt(this.currents,p,this.water(p)),f=this.flow;
         // A ground slope carries Sally at a steady pace and lets go exactly at its end.
-        if(c?.surface==='ground'){f.x=0;f.y=0;for(const [axis,d] of [['x',c.dir[0]],['y',c.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*c.speed*dt};if(this.fits(next))p[axis]=next[axis];}}
+        if(c?.surface==='ground'){f.x=0;f.y=0;
+          // A wet slope is slick: it speeds Sally's slide up instead of carrying her at a steady pace, so she picks up speed and runs on past its foot.
+          if(this.wet.size&&this.wet.has(this.tileKey(p))&&!crawl){this.slideVelocity.x+=c.dir[0]*c.speed*4*dt;this.slideVelocity.y+=c.dir[1]*c.speed*4*dt;}
+          else for(const [axis,d] of [['x',c.dir[0]],['y',c.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*c.speed*dt};if(this.fits(next))p[axis]=next[axis];}}
         // Water has weight: a stream builds Sally up to its speed, and after she swims out of it she
         // drifts on a little before the still water lets go. Climbing onto land stops the drift.
         else{const s=c?this.flowSpeed(c):0,k=1-Math.exp(-(c?3:2.2)*dt);f.x+=((c?c.dir[0]*s:0)-f.x)*k;f.y+=((c?c.dir[1]*s:0)-f.y)*k;if(!c&&!this.water(p)){f.x=0;f.y=0;}
