@@ -66,6 +66,11 @@ Sally takes that. (Plates and levers work doors; only the key and chests wake en
 - Select a hazard to set **slow / medium / fast**, or **half a beat later** to stagger two of them.
 - A vent or log can also take a **Warning** time (how long it hisses or rumbles before it goes), and a log
   can be a **Rolling snowball**, as in the winter levels.
+- **Water currents** carry weight: a stream builds a swimmer up to its speed, lets her drift on after
+  she leaves it, and floats a thrown pebble away (whatever chases the splash follows it along the bank).
+  Select one to give it **surges every** N seconds: it runs at half again its strength, then eases to
+  half, and **offset** staggers two streams. Leaves and foam on the water show how hard it is running.
+  Ground slopes stay steady and stop Sally exactly at their end.
 - **Ice** (Layers) is the same glide ice as the game's: Sally keeps her speed, overshoots, coasts and
   crashes into walls, and only Crawl brakes. Only the marked tiles are slippery.
 - **❄ Cold** ground chills Sally; a **◍ Warm stone** thaws her.
