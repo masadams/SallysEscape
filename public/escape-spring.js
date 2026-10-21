@@ -177,8 +177,9 @@
  {
   id:'spring-wall',name:'The Gardener’s Shortcut',index:5,revision:1,difficulty:'Medium–hard',seasonalTheme:'spring-shed',cunning:2,
   pebbles:3,tongues:1,
+  wind:[{area:[1,1,13,3],dir:[1,0],period:5,on:2,offset:0,strength:1.2}],
   brief:'A stag beetle in an apron, a cracked shed wall, serpents in the shed and a back path home.',
-  hint:'Stand in front of the cracked wall where the beetle can see you down the long row. When it lowers its head, step aside: it charges through the wall. The shed switch opens the back path home, so the wall is never your only way out. A serpent sweeps the middle of the shed, and taking the key wakes a second one by the switch: cross behind the first to the leaf by the switch, hide, and go when the lower one heads away east.',
+  hint:'Stand in front of the cracked wall where the beetle can see you down the long row. When it lowers its head, step aside: it charges through the wall. The shed switch opens the back path home, so the wall is never your only way out. A serpent sweeps the middle of the shed, and taking the key wakes a second one by the switch: cross behind the first to the leaf by the switch, hide, and go when the lower one heads away east. A spring breeze gusts east along the top lawn; a pebble thrown across it lands downwind.',
   gates:[{id:'back-path',name:'back path',tiles:[[17,14]],switch:[17,12],color:[196,150,96]}],
   guards:[
    {kind:'beetle',spawn:[4,7],patrol:[[4,7],[10,7]],facing:0},

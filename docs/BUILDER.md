@@ -73,6 +73,10 @@ Sally takes that. (Plates and levers work doors; only the key and chests wake en
   Ground slopes stay steady and stop Sally exactly at their end.
 - **Mud** (tile) slows Sally. If she stands still in it for more than a second she starts to sink, and
   deep mud slows her even more until she walks out. Sprinting through it is fast but splashes loudly.
+- **Wind lanes** (Extras, two corners) gust on a rhythm: set the direction, **gust every**, **lasting**,
+  **delay** and **strength** (1 is a breeze, 2.3 the Storm Heights gale). A gust shoves Sally along the lane
+  (crawling braces her to about half), blows her off a ledge it pushes her against, carries a throw downwind
+  (the aim arc shows the bend) and drifts spore clouds.
 - **Ice** (Layers) is the same glide ice as the game's: Sally keeps her speed, overshoots, coasts and
   crashes into walls, and only Crawl brakes. Only the marked tiles are slippery.
 - **❄ Cold** ground chills Sally; a **◍ Warm stone** thaws her.
