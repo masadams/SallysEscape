@@ -11,8 +11,9 @@ learns she is one of the lost Wayfinders (the story is in `docs/STORY.md`).
 their own progress and settings), with Continue, Little Explorers, Players, Options and Extras
 (community levels and the level builder). On the world map Sally walks between areas, talks to villagers, finds caches,
 catches golden flies and enters escapes at their flags; the Journal holds the Story pages, the Great
-Map and the Bestiary. In an escape the toolbar is just ☰ Menu, Pause and Full screen; pausing opens
-Resume, Restart, Options, Map and Leave. Options holds sound, music and ambience volume, lighting,
+Map and the Bestiary. In an escape the only button on screen is Pause (Esc, or Start on a controller); pausing opens
+one centred panel, the same in every kind of escape: Resume, Map, Restart, Options and Leave (named
+for where it leads, such as Back to Sunshore Cove). Options holds sound, music and ambience volume, lighting,
 start cards and full screen.
 
 **Escapes.** Early escapes are one-touch; from Venom Depths (escape 24) Sally can drop her tail once
