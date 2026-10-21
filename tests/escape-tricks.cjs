@@ -22,8 +22,8 @@ test('a current carries a swimmer along it',()=>{
   const map=['############','#@~~~~~~~~K#','#.........X#','############'];
   const still=make(map),flow=make(map,{currents:[{area:[2,1,9,1],dir:[1,0],speed:1.2}]});
   for(const g of [still,flow]){g.player.x=2.5;run(g,{},1);}
-  assert.equal(still.player.x,2.5);assert.ok(flow.player.x>3.4,'carried '+flow.player.x);
-  const against=make(map,{currents:[{area:[2,1,9,1],dir:[-1,0],speed:1.6}]});against.player.x=4.5;run(against,{x:1,y:0},1);assert.ok(against.player.x<4.5,'too strong to swim against');
+  assert.equal(still.player.x,2.5);assert.ok(flow.player.x>3.2,'carried '+flow.player.x);
+  const against=make(map,{currents:[{area:[2,1,9,1],dir:[-1,0],speed:1.6}]});against.player.x=4.5;run(against,{x:1,y:0},2.5);assert.ok(against.player.x<4.5,'too strong to swim against once it has hold of her: '+against.player.x);
 });
 
 test('a burrow pair takes Sally from one mound to the other, safe while underground',()=>{
@@ -51,4 +51,18 @@ test('the builder places moss, echo halls, currents, burrow pairs and spore pouc
   const again=B.sanitize(JSON.parse(JSON.stringify(m)));assert.deepEqual(B.toRoute(again),r,'saving and loading keeps them');
   assert.equal(B.removeExtraAt(m,2,2),true);assert.equal(m.tunnels.length,0);
   const g=new EscapeAdventure({level:escapeBuildCustom(r)});assert.equal(g.spores,2);assert.equal(g.moss.size,1);assert.equal(g.tunnels.length,1);
+});
+
+test('water has weight: a stream builds up, Sally drifts on after leaving it, and a pulsing current surges and eases',()=>{
+  const map=['##############','#@~~~~~~~~~~K#','#...........X#','##############'];
+  const g=make(map,{currents:[{area:[2,1,5,1],dir:[1,0],speed:1.2}]});g.player.x=2.5;run(g,{},.1);const early=g.player.x-2.5;run(g,{},.6);
+  assert.ok(early<.1,'a stream does not shove her to full speed at once: '+early);
+  while(g.player.x<6.05)run(g,{},1/60);const out=g.player.x;run(g,{},.4);assert.ok(g.player.x>out+.15,'she drifts on past the end of the stream');const x=g.player.x;run(g,{},2);assert.ok(g.player.x-x<.25,'then the still water lets go');
+  const pulse=make(map,{currents:[{area:[2,1,11,1],dir:[1,0],speed:1,pulse:4}]});const speeds=[];for(let i=0;i<8;i++){speeds.push(pulse.flowSpeed(pulse.currents[0]));run(pulse,{},.5);}
+  assert.ok(Math.max(...speeds)>1.4&&Math.min(...speeds)<.6,'it surges and eases: '+speeds.map(v=>v.toFixed(2)));
+});
+
+test('a pebble that lands in a stream floats away with it',()=>{
+  const g=make(['##############','#@~~~~~~~~~~K#','#...........X#','##############'],{currents:[{area:[2,1,11,1],dir:[1,0],speed:1.2}]});
+  g.decoy={x:3.5,y:1.5,expires:g.elapsed+3,noticed:false,range:7};run(g,{},1);assert.ok(g.decoy.x>4.4&&g.decoy.floating,'it drifted to '+g.decoy.x);
 });
