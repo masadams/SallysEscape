@@ -770,6 +770,12 @@ function drawEscapeMood(ctx,mood,W,H,clock){
       ctx.beginPath();ctx.moveTo(x0,0);ctx.lineTo(x0+top,0);ctx.lineTo(x0+top+slant+bottom-top,H);ctx.lineTo(x0+slant,H);ctx.closePath();ctx.fill();}}
   ctx.restore();
 }
+// Mud round Sally: a ring of it rises as she sinks and wet flecks fly when she runs through it.
+// Nothing is drawn when she is clear of it.
+function drawEscapeMud(g,cell){const p=g.player,sink=p.sink||0,inMud=g.grid[Math.floor(p.y)]?.[Math.floor(p.x)]==='M'&&!p.swimming;if(!(sink>.02)&&!(inMud&&p.sprinting))return;
+  noStroke();if(sink>.02){fill(92,66,40,90+120*sink);ellipse(p.x*cell,(p.y+.08)*cell,cell*(.55+.35*sink),cell*(.36+.22*sink));fill(130,96,58,140*sink);ellipse(p.x*cell,(p.y+.02)*cell,cell*(.36+.3*sink),cell*(.16+.12*sink));
+    if(sink>.45){const t=g.elapsed*3;fill(150,118,74,120);for(let i=0;i<3;i++){const a=t+i*2.1,r=.28+.05*Math.sin(t*2+i);ellipse((p.x+Math.cos(a)*r)*cell,(p.y+Math.sin(a)*r*.6)*cell,cell*.07,cell*.07);}}}
+  if(inMud&&p.sprinting&&escapeLightingFull()){const n=typeof isTvDevice==='function'&&isTvDevice()?3:6;for(let i=0;i<n;i++){const f=(g.elapsed*4+i/n)%1,a=i*2.4+g.elapsed;fill(110,80,48,(1-f)*200);ellipse((p.x+Math.cos(a)*f*.5)*cell,(p.y+Math.sin(a)*f*.5-f*(1-f)*.6)*cell,cell*.08*(1-f*.4),cell*.08*(1-f*.4));}}}
 // Moss, echo halls, currents and burrow mounds.
 function drawEscapeTricks(g,cell,view){
   const seen=(x,y)=>!view.follow||g.visibleTile(x,y);
@@ -866,6 +872,7 @@ function drawEscapeVault(){
   drawEscapeWet(g,cell,view);drawEscapeSway(g,cell,view);drawEscapeDapple(g,cell);
   tickEscapeCritters(g);drawEscapeTricks(g,cell,view);drawEscapePrints(g,cell);drawEscapeCritters(g,cell,view,'ground');drawEscapeReeds(g,cell,view);
   if(g.slippery?.size&&(g.level.seasonal||g.level.costume)!=='winter'&&typeof drawCampaignIce==='function')drawCampaignIce(g,cell);
+  drawEscapeMud(g,cell);
   if((g.level.seasonal||g.level.costume))drawSeasonScenery(g,cell);
   if((g.level.kids||g.level.seasonal)&&typeof drawEscapeKidsGuide==='function')drawEscapeKidsGuide(g,cell);
   if(g.level.rootWheel){const [x,y]=g.level.rootWheel,angle=g.wheelAngle;push();translate((x+.5)*cell,(y+.5)*cell);rotate(angle);noFill();stroke(106,147,76,95);strokeWeight(cell*.11);ellipse(0,0,cell*2.7,cell*2.7);for(let a=0;a<TWO_PI;a+=PI/2)line(0,0,Math.cos(a)*cell*1.35,Math.sin(a)*cell*1.35);pop();}

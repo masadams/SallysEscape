@@ -4,7 +4,7 @@
 // fromRoute turns any escape in the game back into a model, so every escape can be edited.
 (function(root){
   const KEY='sally-escape-custom-v1',VERSION=3;
-  const TILES={'#':'Wall','.':'Floor','L':'Leaves','N':'Gravel','B':'Cracked wall','M':'Mud','~':'Water','_':'Gap','c':'Crumbling floor','T':'Tangle vine','S':'Crack (Sally only)','o':'Spore puffball','t':'Tide flat','m':'Moss (silent)','d':'Soft dirt (Sally digs in)','s':'Soft sand (slows Sally, keeps her tracks)','I':'Ice wall (a sentinel’s gaze glances off it)'};
+  const TILES={'#':'Wall','.':'Floor','L':'Leaves','N':'Gravel','B':'Cracked wall','M':'Mud (slows Sally; linger and she sinks, run and she splashes loudly)','~':'Water','_':'Gap','c':'Crumbling floor','T':'Tangle vine','S':'Crack (Sally only)','o':'Spore puffball','t':'Tide flat','m':'Moss (silent)','d':'Soft dirt (Sally digs in)','s':'Soft sand (slows Sally, keeps her tracks)','I':'Ice wall (a sentinel’s gaze glances off it)'};
   const MARKS={'@':'Sally','K':'Key','X':'Hatch','1':'Treasure 1','2':'Treasure 2','3':'Chest 3'};
   const ENEMIES={snake:'Snake',ladybird:'Ladybird',beetle:'Beetle',scorpion:'Scorpion',toad:'Toad',spider:'Spider',cricket:'Cricket',moth:'Moth',mimic:'Mimic',millipede:'Millipede',cobra:'King cobra',flytrap:'Flytrap',crab:'Hermit crab',fox:'Snow fox',heron:'Bog heron',mantis:'Praying mantis',wasp:'Wasp nest',dragonfly:'Dragonfly',mole:'Mole',bat:'Echo bat',eel:'Eel',angler:'Angler',fish:'Reef fish','sea-snake':'Sea snake',owl:'Owl',gecko:'Gecko',echofrog:'Echo frog',chameleon:'Chameleon',sentinel:'Frost sentinel',cloudray:'Cloud ray',magpie:'Magpie'};
   // Enemies that stay on their post; the rest walk their patrol.
