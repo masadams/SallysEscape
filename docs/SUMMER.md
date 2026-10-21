@@ -15,6 +15,22 @@ The design is in [SUMMER-PLAN.md](SUMMER-PLAN.md). All eight escapes are built a
 | 7 | summer-inlet | The Sunset Inlet | A Sailfin in each of two pools (they only chase swimmers they can see), a vault switch, and a fast channel home |
 | 8 | summer-lighthouse | The Lighthouse Lantern | Tidal causeway, the gull's stores, a crab lane under the lighthouse, a Sunskimmer annex and a tongue-switch bridge home |
 
+## Difficulty
+
+The pack runs from easy to hard. Cunning is how sharp the creatures are (0 to 3): higher means they
+read where Sally is going, react sooner and search longer.
+
+| # | Level | Cunning | What makes it harder |
+| --- | --- | --- | --- |
+| 1 | Easy | 0 | — |
+| 2 | Easy | 0 | — |
+| 3 | Easy–medium | 1 | A hermit crab in the sandbar's middle lane |
+| 4 | Medium | 1 | A second serpent circling the net store; two pebbles |
+| 5 | Medium | 2 | A serpent pacing the meadow below the key |
+| 6 | Medium–hard | 2 | A hermit crab guarding the key in the loft; the key wakes a serpent under the store |
+| 7 | Hard | 3 | Serpents pacing the middle and far banks (they see swimmers); one pebble |
+| 8 | Hard | 3 | Two pebbles; the last lens wakes a serpent circling the harbour hatch |
+
 ## Rewards
 
 Finishing all eight earns **Sunshore Sally**: a teal body, sand belly, coral crest and gold flecks. The menu keepsakes are a miniature lighthouse, plus a sailboat for finding every treasure. The collection, HUD and results use summer words (sun lens, the harbour lanterns).

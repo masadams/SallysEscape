@@ -62,12 +62,12 @@
   ]
  },
  {
-  id:'summer-tide',name:'The Turning Tide',index:2,revision:1,difficulty:'Easy\u2013medium',seasonalTheme:'summer-tide',cunning:0,
+  id:'summer-tide',name:'The Turning Tide',index:2,revision:1,difficulty:'Easy\u2013medium',seasonalTheme:'summer-tide',cunning:1,
   pebbles:2,tongues:1,
-  brief:'Two tidal flats, a sandbar between them, and an eel that wakes when the water comes in.',
-  hint:'The wet sand turns to water when the tide comes in and back to sand when it goes out. Walk the flats while the tide is out, or swim them. The eel in the far flat sleeps in the sand at low tide; at high tide swim along the top or bottom edge, well away from it. Keep a tile back from the rock pool on the sandbar.',
+  brief:'Two tidal flats, a sandbar between them with a crab on it, and an eel that wakes when the water comes in.',
+  hint:'The wet sand turns to water when the tide comes in and back to sand when it goes out. Walk the flats while the tide is out, or swim them. The eel in the far flat sleeps in the sand at low tide; at high tide swim along the top or bottom edge, well away from it. Keep a tile back from the rock pool on the sandbar, and mind the hermit crab in the sandbar\u2019s middle lane: let it peek and scuttle, then cross while it rests.',
   tide:{period:16,high:7,offset:9},
-  guards:[{kind:'eel',spawn:[10,5],patrol:[[10,5]],facing:0},{kind:'eel',spawn:[14,6],patrol:[[14,6]],facing:0}],
+  guards:[{kind:'eel',spawn:[10,5],patrol:[[10,5]],facing:0},{kind:'eel',spawn:[14,6],patrol:[[14,6]],facing:0},{kind:'crab',spawn:[11,4],patrol:[[11,4]],facing:Math.PI/2,axis:'y',range:3}],
   reactions:[],
   fieldNotes:[
    {id:'summer-tide-note-0',at:[3,3],title:'Reading the tide',body:'The flats are sand while the tide is out and water while it is in. Little waves lap at the edge just before it turns. The sandbar and both beaches stay dry at every tide. - Marina'},
@@ -91,12 +91,12 @@
   ]
  },
  {
-  id:'summer-gull',name:'The Gull\u2019s Boardwalk',index:3,revision:1,difficulty:'Easy\u2013medium',seasonalTheme:'summer-harbour',cunning:0,
-  pebbles:3,tongues:1,
-  brief:'A harbour of crates and boardwalks, a gull on the middle post and a serpent in the fish store.',
-  hint:'The gull on the middle post turns to look down each boardwalk in turn. It never bites, but if it sees you it calls, and the serpent comes running. Cross while it looks the other way, or toss a pebble: it cannot resist anything shiny and flies off to steal it. The net-store switch opens the shutter to the key; the key opens the pier shutter.',
+  id:'summer-gull',name:'The Gull\u2019s Boardwalk',index:3,revision:1,difficulty:'Medium',seasonalTheme:'summer-harbour',cunning:1,
+  pebbles:2,tongues:1,
+  brief:'A harbour of crates and boardwalks, a gull on the middle post, and serpents in the net store and the fish store.',
+  hint:'The gull on the middle post turns to look down each boardwalk in turn. It never bites, but if it sees you it calls, and the serpents come running. Cross while it looks the other way, or toss a pebble: it cannot resist anything shiny and flies off to steal it. A second serpent circles the net store: slip in behind it to reach the switch, and follow it out. The net-store switch opens the shutter to the key; the key opens the pier shutter.',
   gates:[{id:'net-shutter',name:'net shutter',tiles:[[12,2]],switch:[2,4],color:[236,196,98]},{id:'pier-shutter',name:'pier shutter',tiles:[[17,6]],color:[236,196,98]}],
-  guards:[{kind:'magpie',spawn:[11,7],patrol:[[11,1],[21,7],[11,13],[1,7]],facing:-Math.PI/2},{kind:'snake',spawn:[20,9],patrol:[[20,9],[20,13]],facing:Math.PI/2}],
+  guards:[{kind:'magpie',spawn:[11,7],patrol:[[11,1],[21,7],[11,13],[1,7]],facing:-Math.PI/2},{kind:'snake',spawn:[20,9],patrol:[[20,9],[20,13]],facing:Math.PI/2},{kind:'snake',spawn:[8,1],patrol:[[8,1],[8,5],[2,5],[2,1]],facing:Math.PI/2}],
   reactions:[{id:'gull-key',when:'key',open:['pier-shutter'],message:'The pier shutter rattles up. The fish store is the quick way home.'}],
   fieldNotes:[
    {id:'summer-gull-note-0',at:[7,12],title:'The harbour gull',body:'The gull on the middle post is a terrible tell-tale. It looks down each boardwalk in turn, and if it sees you it calls, and the serpent in the fish store comes running. It never bites. - Marina'},
@@ -122,13 +122,13 @@
   ]
  },
  {
-  id:'summer-lagoon',name:'The Reed Lagoon',index:4,revision:1,difficulty:'Easy\u2013medium',seasonalTheme:'summer-lagoon',cunning:0,
+  id:'summer-lagoon',name:'The Reed Lagoon',index:4,revision:1,difficulty:'Medium',seasonalTheme:'summer-lagoon',cunning:2,
   pebbles:2,tongues:1,
-  brief:'A reed lagoon with a lazy current, a heron on the bank and a Sunskimmer over the meadow.',
-  hint:'The heron stabs straight along its beak. Step onto the bank while it looks out over the water, then swim: it never strikes a swimmer. The lagoon drifts south. The Sunskimmer flies a square round the key; cross just behind it. The switch past the reeds lowers the footbridge home.',
+  brief:'A reed lagoon with a lazy current, a heron on the bank, a Sunskimmer over the meadow and a serpent below the key.',
+  hint:'The heron stabs straight along its beak. Step onto the bank while it looks out over the water, then swim: it never strikes a swimmer. The lagoon drifts south. The Sunskimmer flies a square round the key; cross just behind it. A serpent paces up and down the meadow below the key and watches it from the top of its walk: take the key while it heads away. The switch past the reeds lowers the footbridge home, or swim back the way you came.',
   currents:[{area:[9,1,13,13],dir:[0,1],speed:.45}],
   gates:[{id:'reed-bridge',name:'reed footbridge',bridge:true,tiles:[[9,12],[10,12],[11,12],[12,12],[13,12]],switch:[21,11],color:[236,196,98]}],
-  guards:[{kind:'heron',spawn:[8,8],patrol:[[8,8]],facing:-Math.PI/2,looks:[-Math.PI/2,0],every:3},{kind:'dragonfly',spawn:[15,4],patrol:[[15,4],[21,4],[21,10],[15,10]],facing:0,speed:1.6}],
+  guards:[{kind:'heron',spawn:[8,8],patrol:[[8,8]],facing:-Math.PI/2,looks:[-Math.PI/2,0],every:3},{kind:'dragonfly',spawn:[15,4],patrol:[[15,4],[21,4],[21,10],[15,10]],facing:0,speed:1.6},{kind:'snake',spawn:[17,13],patrol:[[17,13],[17,9]],facing:-Math.PI/2}],
   reactions:[],
   fieldNotes:[
    {id:'summer-lagoon-note-0',at:[5,7],title:'The reed heron',body:'The heron looks up the bank, then out over the water, then up the bank again. Its beak only reaches straight ahead. It never strikes at a swimmer. - Marina'},
@@ -146,22 +146,23 @@
    '#......#.~~~~~....K...#',
    '#.1....#.~~~~~....#...#',
    '#......#.~~~~~........#',
-   '#..L...#.~~~~~...1....#',
+   '#..L...#.~~~~~........#',
    '#......#.~~~~~........#',
-   '#.X......~~~~~.....L..#',
+   '#.X......~~~~~.....L1.#',
    '#......#1~~~~~.L.....1#',
    '#######################'
   ]
  },
  {
-  id:'summer-boatshed',name:'Beneath the Boatshed',index:5,revision:1,difficulty:'Medium',seasonalTheme:'summer-boatshed',cunning:0,
+  id:'summer-boatshed',name:'Beneath the Boatshed',index:5,revision:1,difficulty:'Medium\u2013hard',seasonalTheme:'summer-boatshed',cunning:2,
   pebbles:2,tongues:2,
-  brief:'A cargo lane where barrels roll, a deep slipway and a bridge switch across the water.',
-  hint:'A barrel rolls down the cargo lane every few seconds; the rumble warns you. Cross just after one goes by. In the store, stand opposite the bridge switch across the slipway and flick it with your tongue. The key is in the loft. The scorpion in the yard only stings when its tail is up.',
+  brief:'A cargo lane where barrels roll, a deep slipway, a crab by the key, and a serpent that wakes when you take it.',
+  hint:'A barrel rolls down the cargo lane every few seconds; the rumble warns you. Cross just after one goes by. In the store, stand opposite the bridge switch across the slipway and flick it with your tongue. The key is in the loft, in a hermit crab\u2019s lane: let it scuttle and tire before you grab it. Taking the key wakes a serpent under the store, right on the way home. It paces up and down the middle of the store; slip past behind it and keep still in the cover beside its path until a barrel goes by. The scorpion in the yard only stings when its tail is up.',
   logs:[{from:[7,1],to:[7,13],period:6,offset:0,speed:6}],
   gates:[{id:'slip-bridge',name:'slipway bridge',bridge:true,tiles:[[14,6],[15,6]],switch:[16,3],color:[236,196,98]}],
-  guards:[{kind:'scorpion',spawn:[19,12],patrol:[[19,12]],facing:Math.PI}],
-  reactions:[],
+  guards:[{kind:'scorpion',spawn:[19,12],patrol:[[19,12]],facing:Math.PI},{kind:'crab',spawn:[19,2],patrol:[[19,2]],facing:0,axis:'x',range:2}],
+  reinforcements:[{id:'store-serpent',kind:'snake',spawn:[11,13],patrol:[[11,13],[11,4]],facing:-Math.PI/2}],
+  reactions:[{id:'boatshed-key',when:'key',spawn:['store-serpent'],message:'Something stirs under the store floor. A serpent is watching the way home.'}],
   fieldNotes:[
    {id:'summer-boatshed-note-0',at:[4,3],title:'The cargo lane',body:'Barrels roll down the cargo lane from the loading door, one after another. Listen for the rumble, watch one go by, then cross. Never stop in the lane. - Marina'},
    {id:'summer-boatshed-note-1',at:[12,5],title:'The slipway',body:'The slipway is too deep to swim. Its bridge switch is on the far side: stand right opposite it and flick it with your tongue.'}
@@ -186,13 +187,13 @@
   ]
  },
  {
-  id:'summer-inlet',name:'The Sunset Inlet',index:6,revision:1,difficulty:'Medium',seasonalTheme:'summer-sunset',cunning:0,
-  pebbles:2,tongues:1,
-  brief:'Three sandbanks, two deep pools with a Sailfin in each, and a fast channel home.',
-  hint:'A Sailfin only hunts swimmers it can see, and it is quicker than you in the water. Wait until it is at the far end of its pool, then swim straight across; it can never follow you onto sand. The switch on the middle bank opens the lens vault. The bottom channel runs fast to the west: drop into it from the far pool for a quick ride home.',
+  id:'summer-inlet',name:'The Sunset Inlet',index:6,revision:1,difficulty:'Hard',seasonalTheme:'summer-sunset',cunning:3,
+  pebbles:1,tongues:1,
+  brief:'Three sandbanks with a serpent on two of them, two deep pools with a Sailfin in each, and a fast channel home.',
+  hint:'A Sailfin only hunts swimmers it can see, and it is quicker than you in the water. Wait until it is at the far end of its pool, then swim straight across; it can never follow you onto sand. Serpents pace the middle and far banks and cannot swim, but they see you in the water. Land behind one as it walks away. The switch on the middle bank opens the lens vault; the vault walls hide you while the far serpent goes by. The bottom channel runs fast to the west: drop into it from the far pool for a quick ride home.',
   currents:[{area:[6,13,16,13],dir:[-1,0],speed:.9}],
   gates:[{id:'lens-vault',name:'lens vault',tiles:[[19,7]],switch:[11,2],color:[236,196,98]}],
-  guards:[{kind:'fish',spawn:[7,9],patrol:[[7,2],[7,11]],facing:-Math.PI/2},{kind:'fish',spawn:[14,3],patrol:[[15,11],[14,2]],facing:Math.PI/2}],
+  guards:[{kind:'fish',spawn:[7,9],patrol:[[7,2],[7,11]],facing:-Math.PI/2},{kind:'fish',spawn:[14,3],patrol:[[15,11],[14,2]],facing:Math.PI/2},{kind:'snake',spawn:[11,11],patrol:[[11,11],[11,1]],facing:-Math.PI/2},{kind:'snake',spawn:[18,1],patrol:[[18,1],[18,11]],facing:Math.PI/2}],
   reactions:[],
   fieldNotes:[
    {id:'summer-inlet-note-0',at:[4,6],title:'Sailfins',body:'A Sailfin patrols each pool. It only chases swimmers it can see, and it cannot follow you onto the sand. Watch it turn at the far end, then swim straight across. - Marina'},
@@ -218,14 +219,15 @@
   ]
  },
  {
-  id:'summer-lighthouse',name:'The Lighthouse Lantern',index:7,revision:1,difficulty:'Medium',seasonalTheme:'summer-lighthouse',cunning:0,
-  pebbles:3,tongues:1,
+  id:'summer-lighthouse',name:'The Lighthouse Lantern',index:7,revision:1,difficulty:'Hard',seasonalTheme:'summer-lighthouse',cunning:3,
+  pebbles:2,tongues:1,
   brief:'The last lens: a tidal causeway, the gull\\u2019s stores, a crab under the lighthouse and the bridge home.',
-  hint:'Cross the flats while the tide is out. In the stores the gull turns to watch each wall; slip along the top while it looks away, or toss it a pebble. Under the lighthouse a crab guards the lane: wake it, step back, and pass while it rests. From the lighthouse step, flick the bridge switch with your tongue and walk home along the harbour wall.',
+  hint:'Cross the flats while the tide is out. In the stores the gull turns to watch each wall; slip along the top while it looks away, or toss it a pebble. Under the lighthouse a crab guards the lane: wake it, step back, and pass while it rests. From the lighthouse step, flick the bridge switch with your tongue and walk home along the harbour wall. Taking the lens wakes a sandstripe serpent on the harbour: watch it from the bridge and cross behind it.',
   tide:{period:16,high:7,offset:9},
   gates:[{id:'harbour-bridge',name:'harbour bridge',bridge:true,tiles:[[7,14],[8,14],[9,14],[10,14],[11,14],[12,14],[13,14],[14,14],[15,14],[16,14],[17,14]],switch:[15,12],color:[236,196,98]}],
   guards:[{kind:'magpie',spawn:[13,4],patrol:[[13,1],[16,4],[13,7],[10,4]],facing:-Math.PI/2},{kind:'crab',spawn:[21,9],patrol:[[21,9]],facing:0,axis:'x',range:2},{kind:'dragonfly',spawn:[10,9],patrol:[[10,9],[16,9],[16,10],[10,10]],facing:0,speed:1.4}],
-  reactions:[{id:'lighthouse-key',when:'key',message:'The last sun lens! Flick the bridge switch from the lighthouse step and walk home along the harbour wall.'}],
+  reinforcements:[{id:'harbour-snake',kind:'snake',spawn:[4,12],patrol:[[1,11],[6,11],[6,15],[1,15]],facing:0}],
+  reactions:[{id:'lighthouse-key',when:'key',spawn:['harbour-snake'],message:'The last sun lens! A serpent stirs on the harbour. Flick the bridge switch from the lighthouse step and slip home behind it.'}],
   fieldNotes:[
    {id:'summer-lighthouse-note-0',at:[4,6],title:'The last lens',body:'The final sun lens is on the lighthouse step. The tide, the gull and the crab are all between here and there. Take your time; every one of them has a rhythm. - Marina'},
    {id:'summer-lighthouse-note-1',at:[11,9],title:'The sunset annex',body:'A Sunskimmer loops the sunset annex all evening. Wait by the door, watch it go round, and fetch each shell just behind it.'}
