@@ -107,6 +107,7 @@
     }
     // Switch soundscapes: the old beds fade out over two seconds as the new ones fade in.
     setScape(key,place='world'){
+      this.wanted=[key,place];if(this.silent)return false; // Silenced: nothing runs until the volume comes back.
       if(!this.ctx||(key===this.key&&place===this.place))return false;this.key=key;this.place=place;const scape=scapeFor(key,place),t=this.ctx.currentTime;
       for(const b of this.beds){b.gain.gain.cancelScheduledValues(t);b.gain.gain.setValueAtTime(b.gain.gain.value,t);b.gain.gain.linearRampToValueAtTime(0,t+2);for(const s of b.sources)try{s.stop(t+2.1);}catch(_){}}
       this.beds=[];this.calls=(scape?.calls||[]).map(([kind,every,level])=>({kind,every,level,next:t+rand(1,every[1])}));
@@ -124,7 +125,12 @@
       return {gain,sources};
     }
     // Level 0–1 (the game's sound volume, ducked during chases and when paused).
-    setVolume(volume){if(!this.master||Math.abs(volume-this.volume)<.005)return;this.volume=volume;const t=this.ctx.currentTime;this.master.gain.cancelScheduledValues(t);this.master.gain.setTargetAtTime(volume,t,.4);}
+    // Level 0 really stops the soundscape: its looping beds and swells are torn down, not left playing
+    // silently, and they are rebuilt when the volume comes back.
+    setVolume(volume){if(!this.master)return;const t=this.ctx.currentTime,g=this.master.gain;
+      if(volume<=.001){if(!this.silent){this.silent=true;for(const b of this.beds)for(const s of b.sources)try{s.stop(t+1.5);}catch(_){}this.beds=[];this.calls=[];this.key=null;}if(this.volume!==0){this.volume=0;g.cancelScheduledValues(t);g.setTargetAtTime(0,t,.4);}return;}
+      if(Math.abs(volume-this.volume)<.005&&!this.silent)return;const wake=this.silent;this.silent=false;this.volume=volume;g.cancelScheduledValues(t);g.setTargetAtTime(volume,t,.4);
+      if(wake&&this.wanted)this.setScape(...this.wanted);}
     // Calls due now play, each panned a little to one side.
     tick(){
       if(!this.ctx||this.volume<=0.001)return;const t=this.ctx.currentTime;

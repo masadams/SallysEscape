@@ -229,6 +229,8 @@
     if(hunters.some(h=>wary.includes(h.state))||game.hawk&&game.hawk.state==='stalk'||game.player?.chilled)return 'tension';
     return 'explore';
   }
+  // Levels measured offline so every layer sits at a similar loudness at full mix.
+  const VOLUMES={pad:-5,strings:-16,stab:-17,sting:-6,shaker:-1,snare:-15,ostinato:-11,bass:-1,melody:7,heart:-4,kick:-7,pluck:-4,bell:-9,flute:-6,arp:-14,rim:-12,boom:-4,alarm:-14,ghost:-8,hat:-20,tom:-6,rimshot:-16,swoop:-14,choir:-7,pizz:-3,marimba:-1,pah:-15,celesta:-9,harp:-7,steel:-8,accordion:-15,sleigh:-14,conga:-6,stomp:-6,clap:-11,bird:-18};
   class EscapeMusic{
     constructor(options={}){this.Tone=options.Tone||root.Tone;this.state=null;this.mood='meadow';this.nextMood=null;this.style=styleFor('meadow');this.nextStyle=null;this.volume=options.volume??.6;this.muted=false;this.ready=false;this.started=false;this.holdUntil=0;this.step=0;this.layers=new Map();this.voices={};}
     // Build the instruments on the game's own audio context, so music and effects share one clock.
@@ -246,60 +248,63 @@
         // underwater) or hides in leaves (a little softened).
         this.muffleFilter=new T.Filter({frequency:18000,type:'lowpass',rolloff:-12}).connect(new T.Limiter(-6).toDestination());
         this.master=new T.Gain({gain:this.muted?0:this.volume}).connect(this.muffleFilter);
-        const reverb=new T.Reverb({decay:lite?1.3:3.2,wet:lite?.22:.28}).connect(this.master);await reverb.ready;
+        // A TV box skips the reverb and the vibrato/tremolo wobbles: they cost the sound engine the most.
+        let reverb;if(lite)reverb=new T.Gain({gain:1}).connect(this.master);else{reverb=new T.Reverb({decay:3.2,wet:.28}).connect(this.master);await reverb.ready;}
+        const wobble=(make,dest)=>lite?dest:make().connect(dest);
         // Tone treats new Gain(0) as the default gain of 1, so silent gains are passed as options.
         for(const name of LAYERS){const gain=new T.Gain({gain:0}).connect(['pad','melody','tension'].includes(name)?reverb:this.master);this.layers.set(name,{gain,target:0,quietAt:0});}
         const out=name=>this.layers.get(name).gain;
-        const v=this.voices;
-        v.pad=new T.PolySynth(T.Synth,{oscillator:lite?{type:'triangle'}:{type:'fattriangle',spread:18,count:2},envelope:{attack:.9,decay:.5,sustain:.7,release:2}}).connect(new T.Filter(1400,'lowpass').connect(out('pad')));
-        v.bass=new T.MonoSynth({oscillator:{type:'triangle'},filter:{Q:1,type:'lowpass'},envelope:{attack:.005,decay:.18,sustain:.1,release:.15},filterEnvelope:{attack:.005,decay:.12,sustain:.2,baseFrequency:220,octaves:2.5}}).connect(out('bass'));
-        v.melody=new T.FMSynth({harmonicity:3.01,modulationIndex:2,oscillator:{type:'sine'},envelope:{attack:.004,decay:.35,sustain:.05,release:.4},modulationEnvelope:{attack:.002,decay:.2,sustain:0,release:.2}}).connect(out('melody'));
+        // Instruments are built the first time a tune plays them, so a region never pays for a band it
+        // does not use. On a TV box chords keep to four notes at once.
+        const factories={},make=(name,build)=>{factories[name]=build;},built={};
+        this.voices=new Proxy(built,{get:(o,name)=>{if(!(name in o)&&factories[name]){let voice=null;try{voice=factories[name]();if(voice?.volume)voice.volume.value=VOLUMES[name]??-10;if(lite&&voice&&'maxPolyphony' in voice)voice.maxPolyphony=4;}catch(_){voice=null;}o[name]=voice;}return o[name];},has:(o,name)=>name in o||name in factories});
+        make('pad',()=>new T.PolySynth(T.Synth,{oscillator:lite?{type:'triangle'}:{type:'fattriangle',spread:18,count:2},envelope:{attack:.9,decay:.5,sustain:.7,release:2}}).connect(new T.Filter(1400,'lowpass').connect(out('pad'))));
+        make('bass',()=>new T.MonoSynth({oscillator:{type:'triangle'},filter:{Q:1,type:'lowpass'},envelope:{attack:.005,decay:.18,sustain:.1,release:.15},filterEnvelope:{attack:.005,decay:.12,sustain:.2,baseFrequency:220,octaves:2.5}}).connect(out('bass')));
+        make('melody',()=>new T.FMSynth({harmonicity:3.01,modulationIndex:2,oscillator:{type:'sine'},envelope:{attack:.004,decay:.35,sustain:.05,release:.4},modulationEnvelope:{attack:.002,decay:.2,sustain:0,release:.2}}).connect(out('melody')));
         // Region leads: a soft pluck, a glassy bell and a breathy flute, plus an arpeggio voice.
-        v.pluck=new T.Synth({oscillator:{type:'triangle'},envelope:{attack:.002,decay:.22,sustain:0,release:.2}}).connect(new T.Filter(2600,'lowpass').connect(out('melody')));
-        v.bell=new T.FMSynth({harmonicity:5.07,modulationIndex:6,oscillator:{type:'sine'},envelope:{attack:.002,decay:.9,sustain:0,release:.9},modulationEnvelope:{attack:.002,decay:.5,sustain:0,release:.4}}).connect(out('melody'));
-        v.flute=new T.Synth({oscillator:{type:'sine'},envelope:{attack:.06,decay:.2,sustain:.6,release:.35}}).connect(new T.Vibrato(5.5,.08).connect(out('melody')));
-        v.arp=new T.Synth({oscillator:{type:'triangle'},envelope:{attack:.004,decay:.15,sustain:0,release:.15}}).connect(out('melody'));
-        v.ghost=new T.Synth({portamento:.12,oscillator:{type:'sine'},envelope:{attack:.15,decay:.3,sustain:.7,release:.8}}).connect(new T.Vibrato(3.5,.35).connect(out('melody')));
-        v.hat=new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.025,sustain:0}}).connect(new T.Filter(8000,'highpass').connect(out('chase')));
-        v.tom=new T.MembraneSynth({pitchDecay:.05,octaves:2.5,envelope:{attack:.001,decay:.22,sustain:0}}).connect(out('chase'));
-        v.rimshot=new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.02,sustain:0}}).connect(new T.Filter(4200,'bandpass').connect(out('chase')));
-        v.swoop=new T.Synth({portamento:.18,oscillator:{type:'sine'},envelope:{attack:.02,decay:.3,sustain:.4,release:.4}}).connect(out('chase'));
-        v.rim=new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.03,sustain:0}}).connect(new T.Filter(3200,'bandpass').connect(out('perc')));
+        make('pluck',()=>new T.Synth({oscillator:{type:'triangle'},envelope:{attack:.002,decay:.22,sustain:0,release:.2}}).connect(new T.Filter(2600,'lowpass').connect(out('melody'))));
+        make('bell',()=>new T.FMSynth({harmonicity:5.07,modulationIndex:6,oscillator:{type:'sine'},envelope:{attack:.002,decay:.9,sustain:0,release:.9},modulationEnvelope:{attack:.002,decay:.5,sustain:0,release:.4}}).connect(out('melody')));
+        make('flute',()=>new T.Synth({oscillator:{type:'sine'},envelope:{attack:.06,decay:.2,sustain:.6,release:.35}}).connect(wobble(()=>new T.Vibrato(5.5,.08),out('melody'))));
+        make('arp',()=>new T.Synth({oscillator:{type:'triangle'},envelope:{attack:.004,decay:.15,sustain:0,release:.15}}).connect(out('melody')));
+        make('ghost',()=>new T.Synth({portamento:.12,oscillator:{type:'sine'},envelope:{attack:.15,decay:.3,sustain:.7,release:.8}}).connect(wobble(()=>new T.Vibrato(3.5,.35),out('melody'))));
+        make('hat',()=>new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.025,sustain:0}}).connect(new T.Filter(8000,'highpass').connect(out('chase'))));
+        make('tom',()=>new T.MembraneSynth({pitchDecay:.05,octaves:2.5,envelope:{attack:.001,decay:.22,sustain:0}}).connect(out('chase')));
+        make('rimshot',()=>new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.02,sustain:0}}).connect(new T.Filter(4200,'bandpass').connect(out('chase'))));
+        make('swoop',()=>new T.Synth({portamento:.18,oscillator:{type:'sine'},envelope:{attack:.02,decay:.3,sustain:.4,release:.4}}).connect(out('chase')));
+        make('rim',()=>new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.03,sustain:0}}).connect(new T.Filter(3200,'bandpass').connect(out('perc'))));
         // The alarm: a low boom and a clashing stab the moment something gives chase.
-        v.boom=new T.MembraneSynth({pitchDecay:.08,octaves:6,envelope:{attack:.001,decay:.7,sustain:0}}).connect(this.master);
-        v.alarm=new T.PolySynth(T.Synth,{oscillator:{type:'sawtooth'},envelope:{attack:.003,decay:.5,sustain:0,release:.3}}).connect(new T.Filter(2400,'lowpass').connect(this.master));
-        v.shaker=new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.002,decay:.05,sustain:0}}).connect(new T.Filter(6500,'highpass').connect(out('perc')));
-        v.strings=new T.PolySynth(T.Synth,{oscillator:{type:'sawtooth'},envelope:{attack:.6,decay:.3,sustain:.8,release:1.2}}).connect(new T.Tremolo(7,.55).start().connect(new T.Filter(950,'lowpass').connect(out('tension'))));
-        v.heart=new T.MembraneSynth({pitchDecay:.03,octaves:3,envelope:{attack:.001,decay:.25,sustain:0,release:.1}}).connect(out('tension'));
-        v.kick=new T.MembraneSynth({pitchDecay:.04,octaves:5,envelope:{attack:.001,decay:.3,sustain:0}}).connect(out('chase'));
-        v.snare=new T.NoiseSynth({noise:{type:'pink'},envelope:{attack:.001,decay:.13,sustain:0}}).connect(new T.Filter(1800,'bandpass').connect(out('chase')));
-        v.ostinato=new T.MonoSynth({oscillator:{type:'square'},filter:{Q:2,type:'lowpass'},envelope:{attack:.003,decay:.08,sustain:.2,release:.05},filterEnvelope:{attack:.002,decay:.08,sustain:.1,baseFrequency:300,octaves:2}}).connect(new T.Gain(.5).connect(out('chase')));
-        v.stab=new T.PolySynth(T.Synth,{oscillator:{type:'sawtooth'},envelope:{attack:.004,decay:.12,sustain:0,release:.08}}).connect(new T.Filter(2200,'lowpass').connect(out('chase')));
+        make('boom',()=>new T.MembraneSynth({pitchDecay:.08,octaves:6,envelope:{attack:.001,decay:.7,sustain:0}}).connect(this.master));
+        make('alarm',()=>new T.PolySynth(T.Synth,{oscillator:{type:'sawtooth'},envelope:{attack:.003,decay:.5,sustain:0,release:.3}}).connect(new T.Filter(2400,'lowpass').connect(this.master)));
+        make('shaker',()=>new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.002,decay:.05,sustain:0}}).connect(new T.Filter(6500,'highpass').connect(out('perc'))));
+        make('strings',()=>new T.PolySynth(T.Synth,{oscillator:{type:'sawtooth'},envelope:{attack:.6,decay:.3,sustain:.8,release:1.2}}).connect(wobble(()=>new T.Tremolo(7,.55).start(),new T.Filter(950,'lowpass').connect(out('tension')))));
+        make('heart',()=>new T.MembraneSynth({pitchDecay:.03,octaves:3,envelope:{attack:.001,decay:.25,sustain:0,release:.1}}).connect(out('tension')));
+        make('kick',()=>new T.MembraneSynth({pitchDecay:.04,octaves:5,envelope:{attack:.001,decay:.3,sustain:0}}).connect(out('chase')));
+        make('snare',()=>new T.NoiseSynth({noise:{type:'pink'},envelope:{attack:.001,decay:.13,sustain:0}}).connect(new T.Filter(1800,'bandpass').connect(out('chase'))));
+        make('ostinato',()=>new T.MonoSynth({oscillator:{type:'square'},filter:{Q:2,type:'lowpass'},envelope:{attack:.003,decay:.08,sustain:.2,release:.05},filterEnvelope:{attack:.002,decay:.08,sustain:.1,baseFrequency:300,octaves:2}}).connect(new T.Gain(.5).connect(out('chase'))));
+        make('stab',()=>new T.PolySynth(T.Synth,{oscillator:{type:'sawtooth'},envelope:{attack:.004,decay:.12,sustain:0,release:.08}}).connect(new T.Filter(2200,'lowpass').connect(out('chase'))));
         // The seasonal bands (lighter versions on TV boxes).
-        v.choir=new T.PolySynth(T.Synth,{oscillator:lite?{type:'sine'}:{type:'fatsine',spread:24,count:3},envelope:{attack:1.2,decay:.5,sustain:.8,release:2.5}}).connect(new T.Filter(1600,'lowpass').connect(out('pad')));
-        v.pizz=new T.Synth({oscillator:{type:'triangle'},envelope:{attack:.002,decay:.25,sustain:0,release:.15}}).connect(out('bass'));
-        v.marimba=new T.Synth({oscillator:{type:'sine'},envelope:{attack:.002,decay:.35,sustain:0,release:.2}}).connect(out('bass'));
-        v.pah=new T.PolySynth(T.Synth,{oscillator:{type:'triangle'},envelope:{attack:.003,decay:.12,sustain:0,release:.08}}).connect(new T.Filter(1800,'lowpass').connect(out('bass')));
-        v.celesta=new T.FMSynth({harmonicity:7.01,modulationIndex:2.5,oscillator:{type:'sine'},envelope:{attack:.002,decay:1.4,sustain:0,release:1},modulationEnvelope:{attack:.002,decay:.6,sustain:0,release:.4}}).connect(out('melody'));
-        v.harp=new T.Synth({oscillator:{type:'triangle'},envelope:{attack:.002,decay:1.1,sustain:0,release:.8}}).connect(new T.Filter(3200,'lowpass').connect(out('melody')));
-        v.steel=new T.FMSynth({harmonicity:2.8,modulationIndex:4,oscillator:{type:'sine'},envelope:{attack:.003,decay:.55,sustain:.05,release:.4},modulationEnvelope:{attack:.002,decay:.25,sustain:0,release:.2}}).connect(out('melody'));
-        v.accordion=new T.Synth({oscillator:lite?{type:'square'}:{type:'fatsquare',spread:12,count:2},envelope:{attack:.03,decay:.1,sustain:.7,release:.2}}).connect(new T.Filter(2000,'lowpass').connect(new T.Vibrato(6,.06).connect(out('melody'))));
-        try{v.sleigh=lite?null:new T.MetalSynth({harmonicity:12,resonance:900,modulationIndex:20,octaves:1.2,envelope:{attack:.001,decay:.14,release:.05}}).connect(out('perc'));if(v.sleigh)v.sleigh.frequency.value=520;}catch(_){v.sleigh=null;}
-        v.sleigh||=new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.08,sustain:0}}).connect(new T.Filter({frequency:6500,type:'bandpass',Q:2}).connect(out('perc')));
-        v.conga=new T.MembraneSynth({pitchDecay:.02,octaves:1.2,envelope:{attack:.001,decay:.18,sustain:0}}).connect(out('perc'));
-        v.stomp=new T.MembraneSynth({pitchDecay:.05,octaves:3,envelope:{attack:.001,decay:.25,sustain:0}}).connect(out('perc'));
-        v.clap=new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.09,sustain:0}}).connect(new T.Filter(1500,'bandpass').connect(out('perc')));
-        v.bird=new T.Synth({portamento:.03,oscillator:{type:'sine'},envelope:{attack:.005,decay:.08,sustain:.3,release:.05}}).connect(out('perc'));
-        v.sting=new T.PolySynth(T.Synth,{oscillator:{type:'triangle'},envelope:{attack:.005,decay:.3,sustain:.3,release:.8}}).connect(reverb);
-        // Levels measured offline so every layer sits at a similar loudness at full mix.
-        for(const [name,voice] of Object.entries(v))if(voice.volume)voice.volume.value={pad:-5,strings:-16,stab:-17,sting:-6,shaker:-1,snare:-15,ostinato:-11,bass:-1,melody:7,heart:-4,kick:-7,pluck:-4,bell:-9,flute:-6,arp:-14,rim:-12,boom:-4,alarm:-14,ghost:-8,hat:-20,tom:-6,rimshot:-16,swoop:-14,choir:-7,pizz:-3,marimba:-1,pah:-15,celesta:-9,harp:-7,steel:-8,accordion:-15,sleigh:-14,conga:-6,stomp:-6,clap:-11,bird:-18}[name]??-10;
+        make('choir',()=>new T.PolySynth(T.Synth,{oscillator:lite?{type:'sine'}:{type:'fatsine',spread:24,count:3},envelope:{attack:1.2,decay:.5,sustain:.8,release:2.5}}).connect(new T.Filter(1600,'lowpass').connect(out('pad'))));
+        make('pizz',()=>new T.Synth({oscillator:{type:'triangle'},envelope:{attack:.002,decay:.25,sustain:0,release:.15}}).connect(out('bass')));
+        make('marimba',()=>new T.Synth({oscillator:{type:'sine'},envelope:{attack:.002,decay:.35,sustain:0,release:.2}}).connect(out('bass')));
+        make('pah',()=>new T.PolySynth(T.Synth,{oscillator:{type:'triangle'},envelope:{attack:.003,decay:.12,sustain:0,release:.08}}).connect(new T.Filter(1800,'lowpass').connect(out('bass'))));
+        make('celesta',()=>new T.FMSynth({harmonicity:7.01,modulationIndex:2.5,oscillator:{type:'sine'},envelope:{attack:.002,decay:1.4,sustain:0,release:1},modulationEnvelope:{attack:.002,decay:.6,sustain:0,release:.4}}).connect(out('melody')));
+        make('harp',()=>new T.Synth({oscillator:{type:'triangle'},envelope:{attack:.002,decay:1.1,sustain:0,release:.8}}).connect(new T.Filter(3200,'lowpass').connect(out('melody'))));
+        make('steel',()=>new T.FMSynth({harmonicity:2.8,modulationIndex:4,oscillator:{type:'sine'},envelope:{attack:.003,decay:.55,sustain:.05,release:.4},modulationEnvelope:{attack:.002,decay:.25,sustain:0,release:.2}}).connect(out('melody')));
+        make('accordion',()=>new T.Synth({oscillator:lite?{type:'square'}:{type:'fatsquare',spread:12,count:2},envelope:{attack:.03,decay:.1,sustain:.7,release:.2}}).connect(new T.Filter(2000,'lowpass').connect(wobble(()=>new T.Vibrato(6,.06),out('melody')))));
+        make('sleigh',()=>{let bell=null;try{bell=lite?null:new T.MetalSynth({harmonicity:12,resonance:900,modulationIndex:20,octaves:1.2,envelope:{attack:.001,decay:.14,release:.05}}).connect(out('perc'));if(bell)bell.frequency.value=520;}catch(_){bell=null;}
+          return bell||new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.08,sustain:0}}).connect(new T.Filter({frequency:6500,type:'bandpass',Q:2}).connect(out('perc')));});
+        make('conga',()=>new T.MembraneSynth({pitchDecay:.02,octaves:1.2,envelope:{attack:.001,decay:.18,sustain:0}}).connect(out('perc')));
+        make('stomp',()=>new T.MembraneSynth({pitchDecay:.05,octaves:3,envelope:{attack:.001,decay:.25,sustain:0}}).connect(out('perc')));
+        make('clap',()=>new T.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.09,sustain:0}}).connect(new T.Filter(1500,'bandpass').connect(out('perc'))));
+        make('bird',()=>new T.Synth({portamento:.03,oscillator:{type:'sine'},envelope:{attack:.005,decay:.08,sustain:.3,release:.05}}).connect(out('perc')));
+        make('sting',()=>new T.PolySynth(T.Synth,{oscillator:{type:'triangle'},envelope:{attack:.005,decay:.3,sustain:.3,release:.8}}).connect(reverb));
         this.ready=true;
       }catch(_){this.ready=false;}
       return this.ready;
     }
     start(){
       const T=this.Tone;if(!this.ready||this.started)return false;const transport=this.context.transport;transport.bpm.value=this.style.bpm||BPM;
-      transport.scheduleRepeat(time=>this.tick(time),'16n');transport.start('+0.1');this.started=true;if(this.state)this.apply(this.state,2);return true; // Fade in rather than starting at full mix.
+      transport.scheduleRepeat(time=>this.tick(time),'16n');if(!this.muted)transport.start('+0.1');this.started=true;if(this.state)this.apply(this.state,2);return true; // Fade in rather than starting at full mix.
     }
     tick(time){
       // A new style starts on the next bar, from the top of its own tune.
@@ -351,7 +356,11 @@
     // tension strings creep in underneath, so danger is felt before it is seen.
     setNearness(k){if(!this.ready||this.state!=='explore')return false;const layer=this.layers.get('tension'),target=Math.round(Math.max(0,Math.min(1,k))*.3*20)/20;if(Math.abs(target-layer.target)<.04)return false;
       const t=this.context.currentTime,g=layer.gain.gain;layer.target=target;layer.quietAt=t+1;g.cancelAndHoldAtTime(t);g.linearRampToValueAtTime(target,t+1.2);return true;}
-    setVolume(volume,muted=this.muted){if(volume===this.volume&&muted===this.muted&&this.volumeSet)return;this.volume=volume;this.muted=muted;if(!this.master)return;this.volumeSet=true;this.master.gain.rampTo(muted?0:volume,.25);}
+    // Turning the music off really stops it: the transport pauses once the fade is done, so no notes are
+    // scheduled or synthesised while it is silent. Turning it back on carries on from where it was.
+    setVolume(volume,muted=this.muted){if(volume===this.volume&&muted===this.muted&&this.volumeSet)return;const was=this.muted;this.volume=volume;this.muted=muted;if(!this.master)return;this.volumeSet=true;this.master.gain.rampTo(muted?0:volume,.25);
+      const transport=this.context?.transport;if(!this.started||!transport||was===muted&&this.volumeSet)return;
+      try{if(muted)transport.pause?.(this.context.currentTime+.3);else{transport.start?.('+0.05');if(this.state)this.apply(this.state,1);}}catch(_){}}
   }
   Object.assign(EscapeMusic,{flavorFor,cue,FLAVORS,stateFor,events,stinger,melody:tuneFor,styleFor,STYLES,MOODS,MIX,FADES,LAYERS,THEME_MOOD,BPM,midi});
   root.EscapeMusic=EscapeMusic;
