@@ -13,7 +13,7 @@ const ESCAPE_BUILDER_ARROW=['→','↓','←','↑'];
 const ESCAPE_BUILDER_EXTRAS={'layer:shade':['⛱','Awning: shade where the hawk cannot dive'],'layer:glowPlants':['✺','Glow plant: light in a dark level'],'layer:regrowth':['✿','Regrowth bug: grows back a lost tail'],'layer:slippery':['❄','Glide ice: Sally keeps her speed, then slides faster; Crawl brakes'],
   cap:['🍄','Bounce cap: click the cap, then where it throws Sally'],wind:['≋','Wind lane: click two opposite corners'],current:['⇶','Current or slope: click two corners; choose Water or Ground in the inspector'],echo:['◎','Echo hall: click two corners; sound carries further inside'],tunnel:['⛏','Burrow pair: click one mound, then its partner'],area:['▢','Trigger area: click two corners; walking in can open doors or wake enemies'],
   ants:['🐜','Ant column: click the points of its loop in order'],seedbed:['🌱','Seed bed: click the two banks either side of a gap; a planted seed grows a crossing'],wheel:['✣','Root wheel'],rival:['⚔','Rivals: click two enemies who fight when they meet'],page:['📜','Page: a note lying on the floor for players to find and read after the run (up to 3)'],
-  sign:['🪧','Trail sign: a short note Sally reads when she stands by it and presses Read (up to 4)'],checkpoint:['⚐','Checkpoint: in a gentle level a catch sends Sally back to the last one reached'],
+  sign:['🪧','Trail sign: a short note Sally reads when she stands by it and presses Read (up to 4)'],crate:['📦','Crate: Sally shoves it a tile by walking into it (noisy). It blocks sight and creatures, and one pushed into a gap fills it'],checkpoint:['⚐','Checkpoint: in a gentle level a catch sends Sally back to the last one reached'],
   'prop:lantern':['🏮','Lantern post: autumn scenery'],'prop:tree':['🍂','Autumn tree: scenery'],'prop:pumpkin':['🎃','Pumpkin: scenery'],'prop:brazier':['🔥','Brazier: winter scenery that glows'],'prop:pine':['🌲','Pine tree: winter scenery'],'prop:gift':['🎁','Gift: winter scenery'],'prop:blossom':['🌸','Blossom tree: spring scenery'],'prop:flowerpot':['🪴','Flower pot: spring scenery'],'prop:wateringcan':['🚿','Watering can: spring scenery'],'prop:flowerlantern':['🏵','Flower lantern: spring scenery that glows'],'prop:parasol':['⛱','Beach parasol: summer scenery'],'prop:sandcastle':['🏰','Sandcastle: summer scenery'],'prop:buoy':['🛟','Buoy: summer scenery'],'prop:crate':['📦','Fish crate: summer scenery'],'prop:bunting':['🎏','Bunting: summer scenery'],'prop:harbourlantern':['🪔','Harbour lantern: summer scenery that glows'],'prop:rowboat':['🛶','Rowing boat: summer scenery'],'prop:lighthouse':['🗼','Lighthouse: summer scenery'],millwheel:['☸','Mill wheel: scenery']};
 
 function escapeBuilderApi(path,options={}){return fetch('/api/'+path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});}
@@ -222,6 +222,7 @@ function escapeBuilderCell(x,y,ch,linked){
   const ant=(m.antTrails||[]).findIndex(t=>hasAt(t.path));if(ant>=0&&!glyph)glyph='<span style="color:#d79a60">∙</span>';
   if((m.seedCrossings||[]).some(c=>hasAt(c.banks)))glyph='🌱';else if((m.seedCrossings||[]).some(c=>hasAt(c.tiles)))shadow+='inset 0 0 0 2px #8fc86a88,';
   if(m.rootWheel&&m.rootWheel[0]===x&&m.rootWheel[1]===y)glyph='✣';
+  if((m.crates||[]).some(q=>q[0]===x&&q[1]===y))glyph='📦';
   if((m.checkpoints||[]).some(q=>q[0]===x&&q[1]===y)&&!glyph)glyph='⚐';
   const prop=(m.props||[]).find(q=>q.at[0]===x&&q.at[1]===y);if(prop&&!glyph)glyph={lantern:'🏮',tree:'🍂',pumpkin:'🎃',brazier:'🔥',pine:'🌲',gift:'🎁'}[prop.kind];
   if(m.millWheel&&m.millWheel[0]===x&&m.millWheel[1]===y)glyph='☸';
@@ -477,6 +478,7 @@ function escapeBuilderApply(x,y){
     return true;}
   if(t==='ants'){const ok=B.addAntPoint(m,x,y,escapeBuilderAnchor==='new');escapeBuilderAnchor=null;if(ok)escapeBuilderPick={kind:'ants',index:m.antTrails.length-1};return ok;}
   if(t==='wheel')return B.setRootWheel(m,x,y);
+  if(t==='crate'){if(!B.toggleCrate(m,x,y))escapeBuilderNote='Crates go on open floor (up to 24).';return true;}
   if(t==='checkpoint'){if(!B.toggleCheckpoint(m,x,y))escapeBuilderNote='Checkpoints go on open floor (up to 6).';return true;}
   if(t.startsWith('prop:'))return B.toggleProp(m,t.slice(5),x,y);
   if(t==='millwheel')return B.setMillWheel(m,x,y);

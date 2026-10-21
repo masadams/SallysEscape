@@ -668,7 +668,7 @@ function drawEscapeTiles(g,screenCell,palette,index){
   // The cached layers are drawn at the camera's size before its chase pull-back or moment lean-in, and
   // scaled to the screen: those zooms ease every frame and must not force the layers to be redrawn.
   const cell=+(screenCell/(escapeCam.applied||1)).toFixed(3);
-  const key=g.level.id+'|'+cell+'|'+index+'|'+escapeLightingFull()+'|'+g.grid.map(r=>r.join('')).join('/'),w=g.width*cell,h=g.height*cell;
+  const key=g.level.id+'|'+cell+'|'+index+'|'+escapeLightingFull()+'|'+g.grid.map(r=>r.join('')).join('/')+'|'+(g.crateVersion||0),w=g.width*cell,h=g.height*cell;
   // Without a real p5 sketch (the test harness) the tiles are simply drawn every frame.
   if(!p5.instance?._renderer||!drawingContext.drawImage)drawEscapeStillTiles(g,screenCell,palette,index);
   else{
@@ -772,6 +772,21 @@ function drawEscapeMood(ctx,mood,W,H,clock){
 }
 // Mud round Sally: a ring of it rises as she sinks and wet flecks fly when she runs through it.
 // Nothing is drawn when she is clear of it.
+// Crates: a wooden crate, a packed snow block in winter, a hay bale in autumn. One that dropped into a
+// gap shows as its lid, flush with the ground.
+function drawEscapeCrates(g,view,cell){
+  if(!g.crates?.length)return;const theme=String(g.level.seasonalTheme||''),skin=theme.startsWith('winter')?'snow':theme.startsWith('autumn')?'hay':'wood';
+  const tone={wood:[[134,96,58],[102,70,40],[164,124,80]],snow:[[214,226,238],[170,188,206],[240,246,252]],hay:[[198,160,82],[156,120,56],[226,196,118]]}[skin];
+  for(const c of g.crates){const q=g.cratePos(c);if(view.follow&&!g.visibleTile(c.x,c.y))continue;const x=q.x*cell,y=q.y*cell;noStroke();
+    if(c.sunk&&!c.from){fill(...tone[1],230);rect(x+cell*.06,y+cell*.06,cell*.88,cell*.88,cell*.08);stroke(...tone[0]);strokeWeight(Math.max(1,cell*.04));for(const k of [.32,.68])line(x+cell*.1,y+cell*k,x+cell*.9,y+cell*k);continue;}
+    const drop=c.sunk?Math.min(1,(g.elapsed-c.start)/c.dur):0,sz=1-drop*.12;
+    fill(0,0,0,60);rect(x+cell*.1,y+cell*.2,cell*.86,cell*.86,cell*.1);
+    push();translate(x+cell*.5,y+cell*.5);scale(sz);fill(...tone[0]);rect(-cell*.44,-cell*.46,cell*.88,cell*.88,cell*(skin==='snow'?.18:.08));
+    if(skin==='wood'){fill(...tone[2]);rect(-cell*.44,-cell*.46,cell*.88,cell*.16,cell*.08);stroke(...tone[1]);strokeWeight(Math.max(1,cell*.05));noFill();rect(-cell*.36,-cell*.28,cell*.72,cell*.64);line(-cell*.36,-cell*.28,cell*.36,cell*.36);}
+    else if(skin==='snow'){fill(...tone[2]);ellipse(-cell*.12,-cell*.2,cell*.42,cell*.2);stroke(...tone[1]);strokeWeight(Math.max(1,cell*.03));line(-cell*.44,cell*.05,cell*.44,cell*.05);}
+    else{stroke(...tone[1]);strokeWeight(Math.max(1,cell*.035));for(const k of [-.25,0,.25])line(-cell*.4,k*cell,cell*.4,k*cell+cell*.04);stroke(120,84,40);strokeWeight(Math.max(1,cell*.06));line(-cell*.18,-cell*.46,-cell*.18,cell*.42);line(cell*.18,-cell*.46,cell*.18,cell*.42);}
+    pop();}
+}
 function drawEscapeMud(g,cell){const p=g.player,sink=p.sink||0,inMud=g.grid[Math.floor(p.y)]?.[Math.floor(p.x)]==='M'&&!p.swimming;if(!(sink>.02)&&!(inMud&&p.sprinting))return;
   noStroke();if(sink>.02){fill(92,66,40,90+120*sink);ellipse(p.x*cell,(p.y+.08)*cell,cell*(.55+.35*sink),cell*(.36+.22*sink));fill(130,96,58,140*sink);ellipse(p.x*cell,(p.y+.02)*cell,cell*(.36+.3*sink),cell*(.16+.12*sink));
     if(sink>.45){const t=g.elapsed*3;fill(150,118,74,120);for(let i=0;i<3;i++){const a=t+i*2.1,r=.28+.05*Math.sin(t*2+i);ellipse((p.x+Math.cos(a)*r)*cell,(p.y+Math.sin(a)*r*.6)*cell,cell*.07,cell*.07);}}}
@@ -925,6 +940,7 @@ function drawEscapeVault(){
     push();translate((x+.5)*cell,(y+.5)*cell);rotate(ang);line((t-.5)*cell-cell*.25,-cell*.18,(t-.5)*cell+cell*.1,-cell*.18);line(((t+.5)%1-.5)*cell-cell*.2,cell*.16,((t+.5)%1-.5)*cell+cell*.12,cell*.16);pop();}}
   // Spore puffballs (a spent one is a flat stub until it regrows) and bounce caps, each cap with
   // a dotted arc to where it lands Sally.
+  drawEscapeCrates(g,view,cell);
   for(const puff of g.puffs||[]){if(view.follow&&!g.visibleTile(puff.x,puff.y))continue;const x=(puff.x+.5)*cell,y=(puff.y+.5)*cell,ready=g.elapsed>=puff.readyAt;noStroke();
     if(ready){const breathe=1+Math.sin(g.elapsed*2+puff.x)*.04;fill(0,0,0,50);ellipse(x,y+cell*.22,cell*.62,cell*.2);fill(236,226,196);ellipse(x,y,cell*.62*breathe,cell*.54*breathe);fill(206,190,150);for(const [dx,dy] of [[-.12,-.08],[.1,-.12],[.05,.08],[-.06,.1]])ellipse(x+dx*cell,y+dy*cell,cell*.07,cell*.07);fill(255,255,255,120);ellipse(x-cell*.1,y-cell*.12,cell*.16,cell*.1);}
     else{fill(150,136,104);ellipse(x,y+cell*.1,cell*.32,cell*.14);}}

@@ -77,6 +77,11 @@ Sally takes that. (Plates and levers work doors; only the key and chests wake en
   **delay** and **strength** (1 is a breeze, 2.3 the Storm Heights gale). A gust shoves Sally along the lane
   (crawling braces her to about half), blows her off a ledge it pushes her against, carries a throw downwind
   (the aim arc shows the bend) and drifts spore clouds.
+- **Crates** (Extras, click to place or remove) are solid: they block sight, creatures and throws. Sally
+  shoves one a tile by walking into it square-on (crawling cannot, and the scrape is loud). A crate will not
+  cover the key, the exit, a switch, plate or gate, water or a creature; one pushed into a gap drops in and
+  makes a way across, and one pushed onto ice slides until something stops it. Winter levels draw them as
+  snow blocks, autumn as hay bales.
 - **Ice** (Layers) is the same glide ice as the game's: Sally keeps her speed, overshoots, coasts and
   crashes into walls, and only Crawl brakes. Only the marked tiles are slippery.
 - **❄ Cold** ground chills Sally; a **◍ Warm stone** thaws her.

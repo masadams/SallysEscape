@@ -156,9 +156,10 @@
  },
  {
   id:'summer-boatshed',name:'Beneath the Boatshed',index:5,revision:1,difficulty:'Medium\u2013hard',seasonalTheme:'summer-boatshed',cunning:2,
+  crates:[[10,12],[4,9]],
   pebbles:2,tongues:2,
   brief:'A cargo lane where barrels roll, a deep slipway, a crab by the key, and a serpent that wakes when you take it.',
-  hint:'A barrel rolls down the cargo lane every few seconds; the rumble warns you. Cross just after one goes by. In the store, stand opposite the bridge switch across the slipway and flick it with your tongue. The key is in the loft, in a hermit crab\u2019s lane: let it scuttle and tire before you grab it. Taking the key wakes a serpent under the store, right on the way home. It paces up and down the middle of the store; slip past behind it and keep still in the cover beside its path until a barrel goes by. The scorpion in the yard only stings when its tail is up.',
+  hint:'A barrel rolls down the cargo lane every few seconds; the rumble warns you. Cross just after one goes by. In the store, stand opposite the bridge switch across the slipway and flick it with your tongue. The key is in the loft, in a hermit crab\u2019s lane: let it scuttle and tire before you grab it. Taking the key wakes a serpent under the store, right on the way home. It paces up and down the middle of the store; slip past behind it and keep still in the cover beside its path until a barrel goes by. The scorpion in the yard only stings when its tail is up. Crates block sight; walk into one to shove it into a better spot, but the scrape is loud.',
   logs:[{from:[7,1],to:[7,13],period:6,offset:0,speed:6}],
   gates:[{id:'slip-bridge',name:'slipway bridge',bridge:true,tiles:[[14,6],[15,6]],switch:[16,3],color:[236,196,98]}],
   guards:[{kind:'scorpion',spawn:[19,12],patrol:[[19,12]],facing:Math.PI},{kind:'crab',spawn:[19,2],patrol:[[19,2]],facing:0,axis:'x',range:2}],

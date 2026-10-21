@@ -850,11 +850,12 @@
   },
   {
     "id": "autumn-store",
+    "crates": [[17, 6], [19, 12]],
     "name": "The Harvest Store",
     "difficulty": "Medium",
     "seasonalTheme": "autumn-dusk",
     "brief": "Find three store switches among narrow shelves and suspicious treat baskets.",
-    "hint": "Blue opens the first aisle, green the centre shelves, amber the pantry. A twitching basket can be exposed with a pebble. A serpent circles the pantry: slip in behind it. The key opens the lower delivery doors.",
+    "hint": "Blue opens the first aisle, green the centre shelves, amber the pantry. A twitching basket can be exposed with a pebble. A serpent circles the pantry: slip in behind it. The key opens the lower delivery doors. Hay bales in the east room hide you from the serpent; walk into one to shove it (it scrapes loudly).",
     "index": 4,
     "revision": 2,
     "cunning": 2,
