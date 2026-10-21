@@ -164,3 +164,12 @@ spotted, a dropped tail, the key and escaping (Android; iPhones do not let web p
 The site's Content Security Policy allows `worker-src blob:` because Tone keeps
 its timing clock in a small worker. A background tab would otherwise throttle
 the music.
+
+## Light on the machine
+
+Instruments are built the first time a tune plays them, so a region never pays for
+a band it doesn't use. On a TV box (`isTvDevice()`), music skips the reverb and
+the vibrato/tremolo wobbles, and chords keep to four notes at once; phones and
+computers sound as before. Turning the music off pauses the transport after the
+fade, so nothing is scheduled or synthesised while it is silent. Turning ambience
+(or all sound) off tears its looping beds down; they are rebuilt when it comes back.
