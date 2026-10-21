@@ -527,6 +527,11 @@ body:not(.mobile-game) #game-toolbar.toolbar-open #menu-button { order:-1; }
 .builder-name-inline { flex:1; min-width:120px; max-width:300px; margin-left:auto; background:#0f2526; border:1px solid #3f6a55; border-radius:8px; color:#f6edc8; padding:6px 10px; font:inherit; font-weight:600; }
 .builder-chip { border-radius:999px; padding:6px 12px; border:1px solid #4f7a66; background:#1c3d36; color:#bfe3a8; font:inherit; font-size:.8rem; white-space:nowrap; }
 .builder-chip.bad { color:#f4c27a; border-color:#a27a3a; }
+.builder-chip.on { background:#2c5a4c; color:#e4f7d2; }
+.builder-tip { position:fixed; z-index:60; max-width:320px; padding:8px 11px; border-radius:10px; background:#10241f; border:1px solid #4f7a66; color:#d9eccb; font-size:.8rem; line-height:1.35; box-shadow:0 8px 24px #0009; pointer-events:none; }
+.builder-tip b { color:#f2e6b0; }
+.builder-tip div { margin-top:4px; }
+.builder-tip div b { color:#bfe3a8; margin-right:4px; }
 .builder-bar .escape-primary { margin:0; min-height:36px; padding:6px 14px; }
 .builder-body { display:grid; grid-template-columns:260px minmax(0,1fr) 280px; min-height:0; }
 .builder-side { overflow:auto; padding:10px; background:#122b2b; border-right:1px solid #2f5248; }
