@@ -950,14 +950,29 @@ const tours={
    },
    [
     9,
-    4
+    12
+   ],
+   {
+    "ride": 0
+   },
+   [
+    16,
+    13,
+    false,
+    true
    ],
    [
     16,
-    2
+    12,
+    false,
+    true
    ],
    [
     16,
+    9
+   ],
+   [
+    15,
     5
    ],
    {
@@ -970,6 +985,10 @@ const tours={
     "action": "pebble",
     "power": 0
    },
+   [
+    16,
+    2
+   ],
    [
     22,
     5
@@ -993,24 +1012,6 @@ const tours={
    [
     21,
     12
-   ],
-   [
-    16,
-    13,
-    false,
-    true
-   ],
-   [
-    16,
-    12,
-    false,
-    true
-   ],
-   [
-    21,
-    12,
-    false,
-    true
    ],
    [
     21,
@@ -1612,7 +1613,13 @@ const tours={
   ]
  }
 };
-function execute(id,variant,delay=0){const r=make(id,delay);try{for(const p of tours[id][variant]){if(Array.isArray(p))r.go(...p);else if(p.face)r.face(...p.face);else if(p.wait)r.wait(p.wait);else if(p.action)r.act(p.action,p.power);}r.wait(1);if(r.g.status!=='won')throw Error('Not won '+r.g.message);if(variant==='treasure'&&r.g.treasure!==r.g.totalTreasure)throw Error('Missing '+r.g.treasure+'/'+r.g.totalTreasure+' '+r.g.loot.filter(l=>!l.taken).map(l=>[l.x,l.y]));const result={id,variant,options:{seasonalId:id},time:+r.g.elapsed.toFixed(2),treasure:r.g.treasure,events:[...r.events],commands:r.commands};console.log(id,variant,'won',result.time,result.treasure+'/10',result.events.join(','));return result;}catch(e){console.log('FAIL',id,variant,e.message,r.g.catches.at(-1));return null;}}
+// {ride:i}: from beside rope i's nearer end, wait for it to swing in, step onto the end and ride it across.
+function ride(r,i){const g=r.g,rope=g.ropes[i],ends=[rope.from,rope.to],near=ends.map(e=>Math.hypot(g.player.x-e[0]-.5,g.player.y-e[1]-.5)),k=near[0]<=near[1]?0:1,e=ends[k];
+ const coming=()=>{const s=g.ropeSwing(rope);return k===0?s<.3&&g.ropeSwing({...rope,phase:rope.phase+.01})<s:s>.7&&g.ropeSwing({...rope,phase:rope.phase+.01})>s;};let n=0;
+ while(!coming()&&g.status==='playing'&&n++<2400)r.wait(1/120);
+ while(!g.player.flight&&g.status==='playing'&&n++<3600){const dx=e[0]+.5-g.player.x,dy=e[1]+.5-g.player.y,L=Math.hypot(dx,dy)||1,sc=Math.min(1,L*120/2.45);r.face(+(dx/L*sc).toFixed(4),+(dy/L*sc).toFixed(4));}
+ while(g.player.flight&&g.status==='playing')r.wait(1/120);if(!g.player.ropeLock)throw Error('Did not ride rope '+i);}
+function execute(id,variant,delay=0){const r=make(id,delay);try{for(const p of tours[id][variant]){if(Array.isArray(p))r.go(...p);else if(p.ride!==undefined)ride(r,p.ride);else if(p.face)r.face(...p.face);else if(p.wait)r.wait(p.wait);else if(p.action)r.act(p.action,p.power);}r.wait(1);if(r.g.status!=='won')throw Error('Not won '+r.g.message);if(variant==='treasure'&&r.g.treasure!==r.g.totalTreasure)throw Error('Missing '+r.g.treasure+'/'+r.g.totalTreasure+' '+r.g.loot.filter(l=>!l.taken).map(l=>[l.x,l.y]));const result={id,variant,options:{seasonalId:id},time:+r.g.elapsed.toFixed(2),treasure:r.g.treasure,events:[...r.events],commands:r.commands};console.log(id,variant,'won',result.time,result.treasure+'/10',result.events.join(','));return result;}catch(e){console.log('FAIL',id,variant,e.message,r.g.catches.at(-1));return null;}}
 function serialize(records){return '[\n'+records.map(({commands,...r})=>'  '+JSON.stringify(r).slice(0,-1)+',"commands":[\n'+commands.map(c=>'    '+JSON.stringify(c)).join(',\n')+'\n  ]}').join(',\n')+'\n]\n';}
 if(require.main===module){const at=process.argv.indexOf('--delay'),delay=at<0?0:Number(process.argv[at+1]);if(!Number.isFinite(delay)||delay<0||delay>30)throw Error('--delay must be 0 to 30 seconds');const result=[];for(const variant of ['main','treasure'])for(const id of Object.keys(tours)){const r=execute(id,variant,delay);if(r)result.push(r);}if(result.length!==16)process.exitCode=1;else if(process.argv.includes('--write'))fs.writeFileSync(path.join(root,'tests/fixtures/escape-seasons.json'),serialize(result));}
 module.exports={make,execute,tours};

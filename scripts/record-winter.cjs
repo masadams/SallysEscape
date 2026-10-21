@@ -50,6 +50,8 @@ function step(r,p){const g=r.g,live=()=>g.status==='playing';
  if(p.away){const [kind,x,y,ang=1.6]=p.away,off=()=>{const h=nearest(g,kind,x,y),want=Math.atan2(y+.5-h.y,x+.5-h.x);return Math.abs(Math.atan2(Math.sin(want-h.facing),Math.cos(want-h.facing)));};let n=0;while(off()<=ang&&live()&&n++<4800)r.wait(1/120);return;}
  if(p.near){const [kind,x,y,d]=p.near;let n=0;while(!g.hunters.some(h=>h.kind===kind&&Math.hypot(h.x-x-.5,h.y-y-.5)<d)&&live()&&n++<4800)r.wait(1/120);return;}
  if(p.clear){const [x,y,d,kind]=p.clear;let n=0;while(g.hunters.some(h=>(!kind||h.kind===kind)&&Math.hypot(h.x-x-.5,h.y-y-.5)<d)&&live()&&n++<4800)r.wait(1/120);return;}
+ // {push:[dx,dy,s]} leans into a crate (or anything) in that direction for s seconds.
+ if(p.push){const [dx,dy,secs]=p.push;for(let i=0;i<Math.round(secs*120)&&live();i++)r.face(dx,dy);return;}
  if(p.face)return r.face(...p.face);
  if(p.wait)return r.wait(p.wait);
  if(p.action)return r.act(p.action,p.power);
