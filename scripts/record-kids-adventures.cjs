@@ -35,7 +35,8 @@ const main={
  'sallys-way-home':r=>{r.go(7,4);r.go(14,3);r.go(23,3);r.go(28,5);r.go(34,3);r.go(28,16);r.go(23,18);r.wait(.7);r.go(6,18);r.go(3,19);},
  'seashell-beach':r=>{r.wait(9);r.go(8,5);r.go(9,10);r.go(21,10);r.go(22,11);r.go(22,9);r.wait(6);r.go(24,5);r.go(28,5);r.go(31,6);r.go(29,11);r.go(27,13);r.wait(2);r.go(24,15);r.go(9,17);r.go(8,18);r.go(3,18);},
  'snowy-hilltop':r=>{r.go(33,17);r.go(7,17);r.go(7,12);r.face(0,-1);r.act('tongue');r.wait(.8);r.go(2,11);r.go(2,7);r.go(26,7);r.go(27,5);r.go(12,5);r.wait(.6);r.go(2,2);r.go(3,4);r.wait(5.5);r.go(17,4);r.go(17,1);r.go(33,1);r.go(35,1);r.go(3,22);},
- 'glow-garden':r=>{r.go(5,12);r.go(13,11);r.go(13,1);r.go(21,2);r.face(0,1);r.act('tongue');r.wait(.8);r.go(28,2);r.go(28,11);r.go(34,17);r.go(27,19);r.go(10,19);r.go(4,19);}
+ 'glow-garden':r=>{r.go(5,12);r.go(13,11);r.go(13,1);r.go(21,2);r.face(0,1);r.act('tongue');r.wait(.8);r.go(28,2);r.go(28,11);r.go(34,17);r.go(27,19);r.go(10,19);r.go(4,19);},
+ 'ant-city':r=>{r.go(11,3);r.wait(5);r.go(19,6);r.go(22,9);r.go(19,6);r.go(26,10);r.wait(4);r.go(30,12);r.go(36,11);r.face(1,0);r.act('tongue');r.wait(.8);r.go(35,6);r.go(37,2);r.go(32,1);r.act('burrow');r.wait(1);r.go(3,4);}
 };
 function execute(id,variant,fn,delay=0){const r=make(id,delay);try{fn(r);r.wait(1);if(r.g.status!=='won')throw Error('Not won '+r.g.message);if(variant==='treasure'&&r.g.treasure!==r.g.totalTreasure)throw Error('Missing treasure '+r.g.treasure+'/'+r.g.totalTreasure+' '+r.g.loot.filter(l=>!l.taken).map(l=>[l.x,l.y]));const out={id,variant,options:{kidsId:id},commands:r.commands,time:+r.g.elapsed.toFixed(2),treasure:r.g.treasure,events:[...r.events]};console.log(id,variant,r.g.status,out.time,out.treasure+'/'+r.g.totalTreasure,'alarms',r.g.alarms,out.events.join(','));return out;}catch(e){console.log('FAIL',id,variant,e.message,'catch',r.g.catches.at(-1));return null;}}
 const treasure={

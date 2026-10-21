@@ -1216,6 +1216,161 @@
     "#.........#.1...L..........#.........2#",
     "#######################################"
   ]
+},
+{
+  "id": "ant-city",
+  "fieldNotes": [
+    {
+      "id": "ant-city-sign-1",
+      "at": [7,2],
+      "title": "Busy ants",
+      "body": "Ants march round and round the food store. They never stop to look. Wait for a gap between the groups, then cross."
+    },
+    {
+      "id": "ant-city-sign-2",
+      "at": [33,11],
+      "title": "A sticky gap",
+      "body": "The amber switch is across the sticky honey. Stand at the edge, face the switch and use Tongue. The queen's door opens."
+    }
+  ],
+  "name": "Busy Ant City",
+  "sticker": "🐜",
+  "adventure": true,
+  "kidsTheme": "ants",
+  "gentle": 0.7,
+  "brief": "Deep in the busy ant city, the queen is keeping Sally's key. Cross the marching ants and find the way to her chamber.",
+  "hint": "Cross the ant column in a gap. The blue button is in the food store; the amber switch is past the honey. The key opens a secret ant tunnel home.",
+  "pebbles": 3,
+  "tongues": 2,
+  "spores": 2,
+  "checkpoints": [
+    [11,3],
+    [19,6],
+    [30,10],
+    [33,8],
+    [37,6]
+  ],
+  "antTrails": [
+    {
+      "path": [
+        [12,5],
+        [27,5],
+        [27,17],
+        [12,17]
+      ],
+      "groups": 3,
+      "size": 3,
+      "speed": 1.2
+    }
+  ],
+  "tunnels": [
+    [
+      [32,1],
+      [6,5]
+    ]
+  ],
+  "gates": [
+    {
+      "id": "ant-blue",
+      "name": "Great hall",
+      "color": [106,195,236],
+      "switch": [22,9],
+      "tiles": [
+        [31,12],
+        [31,13]
+      ]
+    },
+    {
+      "id": "ant-amber",
+      "name": "Queen's door",
+      "color": [244,192,93],
+      "switch": [39,11],
+      "tiles": [
+        [35,5],
+        [36,5]
+      ]
+    },
+    {
+      "id": "ant-tunnel",
+      "name": "Secret tunnel",
+      "color": [191,154,230],
+      "tiles": [
+        [33,1]
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "ant-key",
+      "when": "key",
+      "open": [
+        "ant-tunnel"
+      ],
+      "message": "A secret ant tunnel opens in the corner! It leads home.",
+      "objective": "Hop into the ant tunnel, or walk back, to the green door."
+    }
+  ],
+  "guards": [
+    {
+      "kind": "beetle",
+      "spawn": [20,13],
+      "facing": 0,
+      "patrol": [
+        [23,13],
+        [16,13]
+      ]
+    },
+    {
+      "spawn": [20,19],
+      "patrol": [
+        [13,19],
+        [29,19]
+      ],
+      "facing": 3.141592653589793
+    },
+    {
+      "spawn": [34,17],
+      "patrol": [
+        [34,20],
+        [34,7]
+      ],
+      "facing": 1.5707963267948966
+    },
+    {
+      "kind": "ladybird",
+      "spawn": [26,2],
+      "facing": 0,
+      "patrol": [
+        [22,2],
+        [29,3]
+      ]
+    }
+  ],
+  "map": [
+    "#########################################",
+    "#........#...................2.#........#",
+    "#..............................##....K..#",
+    "#..@........L...L......L.......##.......#",
+    "#..X...........................##.1.....#",
+    "#........#.....................####..####",
+    "#.L......#.....................#........#",
+    "##########....#####..#####.....#.L......#",
+    "##########....#..........#.....#.......1#",
+    "##########....#.........L#..L..#........#",
+    "##########...o#..........#.....#.....####",
+    "##########....#...#..#...#.....#.....__.#",
+    "##########.L..#...#..#...#.......L...####",
+    "##########....#..........#o.............#",
+    "##########....#2........1#.....#........#",
+    "##########....############.....#........#",
+    "##########.....................#...##...#",
+    "##########.....................#...##...#",
+    "##########.....................#...##...#",
+    "##########......d.....d.....L..#......L.#",
+    "##########.....................#........#",
+    "##########1....................#.......2#",
+    "#########################################"
+  ]
 }
   ];
   root.EscapeKids=routes;
