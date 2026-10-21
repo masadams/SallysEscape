@@ -114,6 +114,8 @@
       this.currents=(this.level.currents||[]).map(c=>{const [x1,y1,x2,y2]=c.area;return {x1,y1,x2,y2,dir:c.dir,speed:c.speed||1.2,...(c.surface==='ground'?{surface:'ground'}:{}),...(c.pulse>0?{pulse:c.pulse,phase:c.phase||0}:{})};});this.flow={x:0,y:0};
       this.tunnels=(this.level.tunnels||[]).map(([a,b])=>({a:centre(...a),b:centre(...b)}));this.tunnelReadyAt=0;
       this.spores=this.level.spores||0;this.sporesUsed=0;this.tunnelsUsed=0;
+      // Ropes and vines swing between two end tiles; standing on an end as it arrives grabs it.
+      this.ropes=(this.level.ropes||[]).map((r,i)=>({id:i,from:r.from.slice(),to:r.to.slice(),period:r.period||4,phase:r.phase||0}));
       this.caps=(this.level.caps||[]).map(c=>({at:c.at.slice(),to:c.to.slice(),key:c.at.join(','),readyAt:0,...(c.spring>0?{spring:Math.min(3,Math.round(c.spring))}:{})}));
       this.vents=(this.level.vents||[]).map(v=>{const [dx,dy]=v.dir,tiles=[];for(let i=1;i<=(v.length||4);i++){const x=v.at[0]+dx*i,y=v.at[1]+dy*i;if(!this.floor(x,y))break;tiles.push([x,y]);}
         return {...v,tiles,keys:new Set(tiles.map(([x,y])=>x+','+y)),period:v.period||5,on:v.on||1.6,offset:v.offset||0,warn:v.warn||.9,active:false,warning:false};});
@@ -336,6 +338,9 @@
       const d=distance(from,to),dir={x:(to.x-from.x)/(d||1),y:(to.y-from.y)/(d||1)},base=distance(from,centre(...cap.to))||1;
       return {from,to,start:this.elapsed,dur:.55*Math.sqrt(Math.max(1,d/base)),...(cap.spring?{skid:{x:dir.x*(sprint?3:2.4),y:dir.y*(sprint?3:2.4)}}:{})};
     }
+    // How far along its swing a rope is: 0 at its first end, 1 at the other, easing at each end like a pendulum.
+    ropeSwing(r){return (1-Math.cos((this.elapsed/r.period+r.phase)*Math.PI*2))/2;}
+    ropeEnd(r){const s=this.ropeSwing(r),a=centre(...r.from),b=centre(...r.to);return {x:a.x+(b.x-a.x)*s,y:a.y+(b.y-a.y)*s};}
     fits(p,radius=0.22,actor=null){
       return [[-1,-1],[-1,1],[1,-1],[1,1]].every(([x,y])=>this.actorFloor(Math.floor(p.x+x*radius),Math.floor(p.y+y*radius),actor));
     }
@@ -764,7 +769,9 @@
       if(input.aiming){const l=Math.hypot(input.x||0,input.y||0);if(l){this.player.throwAim={x:input.x/l,y:input.y/l};this.player.facing=Math.abs(input.x)>=Math.abs(input.y)?{x:Math.sign(input.x),y:0}:{x:0,y:Math.sign(input.y)};}input={};}
       // In the air off a bounce cap Sally follows her arc and cannot steer.
       if(this.player.underground){const u=this.player.underground;input={};if(this.elapsed-u.start>=u.dur){this.player.x=u.to.x;this.player.y=u.to.y;this.player.underground=null;this.motion.resetPlayer?.(this.player);this.events.push('tunnel');this.updateVisibility(true);}}
-      if(this.player.flight){this.slideVelocity.x=0;this.slideVelocity.y=0;const f=this.player.flight,t=Math.min(1,(this.elapsed-f.start)/f.dur);this.player.x=f.from.x+(f.to.x-f.from.x)*t;this.player.y=f.from.y+(f.to.y-f.from.y)*t;input={};if(t>=1){this.player.flight=null;this.events.push('hop');if(f.skid){this.player.skid={...f.skid};this.player.bounceReady=true;}}}
+      if(this.player.flight?.rope){const f=this.player.flight,r=f.rope,e=this.ropeEnd(r),s=this.ropeSwing(r),far=f.toward?s:1-s;this.slideVelocity.x=0;this.slideVelocity.y=0;this.player.x=e.x;this.player.y=e.y;input={};
+        if(far>=.985||this.elapsed-f.start>=r.period*.55){const land=centre(...(f.toward?r.to:r.from));this.player.x=land.x;this.player.y=land.y;this.player.flight=null;this.player.ropeLock=r;this.events.push('hop');}}
+      else if(this.player.flight){this.slideVelocity.x=0;this.slideVelocity.y=0;const f=this.player.flight,t=Math.min(1,(this.elapsed-f.start)/f.dur);this.player.x=f.from.x+(f.to.x-f.from.x)*t;this.player.y=f.from.y+(f.to.y-f.from.y)*t;input={};if(t>=1){this.player.flight=null;this.events.push('hop');if(f.skid){this.player.skid={...f.skid};this.player.bounceReady=true;}}}
       // Digging in: held on a soft dirt patch, Sally scrabbles for 0.75 s (noisy, dust flying), then
       // lies buried, hidden from everything and safe, until the button is let go.
       if(this.soil.size){const q=this.player;
@@ -821,6 +828,9 @@
       // The skid off a springy cap carries Sally on a little after she lands, easing off quickly.
       if(p.skid){for(const axis of ['x','y']){const next={...p,[axis]:p[axis]+p.skid[axis]*dt};if(this.fits(next))p[axis]=next[axis];else p.skid[axis]=0;}const k=Math.exp(-6*dt);p.skid.x*=k;p.skid.y*=k;if(Math.hypot(p.skid.x,p.skid.y)<.05||p.flight)p.skid=null;}
       if(this.clouds.length&&this.wind.length)for(const c of this.clouds){const w=this.wind.find(w=>this.gustPhase(w).active&&w.keys.has(this.tileKey(c)));if(w){c.x+=w.dir[0]*w.strength*.5*dt;c.y+=w.dir[1]*w.strength*.5*dt;}}
+      if(this.ropes.length&&!p.flight&&!p.underground){const here=this.tileKey(p);if(p.ropeLock&&here!==p.ropeLock.from.join(',')&&here!==p.ropeLock.to.join(','))p.ropeLock=null;
+        for(const r of this.ropes){if(p.ropeLock===r)continue;const s=this.ropeSwing(r),atFrom=here===r.from.join(',')&&s<.06,atTo=here===r.to.join(',')&&s>.94;
+          if(atFrom||atTo){p.flight={rope:r,toward:atFrom,from:centre(...(atFrom?r.from:r.to)),to:centre(...(atFrom?r.to:r.from)),start:this.elapsed,dur:r.period/2};this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+r.period*.55+.3);this.events.push('rustle');break;}}}
       if(this.caps.length&&!p.flight&&(p.moving||p.bounceReady)){const cap=this.caps.find(c=>c.key===this.tileKey(p)&&this.elapsed>=c.readyAt);p.bounceReady=false;if(cap){p.flight=this.capFlight(cap,p.sprinting);cap.readyAt=this.elapsed+1;this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+.6);this.events.push('hop');}}
       p.hidden=Boolean(p.underground)||this.inRayShadow(p)||!p.moving&&!this.heldBy&&(this.grid[Math.floor(p.y)][Math.floor(p.x)]==='L'||p.camo)||this.clouds.length>0&&!this.heldBy&&this.inCloud(p);
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));

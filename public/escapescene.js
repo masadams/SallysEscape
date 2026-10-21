@@ -944,6 +944,14 @@ function drawEscapeVault(){
   for(const puff of g.puffs||[]){if(view.follow&&!g.visibleTile(puff.x,puff.y))continue;const x=(puff.x+.5)*cell,y=(puff.y+.5)*cell,ready=g.elapsed>=puff.readyAt;noStroke();
     if(ready){const breathe=1+Math.sin(g.elapsed*2+puff.x)*.04;fill(0,0,0,50);ellipse(x,y+cell*.22,cell*.62,cell*.2);fill(236,226,196);ellipse(x,y,cell*.62*breathe,cell*.54*breathe);fill(206,190,150);for(const [dx,dy] of [[-.12,-.08],[.1,-.12],[.05,.08],[-.06,.1]])ellipse(x+dx*cell,y+dy*cell,cell*.07,cell*.07);fill(255,255,255,120);ellipse(x-cell*.1,y-cell*.12,cell*.16,cell*.1);}
     else{fill(150,136,104);ellipse(x,y+cell*.1,cell*.32,cell*.14);}}
+  // Ropes and vines: hung from a point above the middle of their swing, the end sways between its two
+  // landing marks; a vine in the green places, a rope elsewhere.
+  for(const r of g.ropes||[]){const [ax,ay]=r.from,[bx,by]=r.to;if(view.follow&&!g.visibleTile(ax,ay)&&!g.visibleTile(bx,by))continue;
+    const vine=/jungle|garden|hollow|meadow|orchard|spring|grotto/.test(String(g.level.seasonalTheme||g.level.biome||g.level.id)),e=g.player.flight?.rope===r?g.player:g.ropeEnd(r),hx=(ax+bx+1)/2*cell,hy=(ay+by+1)/2*cell-cell*1.6;
+    noStroke();fill(255,220,150,45);for(const [x,y] of [[ax,ay],[bx,by]])ellipse((x+.5)*cell,(y+.5)*cell,cell*.55,cell*.55);
+    noFill();stroke(...(vine?[78,128,62]:[150,118,78]));strokeWeight(Math.max(1.5,cell*.07));const ex=e.x*cell,ey=e.y*cell-(g.player.flight?.rope===r?cell*.5:0);
+    bezier(hx,hy,hx+(ex-hx)*.3,hy+(ey-hy)*.7+cell*.25,ex-(ex-hx)*.1,ey-cell*.2,ex,ey);noStroke();fill(...(vine?[96,156,74]:[120,92,60]));ellipse(hx,hy,cell*.22,cell*.22);
+    if(vine)for(const k of [.35,.6,.8]){fill(110,176,84);ellipse(hx+(ex-hx)*k+cell*.07,hy+(ey-hy)*k,cell*.16,cell*.09);}else{fill(170,136,90);ellipse(ex,ey,cell*.16,cell*.16);}}
   for(const cap of g.caps||[]){const [ax,ay]=cap.at,[tx,ty]=cap.to;if(view.follow&&!g.visibleTile(ax,ay))continue;const x=(ax+.5)*cell,y=(ay+.5)*cell,ex=(tx+.5)*cell,ey=(ty+.5)*cell,mx=(x+ex)/2,my=(y+ey)/2-cell*1.2;
     noFill();stroke(255,190,120,70);strokeWeight(Math.max(1,cell*.035));drawingContext.setLineDash?.([cell*.08,cell*.12]);bezier(x,y,mx,my,mx,my,ex,ey);drawingContext.setLineDash?.([]);noStroke();fill(255,190,120,60);ellipse(ex,ey,cell*.5,cell*.5);
     // A springy cap: a coiled stem, and a fainter arc to where a sprint carries Sally.

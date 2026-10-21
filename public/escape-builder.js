@@ -33,7 +33,7 @@
   const PROPS={lantern:'Lantern post',tree:'Autumn tree',pumpkin:'Pumpkin',brazier:'Brazier',pine:'Pine tree',gift:'Gift',blossom:'Blossom tree',flowerpot:'Flower pot',wateringcan:'Watering can',flowerlantern:'Flower lantern',parasol:'Beach parasol',sandcastle:'Sandcastle',buoy:'Buoy',crate:'Fish crate',bunting:'Bunting',harbourlantern:'Harbour lantern',rowboat:'Rowing boat',lighthouse:'Lighthouse'};
   const LAYERS={shade:'Awning (shade from the hawk)',glowPlants:'Glow plant (light in the dark)',regrowth:'Pink regrowth bug (grows back a lost tail)',slippery:'Glide ice (Sally slides and speeds up; Crawl brakes)'};
   const EXTRAS=()=>({hint:'',tailDrop:false,timeLimit:0,camos:0,seeds:0,diggers:0,glows:0,spores:0,cunning:2,unlimited:false,gaze:false,sightRadius:0,dark:false,living:false,abyss:false,biome:'',
-    hawk:null,storm:null,tide:null,caps:[],wind:[],echoes:[],currents:[],tunnels:[],antTrails:[],seedCrossings:[],rootWheel:null,rivalries:[],shade:[],glowPlants:[],regrowth:[],slippery:[],regions:[],messages:{},pages:[],gentle:0,foxWarn:0,look:'',checkpoints:[],signs:[],props:[],crates:[],millWheel:null});
+    hawk:null,storm:null,tide:null,caps:[],wind:[],echoes:[],currents:[],tunnels:[],antTrails:[],seedCrossings:[],rootWheel:null,rivalries:[],shade:[],glowPlants:[],regrowth:[],slippery:[],regions:[],messages:{},pages:[],gentle:0,foxWarn:0,look:'',checkpoints:[],signs:[],props:[],crates:[],ropes:[],millWheel:null});
 
   function blank(width=21,height=13){
     width=clampInt(width,LIMITS.minW,LIMITS.maxW);height=clampInt(height,LIMITS.minH,LIMITS.maxH);
@@ -91,7 +91,7 @@
     keep.caps=(model.caps||[]).filter(c=>inside(c.at)&&inside(c.to));keep.antTrails=(model.antTrails||[]).map(t=>({...t,path:t.path.filter(inside)})).filter(t=>t.path.length>1);
     keep.wind=(model.wind||[]).filter(z=>inside([z.area[2],z.area[3]]));keep.echoes=(model.echoes||[]).filter(a=>inside([a[2],a[3]]));keep.currents=(model.currents||[]).filter(z=>inside([z.area[2],z.area[3]]));keep.tunnels=(model.tunnels||[]).filter(t=>t.every(inside));keep.regions=(model.regions||[]).filter(r=>inside([r.area[2],r.area[3]]));
     keep.seedCrossings=(model.seedCrossings||[]).filter(c=>[...c.banks,...c.tiles].every(inside));keep.rootWheel=model.rootWheel&&inside(model.rootWheel)?model.rootWheel:null;
-    keep.pages=(model.pages||[]).filter(q=>inside(q.at));keep.signs=(model.signs||[]).filter(q=>inside(q.at));keep.props=(model.props||[]).filter(q=>inside(q.at));keep.checkpoints=(model.checkpoints||[]).filter(inside);keep.crates=(model.crates||[]).filter(inside);keep.millWheel=model.millWheel&&inside(model.millWheel)?model.millWheel:null;
+    keep.pages=(model.pages||[]).filter(q=>inside(q.at));keep.signs=(model.signs||[]).filter(q=>inside(q.at));keep.props=(model.props||[]).filter(q=>inside(q.at));keep.checkpoints=(model.checkpoints||[]).filter(inside);keep.crates=(model.crates||[]).filter(inside);keep.ropes=(model.ropes||[]).filter(r=>inside(r.from)&&(!r.to||inside(r.to)));keep.millWheel=model.millWheel&&inside(model.millWheel)?model.millWheel:null;
     for(const ch of ['@','K','X'])if(!keep.map.some(r=>r.includes(ch))){const spot=findFloor(keep);if(spot)paint(keep,...spot,ch);}
     prune(keep);return keep;
   }
@@ -203,6 +203,10 @@
   function setPage(model,i,changes){const pg=(model.pages||[])[i];if(!pg)return false;if(changes.title!==undefined)pg.title=cleanText(changes.title,40)||'A note';if(changes.body!==undefined)pg.body=cleanText(changes.body,320);if(changes.author!==undefined)pg.author=cleanText(changes.author,30);return true;}
   const pageAt=(model,x,y)=>(model.pages||[]).findIndex(p=>same(p.at,[x,y]));
   // A bounce cap flings Sally from one tile to another; click the cap, then where it lands.
+  // A rope or vine: click one end, then the other; it swings between them every few seconds.
+  function addRope(model,x,y){if(!walkable(at(model,x,y))||(model.ropes||[]).some(r=>!r.to)||(model.ropes||[]).length>=8)return false;model.ropes=model.ropes||[];model.ropes.push({from:[x,y],to:null,period:4});return true;}
+  function setRopeEnd(model,x,y){const r=(model.ropes||[]).find(r=>!r.to);if(!r||!walkable(at(model,x,y))||same(r.from,[x,y]))return false;r.to=[x,y];return true;}
+  function setRope(model,i,changes){const r=(model.ropes||[])[i];if(!r)return false;if(changes.period!==undefined)r.period=clampNum(changes.period,2,12,4);if(changes.phase!==undefined){const v=clampNum(changes.phase,0,.99,0);if(v>0)r.phase=v;else delete r.phase;}return true;}
   function addCap(model,x,y){if(!walkable(at(model,x,y))||(model.caps||[]).some(c=>same(c.at,[x,y]))||(model.caps||[]).length>=12)return false;model.caps=model.caps||[];model.caps.push({at:[x,y],to:null});return true;}
   // Spring 0 is a plain cap; 1-3 lets a sprint carry Sally that many tiles further.
   function setCap(model,i,changes){const c=(model.caps||[])[i];if(!c)return false;if(changes.spring!==undefined){const v=clampInt(changes.spring,0,3);if(v>0)c.spring=v;else delete c.spring;}return true;}
@@ -252,7 +256,7 @@
   function removeExtraAt(model,x,y){
     let hit=false;for(const k of Object.keys(LAYERS)){const n=(model[k]||[]).length;model[k]=(model[k]||[]).filter(p=>!same(p,[x,y]));hit=hit||model[k].length<n;}
     const inRect=a=>x>=a[0]&&x<=a[2]&&y>=a[1]&&y<=a[3];
-    for(const [k,test] of [['pages',pg=>same(pg.at,[x,y])],['signs',q=>same(q.at,[x,y])],['props',q=>same(q.at,[x,y])],['checkpoints',q=>same(q,[x,y])],['crates',q=>same(q,[x,y])],['caps',c=>same(c.at,[x,y])||same(c.to,[x,y])],['seedCrossings',c=>[...c.banks,...c.tiles].some(p=>same(p,[x,y]))],['wind',z=>inRect(z.area)],['currents',z=>inRect(z.area)],['tunnels',t=>t.some(p=>same(p,[x,y]))],['echoes',a=>inRect(a)],['regions',r=>inRect(r.area)],['antTrails',t=>t.path.some(p=>same(p,[x,y]))]]){
+    for(const [k,test] of [['pages',pg=>same(pg.at,[x,y])],['signs',q=>same(q.at,[x,y])],['props',q=>same(q.at,[x,y])],['checkpoints',q=>same(q,[x,y])],['crates',q=>same(q,[x,y])],['ropes',r=>same(r.from,[x,y])||same(r.to,[x,y])],['caps',c=>same(c.at,[x,y])||same(c.to,[x,y])],['seedCrossings',c=>[...c.banks,...c.tiles].some(p=>same(p,[x,y]))],['wind',z=>inRect(z.area)],['currents',z=>inRect(z.area)],['tunnels',t=>t.some(p=>same(p,[x,y]))],['echoes',a=>inRect(a)],['regions',r=>inRect(r.area)],['antTrails',t=>t.path.some(p=>same(p,[x,y]))]]){
       const n=(model[k]||[]).length;model[k]=(model[k]||[]).filter(v=>!test(v));if(model[k].length<n){hit=true;break;}}
     if(!hit&&same(model.rootWheel,[x,y])){model.rootWheel=null;hit=true;}
     if(!hit&&same(model.millWheel,[x,y])){model.millWheel=null;hit=true;}
@@ -373,7 +377,7 @@ function validate(model){
       ...some('antTrails',(model.antTrails||[]).filter(t=>t.path.length>1)),...some('seedCrossings',model.seedCrossings),...some('rootWheel',model.rootWheel),...some('rivalries',model.rivalries),
       ...some('shade',model.shade),...some('glowPlants',model.glowPlants),...some('regrowth',model.regrowth),...some('slippery',model.slippery),
       ...(model.gentle>0?{gentle:model.gentle}:{}),...(model.foxWarn>0?{foxWarn:model.foxWarn}:{}),...(model.look?{look:model.look}:{}),
-      ...some('checkpoints',(model.checkpoints||[]).map(p=>p.slice())),...some('crates',(model.crates||[]).map(p=>p.slice())),...some('props',(model.props||[]).map(q=>({at:q.at.slice(),kind:q.kind}))),...some('millWheel',model.millWheel),
+      ...some('checkpoints',(model.checkpoints||[]).map(p=>p.slice())),...some('crates',(model.crates||[]).map(p=>p.slice())),...some('ropes',(model.ropes||[]).filter(r=>r.to).map(r=>({...r,from:r.from.slice(),to:r.to.slice()}))),...some('props',(model.props||[]).map(q=>({at:q.at.slice(),kind:q.kind}))),...some('millWheel',model.millWheel),
       ...some('fieldNotes',(model.signs||[]).filter(q=>q.body).map((q,i)=>({id:(q.id||'sign-'+(i+1)),at:q.at.slice(),title:q.title,body:q.body}))),
       ...some('pages',(model.pages||[]).filter(pg=>pg.body).map(pg=>({at:pg.at.slice(),title:pg.title,body:pg.body,...(pg.author?{author:pg.author}:{}),...(pg.id?{id:pg.id}:{})})))};
   }
@@ -388,7 +392,7 @@ function validate(model){
     for(const k of ['hawk','storm','tide','rootWheel'])m[k]=copy(route[k]);
     for(const k of ['caps','wind','echoes','currents','tunnels','antTrails','seedCrossings','shade','glowPlants','regrowth','slippery','pages'])m[k]=copy(route[k])||[];
     m.gentle=route.gentle>0?route.gentle:0;m.foxWarn=route.foxWarn||0;m.look=LOOKS[route.look]!==undefined?route.look:LOOKS[route.seasonalTheme]!==undefined?route.seasonalTheme:'';
-    m.checkpoints=(copy(route.checkpoints)||[]).map(p=>Array.isArray(p)?p.slice(0,2):[p.x,p.y]);m.props=copy(route.props)||[];m.crates=(copy(route.crates)||[]).map(p=>p.slice(0,2));m.millWheel=copy(route.millWheel);
+    m.checkpoints=(copy(route.checkpoints)||[]).map(p=>Array.isArray(p)?p.slice(0,2):[p.x,p.y]);m.props=copy(route.props)||[];m.crates=(copy(route.crates)||[]).map(p=>p.slice(0,2));m.ropes=copy(route.ropes)||[];m.millWheel=copy(route.millWheel);
     m.signs=(route.fieldNotes||[]).map(q=>({at:q.at.slice(),title:q.title||'A sign',body:q.body||'',...(q.id?{id:q.id}:{})}));
     // An official escape brings its story page along, so it can be seen and moved while editing.
     if(!m.pages.length&&root.EscapeNotes){const n=root.EscapeNotes.NOTES.find(q=>q.levelId===route.id);if(n)m.pages=[{at:n.at.slice(),title:n.title,body:n.body,author:n.author,id:n.id}];}
@@ -468,7 +472,7 @@ function validate(model){
     model.seedCrossings=list(r.seedCrossings,8).map(c=>({id:safeId(c?.id,/^[a-z0-9-]{1,30}$/)||fresh('seed-'),banks:pts(c?.banks,4),tiles:pts(c?.tiles,12)})).filter(c=>c.banks.length&&c.tiles.length);
     model.rootWheel=point(r.rootWheel,w,h);
     model.gentle=Number(r.gentle)>0?clampNum(r.gentle,.3,1,.6):0;model.foxWarn=clampNum(r.foxWarn,0,3,0);model.look=typeof r.look==='string'&&Object.prototype.hasOwnProperty.call(LOOKS,r.look)?r.look:'';
-    model.checkpoints=pts(r.checkpoints,6);model.crates=pts(r.crates,24);model.props=list(r.props,40).map(q=>({at:point(q?.at,w,h),kind:q?.kind})).filter(q=>q.at&&PROPS[q.kind]);model.millWheel=point(r.millWheel,w,h);
+    model.checkpoints=pts(r.checkpoints,6);model.crates=pts(r.crates,24);model.ropes=list(r.ropes,8).map(q=>({from:point(q?.from,w,h),to:point(q?.to,w,h),period:clampNum(q?.period,2,12,4),...(Number(q?.phase)>0?{phase:clampNum(q.phase,0,.99,0)}:{})})).filter(q=>q.from&&q.to);model.props=list(r.props,40).map(q=>({at:point(q?.at,w,h),kind:q?.kind})).filter(q=>q.at&&PROPS[q.kind]);model.millWheel=point(r.millWheel,w,h);
     model.signs=list(r.signs,4).map(q=>({at:point(q?.at,w,h),title:cleanText(q?.title,40)||'A sign',body:cleanText(q?.body,320),...(typeof q?.id==='string'&&/^[a-z0-9-]{1,40}$/.test(q.id)?{id:q.id}:{})})).filter(q=>q.at);
     model.pages=list(r.pages,PAGE_LIMIT).map(pg=>({at:point(pg?.at,w,h),title:cleanText(pg?.title,40)||'A note',body:cleanText(pg?.body,320),author:cleanText(pg?.author,30),...(typeof pg?.id==='string'&&/^level-note:[a-z]+:[12]$/.test(pg.id)?{id:pg.id}:{})})).filter(pg=>pg.at);
     model.regions=list(r.regions,12).map(q=>({id:safeId(q?.id,/^r[0-9]{1,8}$/),area:area(q?.area),requiresKey:Boolean(q?.requiresKey)})).filter(q=>q.id&&q.area);
@@ -486,7 +490,7 @@ function validate(model){
   const api={TILES,MARKS,ENEMIES,POSTED,LIMITS,COLORS,MODES,TRIGGERS,HAZARDS,SPEEDS,blank,paint,resize,addEnemy,removeEnemy,turnEnemy,addPatrol,clearPatrol,setSleep,
     paintDoor,removeDoorTile,setDoor,addTrigger,removeAt,toggleLink,linksFrom,linksTo,sourceAt,doorAt,triggerAt,hazardAt,guardAt,addHazard,setLogEnd,setHazard,paintClimate,doorName,
     validate,toRoute,fromRoute,treasureTotal,exportText,importText,sanitize,loadAll,saveOne,removeOne,
-    LOOKS,PROPS,toggleCheckpoint,toggleCrate,addSign,setSign,signAt,toggleProp,setMillWheel,LAYERS,DIRS,toggleLayer,addPage,setPage,pageAt,PAGE_LIMIT,addCap,setCap,setCapEnd,addWind,setWind,addEcho,addCurrent,setCurrent,addTunnel,addRegion,setRegion,addAntPoint,setAnts,addSeedCrossing,setRootWheel,toggleRival,removeExtraAt,setGuard,setSettings,setMessage,setLinkAction,regionAt};
+    LOOKS,PROPS,toggleCheckpoint,toggleCrate,addSign,setSign,signAt,toggleProp,setMillWheel,LAYERS,DIRS,toggleLayer,addPage,setPage,pageAt,PAGE_LIMIT,addCap,setCap,setCapEnd,addRope,setRopeEnd,setRope,addWind,setWind,addEcho,addCurrent,setCurrent,addTunnel,addRegion,setRegion,addAntPoint,setAnts,addSeedCrossing,setRootWheel,toggleRival,removeExtraAt,setGuard,setSettings,setMessage,setLinkAction,regionAt};
   root.EscapeBuilder=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
