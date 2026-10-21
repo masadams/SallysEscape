@@ -10,13 +10,14 @@ function openLittleExplorers(focusId){
   const panel=escapeBuilderShow();gameState='kids';
   const done=escapeKidsDone(),levels=escapeKidsLevels(),next=levels.find(l=>!done.includes(l.id)),t=escapeText;
   panel.innerHTML='<div class="kids-picker"><div class="builder-head"><button id="kids-back" class="escape-secondary">← Main menu</button></div>'
-    +'<h2 class="kids-title">Little Explorers</h2><p class="kids-sub">Help Sally on '+levels.length+' little adventures. Every one you finish gives you a sticker!</p>'
+    +'<h2 class="kids-title">Little Explorers</h2><p class="kids-sub">Help Sally on '+levels.length+' little adventures. Every one you finish gives you a sticker!</p><p class="kids-count">Stickers: '+done.length+' of '+levels.length+(done.length===levels.length?' · You finished them all! 🎉':'')+'</p>'
     +'<button id="kids-guide-toggle" class="escape-secondary" aria-pressed="'+escapeKidsGuideOn()+'">Guiding dots: '+(escapeKidsGuideOn()?'On':'Off')+'</button><p class="kids-guide-note">Follow the dots, or turn them off and explore. Your tools never run out. Stand by a sign and press A, Enter or Read to read it.</p>'
     +'<h3 class="kids-section-title">Little discoveries</h3><ol class="kids-stones">'+levels.map((l,i)=>{const got=done.includes(l.id);
-      const section=l.adventure&&!levels[i-1]?.adventure?'</ol><h3 class="kids-section-title">Bigger adventures</h3><p class="kids-sub">Six journeys with room to explore. Every treasure is optional.</p><ol class="kids-stones" start="'+(i+1)+'">':'';
+      const words=['no','one','two','three','four','five','six','seven','eight','nine','ten'],count=f=>{const n=levels.filter(f).length;return words[n]||String(n);},cap=w=>w[0].toUpperCase()+w.slice(1),harder=x=>Boolean(x?.adventure&&x.gentle>.6);
+      const section=l.adventure&&!harder(l)&&!levels[i-1]?.adventure?'</ol><h3 class="kids-section-title">Bigger adventures</h3><p class="kids-sub">'+cap(count(x=>x.adventure&&!harder(x)))+' journeys with room to explore. Every treasure is optional.</p><ol class="kids-stones" start="'+(i+1)+'">':harder(l)&&!harder(levels[i-1])?'</ol><h3 class="kids-section-title">A step harder</h3><p class="kids-sub">'+cap(count(harder))+' full games with more creatures, more switches and a secret way home. Every treasure is optional.</p><ol class="kids-stones" start="'+(i+1)+'">':'';
       return section+'<li><button class="kids-stone'+(got?' kids-done':'')+(l===next?' kids-next':'')+'" data-id="'+t(l.id)+'" aria-label="'+(i+1)+'. '+t(l.name)+(got?', finished':'')+'">'
         +'<span class="kids-num">'+(i+1)+'</span><span class="kids-sticker" aria-hidden="true">'+(got?t(l.sticker||'⭐'):'?')+'</span><span class="kids-name">'+t(l.name)+'</span></button></li>';}).join('')+'</ol>'
-    +'<p class="kids-count">Stickers: '+done.length+' of '+levels.length+(done.length===levels.length?' · You finished them all! 🎉':'')+'</p></div>';
+    +'</div>';
   document.getElementById('kids-back').onclick=closeEscapeBuilder;
   const guide=document.getElementById('kids-guide-toggle');guide.onclick=()=>{const on=!escapeKidsGuideOn();try{escapeStore.setItem('sallys-escape-kids-guide',on?'on':'off');}catch(_){}guide.textContent='Guiding dots: '+(escapeKidsGuideOn()?'On':'Off');guide.setAttribute('aria-pressed',String(escapeKidsGuideOn()));};
   for(const b of panel.querySelectorAll('.kids-stone'))b.onclick=()=>startEscape({kidsId:b.dataset.id});

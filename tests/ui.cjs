@@ -68,7 +68,7 @@ test('Little Explorers groups all 31 levels, preserves old stickers and remember
  const h=harness(),panel=h.el('escape-builder');panel.querySelectorAll=()=>[];panel.querySelector=()=>({focus(){}});
  h.run('escapeKidsMark("hello-sally");openLittleExplorers();');
  assert.equal((panel.innerHTML.match(/class="kids-stone(?: |")/g)||[]).length,31);
- assert.match(panel.innerHTML,/Little discoveries/);assert.match(panel.innerHTML,/Bigger adventures/);assert.match(panel.innerHTML,/Stickers: 1 of 31/);
+ assert.match(panel.innerHTML,/Little discoveries/);assert.match(panel.innerHTML,/Bigger adventures/);assert.match(panel.innerHTML,/Six journeys/);assert.match(panel.innerHTML,/A step harder<\/h3><p class="kids-sub">Five full games/);assert.match(panel.innerHTML,/Stickers: 1 of 31/);
  h.el('kids-guide-toggle').onclick();assert.equal(h.run('escapeKidsGuideOn()'),false);assert.equal(h.el('kids-guide-toggle').textContent,'Guiding dots: Off');
  h.run('globalThis.otherPlayer=EscapePlayers.create("Explorer Two");');
  assert.equal(h.run('EscapePlayers.storage(otherPlayer.id).getItem("sallys-escape-kids-guide")'),null);

@@ -19,9 +19,6 @@
 .escape-challenge-heading { margin: 24px 0 12px; }
 .escape-contracts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
 .escape-save-note { color: #b6c5bb; font-size: .8rem; margin: 20px 0; }
-.escape-view-choice { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 16px; font-size: .85rem; }
-.escape-view-choice select { max-width: 100%; padding: 8px; border-radius: 7px; border: 1px solid #608f82; background: #193333; color: #e2ece0; font: inherit; }
-.escape-view-choice small { flex-basis: 100%; color: #a8c4b3; }
 #escape-map { padding: 20px; color: #dceadc; text-align: center; background: #10252b; border: 1px solid #4e786f; border-radius: 12px; font-family: system-ui,sans-serif; }
 #escape-map h3 { margin: 0 0 10px; }
 #escape-map p { font-size: .85rem; line-height: 1.5; }
@@ -65,7 +62,7 @@ body.escape-shell { background: radial-gradient(ellipse at top,#284c3c,#102c2d 7
 .escape-playing .escape-breath { position:absolute; top:119px; left:25px; width:155px; font-size:.68rem; }
 .escape-playing #escape-objective { position:absolute; bottom:92px; left:20px; max-width:62%; padding:6px 10px; border-radius:9px; font-size:.78rem; color:#d1decb; background:rgba(12,29,31,.75); }
 .escape-playing #escape-warning { position:absolute; bottom:123px; left:20px; max-width:68%; padding:6px 10px; border-radius:9px; background:rgba(12,29,31,.86); font-size:.82rem; }
-.escape-playing #escape-warning:empty { display:none; }
+.escape-playing #escape-warning:empty, .escape-playing #escape-objective:empty { display:none; }
 .escape-playing .escape-actions { position:absolute; bottom:18px; right:20px; gap:6px; }
 .escape-playing .escape-actions button { flex:0 1 118px; width:118px; min-height:54px; padding:8px 10px; font-size:.78rem; line-height:1.6; background:rgba(24,47,48,.94); border-radius:12px; box-shadow:0 4px 12px #0003; }
 .escape-playing #touch-controls { position:absolute; left:14px; right:14px; bottom:14px; width:auto; justify-content:space-between; }
