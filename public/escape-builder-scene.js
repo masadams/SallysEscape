@@ -13,7 +13,7 @@ const ESCAPE_BUILDER_ARROW=['→','↓','←','↑'];
 const ESCAPE_BUILDER_EXTRAS={'layer:shade':['⛱','Awning: shade where the hawk cannot dive'],'layer:glowPlants':['✺','Glow plant: light in a dark level'],'layer:regrowth':['✿','Regrowth bug: grows back a lost tail'],'layer:slippery':['❄','Glide ice: Sally keeps her speed, then slides faster; Crawl brakes'],
   cap:['🍄','Bounce cap: click the cap, then where it throws Sally'],wind:['≋','Wind lane: click two opposite corners'],current:['⇶','Current or slope: click two corners; choose Water or Ground in the inspector'],echo:['◎','Echo hall: click two corners; sound carries further inside'],tunnel:['⛏','Burrow pair: click one mound, then its partner'],area:['▢','Trigger area: click two corners; walking in can open doors or wake enemies'],
   ants:['🐜','Ant column: click the points of its loop in order'],seedbed:['🌱','Seed bed: click the two banks either side of a gap; a planted seed grows a crossing'],wheel:['✣','Root wheel'],rival:['⚔','Rivals: click two enemies who fight when they meet'],page:['📜','Page: a note lying on the floor for players to find and read after the run (up to 3)'],
-  sign:['🪧','Trail sign: a short note Sally reads when she stands by it and presses Read (up to 4)'],crate:['📦','Crate: Sally shoves it a tile by walking into it (noisy). It blocks sight and creatures, and one pushed into a gap fills it'],checkpoint:['⚐','Checkpoint: in a gentle level a catch sends Sally back to the last one reached'],
+  sign:['🪧','Trail sign: a short note Sally reads when she stands by it and presses Read (up to 4)'],rope:['➰','Rope or vine: click one end, then the other. It swings between them; Sally grabs it standing on an end as it arrives, and nothing can follow her'],crate:['📦','Crate: Sally shoves it a tile by walking into it (noisy). It blocks sight and creatures, and one pushed into a gap fills it'],checkpoint:['⚐','Checkpoint: in a gentle level a catch sends Sally back to the last one reached'],
   'prop:lantern':['🏮','Lantern post: autumn scenery'],'prop:tree':['🍂','Autumn tree: scenery'],'prop:pumpkin':['🎃','Pumpkin: scenery'],'prop:brazier':['🔥','Brazier: winter scenery that glows'],'prop:pine':['🌲','Pine tree: winter scenery'],'prop:gift':['🎁','Gift: winter scenery'],'prop:blossom':['🌸','Blossom tree: spring scenery'],'prop:flowerpot':['🪴','Flower pot: spring scenery'],'prop:wateringcan':['🚿','Watering can: spring scenery'],'prop:flowerlantern':['🏵','Flower lantern: spring scenery that glows'],'prop:parasol':['⛱','Beach parasol: summer scenery'],'prop:sandcastle':['🏰','Sandcastle: summer scenery'],'prop:buoy':['🛟','Buoy: summer scenery'],'prop:crate':['📦','Fish crate: summer scenery'],'prop:bunting':['🎏','Bunting: summer scenery'],'prop:harbourlantern':['🪔','Harbour lantern: summer scenery that glows'],'prop:rowboat':['🛶','Rowing boat: summer scenery'],'prop:lighthouse':['🗼','Lighthouse: summer scenery'],millwheel:['☸','Mill wheel: scenery']};
 
 function escapeBuilderApi(path,options={}){return fetch('/api/'+path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});}
@@ -223,6 +223,7 @@ function escapeBuilderCell(x,y,ch,linked){
   if((m.seedCrossings||[]).some(c=>hasAt(c.banks)))glyph='🌱';else if((m.seedCrossings||[]).some(c=>hasAt(c.tiles)))shadow+='inset 0 0 0 2px #8fc86a88,';
   if(m.rootWheel&&m.rootWheel[0]===x&&m.rootWheel[1]===y)glyph='✣';
   if((m.crates||[]).some(q=>q[0]===x&&q[1]===y))glyph='📦';
+  if((m.ropes||[]).some(r=>(r.from[0]===x&&r.from[1]===y)||(r.to&&r.to[0]===x&&r.to[1]===y)))glyph='➰';
   if((m.checkpoints||[]).some(q=>q[0]===x&&q[1]===y)&&!glyph)glyph='⚐';
   const prop=(m.props||[]).find(q=>q.at[0]===x&&q.at[1]===y);if(prop&&!glyph)glyph={lantern:'🏮',tree:'🍂',pumpkin:'🎃',brazier:'🔥',pine:'🌲',gift:'🎁'}[prop.kind];
   if(m.millWheel&&m.millWheel[0]===x&&m.millWheel[1]===y)glyph='☸';
@@ -296,6 +297,7 @@ function escapeBuilderInspector(){
   else if(p.kind==='sign'){const q=(m.signs||[])[p.index];if(!q)return '';
     html='<b>🪧 Trail sign</b> at '+q.at.join(',')+'<br><label>Title <input data-insp="stitle" maxlength="40" value="'+escapeHtml(q.title||'')+'"></label>'
       +'<br><label class="builder-hint">Words <textarea data-insp="sbody" maxlength="320" rows="3" placeholder="What does the sign say? Sally reads it when she stands by it and presses Read (A or Enter).">'+escapeHtml(q.body||'')+'</textarea></label>';}
+  else if(p.kind==='rope'){const r=m.ropes[p.index];if(!r)return '';html='<b>➰ Rope</b> '+r.from.join(',')+' – '+(r.to?r.to.join(','):'<b>click the other end</b>')+'<label>swings every <input type="number" step="0.5" min="2" max="12" data-insp="rperiod" value="'+r.period+'"> s</label><label>offset <input type="number" step="0.05" min="0" max="0.99" data-insp="rphase" value="'+(r.phase||0)+'"></label>';}
   else if(p.kind==='cap'){const c=m.caps[p.index];if(!c)return '';html='<b>🍄 Bounce cap</b> at '+c.at.join(',')+' · '+(c.to?'throws Sally to '+c.to.join(','):'<b>click where it throws Sally</b>')+'<label title="A springy cap throws a sprinting Sally this many tiles further along the same line">springy <select data-insp="capspring">'+[0,1,2,3].map(n=>'<option value="'+n+'"'+((c.spring||0)===n?' selected':'')+'>'+(n?'+'+n+' when sprinting':'no')+'</option>').join('')+'</select></label>';}
   return '<div class="builder-inspector">'+html+'</div>';
 }
@@ -428,6 +430,7 @@ function escapeHtml(text){return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;
 function escapeBuilderPickAt(x,y){
   const m=escapeBuilderModel,B=EscapeBuilder,g=B.guardAt(m,x,y),t=B.triggerAt(m,x,y),h=B.hazardAt(m,x,y),d=B.doorAt(m,x,y),s=B.sourceAt(m,x,y);
   if(g)return {kind:'guard',id:g.id};if(t)return {kind:'trigger',id:t.id};
+  const rope=(m.ropes||[]).findIndex(r=>(r.from[0]===x&&r.from[1]===y)||(r.to&&r.to[0]===x&&r.to[1]===y));if(rope>=0)return {kind:'rope',index:rope};
   const cap=(m.caps||[]).findIndex(c=>c.at[0]===x&&c.at[1]===y);if(cap>=0)return {kind:'cap',index:cap};
   const page=B.pageAt(m,x,y);if(page>=0)return {kind:'page',index:page};
   const sign=B.signAt(m,x,y);if(sign>=0)return {kind:'sign',index:sign};
@@ -464,6 +467,8 @@ function escapeBuilderApply(x,y){
   }
   if(t==='cold'||t==='warm')return B.paintClimate(m,t,x,y);
   if(t.startsWith('layer:'))return B.toggleLayer(m,t.slice(6),x,y);
+  if(t==='rope'){if((m.ropes||[]).some(r=>!r.to)){if(!B.setRopeEnd(m,x,y))escapeBuilderNote='Pick open floor for the other end.';else escapeBuilderPick={kind:'rope',index:m.ropes.length-1};return true;}
+    if(!B.addRope(m,x,y)){escapeBuilderNote='Ropes start on open floor (up to 8).';return true;}escapeBuilderNote='Now click the other end of the swing.';return true;}
   if(t==='cap'){if((m.caps||[]).some(c=>!c.to)){if(!B.setCapEnd(m,x,y))escapeBuilderNote='Pick open floor for the landing.';else escapeBuilderPick={kind:'cap',index:m.caps.length-1};return true;}
     if(!B.addCap(m,x,y)){escapeBuilderNote='Caps go on open floor.';return true;}escapeBuilderNote='Now click where the cap throws Sally.';return true;}
   if(t==='wind'||t==='area'||t==='seedbed'||t==='current'||t==='echo'||t==='tunnel'){
@@ -540,6 +545,7 @@ function wireEscapeBuilder(){
   for(const el of document.querySelectorAll('[data-ginsp]'))el.onchange=e=>{const k=el.dataset.ginsp;B.setGuard(m,p.id,{[k]:k==='buried'?e.target.checked:k==='axis'?e.target.value:val(e)});rerender();};
   const looks=document.querySelectorAll('[data-look]');for(const el of looks)el.onchange=()=>{B.setGuard(m,p.id,{looks:[...looks].filter(q=>q.checked).map(q=>Number(q.dataset.look)*Math.PI/2)});rerender();};
   for(const [k,f] of [['wdir','dir'],['wperiod','period'],['won','on'],['woffset','offset'],['wstrength','strength']])if(insp(k))insp(k).onchange=e=>{B.setWind(m,p.index,{[f]:Number(e.target.value)});rerender();};
+  for(const [k,f] of [['rperiod','period'],['rphase','phase']])if(insp(k))insp(k).onchange=e=>{B.setRope(m,p.index,{[f]:Number(e.target.value)});rerender();};
   if(insp('capspring'))insp('capspring').onchange=e=>{B.setCap(m,p.index,{spring:Number(e.target.value)});rerender();};
   if(insp('csurface'))insp('csurface').onchange=e=>{B.setCurrent(m,p.index,{surface:e.target.value});rerender();};
   for(const [k,f] of [['cpulse','pulse'],['cphase','phase']])if(insp(k))insp(k).onchange=e=>{B.setCurrent(m,p.index,{[f]:e.target.value===''?0:Number(e.target.value)});rerender();};

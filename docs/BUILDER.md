@@ -85,6 +85,10 @@ Sally takes that. (Plates and levers work doors; only the key and chests wake en
 - **Bounce caps** (Extras: click the cap, then its landing) throw Sally along a marked arc. Select one to make it
   **springy** (+1 to +3): a sprint onto it carries her that many tiles further along the same line, onto open
   floor only; she lands with a little skid, and landing on another cap bounces her straight on.
+- **Ropes and vines** (Extras: click one end, then the other) swing between their two ends over a gap or
+  water. Select one to set how long a swing takes and its offset. Sally grabs it by standing on an end as it
+  arrives, rides across (nothing can catch or follow her) and is set down on the far end. Green places draw
+  a vine, others a rope.
 - **Ice** (Layers) is the same glide ice as the game's: Sally keeps her speed, overshoots, coasts and
   crashes into walls, and only Crawl brakes. Only the marked tiles are slippery.
 - **❄ Cold** ground chills Sally; a **◍ Warm stone** thaws her.

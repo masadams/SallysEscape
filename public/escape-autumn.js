@@ -1111,11 +1111,12 @@
   },
   {
     "id": "autumn-mill",
+    "ropes": [{"from": [9, 13], "to": [15, 13], "period": 5}],
     "name": "The Hollow Mill",
     "difficulty": "Medium–hard",
     "seasonalTheme": "autumn-mill",
     "brief": "Flick the bridge wheel across the millrace, then slip past a very alert roast turkey.",
-    "hint": "From the west bank, face the blue wheel and use Tongue. The loft switch opens the key room. Creep past the turkey, or throw a pebble away from your crossing.",
+    "hint": "From the west bank, face the blue wheel and use Tongue. The loft switch opens the key room. Creep past the turkey, or throw a pebble away from your crossing. A rope swings across the south end of the millrace: stand on its mark and ride it over.",
     "index": 5,
     "revision": 2,
     "cunning": 2,
