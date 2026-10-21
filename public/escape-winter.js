@@ -645,9 +645,9 @@
     "name": "Snowball Alley",
     "index": 2,
     "revision": 1,
-    "difficulty": "Easy-medium",
+    "difficulty": "Easy–medium",
     "seasonalTheme": "winter-village",
-    "cunning": 0,
+    "cunning": 1,
     "pebbles": 3,
     "tongues": 2,
     "spores": 1,
@@ -867,9 +867,9 @@
     "name": "The Missing Presents",
     "index": 3,
     "revision": 1,
-    "difficulty": "Easy-medium",
+    "difficulty": "Medium",
     "seasonalTheme": "winter-workshop",
-    "cunning": 0,
+    "cunning": 2,
     "pebbles": 3,
     "tongues": 2,
     "spores": 1,
@@ -987,6 +987,24 @@
           ]
         ],
         "facing": 1.5707963267948966
+      },
+      {
+        "kind": "fox",
+        "spawn": [
+          14,
+          7
+        ],
+        "patrol": [
+          [
+            13,
+            7
+          ],
+          [
+            16,
+            7
+          ]
+        ],
+        "facing": 0
       }
     ],
     "fieldNotes": [
@@ -1093,7 +1111,7 @@
       ]
     ],
     "brief": "Three workshop switches, a suspicious parcel and a thief with very good ears.",
-    "hint": "Blue, green, then red opens the delivery route. A twitching present deserves a snowball. Creep past the Gift Snatcher. The key opens the upper doors home.",
+    "hint": "Blue, green, then red opens the delivery route. A twitching present deserves a snowball. Two Gift Snatchers listen in the workshop: creep past them on quiet ground. The key opens the upper doors home.",
     "foxWarn": 1.05,
     "reactions": [
       {
@@ -1127,9 +1145,9 @@
     "name": "The Frozen Mill",
     "index": 4,
     "revision": 1,
-    "difficulty": "Easy-medium",
+    "difficulty": "Medium",
     "seasonalTheme": "winter-ice",
-    "cunning": 1,
+    "cunning": 2,
     "pebbles": 3,
     "tongues": 2,
     "spores": 1,
@@ -1236,6 +1254,24 @@
           ]
         ],
         "facing": 3.141592653589793
+      },
+      {
+        "kind": "snake",
+        "spawn": [
+          18,
+          8
+        ],
+        "patrol": [
+          [
+            17,
+            8
+          ],
+          [
+            20,
+            8
+          ]
+        ],
+        "facing": 0
       }
     ],
     "fieldNotes": [
@@ -1424,7 +1460,7 @@
       ]
     ],
     "brief": "Wake the mill bridges, cross the unfrozen channel and find the key in the loft.",
-    "hint": "Tongue the blue switch from the west bank. The loft switch is in the lower mill yard. Ice is slippery; the wooden bridge ends are good braking places.",
+    "hint": "Tongue the blue switch from the west bank. The loft switch is in the lower mill yard. Ice is slippery; the wooden bridge ends are good braking places. A Candy Cane Serpent patrols the yard by the race.",
     "millWheel": [
       14,
       7
@@ -1461,9 +1497,9 @@
     "name": "The Yeti's Pass",
     "index": 5,
     "revision": 1,
-    "difficulty": "Medium",
+    "difficulty": "Medium–hard",
     "seasonalTheme": "winter-village",
-    "cunning": 1,
+    "cunning": 2,
     "pebbles": 3,
     "tongues": 2,
     "spores": 1,
@@ -1540,6 +1576,24 @@
           ]
         ],
         "facing": 0
+      },
+      {
+        "kind": "toad",
+        "spawn": [
+          20,
+          12
+        ],
+        "patrol": [
+          [
+            20,
+            11
+          ],
+          [
+            20,
+            15
+          ]
+        ],
+        "facing": 1.5707963267948966
       }
     ],
     "fieldNotes": [
@@ -1827,14 +1881,18 @@
       ]
     ],
     "brief": "A mountain gardener has become a very determined Yeti.",
-    "hint": "Blue opens the pass; green opens the far garden. The Yeti raises its arms before charging. Step behind the stone beds, then move while it recovers.",
+    "hint": "Blue opens the pass; green opens the far garden. The Yeti raises its arms before charging. Step behind the stone beds, then move while it recovers. A snowman guards the far garden, and the far gate wakes a serpent in the low garden.",
     "reactions": [
       {
         "id": "yeti-key",
         "when": "key",
         "open": [
           "mountain-home"
-        ]
+        ],
+        "spawn": [
+          "yeti-serpent"
+        ],
+        "message": "The far gate opens, and a Candy Cane Serpent uncoils in the low garden."
       }
     ],
     "thorns": [
@@ -1869,6 +1927,27 @@
       "#.X....#.....1.#......#",
       "#......#.......#....1.#",
       "#######################"
+    ],
+    "reinforcements": [
+      {
+        "id": "yeti-serpent",
+        "kind": "snake",
+        "spawn": [
+          11,
+          12
+        ],
+        "patrol": [
+          [
+            11,
+            11
+          ],
+          [
+            11,
+            15
+          ]
+        ],
+        "facing": 1.5707963267948966
+      }
     ]
   },
   {
@@ -1876,10 +1955,10 @@
     "name": "Bells in the Blizzard",
     "index": 6,
     "revision": 1,
-    "difficulty": "Medium",
+    "difficulty": "Hard",
     "seasonalTheme": "winter-night",
-    "cunning": 1,
-    "pebbles": 3,
+    "cunning": 3,
+    "pebbles": 2,
     "tongues": 2,
     "spores": 1,
     "gates": [
@@ -1981,6 +2060,32 @@
           ]
         ],
         "facing": 1.5707963267948966
+      },
+      {
+        "kind": "snake",
+        "spawn": [
+          11,
+          1
+        ],
+        "patrol": [
+          [
+            9,
+            1
+          ],
+          [
+            12,
+            1
+          ],
+          [
+            12,
+            5
+          ],
+          [
+            9,
+            5
+          ]
+        ],
+        "facing": 0
       }
     ],
     "fieldNotes": [
@@ -2197,14 +2302,18 @@
     ],
     "glows": 2,
     "brief": "Follow the bells between warm shelters. Something in the snow dislikes your light.",
-    "hint": "Blue then violet opens the upper trail. Krampus waits among the lower drifts; a glow mushroom makes him shrink back. The wisp shows where it means to swoop.",
+    "hint": "Blue then violet opens the upper trail. Krampus waits among the lower drifts; a glow mushroom makes him shrink back. The wisp shows where it means to swoop. A serpent winds along the upper trail, and the bells wake a Gift Snatcher in the west yard.",
     "reactions": [
       {
         "id": "bell-key",
         "when": "key",
         "open": [
           "bell-home"
-        ]
+        ],
+        "spawn": [
+          "bells-snatcher"
+        ],
+        "message": "The bells ring out. Both lower gates open, and a Gift Snatcher creeps into the west yard."
       }
     ],
     "cold": [
@@ -2268,6 +2377,27 @@
       "#.X..1##1...L##...L...1.#",
       "#.....##....1##.........#",
       "#########################"
+    ],
+    "reinforcements": [
+      {
+        "id": "bells-snatcher",
+        "kind": "fox",
+        "spawn": [
+          3,
+          8
+        ],
+        "patrol": [
+          [
+            2,
+            8
+          ],
+          [
+            5,
+            8
+          ]
+        ],
+        "facing": 0
+      }
     ]
   },
   {
@@ -2275,10 +2405,10 @@
     "name": "The Christmas Star",
     "index": 7,
     "revision": 1,
-    "difficulty": "Medium",
+    "difficulty": "Hard",
     "seasonalTheme": "winter-finale",
-    "cunning": 1,
-    "pebbles": 3,
+    "cunning": 3,
+    "pebbles": 2,
     "tongues": 2,
     "spores": 1,
     "gates": [
@@ -2738,7 +2868,7 @@
     "glows": 2,
     "seeds": 1,
     "brief": "Bring the last ornament home and wake the Christmas star.",
-    "hint": "Open the orchard and courtyard gates. The Nutcracker watches with a cold spotlight; use corners and leave its glint before it freezes you. The key opens the lower route home.",
+    "hint": "Open the orchard and courtyard gates. The Nutcracker watches with a cold spotlight; use corners and leave its glint before it freezes you. The key opens the lower route home, but it wakes a serpent in the low garden and a Gift Snatcher by the hatch: crawl the last stretch.",
     "reactions": [
       {
         "id": "star-key",
@@ -2746,7 +2876,11 @@
         "open": [
           "star-home"
         ],
-        "message": "The Christmas gates open. Bring the last ornament home."
+        "spawn": [
+          "star-serpent",
+          "star-snatcher"
+        ],
+        "message": "The Christmas gates open. Bring the last ornament home - but the whole hollow is awake now."
       }
     ],
     "map": [
@@ -2767,6 +2901,46 @@
       "#.X.....##...L..L##1L...L.#",
       "#.......##.......##.......#",
       "###########################"
+    ],
+    "reinforcements": [
+      {
+        "id": "star-serpent",
+        "kind": "snake",
+        "spawn": [
+          15,
+          15
+        ],
+        "patrol": [
+          [
+            16,
+            15
+          ],
+          [
+            11,
+            15
+          ]
+        ],
+        "facing": 3.141592653589793
+      },
+      {
+        "id": "star-snatcher",
+        "kind": "fox",
+        "spawn": [
+          3,
+          12
+        ],
+        "patrol": [
+          [
+            2,
+            12
+          ],
+          [
+            6,
+            12
+          ]
+        ],
+        "facing": 0
+      }
     ]
   }
 ];root.EscapeWinter=routes;if(typeof module!=="undefined"&&module.exports)module.exports=routes;})(typeof globalThis!=="undefined"?globalThis:this);

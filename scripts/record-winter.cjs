@@ -34,9 +34,29 @@ function make(id,delay=0){
 
 // Authored waypoint tours; fixture replay uses only the recorded inputs.
 const tours=require('./winter-tours.json');
-function execute(id,variant,delay=0){const r=make(id,delay);try{for(const p of tours[id][variant]){if(Array.isArray(p))r.go(...p);else if(p.icicles!==undefined){const th=r.g.thorns[p.icicles];let n=0;while(!th.raised&&r.g.status==='playing'&&n++<1200)r.wait(1/120);while(th.raised&&r.g.status==='playing'&&n++<2400)r.wait(1/120);}else if(p.snowball){let n=0;while(r.g.elapsed%7>.06&&r.g.status==='playing'&&n++<900)r.wait(1/120);}else if(p.face)r.face(...p.face);else if(p.wait)r.wait(p.wait);else if(p.action)r.act(p.action,p.power);}r.wait(1);if(r.g.status!=='won')throw Error('Not won '+r.g.message);if(variant==='treasure'&&r.g.treasure!==r.g.totalTreasure)throw Error('Missing '+r.g.treasure+'/'+r.g.totalTreasure+' '+r.g.loot.filter(l=>!l.taken).map(l=>[l.x,l.y]));const result={id,variant,options:{seasonalId:id},time:+r.g.elapsed.toFixed(2),treasure:r.g.treasure,events:[...r.events],commands:r.commands};console.log(id,variant,'won',result.time,result.treasure+'/10',result.events.join(','));return result;}catch(e){console.log('FAIL',id,variant,e.message,r.g.catches.at(-1));return null;}}
+// Tour steps: [x,y,sprint?,crawl?] walks there; {crawl:[x,y]} creeps; {snowball} waits for the lane's
+// next roll; {icicles:i} waits for icicle trap i to rise and fall; {until:[kind,state(s),x?,y?]} waits for
+// the nearest such creature to be in that state; {away:[kind,x,y,angle?]} waits until the nearest such
+// creature faces away from that tile; {clear:[x,y,d,kind]} waits until no such creature is within d tiles
+// and {near:[kind,x,y,d]} until one is;
+// {wait:s}, {face:[x,y]} and {action,power} as usual. All of them are ordinary inputs or waiting.
+function nearest(g,kind,x,y){return g.hunters.filter(h=>h.kind===kind).sort((a,b)=>Math.hypot(a.x-x-.5,a.y-y-.5)-Math.hypot(b.x-x-.5,b.y-y-.5))[0];}
+function step(r,p){const g=r.g,live=()=>g.status==='playing';
+ if(Array.isArray(p))return r.go(...p);
+ if(p.crawl)return r.go(...p.crawl,false,true);
+ if(p.icicles!==undefined){const th=g.thorns[p.icicles];let n=0;while(!th.raised&&live()&&n++<1200)r.wait(1/120);while(th.raised&&live()&&n++<2400)r.wait(1/120);return;}
+ if(p.snowball){let n=0;while(g.elapsed%7>.06&&live()&&n++<900)r.wait(1/120);return;}
+ if(p.until){const [kind,state,x,y]=p.until,ok=h=>h&&[].concat(state).includes(h.state);let n=0;while(!(x===undefined?g.hunters.some(h=>h.kind===kind&&ok(h)):ok(nearest(g,kind,x,y)))&&live()&&n++<4800)r.wait(1/120);return;}
+ if(p.away){const [kind,x,y,ang=1.6]=p.away,off=()=>{const h=nearest(g,kind,x,y),want=Math.atan2(y+.5-h.y,x+.5-h.x);return Math.abs(Math.atan2(Math.sin(want-h.facing),Math.cos(want-h.facing)));};let n=0;while(off()<=ang&&live()&&n++<4800)r.wait(1/120);return;}
+ if(p.near){const [kind,x,y,d]=p.near;let n=0;while(!g.hunters.some(h=>h.kind===kind&&Math.hypot(h.x-x-.5,h.y-y-.5)<d)&&live()&&n++<4800)r.wait(1/120);return;}
+ if(p.clear){const [x,y,d,kind]=p.clear;let n=0;while(g.hunters.some(h=>(!kind||h.kind===kind)&&Math.hypot(h.x-x-.5,h.y-y-.5)<d)&&live()&&n++<4800)r.wait(1/120);return;}
+ if(p.face)return r.face(...p.face);
+ if(p.wait)return r.wait(p.wait);
+ if(p.action)return r.act(p.action,p.power);
+ throw Error('Unknown tour step '+JSON.stringify(p));}
+function execute(id,variant,delay=0){const r=make(id,delay);try{for(const p of tours[id][variant])step(r,p);r.wait(1);if(r.g.status!=='won')throw Error('Not won '+r.g.message);if(variant==='treasure'&&r.g.treasure!==r.g.totalTreasure)throw Error('Missing '+r.g.treasure+'/'+r.g.totalTreasure+' '+r.g.loot.filter(l=>!l.taken).map(l=>[l.x,l.y]));const result={id,variant,options:{seasonalId:id},time:+r.g.elapsed.toFixed(2),treasure:r.g.treasure,events:[...r.events],commands:r.commands};console.log(id,variant,'won',result.time,result.treasure+'/10',result.events.join(','));return result;}catch(e){console.log('FAIL',id,variant,e.message,'at',r.g.player.x.toFixed(1),r.g.player.y.toFixed(1),'t',r.g.elapsed.toFixed(2),JSON.stringify(r.g.catches?.at(-1)||''));return null;}}
 function serialize(records){return '[\n'+records.map(({commands,...r})=>'  '+JSON.stringify(r).slice(0,-1)+',"commands":[\n'+commands.map(c=>'    '+JSON.stringify(c)).join(',\n')+'\n  ]}').join(',\n')+'\n]\n';}
 if(require.main===module){const at=process.argv.indexOf('--delay'),delay=at<0?0:Number(process.argv[at+1]);if(!Number.isFinite(delay)||delay<0||delay>30)throw Error('--delay must be 0 to 30 seconds');const result=[];for(const variant of ['main','treasure'])for(const id of Object.keys(tours)){const r=execute(id,variant,delay);if(r)result.push(r);}if(result.length!==16)process.exitCode=1;else if(process.argv.includes('--write'))fs.writeFileSync(path.join(root,"tests/fixtures/escape-winter.cjs"),'// Reproducible real-input runs: node scripts/record-winter.cjs --write\nmodule.exports=JSON.parse(require("node:zlib").gunzipSync(Buffer.from(\n'+JSON.stringify(require("node:zlib").gzipSync(serialize(result),{level:9}).toString("base64"))+',"base64")).toString("utf8"));\n');}
-module.exports={make,execute,tours};
+module.exports={make,execute,step,tours};
 
 
