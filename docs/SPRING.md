@@ -15,17 +15,33 @@ Routes live in `public/escape-spring.js`; recorded inputs in `tests/fixtures/esc
 | 1 | The Rainy Garden Gate (`spring-gate`) | 19×13 | A hedge switch, then the key opens the garden gate home | Snake |
 | 2 | Under the Potting Shed (`spring-burrows`) | 21×14 | A burrow pair, crawling on moss past a mole, a board pocket where you step onto a leaf and let it surface where it last heard you | Mole |
 | 3 | Across the Lily Pond (`spring-pond`) | 21×15 | Two south-flowing streams, a footbridge switch, a lily pad that throws Sally home | Toad |
-| 4 | The Glasshouse Lookout (`spring-glasshouse`) | 23×15 | Four bays and two switches; walk calmly or crawl past a ladybird so it never buzzes the serpent; come at the mantis from behind | Ladybird, snake, mantis |
-| 5 | The Sleeping Waterwheel (`spring-mill`) | 23×15 | A millrace too deep to swim, three bridges, a switch flicked with the tongue from across the race; a walled toad bay with a leaf strip and a tongue-reach treasure | Toad |
-| 6 | The Gardener’s Shortcut (`spring-wall`) | 23×17 | Let the beetle see you in front of the cracked wall and step aside; the shed switch opens the back path, so the wall is never the only way home | Beetle |
-| 7 | Lanterns After Rain (`spring-lanterns`) | 23×15 | Cross under the moth when it is far; throw a glow mushroom and the weaver backs out of the light; the key opens the low gate home | Moth, spider |
-| 8 | The First Blossom (`spring-festival`) | 25×17 | Moss round the mole court, a tongue-switched bridge over the race, the gardener charging the key garden wall from a vestibule, the bottom path home | Mole, beetle |
+| 4 | The Glasshouse Lookout (`spring-glasshouse`) | 23×15 | Four bays and two switches; walk calmly or crawl past a ladybird so it never buzzes the serpent; come at the mantis from behind | Ladybird, two snakes, mantis |
+| 5 | The Sleeping Waterwheel (`spring-mill`) | 23×15 | A millrace too deep to swim, three bridges, a switch flicked with the tongue from across the race; a walled toad bay with a leaf strip and a tongue-reach treasure | Toad, snake |
+| 6 | The Gardener’s Shortcut (`spring-wall`) | 23×17 | Let the beetle see you in front of the cracked wall and step aside; the shed switch opens the back path, so the wall is never the only way home | Beetle, snake (a second wakes with the key) |
+| 7 | Lanterns After Rain (`spring-lanterns`) | 23×15 | Cross under the moth when it is far; throw a glow mushroom and the weaver backs out of the light; the key opens the low gate home | Moth, spider, snake, toad |
+| 8 | The First Blossom (`spring-festival`) | 25×17 | Moss round the mole court, a tongue-switched bridge over the race, the gardener charging the key garden wall from a vestibule, the bottom path home | Mole, beetle, snake (the key wakes a weaver and a second mole) |
 
 Every level: ten treasure (all optional), finite tools, a fifteen-second safe start, normal retries, field
 notes from **Clover** (the spring guide). Each has a recorded normal win and an all-treasure win made
 of real inputs (the recorder waits on what a player would watch: a mole well away, the moth at the far
 end of its loop, a beetle's wind-up and then its stun before stepping through the hole), and both still
 win after opening the level in the builder and building it again.
+
+## Difficulty
+
+The pack runs from easy to hard. Cunning is how sharp the creatures are (0 to 3): higher means they
+read where Sally is going, react sooner and search longer.
+
+| # | Level | Cunning | What makes it harder |
+| --- | --- | --- | --- |
+| 1 | Easy | 0 | — |
+| 2 | Easy | 0 | — |
+| 3 | Easy–medium | 1 | Two pebbles |
+| 4 | Medium | 2 | A second serpent among the bays |
+| 5 | Medium | 2 | A serpent on the mill side; two pebbles |
+| 6 | Medium–hard | 2 | A serpent by the shed, and the key wakes another |
+| 7 | Hard | 3 | A serpent by the key, a toad on the way home, one pebble |
+| 8 | Hard | 3 | A serpent by the door; the key wakes the weaver and a second mole |
 
 ## Look
 
