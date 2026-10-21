@@ -10,12 +10,88 @@ const ESCAPE_BUILDER_ENEMY={snake:'🐍',ladybird:'🐞',beetle:'🪲',scorpion:
 const ESCAPE_BUILDER_TRIGGER={plate:'◉',heavy:'⬛',lever:'⚲',switch:'▣'},ESCAPE_BUILDER_HAZARD={vent:'♨',thorns:'⋀',log:'●'};
 const ESCAPE_BUILDER_ARROW=['→','↓','←','↑'];
 // The extras placed on top of the map: what each tool is called and how it looks on the grid.
-const ESCAPE_BUILDER_EXTRAS={'layer:shade':['⛱','Awning: shade where the hawk cannot dive'],'layer:glowPlants':['✺','Glow plant: light in a dark level'],'layer:regrowth':['✿','Regrowth bug: grows back a lost tail'],'layer:wet':['💧','Wet ground: slick but gentler than ice. On a ground slope it carries Sally on down past its foot; Crawl grips'],'layer:thinIce':['◌','Thin ice: cracks under Sally, faster if she stands or runs, and breaks into water; crawling spreads her weight. A crate pushed onto it breaks through'],'layer:slippery':['❄','Glide ice: Sally keeps her speed, then slides faster; Crawl brakes'],
+const ESCAPE_BUILDER_EXTRAS={'layer:shade':['⛱','Awning: shade where the hawk cannot dive'],'layer:glowPlants':['✺','Glow plant: light in a dark level'],'layer:regrowth':['✿','Regrowth bug: grows back a lost tail'],'layer:shrubs':['❀','Decoy shrub: looks just like a sleeping mimic but is harmless, so players must tell the real one apart'],'layer:wet':['💧','Wet ground: slick but gentler than ice. On a ground slope it carries Sally on down past its foot; Crawl grips'],'layer:thinIce':['◌','Thin ice: cracks under Sally, faster if she stands or runs, and breaks into water; crawling spreads her weight. A crate pushed onto it breaks through'],'layer:slippery':['❄','Glide ice: Sally keeps her speed, then slides faster; Crawl brakes'],
   cap:['🍄','Bounce cap: click the cap, then where it throws Sally'],wind:['≋','Wind lane: click two opposite corners'],current:['⇶','Current or slope: click two corners; choose Water or Ground in the inspector'],echo:['◎','Echo hall: click two corners; sound carries further inside'],tunnel:['⛏','Burrow pair: click one mound, then its partner'],area:['▢','Trigger area: click two corners; walking in can open doors or wake enemies'],
   ants:['🐜','Ant column: click the points of its loop in order'],seedbed:['🌱','Seed bed: click the two banks either side of a gap; a planted seed grows a crossing'],wheel:['✣','Root wheel'],rival:['⚔','Rivals: click two enemies who fight when they meet'],page:['📜','Page: a note lying on the floor for players to find and read after the run (up to 3)'],
   sign:['🪧','Trail sign: a short note Sally reads when she stands by it and presses Read (up to 4)'],rope:['➰','Rope or vine: click one end, then the other. It swings between them; Sally grabs it standing on an end as it arrives, and nothing can follow her'],crate:['📦','Crate: Sally shoves it a tile by walking into it (noisy). It blocks sight and creatures, and one pushed into a gap fills it'],checkpoint:['⚐','Checkpoint: in a gentle level a catch sends Sally back to the last one reached'],
   'prop:lantern':['🏮','Lantern post: autumn scenery'],'prop:tree':['🍂','Autumn tree: scenery'],'prop:pumpkin':['🎃','Pumpkin: scenery'],'prop:brazier':['🔥','Brazier: winter scenery that glows'],'prop:pine':['🌲','Pine tree: winter scenery'],'prop:gift':['🎁','Gift: winter scenery'],'prop:blossom':['🌸','Blossom tree: spring scenery'],'prop:flowerpot':['🪴','Flower pot: spring scenery'],'prop:wateringcan':['🚿','Watering can: spring scenery'],'prop:flowerlantern':['🏵','Flower lantern: spring scenery that glows'],'prop:parasol':['⛱','Beach parasol: summer scenery'],'prop:sandcastle':['🏰','Sandcastle: summer scenery'],'prop:buoy':['🛟','Buoy: summer scenery'],'prop:crate':['📦','Fish crate: summer scenery'],'prop:bunting':['🎏','Bunting: summer scenery'],'prop:harbourlantern':['🪔','Harbour lantern: summer scenery that glows'],'prop:rowboat':['🛶','Rowing boat: summer scenery'],'prop:lighthouse':['🗼','Lighthouse: summer scenery'],millwheel:['☸','Mill wheel: scenery']};
 
+// Hints: with Hints on (the menu bar toggle, remembered per browser), resting the pointer on a tool
+// or a map tile shows what it is and how it plays, in a little card by the pointer.
+const ESCAPE_BUILDER_HINT_KEY='sally-builder-hints';
+const ESCAPE_BUILDER_DETAILS={
+  '#':'Solid wall. Blocks Sally, creatures, sight and throws.','.':'Plain open floor.',
+  'L':'Leaves: standing still in them hides Sally. Moving through them rustles.','N':'Gravel: crunches loudly underfoot, so hunters hear Sally walk on it. Crawl or go round.',
+  'B':'Cracked wall: a charging beetle smashes it open, making a new way through.','M':'Mud slows Sally. If she stands still for a second she starts to sink and gets slower; sprinting through it splashes loudly.',
+  '~':'Water: Sally swims slowly. Pebbles thrown in splash. Fish and eels live here.','_':'Gap: a drop nobody can cross on foot. Bridges, caps, ropes, seed beds or a pushed crate get Sally over.',
+  'c':'Crumbling floor: it gives way a moment after Sally steps on it, so keep moving.','T':'Tangle vine: grabs Sally for a moment when she walks into it, then withers and regrows.',
+  'S':'Crack: a slit only Sally fits through. No creature can follow or see in.','o':'Spore puffball: stepping on it (or a pebble nearby) bursts a cloud that hides Sally and blinds hunters inside it.',
+  't':'Tide flat: sand at low tide, water at high tide.','m':'Moss: silent ground. Even a sprint makes no sound on it.',
+  'd':'Soft dirt: hold Burrow on it and Sally digs in and hides underground.','s':'Soft sand: slows Sally and keeps her footprints for a while.',
+  'I':'Ice wall: a frost sentinel’s gaze glances off it, so it is safe cover from sentinels (bank a pebble off it too).',
+  'cold':'Cold ground: Sally loses warmth here. Too cold and she slows, then freezes. Pair it with warm stones.','warm':'Warm stone: standing on it thaws Sally back to full warmth.',
+  '@':'Where Sally starts.','K':'The key. Sally must carry it to the hatch.','X':'The hatch: the way out once Sally has the key (and any treasure the level asks for).',
+  '1':'Treasure worth 1.','2':'Treasure worth 2.','3':'A chest worth 3.',
+  'door':'A door in the chosen colour. Link it to a switch, plate, lever, area or the key to open it.','bridge':'A bridge in the chosen colour, over a gap or water. Linked triggers open (lay) it.',
+  'trig:plate':'Pressure plate: Sally standing on it opens its linked doors (set it to close them again after a time).','trig:heavy':'Heavy plate: ignores Sally. Only a beetle’s weight presses it, so lure one on.',
+  'trig:lever':'Lever: Sally walks into it to flip it; it stays flipped.','trig:switch':'Switch: Sally steps on it, or hits it from range with her tongue.',
+  'haz:vent':'Steam vent: sits in a wall and blasts steam across the floor in front of it on a rhythm. It stuns hunters too.','haz:thorns':'Thorn bed: rises and sinks on a rhythm. Cross while it is down.','haz:log':'Rolling log (a snowball in winter): rumbles a warning, then rolls along its line.',
+  'select':'Select: click anything to see and change its settings on the right.','link':'Link: click a trigger, the key or a chest, then the doors, bridges or creatures it should affect.',
+  'patrol':'Patrol: click a creature, then the tiles it walks to, in order.','turn':'Turn: turns a creature or a vent a quarter turn.','remove':'Remove: clears a creature, trigger, hazard, door tile or extra from a tile.'
+};
+function escapeBuilderHintsOn(){try{return escapeStore.getItem(ESCAPE_BUILDER_HINT_KEY)!=='0';}catch(_){return true;}}
+// [title, body] for a palette tool, a mode or a tab.
+function escapeBuilderToolHint(id){
+  const B=EscapeBuilder;
+  if(id.startsWith('enemy:')){const kind=id.slice(6),e=typeof EscapeBestiary!=='undefined'?EscapeBestiary.byKind(kind):null,name=B.ENEMIES[kind]||kind;return e?[name+' · '+e.job,e.hunts+(e.tip?' Tip: '+e.tip:'')]:[name,'A creature. Select it to set its patrol, facing and cunning.'];}
+  if(ESCAPE_BUILDER_DETAILS[id]){const tool=ESCAPE_BUILDER_TABS.map(t=>escapeBuilderToolsIn(t[0])).flat().find(t=>t[0]===id),mode=ESCAPE_BUILDER_MODES.find(m=>m[0]===id);return [tool?tool[2]:mode?mode[2]:id,ESCAPE_BUILDER_DETAILS[id]];}
+  const extra=ESCAPE_BUILDER_EXTRAS[id];if(extra){const i=extra[1].indexOf(':');return i<0?[extra[1],'']:[extra[1].slice(0,i),extra[1].slice(i+1).trim()];}
+  return null;
+}
+// Everything on one map tile, one line each: the ground, then whatever is placed on it.
+function escapeBuilderCellHint(x,y){
+  const m=escapeBuilderModel,B=EscapeBuilder,ch=m.map[y]?.[x];if(ch===undefined)return null;
+  const has=list=>(list||[]).some(q=>q[0]===x&&q[1]===y),inRect=a=>x>=a[0]&&x<=a[2]&&y>=a[1]&&y<=a[3],first=t=>String(t).split('. ')[0].replace(/\.$/,'')+'.',lines=[];
+  const ground=B.TILES[ch]?B.TILES[ch].split(' (')[0]:B.MARKS[ch]||ch;lines.push(['Ground: '+ground,first(ESCAPE_BUILDER_DETAILS[ch]||'')]);
+  const g=B.guardAt(m,x,y);if(g){const e=typeof EscapeBestiary!=='undefined'?EscapeBestiary.byKind(g.kind):null;lines.push([(B.ENEMIES[g.kind]||g.kind)+(g.sleep?' (asleep)':''),e?first(e.hunts):'']);}
+  const d=B.doorAt(m,x,y);if(d)lines.push([(d.bridge?'Bridge':'Door')+' · '+B.COLORS[d.color][0],'Opened by the triggers linked to it.']);
+  const t=B.triggerAt(m,x,y);if(t)lines.push([B.TRIGGERS[t.type],first(ESCAPE_BUILDER_DETAILS['trig:'+t.type]||'')]);
+  const h=B.hazardAt(m,x,y);if(h)lines.push([B.HAZARDS[h.type],first(ESCAPE_BUILDER_DETAILS['haz:'+h.type]||'')]);
+  if(has(m.cold))lines.push(['Cold ground',first(ESCAPE_BUILDER_DETAILS.cold)]);if(has(m.warm))lines.push(['Warm stone',first(ESCAPE_BUILDER_DETAILS.warm)]);
+  for(const k of Object.keys(B.LAYERS))if(has(m[k])){const hint=escapeBuilderToolHint('layer:'+k);if(hint)lines.push([hint[0],first(hint[1])]);}
+  const extra=(key,test)=>{const hint=escapeBuilderToolHint(key);if(test&&hint)lines.push([hint[0],first(hint[1])]);};
+  extra('wind',(m.wind||[]).some(z=>inRect(z.area)));extra('current',(m.currents||[]).some(z=>inRect(z.area)));extra('echo',(m.echoes||[]).some(inRect));
+  extra('cap',(m.caps||[]).some(c=>c.at[0]===x&&c.at[1]===y));if((m.caps||[]).some(c=>c.to&&c.to[0]===x&&c.to[1]===y))lines.push(['Cap landing','Where a bounce cap throws Sally.']);
+  extra('rope',(m.ropes||[]).some(r=>(r.from[0]===x&&r.from[1]===y)||(r.to&&r.to[0]===x&&r.to[1]===y)));extra('crate',has(m.crates));extra('checkpoint',has(m.checkpoints));
+  extra('tunnel',(m.tunnels||[]).some(t=>has(t)));extra('ants',(m.antTrails||[]).some(t=>has(t.path)));extra('area',(m.regions||[]).some(r=>inRect(r.area)));
+  extra('sign',B.signAt(m,x,y)>=0);extra('page',B.pageAt(m,x,y)>=0);
+  const prop=(m.props||[]).find(q=>q.at[0]===x&&q.at[1]===y);if(prop)extra('prop:'+prop.kind,true);
+  return ['Tile '+x+','+y,lines];
+}
+function escapeBuilderTipHtml(hint){
+  if(!hint)return '';const [title,body]=hint;
+  if(Array.isArray(body))return '<b>'+escapeHtml(title)+'</b>'+body.map(([a,b])=>'<div><b>'+escapeHtml(a)+'</b>'+(b?' '+escapeHtml(b):'')+'</div>').join('');
+  return '<b>'+escapeHtml(title)+'</b>'+(body?'<div>'+escapeHtml(body)+'</div>':'');
+}
+// One delegated listener on the builder panel shows the card for whatever the pointer rests on.
+function wireEscapeBuilderHints(panel){
+  if(!panel||panel.dataset?.hintsWired||typeof panel.addEventListener!=='function')return;panel.dataset.hintsWired='1';
+  const tip=()=>{let el=document.getElementById('builder-tip');if(!el){el=document.createElement('div');el.id='builder-tip';el.className='builder-tip';el.setAttribute('role','tooltip');document.body.appendChild(el);}return el;};
+  const hide=()=>{const el=document.getElementById('builder-tip');if(el)el.hidden=true;};
+  panel.addEventListener('mousemove',e=>{
+    if(!escapeBuilderHintsOn())return hide();
+    const target=e.target.closest?.('[data-tool],[data-tab],[data-x]');if(!target)return hide();
+    let hint=null;if(target.dataset.x!==undefined)hint=escapeBuilderCellHint(Number(target.dataset.x),Number(target.dataset.y));
+    else if(target.dataset.tool)hint=escapeBuilderToolHint(target.dataset.tool);
+    else if(target.dataset.tab){const tab=ESCAPE_BUILDER_TABS.find(t=>t[0]===target.dataset.tab);hint=tab?[tab[1],'Opens the '+tab[1].toLowerCase()+' tools. Rest on any of them for what it does.']:null;}
+    if(!hint)return hide();
+    if(target.title){target.dataset.title=target.title;target.removeAttribute('title');}
+    const el=tip();el.innerHTML=escapeBuilderTipHtml(hint);el.hidden=false;
+    const w=el.offsetWidth||260,h=el.offsetHeight||80,vw=window.innerWidth||1024,vh=window.innerHeight||768;
+    el.style.left=Math.max(8,Math.min(vw-w-8,e.clientX+16))+'px';el.style.top=Math.max(8,Math.min(vh-h-8,e.clientY+18))+'px';
+  });
+  panel.addEventListener('mouseleave',hide);
+}
 function escapeBuilderApi(path,options={}){return fetch('/api/'+path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});}
 function escapeBuilderShow(){
   escapeAbandonRun?.();resetGameState();gameState='builder';
@@ -212,7 +288,7 @@ function escapeBuilderCell(x,y,ch,linked){
   if(cold)cls+=' builder-cold';
   // Extras: layers, caps, wind, areas, ant trails, seed beds, the root wheel.
   const hasAt=list=>(list||[]).some(q=>q[0]===x&&q[1]===y),inRect=a=>x>=a[0]&&x<=a[2]&&y>=a[1]&&y<=a[3];let shadow='';
-  if(hasAt(m.shade))shadow+='inset 0 -5px 0 #c96a48aa,';if(hasAt(m.slippery))bg='linear-gradient(#8fd0eccc,#bfe6f5aa),'+bg;if(hasAt(m.wet))bg='linear-gradient(#5a7a9455,#5a7a9433),'+bg;if(hasAt(m.thinIce)){bg='linear-gradient(#e2f2fbcc,#cfe8f5aa),'+bg;if(!glyph)glyph='<span style="opacity:.6">◌</span>';}if(hasAt(m.glowPlants)&&!glyph)glyph='✺';if(hasAt(m.regrowth)&&!glyph)glyph='✿';
+  if(hasAt(m.shade))shadow+='inset 0 -5px 0 #c96a48aa,';if(hasAt(m.slippery))bg='linear-gradient(#8fd0eccc,#bfe6f5aa),'+bg;if(hasAt(m.shrubs)&&!glyph)glyph='❀';if(hasAt(m.wet))bg='linear-gradient(#5a7a9455,#5a7a9433),'+bg;if(hasAt(m.thinIce)){bg='linear-gradient(#e2f2fbcc,#cfe8f5aa),'+bg;if(!glyph)glyph='<span style="opacity:.6">◌</span>';}if(hasAt(m.glowPlants)&&!glyph)glyph='✺';if(hasAt(m.regrowth)&&!glyph)glyph='✿';
   const wind=(m.wind||[]).find(z=>inRect(z.area));if(wind){bg='linear-gradient(#9ec4e033,#9ec4e033),'+bg;if(!glyph)glyph='<span style="opacity:.55">'+ESCAPE_BUILDER_ARROW[EscapeBuilder.DIRS.findIndex(([dx,dy])=>dx===wind.dir[0]&&dy===wind.dir[1])]+'</span>';}
   const current=(m.currents||[]).find(z=>inRect(z.area));if(current){bg='linear-gradient(#5ac8e044,#5ac8e044),'+bg;if(!glyph)glyph='<span style="opacity:.7">'+['⇒','⇓','⇐','⇑'][EscapeBuilder.DIRS.findIndex(([dx,dy])=>dx===current.dir[0]&&dy===current.dir[1])]+'</span>';}
   if((m.echoes||[]).some(a=>inRect(a)))shadow+='inset 0 0 0 2px #b9a6e888,';
@@ -384,6 +460,7 @@ function escapeBuilderMenuBar(problems){
     menu('file','File')+menu('edit','Edit')+menu('level','Level')+menu('help','Help')+
     '<input id="builder-name" class="builder-name-inline" maxlength="40" aria-label="Level name" value="'+escapeHtml(escapeBuilderModel.name)+'">'+
     (([icon,name])=>'<span class="builder-brush" title="The brush in hand">'+icon+' '+escapeHtml(name)+'</span>')(escapeBuilderBrush())+
+    '<button id="builder-hints" class="builder-chip'+(escapeBuilderHintsOn()?' on':'')+'" title="Show what a tool or tile is when you rest the pointer on it" aria-pressed="'+escapeBuilderHintsOn()+'">💬 Hints '+(escapeBuilderHintsOn()?'on':'off')+'</button>'+
     '<button id="builder-problems" class="builder-chip'+(problems.length?' bad':'')+'" title="'+escapeHtml(problems.join(' '))+'">'+(problems.length?'⚠ '+problems.length+' to fix':'✓ Ready')+'</button>'+
     '<button id="builder-play" class="escape-primary"'+(problems.length?' disabled':'')+'>▶ Playtest</button></div>';
 }
@@ -503,6 +580,8 @@ function wireEscapeBuilder(){
   const m=escapeBuilderModel,B=EscapeBuilder,$=id=>document.getElementById(id),rerender=()=>renderEscapeBuilder(),ws=escapeBuilderWorkshop,on=(id,fn)=>{const el=$(id);if(el)el.onclick=fn;};
   const dialog=d=>{escapeBuilderDialog=d;escapeBuilderMenu=null;rerender();},act=fn=>()=>{escapeBuilderMenu=null;fn();};
   on('builder-back',ws?()=>openEscapeWorkshop():closeEscapeBuilder);
+  on('builder-hints',()=>{try{escapeStore.setItem(ESCAPE_BUILDER_HINT_KEY,escapeBuilderHintsOn()?'0':'1');}catch(_){}const tipEl=document.getElementById('builder-tip');if(tipEl)tipEl.hidden=true;rerender();});
+  wireEscapeBuilderHints(document.getElementById('escape-builder'));
   if($('builder-name'))$('builder-name').onchange=e=>{m.name=e.target.value;rerender();};
   if($('builder-brief'))$('builder-brief').onchange=e=>{m.brief=e.target.value;};if($('builder-author'))$('builder-author').onchange=e=>{m.author=e.target.value;};
   if($('builder-w'))$('builder-w').onchange=$('builder-h').onchange=()=>{escapeBuilderModel=B.resize(m,Number($('builder-w').value),Number($('builder-h').value));escapeBuilderPick=null;rerender();};
