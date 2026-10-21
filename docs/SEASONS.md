@@ -11,11 +11,23 @@ Eight festival lanterns have gone dark. Find the key and return to the green doo
 | 1 | The Orchard Gate | Easy | 21 × 13 / 161 | An amber switch, small orchard rooms, a serpent on the optional treasure loop, and a key-opened return gate. |
 | 2 | The Pumpkin Patch | Easy | 21 × 13 / 169 | Pumpkin sight lines, garden cover, a required north switch and an optional south shortcut. |
 | 3 | The Gardener's Yard | Easy–medium | 23 × 15 / 207 | Blue then green switches, a committed charge around stone beds, and a guarded treasure detour. |
-| 4 | Lantern Lane | Easy–medium | 23 × 15 / 214 | A courtyard switch, dark exploration, a ghost's beam/swoop, and two ways around the hedges. |
-| 5 | The Harvest Store | Easy–medium | 23 × 15 / 220 | Blue, green and amber shelf gates, suspicious treat baskets and delivery doors that open with the key. |
-| 6 | The Hollow Mill | Medium | 25 × 15 / 198 | Tongue the wheel across water, cross the bridge, turn the loft switch and creep past the roast turkey. |
-| 7 | The Moonlit Maze | Medium | 25 × 17 / 227 | Two switches, upper ghost/lower gardener crossings, lizard cracks and a central return route. |
-| 8 | The Last Lantern | Medium | 27 × 17 / 246 | Orchard and courtyard switches, lizard-only passages, all the principal sentries and two key-opened return gates. |
+| 4 | Lantern Lane | Medium | 23 × 15 / 214 | A courtyard switch, dark exploration, a ghost's beam/swoop, and two ways around the hedges. |
+| 5 | The Harvest Store | Medium | 23 × 15 / 220 | Blue, green and amber shelf gates, suspicious treat baskets and delivery doors that open with the key. |
+| 6 | The Hollow Mill | Medium–hard | 25 × 15 / 198 | Tongue the wheel across water, cross the bridge, turn the loft switch and creep past the roast turkey. |
+| 7 | The Moonlit Maze | Hard | 25 × 17 / 227 | Two switches, upper ghost/lower gardener crossings, lizard cracks and a central return route. |
+| 8 | The Last Lantern | Hard | 27 × 17 / 246 | Orchard and courtyard switches, lizard-only passages, all the principal sentries and two key-opened return gates. |
+
+The pack runs from easy to hard. Cunning is how sharp the creatures are (0 to 3): higher means they read where Sally is going, react sooner and search longer.
+
+| # | Cunning | What makes it harder |
+| --- | --- | --- |
+| 1–2 | 0 | — |
+| 3 | 1 | — |
+| 4 | 2 | A second serpent patrols the courtyard |
+| 5 | 2 | A serpent circles the pantry; two pebbles |
+| 6 | 2 | The lower bridge wakes a serpent by the millrace |
+| 7 | 3 | A serpent paces beside the key; a pumpkin watches the violet switch |
+| 8 | 3 | Two pebbles; the key wakes a serpent, the turkey and a gardener |
 
 The old maps had roughly 400–650 walkable tiles. These layouts have 161–246, closer to the early campaign's room-and-corridor scale. Complexity comes from cover, route choice, interacting with switches, finite tools and optional treasure excursions. The first four use cunning 0 and the last four cunning 1. There are no timed switches, mandatory treasure totals or time limits.
 

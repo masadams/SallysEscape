@@ -349,7 +349,7 @@
     "hint": "The blue switch opens the yard. Find the green shed switch beyond it. A gardener commits to its charge; use the stone beds to turn aside.",
     "index": 2,
     "revision": 2,
-    "cunning": 0,
+    "cunning": 1,
     "pebbles": 2,
     "tongues": 1,
     "guards": [
@@ -609,13 +609,13 @@
   {
     "id": "autumn-lanterns",
     "name": "Lantern Lane",
-    "difficulty": "Easy–medium",
+    "difficulty": "Medium",
     "seasonalTheme": "autumn-night",
     "brief": "Carry a lantern through two courtyards watched by a ghost.",
-    "hint": "The centre switch opens the upper lanes. Shelter beside the hedges when the ghost glares. The southern loop offers room to break a serpent's sight.",
+    "hint": "The centre switch opens the upper lanes. Shelter beside the hedges when the ghost glares. The southern loop offers room to break a serpent's sight, and a second serpent patrols the courtyard.",
     "index": 3,
     "revision": 2,
-    "cunning": 0,
+    "cunning": 2,
     "pebbles": 2,
     "tongues": 1,
     "guards": [
@@ -655,6 +655,25 @@
           [
             20,
             11
+          ]
+        ],
+        "facing": 0
+      },
+      {
+        "id": "courtyard-snake",
+        "kind": "snake",
+        "spawn": [
+          9,
+          8
+        ],
+        "patrol": [
+          [
+            5,
+            8
+          ],
+          [
+            14,
+            8
           ]
         ],
         "facing": 0
@@ -832,14 +851,14 @@
   {
     "id": "autumn-store",
     "name": "The Harvest Store",
-    "difficulty": "Easy–medium",
+    "difficulty": "Medium",
     "seasonalTheme": "autumn-dusk",
     "brief": "Find three store switches among narrow shelves and suspicious treat baskets.",
-    "hint": "Blue opens the first aisle, green the centre shelves, amber the pantry. A twitching basket can be exposed with a pebble. The key opens the lower delivery doors.",
+    "hint": "Blue opens the first aisle, green the centre shelves, amber the pantry. A twitching basket can be exposed with a pebble. A serpent circles the pantry: slip in behind it. The key opens the lower delivery doors.",
     "index": 4,
     "revision": 2,
-    "cunning": 1,
-    "pebbles": 3,
+    "cunning": 2,
+    "pebbles": 2,
     "tongues": 1,
     "guards": [
       {
@@ -866,6 +885,33 @@
           [
             13,
             8
+          ]
+        ],
+        "facing": 0
+      },
+      {
+        "id": "pantry-snake",
+        "kind": "snake",
+        "spawn": [
+          18,
+          2
+        ],
+        "patrol": [
+          [
+            21,
+            2
+          ],
+          [
+            21,
+            5
+          ],
+          [
+            15,
+            5
+          ],
+          [
+            15,
+            2
           ]
         ],
         "facing": 0
@@ -1064,13 +1110,13 @@
   {
     "id": "autumn-mill",
     "name": "The Hollow Mill",
-    "difficulty": "Medium",
+    "difficulty": "Medium–hard",
     "seasonalTheme": "autumn-mill",
     "brief": "Flick the bridge wheel across the millrace, then slip past a very alert roast turkey.",
     "hint": "From the west bank, face the blue wheel and use Tongue. The loft switch opens the key room. Creep past the turkey, or throw a pebble away from your crossing.",
     "index": 5,
     "revision": 2,
-    "cunning": 1,
+    "cunning": 2,
     "pebbles": 2,
     "tongues": 2,
     "guards": [
@@ -1301,7 +1347,10 @@
         "open": [
           "mill-home"
         ],
-        "message": "The lower mill bridge is ready for the return."
+        "message": "The lower mill bridge is ready, but something rattles awake by the millrace.",
+        "spawn": [
+          "mill-serpent"
+        ]
       }
     ],
     "map": [
@@ -1320,18 +1369,39 @@
       "#.X....1.._____......1.L#",
       "#........._____.1.......#",
       "#########################"
+    ],
+    "reinforcements": [
+      {
+        "id": "mill-serpent",
+        "kind": "snake",
+        "spawn": [
+          21,
+          9
+        ],
+        "patrol": [
+          [
+            21,
+            5
+          ],
+          [
+            21,
+            12
+          ]
+        ],
+        "facing": -1.5707963267948966
+      }
     ]
   },
   {
     "id": "autumn-maze",
     "name": "The Moonlit Maze",
-    "difficulty": "Medium",
+    "difficulty": "Hard",
     "seasonalTheme": "autumn-night",
     "brief": "Two courtyard switches open two ways past the moonlit watchers.",
-    "hint": "Find the amber switch in the western loop, then the violet switch beyond it. Choose the ghost's upper lane or the gardener's lower crossing. The key opens the centre route home.",
+    "hint": "Find the amber switch in the western loop, then the violet switch beyond it. Choose the ghost's upper lane or the gardener's lower crossing. A serpent paces beside the key, and a pumpkin watches the violet switch. The key opens the centre route home.",
     "index": 6,
     "revision": 2,
-    "cunning": 1,
+    "cunning": 3,
     "pebbles": 2,
     "tongues": 1,
     "guards": [
@@ -1374,6 +1444,40 @@
           ]
         ],
         "facing": 0
+      },
+      {
+        "id": "key-snake",
+        "kind": "snake",
+        "spawn": [
+          19,
+          3
+        ],
+        "patrol": [
+          [
+            19,
+            1
+          ],
+          [
+            19,
+            5
+          ]
+        ],
+        "facing": -1.5707963267948966
+      },
+      {
+        "id": "violet-pumpkin",
+        "kind": "toad",
+        "spawn": [
+          13,
+          11
+        ],
+        "patrol": [
+          [
+            13,
+            11
+          ]
+        ],
+        "facing": 3.141592653589793
       }
     ],
     "gates": [
@@ -1645,14 +1749,14 @@
   {
     "id": "autumn-finale",
     "name": "The Last Lantern",
-    "difficulty": "Medium",
+    "difficulty": "Hard",
     "seasonalTheme": "autumn-festival",
     "brief": "Bring the final lantern through orchard, courtyard and mill garden.",
-    "hint": "The orchard switch opens the central hall; the courtyard switch opens the far garden. Lizard cracks offer a serpent-free shortcut. The key opens the lower gates home.",
+    "hint": "The orchard switch opens the central hall; the courtyard switch opens the far garden. Lizard cracks offer a serpent-free shortcut. The key opens the lower gates home, but it wakes the whole hollow: a serpent in the lower garden, the turkey in the hall and a gardener in the orchard. Creep past the turkey.",
     "index": 7,
     "revision": 2,
-    "cunning": 1,
-    "pebbles": 3,
+    "cunning": 3,
+    "pebbles": 2,
     "tongues": 2,
     "guards": [
       {
@@ -2021,7 +2125,12 @@
           "festival-home-west",
           "festival-home-east"
         ],
-        "message": "The festival gates swing wide. Bring the last lantern home."
+        "message": "The festival gates swing wide, and the whole hollow wakes. Bring the last lantern home.",
+        "spawn": [
+          "festival-serpent",
+          "festival-turkey",
+          "orchard-gardener"
+        ]
       }
     ],
     "map": [
@@ -2042,6 +2151,73 @@
       "#.X.....##......L##1....L.#",
       "#.......##.......##.......#",
       "###########################"
+    ],
+    "reinforcements": [
+      {
+        "id": "festival-serpent",
+        "kind": "snake",
+        "spawn": [
+          13,
+          14
+        ],
+        "patrol": [
+          [
+            10,
+            14
+          ],
+          [
+            10,
+            12
+          ],
+          [
+            16,
+            12
+          ],
+          [
+            16,
+            14
+          ]
+        ],
+        "facing": 3.141592653589793
+      },
+      {
+        "id": "festival-turkey",
+        "kind": "fox",
+        "spawn": [
+          15,
+          9
+        ],
+        "patrol": [
+          [
+            12,
+            9
+          ],
+          [
+            16,
+            9
+          ]
+        ],
+        "facing": 3.141592653589793
+      },
+      {
+        "id": "orchard-gardener",
+        "kind": "beetle",
+        "spawn": [
+          4,
+          4
+        ],
+        "patrol": [
+          [
+            2,
+            4
+          ],
+          [
+            6,
+            4
+          ]
+        ],
+        "facing": 0
+      }
     ]
   }
 ];
