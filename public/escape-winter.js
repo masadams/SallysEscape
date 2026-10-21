@@ -196,6 +196,7 @@
   },
   {
     "id": "winter-pond",
+    "crates": [[11, 4], [10, 10]],
     "name": "The Skating Pond",
     "index": 1,
     "revision": 1,
@@ -612,7 +613,7 @@
       ]
     ],
     "brief": "Skate between little snow islands and find the gate keeper's star key.",
-    "hint": "The west switch opens the north crossing. Snow islands are good places to slow down. The key opens the south crossing.",
+    "hint": "The west switch opens the north crossing. Snow islands are good places to slow down. The key opens the south crossing. Snow blocks on the islands can be shoved onto the ice, and they slide until something stops them.",
     "reactions": [
       {
         "id": "pond-key",

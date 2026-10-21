@@ -50,6 +50,8 @@
       if(!this.level)throw new Error('Unknown Escape level');
       this.cunning=CUNNING[Math.max(0,Math.min(3,Math.round(this.level.cunning??2)))];
       this.grid=catalog.escapeGridFor(this.level);this.height=this.grid.length;this.width=this.grid[0].length;
+      // Crates: solid, so they block walking, sight, hunters and throws; Sally can shove one a tile at a time.
+      this.crateAt=new Uint8Array(this.width*this.height);this.crates=(this.level.crates||[]).filter(([x,y])=>this.floor(x,y)&&this.grid[y][x]!=='U'&&!this.crateAt[y*this.width+x]).map(([x,y],i)=>{this.crateAt[y*this.width+x]=1;return {id:i,x,y,from:null,start:0,dir:[0,0]};});this.crateVersion=0;this.crateNoiseUntil=-1;this.lean=null;
       this.player={...centre(...this.level.spawn),facing:{x:0,y:-1},tongueAim:null,stamina:100,exhausted:false,moving:false,sprinting:false,crawling:false,hidden:false,noisy:false};
       this.hunters=this.level.guards.map(guard=>this.makeHunter(guard));for(const h of this.hunters)h.restState=h.state;
       // Gentle levels (Little Explorers, for young children) can't be lost: a catch is an "Oops!"
@@ -123,7 +125,7 @@
       this.motion=new CreatureMotion(this);
     }
     makeHunter(guard){return {...centre(...guard.spawn),id:guard.id||null,kind:guard.kind||'snake',facing:guard.facing,state:guard.kind==='echofrog'?'listen':guard.kind==='sentinel'?'watch':guard.kind==='cloudray'?'glide':guard.kind==='mimic'?'rooted':guard.kind==='cobra'?'coiled':guard.kind==='angler'?'lurking':guard.kind==='flytrap'?'open':guard.kind==='heron'||guard.kind==='mantis'?'still':guard.kind==='wasp'?'nest':guard.kind==='dragonfly'?'fly':guard.kind==='mole'?'under':guard.kind==='bat'?'fly':guard.kind==='eel'?'lurk':guard.kind==='crab'?'shell':'patrol',awareness:0,lastKnown:null,lastObserved:-Infinity,reason:'seen',path:[],routeIndex:0,pauseUntil:0,searchUntil:0,patrol:guard.patrol.map(p=>centre(...p)),aim:null,phaseUntil:0,distanceMoved:0,...(guard.kind==='cobra'?{post:centre(...guard.spawn),reach:guard.reach||2.6}:{}),...(guard.kind==='angler'?{lure:centre(...(guard.lure||guard.spawn))}:{}),...(guard.kind==='sentinel'?{facing:guard.looks?guard.looks[0]:guard.facing,looks:guard.looks||null,every:guard.every||3.5,look:0,turnAt:guard.every||3.5,range:guard.range||9,beams:[],readyAt:0}:{}),...(guard.kind==='cloudray'?{leg:0,speed:guard.speed||1.4,shadowR:guard.range||2.1}:{}),...(guard.kind==='heron'||guard.kind==='mantis'?{facing:guard.looks?guard.looks[0]:guard.facing,reach:guard.reach||(guard.kind==='mantis'?1.7:2.6),looks:guard.looks||null,every:guard.every||3.2,look:0,turnAt:guard.every||3.2}:{}),...(guard.kind==='eel'?{post:centre(...guard.spawn)}:{}),...(guard.kind==='bat'?{leg:0,speed:guard.speed||1.8,every:guard.every||2.4,range:guard.range||4.5,pulseAt:(guard.offset||0)-2,pulseFrom:null}:{}),...(guard.kind==='dragonfly'?{leg:0,hoverUntil:0,speed:guard.speed||4.6,hover:guard.hover??.4}:{}),...(guard.kind==='wasp'?{nest:centre(...guard.spawn),swarm:null,leash:guard.leash||6,readyAt:0}:{}),...(guard.kind==='crab'?{home:centre(...guard.spawn),axis:guard.axis||'x',range:guard.range||3}:{}),...(guard.kind==='scorpion'?{reach:guard.reach||1.8,buried:Boolean(guard.buried),offset:guard.offset??(guard.spawn[0]*.7+guard.spawn[1]*.3)%3.8,post:centre(...guard.spawn)}:{})};}
-    floor(x,y){const t=this.grid[y]?.[x];return t!==undefined&&t!=='#'&&t!=='B'&&t!=='G'&&t!=='P';}
+    floor(x,y){const t=this.grid[y]?.[x];return t!==undefined&&t!=='#'&&t!=='B'&&t!=='G'&&t!=='P'&&!this.crateAt?.[y*this.width+x];}
     water(p){return this.grid[Math.floor(p.y)]?.[Math.floor(p.x)]==='U';}
     // A crack (Y; S in text maps) is wide enough for Sally only: no hunter can squeeze through or see into it.
     actorFloor(x,y,h){const wet=this.grid[y]?.[x]==='U';if(h&&this.grid[y]?.[x]==='Y')return false;return this.floor(x,y)&&(!h||h.kind==='sea-snake'||(h.kind==='fish'?wet:!wet));}
@@ -291,6 +293,38 @@
       return true;
     }
     flowSpeed(c){return c.pulse?c.speed*(1+.55*Math.sin((this.elapsed/c.pulse+(c.phase||0))*Math.PI*2)):c.speed;}
+    // Leaning into a crate square-on for a moment shoves it one tile, with a loud scrape. It will not
+    // cover the key, the exit, a switch or plate, a gate, water or a creature; pushed into a gap it
+    // drops in and fills it (a way across), and pushed onto ice it slides until something stops it.
+    crateTile(x,y){return this.crates.find(c=>!c.sunk&&c.x===x&&c.y===y)||null;}
+    leanOnCrate(axis,s,dt){
+      const p=this.player,other=axis==='x'?'y':'x',tx=Math.floor(p.x+(axis==='x'?s*.3:0)),ty=Math.floor(p.y+(axis==='y'?s*.3:0)),c=this.crateTile(tx,ty);
+      if(!c||c.from||Math.abs(p[other]-(c[other]+.5))>.38)return;
+      const dir=axis==='x'?[s,0]:[0,s],l=this.lean,same=l&&l.c===c&&l.dir[0]===dir[0]&&l.dir[1]===dir[1]&&l.at>=this.elapsed-.05;
+      this.lean={c,dir,at:this.elapsed,t:(same?l.t:0)+dt};
+      if(this.lean.t>=.3){this.lean.t=0;if(this.shoveCrate(c,dir,.32)){this.crateNoiseUntil=this.elapsed+.45;this.events.push('scrape');}}
+    }
+    crateRoom(x,y){
+      const at=q=>q&&Math.floor(q.x)===x&&Math.floor(q.y)===y;
+      if(!this.hasKey&&at(this.key)||at(this.exit))return false;
+      if(this.gates.some(g=>at(g.switch)||[...g.plates,...g.levers,...g.heavyPlates].some(at)||g.tiles.some(([gx,gy])=>gx===x&&gy===y)))return false;
+      if(this.hunters.some(h=>!h.eaten&&Math.abs(h.x-x-.5)<.9&&Math.abs(h.y-y-.5)<.9)||Math.abs(this.player.x-x-.5)<.72&&Math.abs(this.player.y-y-.5)<.72)return false;
+      return true;
+    }
+    shoveCrate(c,dir,dur){
+      const nx=c.x+dir[0],ny=c.y+dir[1],t=this.grid[ny]?.[nx];
+      if(t===undefined||!this.crateRoom(nx,ny))return false;
+      const gap=t==='P';if(!gap&&(!this.floor(nx,ny)||t==='U'))return false;
+      this.crateAt[c.y*this.width+c.x]=0;c.from={x:c.x,y:c.y};c.start=this.elapsed;c.dur=dur;c.dir=dir;c.x=nx;c.y=ny;
+      if(gap){c.sunk=true;this.grid[ny][nx]='.';this.events.push('clack');this.notice('The crate drops into the gap. A way across!');}
+      else this.crateAt[ny*this.width+nx]=1;
+      this.crateVersion++;for(const h of this.hunters){h.path=[];h.targetId=null;}this.updateVisibility(true);return true;
+    }
+    updateCrates(){
+      for(const c of this.crates){if(!c.from||this.elapsed-c.start<c.dur)continue;c.from=null;
+        if(!c.sunk&&this.slippery.has(c.x+','+c.y)&&this.shoveCrate(c,c.dir,.16))this.events.push('scrape');}
+    }
+    cratePos(c){if(!c.from)return {x:c.x,y:c.y};const k=Math.min(1,(this.elapsed-c.start)/c.dur),e=k*(2-k);return {x:c.from.x+(c.x-c.from.x)*e,y:c.from.y+(c.y-c.from.y)*e};}
     fits(p,radius=0.22,actor=null){
       return [[-1,-1],[-1,1],[1,-1],[1,1]].every(([x,y])=>this.actorFloor(Math.floor(p.x+x*radius),Math.floor(p.y+y*radius),actor));
     }
@@ -749,7 +783,7 @@
       const skating=!special&&(onIce||Math.hypot(this.slideVelocity.x,this.slideVelocity.y)>.018);
       const travel=skating?Ice.steer(this.slideVelocity,{x:dx,y:dy},speed,dt,{ice:onIce,brake:crawl,glide:onIce}):{x:dx*speed*dt,y:dy*speed*dt};
       // On ice a wall knocks Sally back a little instead of stopping her dead.
-      for(const axis of ['x','y']){const next={...p,[axis]:p[axis]+travel[axis]};if(this.fits(next)&&!(this.vents.length&&this.inJet(next)&&!this.inJet(p)))p[axis]=next[axis];else{const hit=this.slideVelocity[axis];this.slideVelocity[axis]=onIce?-hit*.35:0;if(onIce&&Math.abs(hit)>1.6){this.events.push('scrape');this.iceBumpAt=this.elapsed;}}}
+      for(const axis of ['x','y']){const next={...p,[axis]:p[axis]+travel[axis]};if(this.fits(next)&&!(this.vents.length&&this.inJet(next)&&!this.inJet(p)))p[axis]=next[axis];else{if(this.crates.length&&!skating&&!crawl&&travel[axis])this.leanOnCrate(axis,Math.sign(travel[axis]),dt);const hit=this.slideVelocity[axis];this.slideVelocity[axis]=onIce?-hit*.35:0;if(onIce&&Math.abs(hit)>1.6){this.events.push('scrape');this.iceBumpAt=this.elapsed;}}}
       p.sliding=onIce&&Math.hypot(this.slideVelocity.x,this.slideVelocity.y)>.12;
       if(!onIce&&Math.hypot(this.slideVelocity.x-dx*speed,this.slideVelocity.y-dy*speed)<.04){this.slideVelocity.x=0;this.slideVelocity.y=0;}
       if(this.wind.length&&!p.flight){const gust=this.wind.find(w=>this.gustPhase(w).active&&w.keys.has(this.tileKey(p)));if(gust)for(const [axis,d] of [['x',gust.dir[0]],['y',gust.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*gust.strength*(crawl?.45:1)*dt};if(this.fits(next))p[axis]=next[axis];
@@ -780,13 +814,14 @@
       // A crawl makes no sound, even on gravel.
       p.silent=this.moss.size>0&&this.moss.has(this.tileKey(p));p.loud=p.sprinting&&!p.silent;
       // Gravel crunches underfoot; mud splashes when Sally runs through it.
-      p.noisy=p.loud||(p.moving&&!p.crawling&&!p.silent&&(this.grid[Math.floor(p.y)][Math.floor(p.x)]==='N'||p.sprinting&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M'));
+      p.noisy=p.loud||this.elapsed<this.crateNoiseUntil||(p.moving&&!p.crawling&&!p.silent&&(this.grid[Math.floor(p.y)][Math.floor(p.x)]==='N'||p.sprinting&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M'));
       if(p.dig){if(p.dig.buried){p.hidden=true;p.noisy=false;this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+.05);}else p.noisy=true;}
       if(p.noisy&&this.echoes.length&&this.elapsed>=(this.echoAt||0)&&this.inEcho(p)){this.echoAt=this.elapsed+1.2;this.events.push('echo');}
       if(this.level.dark){
         this.glowTrail=this.glowTrail.filter(t=>t.expires>this.elapsed);
         if(p.moving&&this.elapsed>=this.trailAt){this.glowTrail.push({...copy(p),born:this.elapsed,expires:this.elapsed+8});this.trailAt=this.elapsed+.18;}
       }
+      if(this.crates.length)this.updateCrates();
       this.activateSwitches();this.reactToMaze('enter');this.updateVisibility();
       if(this.flights.length||this.lights.length)this.updateFlights();
       if(this.decoy&&this.decoy.expires<=this.elapsed)this.decoy=null;
