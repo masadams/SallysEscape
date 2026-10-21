@@ -13,8 +13,9 @@ their own progress and settings), with Continue, Little Explorers, Players, Opti
 catches golden flies and enters escapes at their flags; the Journal holds the Story pages, the Great
 Map and the Bestiary. In an escape the only button on screen is Pause (Esc, or Start on a controller); pausing opens
 one centred panel, the same in every kind of escape: Resume, Map, Restart, Options and Leave (named
-for where it leads, such as Back to Sunshore Cove). Options holds sound, music and ambience volume, lighting,
-start cards and full screen.
+for where it leads, such as Back to Sunshore Cove). Options has three short sections: Sound (effects, music and ambience), Screen (lighting, text size,
+full screen) and Play (hard mode, start cards, play data); the device checks (frame rate, sound
+route, test sound) are folded under Advanced.
 
 **Escapes.** Early escapes are one-touch; from Venom Depths (escape 24) Sally can drop her tail once
 as a decoy, and pink regrowth bugs grow it back. Every hunter has its own job (`docs/ENEMIES.md`), and
@@ -53,8 +54,8 @@ and steps the zoom on the rest. On the world map A enters an escape, X tries its
 golden flies and holding Y opens the panel (area travel, the Journal, Main menu); LB/RB jump between
 areas and B goes to the main menu. On an escape's opening card Y shows the hint and any other button starts. While a pad is in use the screens show its buttons (A, B, X, Y) in
 place of keyboard keys. In menus the stick or d-pad moves between buttons (left and right change a drop-down or a
-slider), A presses and B goes back. Options → Frame rate shows frames a second in the corner, and
-Options → Test sound plays two beeps to check where sound is lost on a device. The tool buttons show pad labels once a pad is used, and
+slider), A presses and B goes back. Options → Advanced → Frame rate shows frames a second in the corner, and
+Options → Advanced → Test sound plays two beeps to check where sound is lost on a device. The tool buttons show pad labels once a pad is used, and
 big moments rumble where the pad supports it.
 
 **Little Explorers.** Twenty-six gentle levels for young players (about 5 and up), from the title screen and
