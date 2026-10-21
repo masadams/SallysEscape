@@ -138,6 +138,11 @@ with nothing linked, a heavy plate with no beetle…). **▶ Playtest** runs it.
 this browser. **Share** gives one line of text (`SALLY2:…`) to paste into **Import** anywhere.
 **⇪ Publish to community** puts it on the shared shelf.
 
+**Your own flag.** In a playtest, a community level or a Little Explorers level, press **B** (hold **A** on a
+controller, or tap **Flag**) to plant a flag where Sally stands. If a creature catches her she comes back to
+the flag instead of losing the run; plant again to move it. It can't be planted in water, in mid-air, or with
+a creature close by or already after her. The game's own escapes don't offer it (yet).
+
 **Community levels** (Extras on the start menu) lists every published level for every player, with each
 player's best time. Level makers can copy a community level into the builder or take it down.
 

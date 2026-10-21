@@ -104,6 +104,7 @@ function escapeAbilityIcon(kind){
     tongue:'<path d="M5 11h13a6 6 0 0 1 0 12h-6a3 3 0 0 1 0-6h6" stroke="#f5a0bb" stroke-width="5"/><path d="m5 7 4 4-4 4" stroke="#ffdfcd"/>',
     seed:'<path d="M16 27V13m0 7C5 20 4 11 5 7c8 0 12 6 11 13Zm0-5C16 6 22 4 28 5c0 7-5 11-12 10Z" fill="#a9d982" stroke="#c8efaa"/>',
     camo:'<path d="M5 22C3 10 14 4 28 5c0 14-7 23-18 20Z" fill="#8fbf80"/><path d="M7 25 23 10m-10 9-1-6m6 1 5 1" stroke="#355d46"/>',
+    flag:'<path d="M9 29V4" stroke="#d9c6a0" stroke-width="3"/><path d="M10 5h15l-4 6 4 6H10Z" fill="#ff9a6a" stroke="#ffd2b8"/>',
     look:'<path d="M2 16Q16 1 30 16 16 31 2 16Z" fill="#b8dfd9"/><circle cx="16" cy="16" r="5" fill="#254e5a"/><path d="M7 5H2V1" stroke="#f0d992"/>',
     tail:'<path d="M5 6c20-4 28 17 14 22-9 3-15-8-8-12 5-3 10 3 5 5" stroke="#abd88b" stroke-width="5"/>',
     heart:'<path d="M16 28 4 16C-3 6 10 0 16 9 22 0 35 6 28 16Z" fill="currentColor" stroke="none"/>'
@@ -170,7 +171,7 @@ function startEscape(options={}){
   if(options.custom||options.kidsId||options.seasonalId?false:options.hiddenId?!escapeProgress.hiddenLevelOpen(options.hiddenId,EscapeWorld.chapters):options.challengeId?!escapeProgress.challengeUnlocked(options.challengeId):!escapeProgress.unlocked(options.levelId||'quiet-vault')){showEscapeSelect();return;}
   // Now and then (about one escape in four, never in a challenge) glow bugs drift about as a bonus.
   if(options.glowbugs===undefined&&!options.challengeId&&!options.custom&&!options.kidsId&&!options.seasonalId&&Math.random()<ESCAPE_GLOWBUG_CHANCE)options={...options,glowbugs:1+Math.floor(Math.random()*1e6)};
-  startRun('escape');escapeGame=new EscapeAdventure(options.custom?{level:escapeBuildCustom(options.custom)}:options);escapeMetCount=0;escapeBestiaryNote=null;escapeCharacter=new SallyCharacter({reducedMotion:Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)});document.getElementById('escape-builder').style.display='none';escapeResultShown=false;escapeHudAt=-Infinity;
+  startRun('escape');escapeGame=new EscapeAdventure(options.custom?{level:escapeBuildCustom(options.custom),plantFlag:true}:{...options,plantFlag:Boolean(options.kidsId)});escapeMetCount=0;escapeBestiaryNote=null;escapeCharacter=new SallyCharacter({reducedMotion:Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)});document.getElementById('escape-builder').style.display='none';escapeResultShown=false;escapeHudAt=-Infinity;
   escapeCrawlTip(escapeGame);
   escapeOptions=options.custom?{custom:options.custom,from:options.from||'builder'}:escapeGame.level.seasonal?{seasonalId:escapeGame.level.id,from:'seasonal'}:escapeGame.level.kids?{kidsId:escapeGame.level.id,from:'kids'}:escapeGame.level.hidden?{hiddenId:escapeGame.level.id}:{levelId:escapeGame.level.id,challengeId:escapeGame.challenge?.id||null};
   gameState='escape';escapeLibraryOpen=false;document.getElementById('game-area').classList.remove('escape-world-open');mountEscapeChrome(true);
@@ -183,7 +184,7 @@ function startEscape(options={}){
     <div class="escape-inventory"><span id="escape-key">◇ Find the key</span><span id="escape-treasure">Treasure 0 / 10</span></div>
     <div class="escape-kit" role="group" aria-label="Sally’s abilities and breath"><div class="escape-breath"><span>Breath <kbd>Shift</kbd></span><div id="escape-stamina" role="progressbar" aria-label="Stamina" aria-valuemin="0" aria-valuemax="100"><i id="escape-stamina-fill"></i></div><div id="escape-warmth-row" style="display:none"><span>Warmth</span><div id="escape-warmth" role="progressbar" aria-label="Warmth" aria-valuemin="0" aria-valuemax="100"><i id="escape-warmth-fill"></i></div></div></div>
     <div id="escape-tail" class="escape-tail-status" style="display:none" role="img"></div><div class="escape-actions"><button id="escape-burrow-action">Burrow <kbd>E</kbd></button><button id="escape-decoy-action">Toss pebble <kbd>Q</kbd></button><button id="escape-glow-action">Glow mushroom <kbd>L</kbd></button><button id="escape-spore-action">Spore pouch <kbd>Z</kbd></button><button id="escape-tongue-action" title="Face a key or treasure within three tiles. Gaps are allowed; walls and gates block the grab.">Tongue <kbd>R</kbd></button>
-    <button id="escape-seed-action" title="Plant on bare ground for cover, face an open doorway to brace it, or use a marked vine bank.">Seed <kbd>F</kbd></button><button id="escape-dig-action" title="Dig a tunnel entrance, then dig its way out somewhere else; Burrow on either mound to use it.">Dig <kbd>T</kbd></button><button id="escape-camo-action" title="Blend into the ground. You stay hidden while you keep still.">Camo <kbd>X</kbd></button><button id="escape-look-action" title="Turn your gaze behind you briefly, even while moving.">Look back <kbd>Space</kbd></button></div></div><p id="escape-objective">Find the golden key. Treasure is optional.</p><p id="escape-warning" role="status" aria-live="polite"></p>`;
+    <button id="escape-seed-action" title="Plant on bare ground for cover, face an open doorway to brace it, or use a marked vine bank.">Seed <kbd>F</kbd></button><button id="escape-dig-action" title="Dig a tunnel entrance, then dig its way out somewhere else; Burrow on either mound to use it.">Dig <kbd>T</kbd></button><button id="escape-camo-action" title="Blend into the ground. You stay hidden while you keep still.">Camo <kbd>X</kbd></button><button id="escape-flag-action" title="Plant your flag here. If a creature catches Sally she comes back to it. Plant again to move it.">Flag <kbd>B</kbd></button><button id="escape-look-action" title="Turn your gaze behind you briefly, even while moving.">Look back <kbd>Space</kbd></button></div></div><p id="escape-objective">Find the golden key. Treasure is optional.</p><p id="escape-warning" role="status" aria-live="polite"></p>`;
   // p5 redraws synchronously on resize; the new HUD must exist first.
   const size=canvasDimensions();resizeCanvas(size.width,size.height,true);
   document.getElementById('escape-burrow-action').onclick=useEscapeBurrow;
@@ -191,7 +192,7 @@ function startEscape(options={}){
   escapeBindCharge(document.getElementById('escape-decoy-action'),'pebble');escapeBindCharge(document.getElementById('escape-glow-action'),'glow');escapeBindCharge(document.getElementById('escape-spore-action'),'spore');
   document.getElementById('escape-tongue-action').onclick=useEscapeTongue;
   document.getElementById('escape-look-action').onclick=useEscapeLook;
-  document.getElementById('escape-seed-action').onclick=useEscapeSeed;document.getElementById('escape-dig-action').onclick=useEscapeDig;
+  document.getElementById('escape-seed-action').onclick=useEscapeSeed;document.getElementById('escape-flag-action').onclick=useEscapeFlag;document.getElementById('escape-dig-action').onclick=useEscapeDig;
   document.getElementById('escape-camo-action').onclick=useEscapeCamo;
   document.getElementById('escape-map-button').onclick=toggleEscapeMap;
   clearTouchInput();suppressHeldKeys();unlockAudio();renderEscapeHUD();updateToolbar();
@@ -260,6 +261,7 @@ function drawEscapeHawk(k,cell,clock){
 }
 function useEscapeLook(){if(gameState==='escape'&&!paused&&escapeGame){if(typeof readEscapeNearSign==='function'&&readEscapeNearSign())return;escapeGame.lookBack();renderEscapeHUD(true);}}
 function useEscapeDig(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.digTunnel();renderEscapeHUD(true);}}
+function useEscapeFlag(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.plantFlag();renderEscapeHUD(true);}}
 function useEscapeSeed(){if(gameState==='escape'&&!paused&&escapeGame){escapeGame.plantSeed();renderEscapeHUD(true);}}
 function escapeKeyPressed(k=String(key).toLowerCase(),code=keyCode){
   if(gameState==='escape'&&escapeMoment&&!escapeResultShown){skipEscapeMoment(k);return;}
@@ -286,6 +288,7 @@ function escapeKeyPressed(k=String(key).toLowerCase(),code=keyCode){
   if(k==='r'||k==='t')useEscapeTongue();
   if(k==='v'||k===' '&&document.activeElement?.tagName!=='BUTTON')useEscapeLook();
   if(k==='f')useEscapeSeed();
+  if(k==='b')useEscapeFlag();
   if(k==='t')useEscapeDig();
 }
 function toggleEscapeMap(){
@@ -371,6 +374,7 @@ function renderEscapeHUD(force=false){
     [document.getElementById('escape-seed-action'),'seed','Seed','F',g.seeds,g.level.seeds,g.elapsed>=g.seedReadyAt,false],
     [document.getElementById('escape-dig-action'),'dig',g.pendingDig?'Dig way out':'Dig tunnel','T',g.diggers+(g.pendingDig?1:0),g.level.diggers||0,true,Boolean(g.pendingDig)],
     [document.getElementById('escape-camo-action'),'camo','Camo','X',g.camos,g.level.camos,g.camoUntil<=g.elapsed,g.camoUntil>g.elapsed],
+    [document.getElementById('escape-flag-action'),'flag',g.flag?'Move flag':'Flag','B',1,g.canPlantFlag?null:0,true,Boolean(g.flag)],
     [document.getElementById('escape-look-action'),'look','Look back','Space',1,g.level.gaze?null:0,true,g.lookUntil>g.elapsed]
   ];
   for(const [button,kind,label,key,left,total,ready,active]of abilities){
@@ -973,6 +977,10 @@ function drawEscapeVault(){
     noFill();stroke(...(vine?[78,128,62]:[150,118,78]));strokeWeight(Math.max(1.5,cell*.07));const ex=e.x*cell,ey=e.y*cell-(g.player.flight?.rope===r?escapeFlightLift(g,cell)+cell*.15:0);
     bezier(hx,hy,hx+(ex-hx)*.3,hy+(ey-hy)*.7+cell*.25,ex-(ex-hx)*.1,ey-cell*.2,ex,ey);noStroke();fill(...(vine?[96,156,74]:[120,92,60]));ellipse(hx,hy,cell*.22,cell*.22);
     if(vine)for(const k of [.35,.6,.8]){fill(110,176,84);ellipse(hx+(ex-hx)*k+cell*.07,hy+(ey-hy)*k,cell*.16,cell*.09);}else{fill(170,136,90);ellipse(ex,ey,cell*.16,cell*.16);}}
+  // Sally's own flag, where a catch brings her back: a pole and a waving pennant.
+  if(g.flag&&(!view.follow||g.visibleTile(Math.floor(g.flag.x),Math.floor(g.flag.y)))){const x=g.flag.x*cell,y=g.flag.y*cell,w=Math.sin(g.elapsed*5)*cell*.04,pop=Math.min(1,(g.elapsed-g.flag.at)/.25);
+    noStroke();fill(0,0,0,60);ellipse(x,y+cell*.32,cell*.4,cell*.12);stroke(120,92,60);strokeWeight(Math.max(1.5,cell*.06));line(x-cell*.12,y+cell*.32,x-cell*.12,y+cell*.32-cell*.78*pop);noStroke();
+    fill(255,154,106);triangle(x-cell*.1,y-cell*.46*pop,x+cell*.34+w,y-cell*.32*pop,x-cell*.1,y-cell*.16*pop);fill(255,226,160);ellipse(x-cell*.12,y+cell*.32-cell*.8*pop,cell*.1,cell*.1);}
   for(const cap of g.caps||[]){const [ax,ay]=cap.at,[tx,ty]=cap.to;if(view.follow&&!g.visibleTile(ax,ay))continue;const x=(ax+.5)*cell,y=(ay+.5)*cell,ex=(tx+.5)*cell,ey=(ty+.5)*cell,mx=(x+ex)/2,my=(y+ey)/2-cell*1.2;
     noFill();stroke(255,190,120,70);strokeWeight(Math.max(1,cell*.035));drawingContext.setLineDash?.([cell*.08,cell*.12]);bezier(x,y,mx,my,mx,my,ex,ey);drawingContext.setLineDash?.([]);noStroke();fill(255,190,120,60);ellipse(ex,ey,cell*.5,cell*.5);
     // A springy cap: a coiled stem, and a fainter arc to where a sprint carries Sally.

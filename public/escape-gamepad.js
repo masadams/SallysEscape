@@ -8,7 +8,7 @@ const ESCAPE_PAD={A:0,B:1,X:2,Y:3,LB:4,RB:5,LT:6,RT:7,VIEW:8,START:9,L3:10,R3:11
 // throw on release, aimed with the stick, just like holding Q.
 const ESCAPE_PAD_ACTIONS={A:'look',B:'burrow',X:'pebble',Y:'tongue',LB:'glow',RB:'spore',L3:'camo',R3:'seed'};
 // The labels shown on the tool buttons while a pad is in use, in place of the keyboard keys.
-const ESCAPE_PAD_LABELS={Space:'A',E:'B',Q:'X',R:'Y',L:'LB',Z:'RB',X:'L3',F:'R3'};
+const ESCAPE_PAD_LABELS={B:'Hold A',Space:'A',E:'B',Q:'X',R:'Y',L:'LB',Z:'RB',X:'L3',F:'R3'};
 const ESCAPE_PAD_DEAD=.22;
 const escapePad={exitAt:0,holdY:null,index:null,active:false,x:0,y:0,sprint:false,crawl:false,prev:[],nav:{dir:null,at:0,repeat:false}};
 let escapeLastInput='auto';
@@ -89,6 +89,9 @@ function pollEscapePad(){
     if(!pressed(i))continue;
     ({look:useEscapeLook,burrow:useEscapeBurrow,tongue:useEscapeTongue,camo:useEscapeCamo,seed:()=>escapeGame?.level.diggers&&!escapeGame.level.seeds?useEscapeDig():useEscapeSeed()})[action]?.();
   }
+  // Where Sally can plant her own flag, holding A plants it (a tap is still Look back).
+  if(escapeGame?.canPlantFlag){const a=now[ESCAPE_PAD.A];if(a&&!was[ESCAPE_PAD.A])escapePad.flagHold=performance.now();
+    if(!a)escapePad.flagHold=null;else if(escapePad.flagHold&&performance.now()-escapePad.flagHold>=600){escapePad.flagHold=null;useEscapeFlag();}}
 }
 function escapePadForget(){escapePad.index=null;escapePad.active=false;if(escapeLastInput==='pad')escapeLastInput='auto';escapePad.x=0;escapePad.y=0;escapePad.sprint=false;escapePad.crawl=false;escapePad.prev=[];escapePad.lastAx=0;escapePad.lastAy=0;document.body?.classList?.remove('pad-nav');if(escapeCharge?.source==='pad')releaseEscapeCharge();}
 
