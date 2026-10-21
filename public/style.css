@@ -755,3 +755,16 @@ body.pad-nav .pad-glyph { display:inline-block; }
 
 /* Keyboard-only shortcuts in labels hide while a controller or touch is in use. */
 .pad-nav .key-only, .touch-nav .key-only { display:none; }
+
+/* Pause: one centred panel in every kind of escape (campaign, seasonal, kids, builder playtest).
+   While a run is going the top bar keeps only Pause; paused, the bar steps aside for the panel.
+   Full screen lives in Options everywhere. */
+.pause-card { width:min(340px,100%); text-align:center; }
+.pause-card .eyebrow { margin:0 0 2px; }
+.pause-actions { display:flex; flex-direction:column; gap:8px; }
+.pause-actions button { min-height:44px; font-size:1rem; }
+@media (max-height:520px){ .pause-actions { display:grid; grid-template-columns:1fr 1fr; } .pause-actions #pause-resume { grid-column:1 / -1; } .pause-actions button { min-height:38px; } }
+#game-toolbar #fullscreen-button { display:none !important; }
+#game-area.run-active #menu-button { display:none !important; }
+#game-area.run-paused #game-toolbar { display:none !important; }
+#game-area:not(.run-active) #pause-button { display:none !important; }
