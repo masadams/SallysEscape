@@ -219,14 +219,15 @@
   ]
  },
  {
-  id:'summer-lighthouse',name:'The Lighthouse Lantern',index:7,revision:1,difficulty:'Medium',seasonalTheme:'summer-lighthouse',cunning:3,
-  pebbles:3,tongues:1,
+  id:'summer-lighthouse',name:'The Lighthouse Lantern',index:7,revision:1,difficulty:'Hard',seasonalTheme:'summer-lighthouse',cunning:3,
+  pebbles:2,tongues:1,
   brief:'The last lens: a tidal causeway, the gull\\u2019s stores, a crab under the lighthouse and the bridge home.',
-  hint:'Cross the flats while the tide is out. In the stores the gull turns to watch each wall; slip along the top while it looks away, or toss it a pebble. Under the lighthouse a crab guards the lane: wake it, step back, and pass while it rests. From the lighthouse step, flick the bridge switch with your tongue and walk home along the harbour wall.',
+  hint:'Cross the flats while the tide is out. In the stores the gull turns to watch each wall; slip along the top while it looks away, or toss it a pebble. Under the lighthouse a crab guards the lane: wake it, step back, and pass while it rests. From the lighthouse step, flick the bridge switch with your tongue and walk home along the harbour wall. Taking the lens wakes a sandstripe serpent on the harbour: watch it from the bridge and cross behind it.',
   tide:{period:16,high:7,offset:9},
   gates:[{id:'harbour-bridge',name:'harbour bridge',bridge:true,tiles:[[7,14],[8,14],[9,14],[10,14],[11,14],[12,14],[13,14],[14,14],[15,14],[16,14],[17,14]],switch:[15,12],color:[236,196,98]}],
   guards:[{kind:'magpie',spawn:[13,4],patrol:[[13,1],[16,4],[13,7],[10,4]],facing:-Math.PI/2},{kind:'crab',spawn:[21,9],patrol:[[21,9]],facing:0,axis:'x',range:2},{kind:'dragonfly',spawn:[10,9],patrol:[[10,9],[16,9],[16,10],[10,10]],facing:0,speed:1.4}],
-  reactions:[{id:'lighthouse-key',when:'key',message:'The last sun lens! Flick the bridge switch from the lighthouse step and walk home along the harbour wall.'}],
+  reinforcements:[{id:'harbour-snake',kind:'snake',spawn:[4,12],patrol:[[1,11],[6,11],[6,15],[1,15]],facing:0}],
+  reactions:[{id:'lighthouse-key',when:'key',spawn:['harbour-snake'],message:'The last sun lens! A serpent stirs on the harbour. Flick the bridge switch from the lighthouse step and slip home behind it.'}],
   fieldNotes:[
    {id:'summer-lighthouse-note-0',at:[4,6],title:'The last lens',body:'The final sun lens is on the lighthouse step. The tide, the gull and the crab are all between here and there. Take your time; every one of them has a rhythm. - Marina'},
    {id:'summer-lighthouse-note-1',at:[11,9],title:'The sunset annex',body:'A Sunskimmer loops the sunset annex all evening. Wait by the door, watch it go round, and fetch each shell just behind it.'}
