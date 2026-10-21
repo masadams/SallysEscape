@@ -42,6 +42,8 @@ function record(Engine,options,hints){
       // Stepping onto a bounce cap flings Sally; ride the flight out and carry on from where she lands.
       route:for(const pt of g.route(g.player,{x:tx+.5,y:ty+.5})||[]){let n=0;while(Math.hypot(pt.x-g.player.x,pt.y-g.player.y)>.06&&n++<400&&g.status==='playing'){if(g.player.flight){while(g.player.flight&&g.status==='playing')move(0,0,false,1);break route;}const dx=pt.x-g.player.x,dy=pt.y-g.player.y,L=Math.hypot(dx,dy),step=(sprint?4:2.45)/120,s=L<step?L/step:1;move(+(dx/L*s).toFixed(4),+(dy/L*s).toFixed(4),sprint,1);}}
       continue;}
+    // pDX,DY,S leans into a crate (or anything) in that direction for S seconds: a shove.
+    if(/^p-?[01],-?[01],[0-9.]+$/.test(c)){const [px,py,ps]=c.slice(1).split(',').map(Number);move(px,py,false,Math.round(ps*120));continue;}
     if(ACT[c]){if(g[ACT[c]]())out.push({kind:c});else throw new Error('hint '+c+' failed at '+g.player.x.toFixed(2)+','+g.player.y.toFixed(2)+': '+g.message);continue;}
     throw new Error('unknown hint '+c);
   }
@@ -54,6 +56,9 @@ function extractPlan(Engine,recording){
   const g=new Engine(recording.options),plan=[];let last={x:g.player.x,y:g.player.y},still=0,lastInput=null;
   const flushWait=()=>{if(still>0){plan.push({type:'wait',t:still/120});still=0;}};
   for(const c of recording.commands){
+    // A move that shoved a crate is kept as a push from where it started, not as waypoints.
+    if(c.kind==='move'&&(c.x||c.y)&&g.crates?.length){const probe=clone(g),v=probe.crateVersion;for(let n=0;n<c.frames;n++)probe.advance(1/120,c);
+      if(probe.crateVersion!==v){flushWait();plan.push({type:'go',x:g.player.x,y:g.player.y,sprint:false,exact:true});plan.push({type:'push',x:c.x,y:c.y,frames:c.frames});for(let n=0;n<c.frames;n++)g.advance(1/120,c);last={x:g.player.x,y:g.player.y};lastInput=c;continue;}}
     if(c.kind!=='move'){flushWait();plan.push({type:'go',x:g.player.x,y:g.player.y,sprint:false,exact:true});plan.push({type:'act',kind:c.kind,aim:lastInput&&(lastInput.x||lastInput.y)?{x:lastInput.x,y:lastInput.y}:null});g[ACT[c.kind]]();continue;}
     for(let n=0;n<c.frames;n++){
       const flying=Boolean(g.player.flight);g.advance(1/120,c);if(g.player.flight){if(!flying){if(still)flushWait();plan.push({type:'go',x:g.player.flight.from.x,y:g.player.flight.from.y,sprint:false});}last={x:g.player.flight.to.x,y:g.player.flight.to.y};continue;}if(!(c.x||c.y)){still++;continue;}
@@ -102,6 +107,7 @@ function runItem(g,rec,item,option){
   if(option.camo){if(!g.camos||!g.camouflage())return false;rec.push({kind:'camo'});if(!wait(g,rec,2))return false;}
   if(option.wait&&!wait(g,rec,option.wait))return false;if(g.status==='won')return true;
   if(item.type==='wait')return wait(g,rec,item.t*option.scale);
+  if(item.type==='push'){for(let i=0;i<item.frames&&g.status==='playing';i++)frame(g,rec,item.x,item.y,false);return !bad(g);}
   if(item.type==='act'){if(item.aim)frame(g,rec,item.aim.x,item.aim.y,false);if(bad(g))return false;const ok=g[ACT[item.kind]]();if(ok)rec.push({kind:item.kind});return ok&&!bad(g);}
   if(item.type==='go'){const sprint=option.sprint!==null?option.sprint:g.solverSprint>0?true:item.sprint;if(g.solverSprint>0)g.solverSprint--;return go(g,rec,item,sprint);}
   return finish(g,rec);

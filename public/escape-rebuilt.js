@@ -1025,12 +1025,12 @@
  "#...L.................L...#",
  "#1...........N...........3#",
  "###########################"]},
-{explore:false,tailDrop:true,id:"sugar-store",crates:[[10,5],[22,8],[16,11]],name:"Sugar Store",brief:"The store room glitters, and something with quick feet lives under the floor.",hint:"Soft dirt patches hide you: hold Burrow on one to dig in, but the digging is noisy. A gecko steals the last treasure you picked up and runs for its burrow: chase it down, or grab it with your tongue. The hatch wants five treasure. Sugar sacks block sight; walk into one to shove it where you need cover, but the scrape is loud.",pebbles:2,tongues:2,requiredTreasure:5,guards:[{kind:"gecko",spawn:[25,3],facing:PI,patrol:[[25,3]]},{kind:"gecko",spawn:[5,9],facing:PI,patrol:[[5,9]]},{kind:"beetle",spawn:[14,11],facing:PI,patrol:[[5,11],[24,12]]},{spawn:[14,8],facing:0,patrol:[[3,8],[25,9]]}],map:[
+{explore:false,tailDrop:true,id:"sugar-store",crates:[[14,5],[22,8],[16,11]],name:"Sugar Store",brief:"The store room glitters, and something with quick feet lives under the floor.",hint:"Soft dirt patches hide you: hold Burrow on one to dig in, but the digging is noisy. A gecko steals the last treasure you picked up and runs for its burrow: chase it down, or grab it with your tongue. The hatch wants five treasure. The middle way up to the key has fallen through: shove the sugar sack below it into the hole to cross. Sacks also block sight, but every shove scrapes loudly.",pebbles:2,tongues:2,requiredTreasure:5,guards:[{kind:"gecko",spawn:[25,3],facing:PI,patrol:[[25,3]]},{kind:"gecko",spawn:[5,9],facing:PI,patrol:[[5,9]]},{kind:"beetle",spawn:[14,11],facing:PI,patrol:[[5,11],[24,12]]},{spawn:[14,8],facing:0,patrol:[[3,8],[25,9]]}],map:[
  "#############################",
  "#1.........................2#",
  "#.L....N......K.............#",
  "#.....1.........L...........#",
- "#...#####.####.####.#####...#",
+ "#...#####.####_####.#####...#",
  "#.....dd..............1.....#",
  "#.............1...........L.#",
  "#X..#####.####.####.#####...#",
