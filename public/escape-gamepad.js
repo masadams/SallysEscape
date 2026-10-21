@@ -56,10 +56,11 @@ function pollEscapePad(){
   if(!was.length)return;
   if(pressed(ESCAPE_PAD.START)){if(gameState==='escape')togglePause();else document.getElementById('menu-button')?.click();return;}
   // The seasonal world uses the same buttons as the main world map: A enters, B goes back, holding Y
-    // opens the panel (X does too), View shows the overview, LB/RB step between open areas.
+    // opens the panel (X does too, as there are no challenges here), View shows the map, LB/RB step
+    // between open areas.
     if(gameState==='seasonalHub'){if(pressed(ESCAPE_PAD.A))seasonEnter();if(pressed(ESCAPE_PAD.B))escapeGoBack();if(pressed(ESCAPE_PAD.X))seasonTogglePanel(true);
       if(pressed(ESCAPE_PAD.Y))escapePad.holdY=millis();if(escapePad.holdY!==null&&down(ESCAPE_PAD.Y)&&millis()-escapePad.holdY>450){escapePad.holdY=null;seasonTogglePanel(true);return;}
-      if(released(ESCAPE_PAD.Y)&&escapePad.holdY!==null){escapePad.holdY=null;seasonToggleOverview();}if(pressed(ESCAPE_PAD.VIEW))seasonToggleOverview();if(pressed(ESCAPE_PAD.LB)||pressed(ESCAPE_PAD.RB))seasonTravelStep(pressed(ESCAPE_PAD.RB)?1:-1);return;}
+      if(released(ESCAPE_PAD.Y)&&escapePad.holdY!==null)escapePad.holdY=null;if(pressed(ESCAPE_PAD.VIEW))seasonToggleOverview();if(pressed(ESCAPE_PAD.LB)||pressed(ESCAPE_PAD.RB))seasonTravelStep(pressed(ESCAPE_PAD.RB)?1:-1);return;}
   if(gameState==='escapeSelect'){
     if(pressed(ESCAPE_PAD.A))enterEscapeWorld();
     if(pressed(ESCAPE_PAD.B)&&typeof escapeGoBack==='function'){escapeGoBack();return;}
@@ -68,6 +69,7 @@ function pollEscapePad(){
     if(escapePad.holdY!==null&&down(ESCAPE_PAD.Y)&&millis()-escapePad.holdY>450){escapePad.holdY=null;if(typeof openEscapeWorldPanel==='function')openEscapeWorldPanel();return;}
     if(released(ESCAPE_PAD.Y)&&escapePad.holdY!==null){escapePad.holdY=null;escapeKeyPressed('t',84);}
     // X tries the challenge at this entrance, when it is open. LB and RB step between open areas.
+    if(pressed(ESCAPE_PAD.VIEW)&&typeof openEscapeWorldPanel==='function'){openEscapeWorldPanel();return;}
     if(pressed(ESCAPE_PAD.X)){const b=document.getElementById('world-challenge');if(b&&b.style.display!=='none'&&b.onclick)b.onclick();}
     if((pressed(ESCAPE_PAD.LB)||pressed(ESCAPE_PAD.RB))&&escapeWorld){const n=escapeWorld.chapters.length,dir=pressed(ESCAPE_PAD.RB)?1:-1;let i=escapeWorld.chapterAt();for(let k=0;k<n;k++){i=(i+dir+n)%n;if(escapeWorld.regionOpen(i))break;}if(escapeWorld.travel(i)){renderEscapeWorldHUD();escapeSound?.('hop');}}
     return;

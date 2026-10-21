@@ -51,8 +51,10 @@ moves, RT sprints, LT crawls (held still too), A looks back, B burrows (held on 
 pouch, L3 camouflage, R3 seed; held throws aim with the stick. The right stick looks around (peeks the
 view ahead, springing back when let go). Start pauses; View/Select opens the map on levels that have one
 and steps the zoom on the rest. On the world map A enters an escape, X tries its challenge, a tap of Y grabs
-golden flies and holding Y opens the panel (area travel, the Journal, Main menu); LB/RB jump between
-areas and B goes to the main menu. On an escape's opening card Y shows the hint and any other button starts. While a pad is in use the screens show its buttons (A, B, X, Y) in
+golden flies, holding Y opens the panel (area travel, the Journal, Main menu) and View opens it too; LB/RB
+jump between areas and B goes to the main menu. The seasonal map uses the same buttons: A enters, holding Y
+opens Levels & keepsakes, View shows the map of all four areas, LB/RB change area, B goes back. On a
+keyboard both maps share keys too: Enter plays, G shows the map, V lists the levels, Esc goes back. On an escape's opening card Y shows the hint and any other button starts. While a pad is in use the screens show its buttons (A, B, X, Y) in
 place of keyboard keys. In menus the stick or d-pad moves between buttons (left and right change a drop-down or a
 slider), A presses and B goes back. Options → Advanced → Frame rate shows frames a second in the corner, and
 Options → Advanced → Test sound plays two beeps to check where sound is lost on a device. The tool buttons show pad labels once a pad is used, and

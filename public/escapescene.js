@@ -265,6 +265,9 @@ function escapeKeyPressed(k=String(key).toLowerCase(),code=keyCode){
   if(gameState==='escape'&&paused&&k==='r'){escapeRestart();return;}
   if(gameState==='escapeSelect'&&!escapeLibraryOpen&&(k==='r'||k==='t')){if(escapeWorld?.tongue())escapeSound('tongue');return;}
   // C tries the challenge of the escape Sally stands at, like X on a controller.
+  // The same keys as the seasonal map: G the map (travel and the Journal), V the list of escapes.
+  if(gameState==='escapeSelect'&&!escapeLibraryOpen&&k==='g'){if(escapeWorldPanelOpen)closeEscapeWorldPanel();else openEscapeWorldPanel();return;}
+  if(gameState==='escapeSelect'&&!escapeLibraryOpen&&k==='v'){openEscapeLibrary();return;}
   if(gameState==='escapeSelect'&&!escapeLibraryOpen&&k==='c'){const b=document.getElementById('world-challenge');if(b&&b.style.display!=='none'&&b.onclick)b.onclick();return;}
   if(gameState==='escapeSelect'){if(!escapeLibraryOpen&&(code===13||k==='enter')&&document.activeElement?.tagName!=='BUTTON')enterEscapeWorld();return;}
   if(gameState==='escapeResult'&&k==='r'){startEscape({...escapeOptions,skipIntro:true,quick:true});return;}
