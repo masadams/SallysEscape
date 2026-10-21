@@ -88,6 +88,10 @@
     update(dt,game){
       if(!Number.isFinite(dt)||dt<=0)return;
       this.clock+=dt;this.sliding=Boolean(game.player?.sliding);
+      // A hard crash into a wall on the ice spins Sally half round with her legs flailing, then she
+      // finds her feet; the spin direction comes from the moment of the crash, so replays match.
+      if(game.iceBumpAt!==undefined&&game.iceBumpAt!==this.lastIceBump){this.lastIceBump=game.iceBumpAt;this.tumble={left:.55,dir:Math.floor(game.iceBumpAt*10)%2?1:-1};}
+      if(this.tumble){this.tumble.left-=dt;if(this.tumble.left<=0)this.tumble=null;else this.sliding=true;}
       if(distance(this.lizard.head,game.player)>.65)this.resetPlayer(game.player);
       const hunters=game.hunters||[game.hunter];
       hunters.forEach((h,i)=>{if(distance(this.snakes[i].head,h)>.65)this.resetHunter(h,i);});
@@ -100,6 +104,7 @@
           if(actor.lookAim){const want=Math.atan2(actor.lookAim.y,actor.lookAim.x);target=travelled>1e-7?target+clamp(difference(want,target),-1.2,1.2):want;}
           // On ice the body lags the slide and wobbles, so Sally skids rather than walks.
           const turn=this.sliding?1.4:9;model.headAngle+=clamp(difference(target,model.headAngle),-turn*dt,turn*dt)+(this.sliding?Math.sin(this.clock*6.3)*1.1*dt:0);
+          if(this.tumble)model.headAngle+=this.tumble.dir*this.tumble.left*12*dt;
         }else model.headAngle=actor.facing; // The nose and visible gaze agree with actual perception.
         model.trail.update(actor);model.head=copy(actor);model.distance+=travelled;
         model.instantSpeed=speed;
