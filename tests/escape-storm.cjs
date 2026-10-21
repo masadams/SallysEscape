@@ -37,3 +37,28 @@ test('Storm Heights follows the Mushroom Grotto with five escapes that teach win
   const w=new EscapeWorld(),c=w.chapters.find(c=>c.theme==='storm');assert.equal(c.name,'Storm Heights');assert.equal(c.start,83);
   assert.ok(w.paths.some(([a,b])=>w.chapters[a].theme==='grotto'&&w.chapters[b]===c),'Storm Heights opens off the Grotto');
 });
+test('a gusting lane carries a throw downwind, and a calm one does not',()=>{
+  const wind=[{area:[3,2,13,6],dir:[0,1],period:4,on:2,offset:0}];
+  const g=room({wind,pebbles:2});Object.assign(g.player,{x:3.5,y:2.5});g.player.throwAim={x:1,y:0};
+  const calm=room({wind:[{...wind[0],offset:2.5}],pebbles:2});Object.assign(calm.player,{x:3.5,y:2.5});calm.player.throwAim={x:1,y:0};
+  ticks(g,.1);ticks(calm,.1);assert.ok(g.gustPhase(g.wind[0]).active&&!calm.gustPhase(calm.wind[0]).active);
+  const blown=g.planThrow(1).land,still=calm.planThrow(1).land;
+  assert.ok(Math.abs(still.y-2.5)<.05,'a calm lane leaves it straight');assert.ok(blown.y-still.y>.6,'the gust carries it south: '+blown.y);
+});
+test('crawling braces Sally against a gust, and a breeze pushes less than a gale',()=>{
+  const lane=extra=>room({wind:[{area:[3,3,13,5],dir:[1,0],period:4,on:1.5,offset:0,...extra}]});
+  const walk=lane(),crawl=lane(),breeze=lane({strength:1});for(const g of [walk,crawl,breeze])Object.assign(g.player,{x:5.5,y:4.5});
+  ticks(walk,1);ticks(crawl,1,{crawl:true});ticks(breeze,1);
+  assert.ok(crawl.player.x-5.5<(walk.player.x-5.5)*.6,'braced: '+crawl.player.x+' vs '+walk.player.x);
+  assert.ok(breeze.player.x<walk.player.x-.8,'breeze: '+breeze.player.x);
+});
+test('a gust blows a spore cloud down its lane',()=>{
+  const g=room({wind:[{area:[3,2,13,6],dir:[1,0],period:4,on:2,offset:0}]});g.clouds.push({x:5.5,y:4.5,r:1.9,born:0,until:6});
+  ticks(g,1);assert.ok(g.clouds[0].x>6.4,'drifted east: '+g.clouds[0].x);
+});
+test('the builder sets a wind lane\'s strength and any direction, and keeps them through saving',()=>{
+  const B=require('../public/escape-builder.js');const m=B.blank(21,13);assert.ok(B.addWind(m,2,2,6,4));
+  B.setWind(m,0,{dir:2});assert.deepEqual(m.wind[0].dir,[-1,0]);B.setWind(m,0,{dir:0});assert.deepEqual(m.wind[0].dir,[1,0],'east (index 0) can be picked again');
+  B.setWind(m,0,{strength:1.2});const back=B.fromRoute(B.toRoute(m));assert.equal(back.wind[0].strength,1.2);
+  B.setWind(m,0,{strength:2.3});assert.equal('strength' in m.wind[0],false,'the default is not stored');
+});

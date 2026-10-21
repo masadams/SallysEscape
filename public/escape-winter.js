@@ -872,6 +872,7 @@
     "cunning": 2,
     "pebbles": 3,
     "tongues": 2,
+    "wind": [{"area": [7, 4, 11, 9], "dir": [0, 1], "period": 6, "on": 2, "offset": 0, "strength": 1.4}],
     "spores": 1,
     "gates": [
       {
@@ -1111,7 +1112,7 @@
       ]
     ],
     "brief": "Three workshop switches, a suspicious parcel and a thief with very good ears.",
-    "hint": "Blue, green, then red opens the delivery route. A twitching present deserves a snowball. Two Gift Snatchers listen in the workshop: creep past them on quiet ground. The key opens the upper doors home.",
+    "hint": "Blue, green, then red opens the delivery route. A twitching present deserves a snowball. Two Gift Snatchers listen in the workshop: creep past them on quiet ground. The key opens the upper doors home. A flurry gusts down the middle room toward the twitching present; crawl to hold your line.",
     "foxWarn": 1.05,
     "reactions": [
       {

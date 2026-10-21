@@ -921,7 +921,7 @@ function drawEscapeVault(){
   // Wind lanes: faint streaks always show the lane and its direction; they thicken and race just
   // before and during a gust.
   for(const w of g.wind||[]){const ph=g.gustPhase(w),hot=ph.active||ph.warning;for(const key of w.keys){const [x,y]=key.split(',').map(Number);if(view.follow&&!g.visibleTile(x,y))continue;
-    const ang=Math.atan2(w.dir[1],w.dir[0]),speed=ph.active?3:hot?1.8:.6,t=(g.elapsed*speed+(x*.37+y*.61))%1;stroke(220,236,255,ph.active?150:hot?100:40);strokeWeight(cell*(ph.active?.05:.03));
+    const k=Math.sqrt((w.strength||2.3)/2.3),ang=Math.atan2(w.dir[1],w.dir[0]),speed=(ph.active?3:hot?1.8:.6)*k,t=(g.elapsed*speed+(x*.37+y*.61))%1;stroke(220,236,255,Math.min(220,(ph.active?150:hot?100:40)*k));strokeWeight(cell*(ph.active?.05:.03)*k);
     push();translate((x+.5)*cell,(y+.5)*cell);rotate(ang);line((t-.5)*cell-cell*.25,-cell*.18,(t-.5)*cell+cell*.1,-cell*.18);line(((t+.5)%1-.5)*cell-cell*.2,cell*.16,((t+.5)%1-.5)*cell+cell*.12,cell*.16);pop();}}
   // Spore puffballs (a spent one is a flat stub until it regrows) and bounce caps, each cap with
   // a dotted arc to where it lands Sally.

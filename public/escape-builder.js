@@ -277,7 +277,8 @@
     return true;
   }
   function setMessage(model,source,message,objective){model.messages=model.messages||{};if(!message&&!objective)delete model.messages[source];else model.messages[source]={message:String(message||'').slice(0,160),objective:String(objective||'').slice(0,100)};return true;}
-  function setWind(model,i,changes){const z=(model.wind||[])[i];if(!z)return false;if(changes.dir)z.dir=DIRS[clampInt(changes.dir,0,3)].slice();for(const [k,lo,hi] of [['period',1,30],['on',.2,30],['offset',0,30]])if(changes[k]!==undefined)z[k]=clampNum(changes[k],lo,hi);return true;}
+  function setWind(model,i,changes){const z=(model.wind||[])[i];if(!z)return false;if(changes.dir!==undefined)z.dir=DIRS[clampInt(changes.dir,0,3)].slice();for(const [k,lo,hi] of [['period',1,30],['on',.2,30],['offset',0,30]])if(changes[k]!==undefined)z[k]=clampNum(changes[k],lo,hi);
+    if(changes.strength!==undefined){const v=clampNum(changes.strength,.5,4,2.3);if(v===2.3)delete z.strength;else z.strength=v;}return true;}
   function setAnts(model,i,changes){const t=(model.antTrails||[])[i];if(!t)return false;for(const [k,lo,hi] of [['groups',1,8],['size',1,8],['speed',.3,4]])if(changes[k]!==undefined)t[k]=clampNum(changes[k],lo,hi);return true;}
   function setRegion(model,id,changes){const r=(model.regions||[]).find(q=>q.id===id);if(!r)return false;if(changes.requiresKey!==undefined)r.requiresKey=Boolean(changes.requiresKey);return true;}
 
@@ -455,7 +456,7 @@ function validate(model){
       hawk:r.hawk||null,storm:r.storm||null,tide:r.tide||null});
     for(const k of Object.keys(LAYERS))model[k]=pts(r[k],120);
     model.caps=list(r.caps,12).map(c=>({at:point(c?.at,w,h),to:point(c?.to,w,h)})).filter(c=>c.at);
-    model.wind=list(r.wind,12).map(z=>({area:area(z?.area),dir:DIRS.find(([dx,dy])=>dx===z?.dir?.[0]&&dy===z?.dir?.[1])?.slice()||[1,0],period:clampNum(z?.period,1,30,5),on:clampNum(z?.on,.2,30,1.6),offset:clampNum(z?.offset,0,30,0)})).filter(z=>z.area);
+    model.wind=list(r.wind,12).map(z=>({area:area(z?.area),dir:DIRS.find(([dx,dy])=>dx===z?.dir?.[0]&&dy===z?.dir?.[1])?.slice()||[1,0],period:clampNum(z?.period,1,30,5),on:clampNum(z?.on,.2,30,1.6),offset:clampNum(z?.offset,0,30,0),...(Number(z?.strength)>0&&Number(z.strength)!==2.3?{strength:clampNum(z.strength,.5,4,2.3)}:{})})).filter(z=>z.area);
     model.echoes=list(r.echoes,8).map(area).filter(Boolean);
     model.currents=list(r.currents,12).map(z=>({area:area(z?.area),dir:DIRS.find(([dx,dy])=>dx===z?.dir?.[0]&&dy===z?.dir?.[1])?.slice()||[1,0],speed:clampNum(z?.speed,.4,3,1.2),...(z?.surface==='ground'?{surface:'ground'}:{}),...(z?.surface!=='ground'&&Number(z?.pulse)>0?{pulse:clampNum(z.pulse,2,20,6),...(Number(z.phase)>0?{phase:clampNum(z.phase,0,.99,0)}:{})}:{})})).filter(z=>z.area);
     model.tunnels=list(r.tunnels,6).map(t=>Array.isArray(t)?[point(t[0],w,h),point(t[1],w,h)]:[]).filter(t=>t[0]&&t[1]);

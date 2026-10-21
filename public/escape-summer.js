@@ -93,8 +93,9 @@
  {
   id:'summer-gull',name:'The Gull\u2019s Boardwalk',index:3,revision:1,difficulty:'Medium',seasonalTheme:'summer-harbour',cunning:1,
   pebbles:2,tongues:1,
+  wind:[{area:[1,7,21,7],dir:[-1,0],period:6,on:2.2,offset:1,strength:1.3}],
   brief:'A harbour of crates and boardwalks, a gull on the middle post, and serpents in the net store and the fish store.',
-  hint:'The gull on the middle post turns to look down each boardwalk in turn. It never bites, but if it sees you it calls, and the serpents come running. Cross while it looks the other way, or toss a pebble: it cannot resist anything shiny and flies off to steal it. A second serpent circles the net store: slip in behind it to reach the switch, and follow it out. The net-store switch opens the shutter to the key; the key opens the pier shutter.',
+  hint:'The gull on the middle post turns to look down each boardwalk in turn. It never bites, but if it sees you it calls, and the serpents come running. Cross while it looks the other way, or toss a pebble: it cannot resist anything shiny and flies off to steal it. A second serpent circles the net store: slip in behind it to reach the switch, and follow it out. The net-store switch opens the shutter to the key; the key opens the pier shutter. A sea breeze gusts west along the middle boardwalk, so a pebble thrown across it drifts downwind.',
   gates:[{id:'net-shutter',name:'net shutter',tiles:[[12,2]],switch:[2,4],color:[236,196,98]},{id:'pier-shutter',name:'pier shutter',tiles:[[17,6]],color:[236,196,98]}],
   guards:[{kind:'magpie',spawn:[11,7],patrol:[[11,1],[21,7],[11,13],[1,7]],facing:-Math.PI/2},{kind:'snake',spawn:[20,9],patrol:[[20,9],[20,13]],facing:Math.PI/2},{kind:'snake',spawn:[8,1],patrol:[[8,1],[8,5],[2,5],[2,1]],facing:Math.PI/2}],
   reactions:[{id:'gull-key',when:'key',open:['pier-shutter'],message:'The pier shutter rattles up. The fish store is the quick way home.'}],

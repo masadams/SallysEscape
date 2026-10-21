@@ -94,7 +94,7 @@
       this.thorns=(this.level.thorns||[]).map(t=>({...t,keys:new Set(t.tiles.map(([x,y])=>x+','+y)),period:t.period||3,up:t.up||1.2,offset:t.offset||0,raised:false,warning:false}));
       this.crumbling=new Map();
       // Storm Heights: gusting wind lanes and lightning that lights up the whole cliff.
-      this.wind=(this.level.wind||[]).map(w=>{const [x1,y1,x2,y2]=w.area,keys=new Set();for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)keys.add(x+','+y);return {...w,keys,period:w.period||5,on:w.on||1.6,offset:w.offset||0,warned:false};});
+      this.wind=(this.level.wind||[]).map(w=>{const [x1,y1,x2,y2]=w.area,keys=new Set();for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)keys.add(x+','+y);return {...w,keys,period:w.period||5,on:w.on||1.6,offset:w.offset||0,strength:w.strength||2.3,warned:false};});
       const storm=this.level.storm;this.storm=storm?{every:storm.every||9,warn:storm.warn||1.4,nextAt:storm.first||storm.every||9,warned:false}:null;this.flashUntil=0;
       // Tide Pools: tide flats turn between sand and water on the level's rhythm.
       this.tideFlats=(this.level.tideFlats||[]).map(([x,y])=>({x,y}));const tide=this.level.tide;this.tide=this.tideFlats.length?{period:tide?.period||14,high:tide?.high||6,offset:tide?.offset||0,isHigh:null,warned:false}:null;
@@ -388,9 +388,11 @@
     throwAim(){const p=this.player,a=p.throwAim||p.tongueAim||p.facing,l=Math.hypot(a.x,a.y)||1;return {x:a.x/l,y:a.y/l};}
     planThrow(power=0){
       const p=this.player,v=this.throwAim(),step=.05,points=[copy(p)],bounces=[];let pos=copy(p),left=2.6+Math.max(0,Math.min(1,power))*3.4;
-      const solid=(x,y)=>!this.sightFloor(x,y);
+      const solid=(x,y)=>!this.sightFloor(x,y),gusts=this.wind.filter(w=>this.gustPhase(w).active);
       while(left>0){
-        const n={x:pos.x+v.x*step,y:pos.y+v.y*step},tx=Math.floor(n.x),ty=Math.floor(n.y),ox=Math.floor(pos.x),oy=Math.floor(pos.y);
+        // A gust it flies through carries it sideways, so a throw across a windy lane drifts downwind.
+        const g=gusts.length?gusts.find(w=>w.keys.has(this.tileKey(pos))):null,k=g?g.strength*.14:0;
+        const n={x:pos.x+v.x*step+(g?g.dir[0]*k*step:0),y:pos.y+v.y*step+(g?g.dir[1]*k*step:0)},tx=Math.floor(n.x),ty=Math.floor(n.y),ox=Math.floor(pos.x),oy=Math.floor(pos.y);
         if(solid(tx,ty)||(tx!==ox&&ty!==oy&&solid(tx,oy)&&solid(ox,ty))){
           if(bounces.length>=2)break;
           const flipX=tx!==ox&&solid(tx,oy),flipY=ty!==oy&&solid(ox,ty);
@@ -750,7 +752,7 @@
       for(const axis of ['x','y']){const next={...p,[axis]:p[axis]+travel[axis]};if(this.fits(next)&&!(this.vents.length&&this.inJet(next)&&!this.inJet(p)))p[axis]=next[axis];else{const hit=this.slideVelocity[axis];this.slideVelocity[axis]=onIce?-hit*.35:0;if(onIce&&Math.abs(hit)>1.6){this.events.push('scrape');this.iceBumpAt=this.elapsed;}}}
       p.sliding=onIce&&Math.hypot(this.slideVelocity.x,this.slideVelocity.y)>.12;
       if(!onIce&&Math.hypot(this.slideVelocity.x-dx*speed,this.slideVelocity.y-dy*speed)<.04){this.slideVelocity.x=0;this.slideVelocity.y=0;}
-      if(this.wind.length&&!p.flight){const gust=this.wind.find(w=>this.gustPhase(w).active&&w.keys.has(this.tileKey(p)));if(gust)for(const [axis,d] of [['x',gust.dir[0]],['y',gust.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*2.3*dt};if(this.fits(next))p[axis]=next[axis];
+      if(this.wind.length&&!p.flight){const gust=this.wind.find(w=>this.gustPhase(w).active&&w.keys.has(this.tileKey(p)));if(gust)for(const [axis,d] of [['x',gust.dir[0]],['y',gust.dir[1]]]){if(!d)continue;const next={...p,[axis]:p[axis]+d*gust.strength*(crawl?.45:1)*dt};if(this.fits(next))p[axis]=next[axis];
         // A gust that shoves Sally against a ledge over a gap blows her off it.
         else if(this.grid[Math.floor(next.y+d*(axis==='y'?.3:0))]?.[Math.floor(next.x+d*(axis==='x'?.3:0))]==='P'&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(null)){this.finish('caught','A gust blew Sally off the ledge. Watch the streaks: when they thicken, get out of the lane or brace against a wall.');return;}}}
       if(this.currents.length&&!p.underground&&!p.flight){const c=Ice.currentAt(this.currents,p,this.water(p)),f=this.flow;
@@ -770,6 +772,8 @@
       if(this.camoUntil>this.elapsed&&p.moving){this.camoUntil=0;this.notice('Moving broke the camouflage.');}
       p.camo=this.camoUntil>this.elapsed;
       if(this.puffs.length)this.updatePuffs();else if(this.clouds.length)this.clouds=this.clouds.filter(c=>c.until>this.elapsed);
+      // A gust blows a spore cloud downwind along its lane.
+      if(this.clouds.length&&this.wind.length)for(const c of this.clouds){const w=this.wind.find(w=>this.gustPhase(w).active&&w.keys.has(this.tileKey(c)));if(w){c.x+=w.dir[0]*w.strength*.5*dt;c.y+=w.dir[1]*w.strength*.5*dt;}}
       if(this.caps.length&&!p.flight&&p.moving){const cap=this.caps.find(c=>c.key===this.tileKey(p)&&this.elapsed>=c.readyAt);if(cap){p.flight={from:centre(...cap.at),to:centre(...cap.to),start:this.elapsed,dur:.55};cap.readyAt=this.elapsed+1;this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+.6);this.events.push('hop');}}
       p.hidden=Boolean(p.underground)||this.inRayShadow(p)||!p.moving&&!this.heldBy&&(this.grid[Math.floor(p.y)][Math.floor(p.x)]==='L'||p.camo)||this.clouds.length>0&&!this.heldBy&&this.inCloud(p);
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
