@@ -1078,7 +1078,7 @@
     }
   ],
   "name": "The Glow-Worm Garden",
-  "sticker": "🍄",
+  "sticker": "✨",
   "adventure": true,
   "kidsTheme": "lantern",
   "gentle": 0.68,
@@ -1370,6 +1370,265 @@
     "##########.....................#........#",
     "##########1....................#.......2#",
     "#########################################"
+  ]
+},
+{
+  "id": "treasure-island",
+  "name": "Treasure Island",
+  "sticker": "🏝️",
+  "adventure": true,
+  "kidsTheme": "beach",
+  "gentle": 0.72,
+  "brief": "The biggest adventure of all! Sally's key is hidden in a cove on Treasure Island. Hop across the lagoon, find the island button and the jungle switch, and bring the key home.",
+  "hint": "Bounce caps cross the lagoon (or swim it). The blue button on the island opens the jungle; the amber switch past the rock pool opens the key cove. The key opens a secret tunnel home.",
+  "pebbles": 3,
+  "tongues": 2,
+  "spores": 2,
+  "fieldNotes": [
+    {
+      "id": "treasure-island-sign-1",
+      "at": [
+        5,
+        4
+      ],
+      "title": "Over the lagoon",
+      "body": "Step on the bouncy cap and fly over the lagoon. You can swim it too. Another cap on the island brings you back."
+    },
+    {
+      "id": "treasure-island-sign-2",
+      "at": [
+        36,
+        18
+      ],
+      "title": "The rock pool",
+      "body": "The amber switch sits in a nook across the rock pool. Stand on this side, face it and use Tongue. The cove door opens."
+    }
+  ],
+  "checkpoints": [
+    [
+      6,
+      4
+    ],
+    [
+      15,
+      4
+    ],
+    [
+      21,
+      11
+    ],
+    [
+      33,
+      18
+    ],
+    [
+      40,
+      12
+    ]
+  ],
+  "caps": [
+    {
+      "at": [
+        7,
+        4
+      ],
+      "to": [
+        15,
+        4
+      ]
+    },
+    {
+      "at": [
+        14,
+        19
+      ],
+      "to": [
+        6,
+        19
+      ]
+    }
+  ],
+  "tunnels": [
+    [
+      [
+        41,
+        1
+      ],
+      [
+        5,
+        2
+      ]
+    ]
+  ],
+  "gates": [
+    {
+      "id": "island-blue",
+      "name": "Jungle gate",
+      "color": [
+        106,
+        195,
+        236
+      ],
+      "switch": [
+        17,
+        21
+      ],
+      "tiles": [
+        [
+          22,
+          11
+        ]
+      ]
+    },
+    {
+      "id": "island-amber",
+      "name": "Cove door",
+      "color": [
+        244,
+        192,
+        93
+      ],
+      "switch": [
+        38,
+        13
+      ],
+      "tiles": [
+        [
+          40,
+          11
+        ]
+      ]
+    },
+    {
+      "id": "island-tunnel",
+      "name": "Secret tunnel",
+      "color": [
+        191,
+        154,
+        230
+      ],
+      "tiles": [
+        [
+          40,
+          1
+        ],
+        [
+          41,
+          2
+        ]
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "id": "island-key",
+      "when": "key",
+      "open": [
+        "island-tunnel"
+      ],
+      "message": "A secret tunnel opens in the corner of the cove! It leads all the way home.",
+      "objective": "Hop into the tunnel, or walk back, to the green door."
+    }
+  ],
+  "guards": [
+    {
+      "spawn": [18,9],
+      "facing": 1.5707963267948966,
+      "patrol": [[18,7],[18,14]]
+    },
+    {
+      "kind": "crab",
+      "spawn": [
+        18,
+        18
+      ],
+      "facing": 0,
+      "patrol": [
+        [
+          18,
+          18
+        ]
+      ],
+      "axis": "x",
+      "range": 3
+    },
+    {
+      "kind": "beetle",
+      "spawn": [
+        28,
+        12
+      ],
+      "facing": 0,
+      "patrol": [
+        [
+          24,
+          12
+        ],
+        [
+          32,
+          12
+        ]
+      ]
+    },
+    {
+      "kind": "ladybird",
+      "spawn": [
+        28,
+        2
+      ],
+      "facing": 0,
+      "patrol": [
+        [
+          25,
+          2
+        ],
+        [
+          31,
+          3
+        ]
+      ]
+    },
+    {
+      "kind": "toad",
+      "spawn": [
+        36,
+        6
+      ],
+      "facing": 1.5707963267948966,
+      "patrol": [
+        [
+          36,
+          6
+        ]
+      ]
+    }
+  ],
+  "map": [
+      "###########################################",
+      "#.......~~~~~~........#...........#.......#",
+      "#..@....~~~~~~.....2..#...........#.......#",
+      "#..X....~~~~~~....L...#...........#....K..#",
+      "#.......~~~~~~........#.....1.....#..##...#",
+      "#.......~~~~~~.###....#..L........#..##...#",
+      "####....~~~~~~........#...........#.......#",
+      "#.......~~~~~~.#......#...........#.......#",
+      "#.......~~~~~~.#......########.####.....L.#",
+      "#...L...~~~~~~.#......#L..........#.2.....#",
+      "#.......~~~~~~.#......#...........#.......#",
+      "#.......~~~~~~.#..###...........L.######.##",
+      "#.......~~~~~~.#L.....#.......o...#..###..#",
+      "#.......~~~~~~.#......#...........#..#.#..#",
+      "#.......~~~~~~.#......#...........#..~~~..#",
+      "#..L....~~~~~~.#...o..######.######..~~~..#",
+      "#.......~~~~~~.##.....#...........#.......#",
+      "#.......~~~~~~.##.....#...................#",
+      "#.......~~~~~~........#...................#",
+      "#.......~~~~~~........#...L...............#",
+      "#....L..~~~~~~......L.#...........#.L.....#",
+      "#.......~~~~~~........#.o.........#.......#",
+      "#.1.....~~~~~~.1......#.......2...#......1#",
+      "#.......~~~~~~........#...........#.......#",
+      "###########################################"
   ]
 }
   ];
