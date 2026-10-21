@@ -13,7 +13,7 @@ test('a run notes where Sally was caught and by what, tail drops included, and t
 });
 
 test('only the game’s own escapes are kept, once per run, and quits remember where Sally gave up',t=>{
-  delete data[P.KEY];const realFetch=global.fetch;global.fetch=undefined;t.after(()=>{global.fetch=realFetch;});
+  delete data[P.KEY];P.setEnabled(true);const realFetch=global.fetch;global.fetch=undefined;t.after(()=>{global.fetch=realFetch;});
   const g=new EscapeAdventure({levelId:EscapeCatalog.levels[3].id});g.elapsed=12.34;
   assert.equal(P.record(g,'quit'),true);assert.equal(P.record(g,'quit'),false,'the same run counts once');
   const q=JSON.parse(data[P.KEY]);assert.equal(q.length,1);assert.equal(q[0].t,12.3);assert.equal(q[0].at.length,2);
@@ -41,9 +41,9 @@ test('a flood of reports from one visitor is turned away',async t=>{
 });
 
 test('turning sharing off keeps no new runs and throws away the ones waiting to be sent',t=>{
-  delete data[P.KEY];delete data['sally-escape-playdata-off'];global.localStorage.removeItem=k=>{delete data[k];};
+  delete data[P.KEY];delete data['sally-escape-playdata-off'];delete data['sally-escape-playdata-asked'];global.localStorage.removeItem=k=>{delete data[k];};
   const realFetch=global.fetch;global.fetch=undefined;t.after(()=>{global.fetch=realFetch;P.setEnabled(true);});
-  assert.equal(P.enabled(),true,'sharing starts on');
+  assert.equal(P.enabled(),false,'nothing is shared before the player is asked');assert.equal(P.asked(),false);assert.equal(P.record(new EscapeAdventure({levelId:EscapeCatalog.levels[4].id}),'won'),false,'no summary is kept before a yes');P.setEnabled(true);assert.equal(P.asked(),true);assert.equal(P.enabled(),true);
   assert.equal(P.record(new EscapeAdventure({levelId:EscapeCatalog.levels[3].id}),'quit'),true);assert.equal(P.pending(),1);
   P.setEnabled(false);assert.equal(P.enabled(),false);assert.equal(P.pending(),0,'waiting runs are dropped');
   assert.equal(P.record(new EscapeAdventure({levelId:EscapeCatalog.levels[4].id}),'won'),false);assert.equal(P.pending(),0);assert.equal(P.flush(),false);

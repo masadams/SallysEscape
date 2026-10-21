@@ -206,6 +206,10 @@ function setupMenus(){
   for(const id of ['options-panel','players-panel'])$(id)?.addEventListener('pointerdown',e=>{if(e.target.id===id)$(id).style.display='none';});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')for(const id of ['options-panel','players-panel'])if($(id)?.style.display==='flex'){$(id).style.display='none';e.stopPropagation();}},true);
   playerChip();
+  // Play data is shared only after a yes: the title asks once per device; Options can change it.
+  {const box=$('playdata-panel'),answer=on=>{EscapePlayData.setEnabled(on);box.style.display='none';updateToolbar();$('play-button')?.focus?.();};
+   if(box&&typeof EscapePlayData!=='undefined'){$('playdata-yes').onclick=()=>answer(true);$('playdata-no').onclick=()=>answer(false);
+     if(!EscapePlayData.asked()&&typeof setTimeout==='function')setTimeout(()=>{if(gameState==='start'&&!EscapePlayData.asked()&&![...document.querySelectorAll('.game-dialog')].some(d=>d.style.display==='flex')){box.style.display='flex';$('playdata-yes')?.focus?.();}},900);}}
 }
 // Pausing an escape opens the menu (Resume, Restart, Options, Map, Leave), like a game's pause screen.
 {const pauseOnly=togglePause;togglePause=function(){pauseOnly();closeToolbarMenu();syncPausePanel();};}

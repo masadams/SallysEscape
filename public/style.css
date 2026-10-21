@@ -778,3 +778,5 @@ body.pad-nav .pad-glyph { display:inline-block; }
 #options-advanced[hidden] { display:none; }
 @media (max-height:520px) and (min-width:700px) { .options-card { position:relative; } .options-card .options-foot { position:absolute; right:16px; bottom:12px; } .options-card .options-grid { gap:4px 10px; } .options-card .options-grid button { min-height:30px; padding:3px 10px; } .options-section:last-child .options-grid { margin-bottom:44px; } }
 .pad-glyph.pad-view { width:auto; padding:0 .45em; border-radius:.75em; background:#5b6670; }
+.playdata-card { width:min(440px,100%); } .playdata-card p { margin:0 0 10px; line-height:1.45; } .playdata-small { font-size:.85rem; opacity:.8; }
+.playdata-card .options-foot { gap:10px; margin-top:6px; }
