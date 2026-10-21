@@ -645,9 +645,9 @@
     "name": "Snowball Alley",
     "index": 2,
     "revision": 1,
-    "difficulty": "Easy-medium",
+    "difficulty": "Easy–medium",
     "seasonalTheme": "winter-village",
-    "cunning": 0,
+    "cunning": 1,
     "pebbles": 3,
     "tongues": 2,
     "spores": 1,
@@ -867,9 +867,9 @@
     "name": "The Missing Presents",
     "index": 3,
     "revision": 1,
-    "difficulty": "Easy-medium",
+    "difficulty": "Medium",
     "seasonalTheme": "winter-workshop",
-    "cunning": 0,
+    "cunning": 2,
     "pebbles": 3,
     "tongues": 2,
     "spores": 1,
@@ -987,6 +987,24 @@
           ]
         ],
         "facing": 1.5707963267948966
+      },
+      {
+        "kind": "fox",
+        "spawn": [
+          14,
+          7
+        ],
+        "patrol": [
+          [
+            13,
+            7
+          ],
+          [
+            16,
+            7
+          ]
+        ],
+        "facing": 0
       }
     ],
     "fieldNotes": [
@@ -1127,9 +1145,9 @@
     "name": "The Frozen Mill",
     "index": 4,
     "revision": 1,
-    "difficulty": "Easy-medium",
+    "difficulty": "Medium",
     "seasonalTheme": "winter-ice",
-    "cunning": 1,
+    "cunning": 2,
     "pebbles": 3,
     "tongues": 2,
     "spores": 1,
@@ -1236,6 +1254,24 @@
           ]
         ],
         "facing": 3.141592653589793
+      },
+      {
+        "kind": "snake",
+        "spawn": [
+          18,
+          8
+        ],
+        "patrol": [
+          [
+            17,
+            8
+          ],
+          [
+            20,
+            8
+          ]
+        ],
+        "facing": 0
       }
     ],
     "fieldNotes": [
@@ -1461,9 +1497,9 @@
     "name": "The Yeti's Pass",
     "index": 5,
     "revision": 1,
-    "difficulty": "Medium",
+    "difficulty": "Medium–hard",
     "seasonalTheme": "winter-village",
-    "cunning": 1,
+    "cunning": 2,
     "pebbles": 3,
     "tongues": 2,
     "spores": 1,
@@ -1540,6 +1576,24 @@
           ]
         ],
         "facing": 0
+      },
+      {
+        "kind": "toad",
+        "spawn": [
+          20,
+          12
+        ],
+        "patrol": [
+          [
+            20,
+            11
+          ],
+          [
+            20,
+            15
+          ]
+        ],
+        "facing": 1.5707963267948966
       }
     ],
     "fieldNotes": [
@@ -1834,7 +1888,11 @@
         "when": "key",
         "open": [
           "mountain-home"
-        ]
+        ],
+        "spawn": [
+          "yeti-serpent"
+        ],
+        "message": "The far gate opens, and a Candy Cane Serpent uncoils in the low garden."
       }
     ],
     "thorns": [
@@ -1869,6 +1927,27 @@
       "#.X....#.....1.#......#",
       "#......#.......#....1.#",
       "#######################"
+    ],
+    "reinforcements": [
+      {
+        "id": "yeti-serpent",
+        "kind": "snake",
+        "spawn": [
+          11,
+          12
+        ],
+        "patrol": [
+          [
+            11,
+            11
+          ],
+          [
+            11,
+            15
+          ]
+        ],
+        "facing": 1.5707963267948966
+      }
     ]
   },
   {
@@ -1876,10 +1955,10 @@
     "name": "Bells in the Blizzard",
     "index": 6,
     "revision": 1,
-    "difficulty": "Medium",
+    "difficulty": "Hard",
     "seasonalTheme": "winter-night",
-    "cunning": 1,
-    "pebbles": 3,
+    "cunning": 3,
+    "pebbles": 2,
     "tongues": 2,
     "spores": 1,
     "gates": [
@@ -1981,6 +2060,32 @@
           ]
         ],
         "facing": 1.5707963267948966
+      },
+      {
+        "kind": "snake",
+        "spawn": [
+          11,
+          1
+        ],
+        "patrol": [
+          [
+            9,
+            1
+          ],
+          [
+            12,
+            1
+          ],
+          [
+            12,
+            5
+          ],
+          [
+            9,
+            5
+          ]
+        ],
+        "facing": 0
       }
     ],
     "fieldNotes": [
@@ -2204,7 +2309,11 @@
         "when": "key",
         "open": [
           "bell-home"
-        ]
+        ],
+        "spawn": [
+          "bells-snatcher"
+        ],
+        "message": "The bells ring out. Both lower gates open, and a Gift Snatcher creeps into the west yard."
       }
     ],
     "cold": [
@@ -2268,6 +2377,27 @@
       "#.X..1##1...L##...L...1.#",
       "#.....##....1##.........#",
       "#########################"
+    ],
+    "reinforcements": [
+      {
+        "id": "bells-snatcher",
+        "kind": "fox",
+        "spawn": [
+          3,
+          8
+        ],
+        "patrol": [
+          [
+            2,
+            8
+          ],
+          [
+            5,
+            8
+          ]
+        ],
+        "facing": 0
+      }
     ]
   },
   {
@@ -2275,10 +2405,10 @@
     "name": "The Christmas Star",
     "index": 7,
     "revision": 1,
-    "difficulty": "Medium",
+    "difficulty": "Hard",
     "seasonalTheme": "winter-finale",
-    "cunning": 1,
-    "pebbles": 3,
+    "cunning": 3,
+    "pebbles": 2,
     "tongues": 2,
     "spores": 1,
     "gates": [
@@ -2746,7 +2876,11 @@
         "open": [
           "star-home"
         ],
-        "message": "The Christmas gates open. Bring the last ornament home."
+        "spawn": [
+          "star-serpent",
+          "star-snatcher"
+        ],
+        "message": "The Christmas gates open. Bring the last ornament home - but the whole hollow is awake now."
       }
     ],
     "map": [
@@ -2767,6 +2901,46 @@
       "#.X.....##...L..L##1L...L.#",
       "#.......##.......##.......#",
       "###########################"
+    ],
+    "reinforcements": [
+      {
+        "id": "star-serpent",
+        "kind": "snake",
+        "spawn": [
+          15,
+          15
+        ],
+        "patrol": [
+          [
+            16,
+            15
+          ],
+          [
+            11,
+            15
+          ]
+        ],
+        "facing": 3.141592653589793
+      },
+      {
+        "id": "star-snatcher",
+        "kind": "fox",
+        "spawn": [
+          3,
+          12
+        ],
+        "patrol": [
+          [
+            2,
+            12
+          ],
+          [
+            6,
+            12
+          ]
+        ],
+        "facing": 0
+      }
     ]
   }
 ];root.EscapeWinter=routes;if(typeof module!=="undefined"&&module.exports)module.exports=routes;})(typeof globalThis!=="undefined"?globalThis:this);
