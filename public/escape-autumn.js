@@ -185,7 +185,7 @@
     "difficulty": "Easy",
     "seasonalTheme": "autumn",
     "brief": "Two pumpkin sentries watch the garden loops. Choose where to cross.",
-    "hint": "Open the north gate from the west garden. The centre switch opens a second way home. Step sideways when a pumpkin aims its vine.",
+    "hint": "Open the north gate from the west garden. The centre switch opens a second way home. Step sideways when a pumpkin aims its vine. Don't stand about in the muddy patch: Sally sinks, and running through it splashes.",
     "index": 1,
     "revision": 2,
     "cunning": 0,
@@ -334,7 +334,7 @@
       "#.....#1L...#####.###",
       "#.....#.....###...L.#",
       "#.....###.#####.....#",
-      "#.....#.......#.....#",
+      "#.....#.MMMMM.#.....#",
       "#.@.1.....1..L.....1#",
       "#.X...#.......#.....#",
       "#####################"

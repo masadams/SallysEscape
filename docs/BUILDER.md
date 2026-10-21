@@ -71,6 +71,8 @@ Sally takes that. (Plates and levers work doors; only the key and chests wake en
   Select one to give it **surges every** N seconds: it runs at half again its strength, then eases to
   half, and **offset** staggers two streams. Leaves and foam on the water show how hard it is running.
   Ground slopes stay steady and stop Sally exactly at their end.
+- **Mud** (tile) slows Sally. If she stands still in it for more than a second she starts to sink, and
+  deep mud slows her even more until she walks out. Sprinting through it is fast but splashes loudly.
 - **Ice** (Layers) is the same glide ice as the game's: Sally keeps her speed, overshoots, coasts and
   crashes into walls, and only Crawl brakes. Only the marked tiles are slippery.
 - **❄ Cold** ground chills Sally; a **◍ Warm stone** thaws her.

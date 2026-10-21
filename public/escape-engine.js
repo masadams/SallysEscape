@@ -737,7 +737,7 @@
       if(p.exhausted&&p.stamina>=25)p.exhausted=false;
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
       if(this.cold.size)this.updateWarmth(dt);
-      const crawl=Boolean(input.crawl&&!this.water(p)),sprint=!crawl&&Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',sand=!p.swimming&&this.softSand.has(this.tileKey(p)),speed=(sprint?4:crawl?1.25:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72:sand?.7:1)*(this.water(p)?.55:1);
+      const crawl=Boolean(input.crawl&&!this.water(p)),sprint=!crawl&&Boolean(input.sprint&&!p.exhausted&&!p.chilled&&p.stamina>0&&length>0),mud=this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',sand=!p.swimming&&this.softSand.has(this.tileKey(p)),speed=(sprint?4:crawl?1.25:2.45)*(this.hasTail?1:.9)*(p.warmth<=0?.5:p.chilled?.72:1)*(p.webbed?.45:mud?.72*(1-.5*(p.sink||0)):sand?.7:1)*(this.water(p)?.55:1);
       const onIce=this.slippery.has(this.tileKey(p)),special=p.flight||p.underground||p.dig||this.heldBy;
       if(special){this.slideVelocity.x=0;this.slideVelocity.y=0;}
       // Stepping onto ice keeps the speed Sally arrived with; from there the glide builds past a
@@ -760,7 +760,12 @@
         // drifts on a little before the still water lets go. Climbing onto land stops the drift.
         else{const s=c?this.flowSpeed(c):0,k=1-Math.exp(-(c?3:2.2)*dt);f.x+=((c?c.dir[0]*s:0)-f.x)*k;f.y+=((c?c.dir[1]*s:0)-f.y)*k;if(!c&&!this.water(p)){f.x=0;f.y=0;}
           for(const axis of ['x','y']){if(Math.abs(f[axis])<1e-4)continue;const next={...p,[axis]:p[axis]+f[axis]*dt};if(this.fits(next))p[axis]=next[axis];else f[axis]=0;}}}
-      p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);if(p.swimming&&!this.water(old))this.events.push('splash');p.moving=distance(old,p)>0.0001;p.sprinting=sprint&&p.moving;p.crawling=crawl&&!p.swimming;this.playerVelocity={x:(p.x-old.x)/dt,y:(p.y-old.y)/dt};this.trackSally(dt);
+      p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);
+      // Mud sucks at a lizard that lingers: after a second standing still she sinks (slowly if she crawls), and the
+      // deeper she is the harder it is to move; keeping on the move pulls her free again.
+      {const inMud=!this.water(p)&&!p.flight&&!p.underground&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',was=p.sink||0,moving=distance(old,p)>0.0001;
+        if(inMud){p.mudStill=moving?0:(p.mudStill||0)+dt;p.sink=Math.max(0,Math.min(1,was+(moving?-.3:p.mudStill<1?0:crawl?.25:.55)*dt));if(was<.5&&p.sink>=.5)this.notice('Sally is sinking into the mud! Keep moving.');if(moving&&was>.45&&!p.squelched){this.events.push('squish');p.squelched=true;}if(!moving)p.squelched=false;}
+        else{p.sink=Math.max(0,was-2*dt);p.mudStill=0;}}if(p.swimming&&!this.water(old))this.events.push('splash');p.moving=distance(old,p)>0.0001;p.sprinting=sprint&&p.moving;p.crawling=crawl&&!p.swimming;this.playerVelocity={x:(p.x-old.x)/dt,y:(p.y-old.y)/dt};this.trackSally(dt);
       p.stamina=Math.max(0,Math.min(100,p.stamina+(p.sprinting?-24:18)*dt));
       if(this.camoUntil>this.elapsed&&p.moving){this.camoUntil=0;this.notice('Moving broke the camouflage.');}
       p.camo=this.camoUntil>this.elapsed;
@@ -770,7 +775,8 @@
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
       // A crawl makes no sound, even on gravel.
       p.silent=this.moss.size>0&&this.moss.has(this.tileKey(p));p.loud=p.sprinting&&!p.silent;
-      p.noisy=p.loud||(p.moving&&!p.crawling&&!p.silent&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='N');
+      // Gravel crunches underfoot; mud splashes when Sally runs through it.
+      p.noisy=p.loud||(p.moving&&!p.crawling&&!p.silent&&(this.grid[Math.floor(p.y)][Math.floor(p.x)]==='N'||p.sprinting&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M'));
       if(p.dig){if(p.dig.buried){p.hidden=true;p.noisy=false;this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+.05);}else p.noisy=true;}
       if(p.noisy&&this.echoes.length&&this.elapsed>=(this.echoAt||0)&&this.inEcho(p)){this.echoAt=this.elapsed+1.2;this.events.push('echo');}
       if(this.level.dark){

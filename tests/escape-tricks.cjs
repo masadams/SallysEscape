@@ -66,3 +66,16 @@ test('a pebble that lands in a stream floats away with it',()=>{
   const g=make(['##############','#@~~~~~~~~~~K#','#...........X#','##############'],{currents:[{area:[2,1,11,1],dir:[1,0],speed:1.2}]});
   g.decoy={x:3.5,y:1.5,expires:g.elapsed+3,noticed:false,range:7};run(g,{},1);assert.ok(g.decoy.x>4.4&&g.decoy.floating,'it drifted to '+g.decoy.x);
 });
+
+test('mud sucks at a lizard that lingers: she sinks after a moment, moves slower the deeper she is, and walks free',()=>{
+  const g=make(['############','#@MMMMMMMMK#','#.........X#','############']);g.player.x=4.5;g.player.y=1.5;
+  run(g,{},.8);assert.equal(g.player.sink||0,0,'a short pause is free');run(g,{},1.6);assert.ok(g.player.sink>.5,'lingering sinks her: '+g.player.sink);
+  const x=g.player.x;run(g,{x:1,y:0},.3);const stuck=g.player.x-x;const free=make(['############','#@MMMMMMMMK#','#.........X#','############']);free.player.x=4.5;free.player.y=1.5;run(free,{x:1,y:0},.3);
+  assert.ok(stuck<(free.player.x-4.5)*.8,'deep mud holds her back: '+stuck.toFixed(2)+' vs '+(free.player.x-4.5).toFixed(2));
+  run(g,{x:1,y:0},2);assert.ok(g.player.sink<.1,'keeping on the move pulls her free');
+});
+
+test('running through mud splashes loudly; walking or crawling through it does not',()=>{
+  const g=make(['############','#@MMMMMMMMK#','#.........X#','############']);g.player.x=3.5;g.player.y=1.5;
+  run(g,{x:1,y:0},.3);assert.equal(g.player.noisy,false,'walking is quiet');run(g,{x:1,y:0,sprint:true},.3);assert.equal(g.player.noisy,true,'running splashes');
+});
