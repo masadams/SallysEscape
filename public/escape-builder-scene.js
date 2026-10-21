@@ -296,7 +296,7 @@ function escapeBuilderInspector(){
   else if(p.kind==='sign'){const q=(m.signs||[])[p.index];if(!q)return '';
     html='<b>🪧 Trail sign</b> at '+q.at.join(',')+'<br><label>Title <input data-insp="stitle" maxlength="40" value="'+escapeHtml(q.title||'')+'"></label>'
       +'<br><label class="builder-hint">Words <textarea data-insp="sbody" maxlength="320" rows="3" placeholder="What does the sign say? Sally reads it when she stands by it and presses Read (A or Enter).">'+escapeHtml(q.body||'')+'</textarea></label>';}
-  else if(p.kind==='cap'){const c=m.caps[p.index];if(!c)return '';html='<b>🍄 Bounce cap</b> at '+c.at.join(',')+' · '+(c.to?'throws Sally to '+c.to.join(','):'<b>click where it throws Sally</b>');}
+  else if(p.kind==='cap'){const c=m.caps[p.index];if(!c)return '';html='<b>🍄 Bounce cap</b> at '+c.at.join(',')+' · '+(c.to?'throws Sally to '+c.to.join(','):'<b>click where it throws Sally</b>')+'<label title="A springy cap throws a sprinting Sally this many tiles further along the same line">springy <select data-insp="capspring">'+[0,1,2,3].map(n=>'<option value="'+n+'"'+((c.spring||0)===n?' selected':'')+'>'+(n?'+'+n+' when sprinting':'no')+'</option>').join('')+'</select></label>';}
   return '<div class="builder-inspector">'+html+'</div>';
 }
 // Whole-level settings: tools, time, darkness, and the sky and weather.
@@ -540,6 +540,7 @@ function wireEscapeBuilder(){
   for(const el of document.querySelectorAll('[data-ginsp]'))el.onchange=e=>{const k=el.dataset.ginsp;B.setGuard(m,p.id,{[k]:k==='buried'?e.target.checked:k==='axis'?e.target.value:val(e)});rerender();};
   const looks=document.querySelectorAll('[data-look]');for(const el of looks)el.onchange=()=>{B.setGuard(m,p.id,{looks:[...looks].filter(q=>q.checked).map(q=>Number(q.dataset.look)*Math.PI/2)});rerender();};
   for(const [k,f] of [['wdir','dir'],['wperiod','period'],['won','on'],['woffset','offset'],['wstrength','strength']])if(insp(k))insp(k).onchange=e=>{B.setWind(m,p.index,{[f]:Number(e.target.value)});rerender();};
+  if(insp('capspring'))insp('capspring').onchange=e=>{B.setCap(m,p.index,{spring:Number(e.target.value)});rerender();};
   if(insp('csurface'))insp('csurface').onchange=e=>{B.setCurrent(m,p.index,{surface:e.target.value});rerender();};
   for(const [k,f] of [['cpulse','pulse'],['cphase','phase']])if(insp(k))insp(k).onchange=e=>{B.setCurrent(m,p.index,{[f]:e.target.value===''?0:Number(e.target.value)});rerender();};
   for(const [k,f] of [['cdir','dir'],['cspeed','speed']])if(insp(k))insp(k).onchange=e=>{B.setCurrent(m,p.index,{[f]:Number(e.target.value)});rerender();};

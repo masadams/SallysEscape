@@ -114,7 +114,7 @@
       this.currents=(this.level.currents||[]).map(c=>{const [x1,y1,x2,y2]=c.area;return {x1,y1,x2,y2,dir:c.dir,speed:c.speed||1.2,...(c.surface==='ground'?{surface:'ground'}:{}),...(c.pulse>0?{pulse:c.pulse,phase:c.phase||0}:{})};});this.flow={x:0,y:0};
       this.tunnels=(this.level.tunnels||[]).map(([a,b])=>({a:centre(...a),b:centre(...b)}));this.tunnelReadyAt=0;
       this.spores=this.level.spores||0;this.sporesUsed=0;this.tunnelsUsed=0;
-      this.caps=(this.level.caps||[]).map(c=>({at:c.at.slice(),to:c.to.slice(),key:c.at.join(','),readyAt:0}));
+      this.caps=(this.level.caps||[]).map(c=>({at:c.at.slice(),to:c.to.slice(),key:c.at.join(','),readyAt:0,...(c.spring>0?{spring:Math.min(3,Math.round(c.spring))}:{})}));
       this.vents=(this.level.vents||[]).map(v=>{const [dx,dy]=v.dir,tiles=[];for(let i=1;i<=(v.length||4);i++){const x=v.at[0]+dx*i,y=v.at[1]+dy*i;if(!this.floor(x,y))break;tiles.push([x,y]);}
         return {...v,tiles,keys:new Set(tiles.map(([x,y])=>x+','+y)),period:v.period||5,on:v.on||1.6,offset:v.offset||0,warn:v.warn||.9,active:false,warning:false};});
       this.blasts=0;this.steamed=0;this.player.warmth=100;this.player.chilled=false;this.lowestWarmth=100;
@@ -325,6 +325,17 @@
         if(!c.sunk&&this.slippery.has(c.x+','+c.y)&&this.shoveCrate(c,c.dir,.16))this.events.push('scrape');}
     }
     cratePos(c){if(!c.from)return {x:c.x,y:c.y};const k=Math.min(1,(this.elapsed-c.start)/c.dur),e=k*(2-k);return {x:c.from.x+(c.x-c.from.x)*e,y:c.from.y+(c.y-c.from.y)*e};}
+    // A bounce cap throws Sally to its landing. A springy one (spring 1-3) throws a sprinting Sally up to
+    // that many tiles further along the same line, onto open floor only; she lands with some skid, and
+    // landing on another cap bounces her straight on.
+    capFlight(cap,sprint){
+      const from=centre(...cap.at);let to=centre(...cap.to);
+      if(cap.spring&&sprint){const dx=cap.to[0]-cap.at[0],dy=cap.to[1]-cap.at[1],l=Math.hypot(dx,dy)||1;
+        const tile=k=>[Math.floor(to.x+dx/l*k),Math.floor(to.y+dy/l*k)];let reach=0;while(reach<cap.spring&&this.sightFloor(...tile(reach+1)))reach++;
+        for(let k=reach;k>=1;k--){const [x,y]=tile(k);if(this.floor(x,y)&&this.grid[y][x]!=='U'&&this.grid[y][x]!=='Y'){to=centre(x,y);break;}}}
+      const d=distance(from,to),dir={x:(to.x-from.x)/(d||1),y:(to.y-from.y)/(d||1)},base=distance(from,centre(...cap.to))||1;
+      return {from,to,start:this.elapsed,dur:.55*Math.sqrt(Math.max(1,d/base)),...(cap.spring?{skid:{x:dir.x*(sprint?3:2.4),y:dir.y*(sprint?3:2.4)}}:{})};
+    }
     fits(p,radius=0.22,actor=null){
       return [[-1,-1],[-1,1],[1,-1],[1,1]].every(([x,y])=>this.actorFloor(Math.floor(p.x+x*radius),Math.floor(p.y+y*radius),actor));
     }
@@ -753,7 +764,7 @@
       if(input.aiming){const l=Math.hypot(input.x||0,input.y||0);if(l){this.player.throwAim={x:input.x/l,y:input.y/l};this.player.facing=Math.abs(input.x)>=Math.abs(input.y)?{x:Math.sign(input.x),y:0}:{x:0,y:Math.sign(input.y)};}input={};}
       // In the air off a bounce cap Sally follows her arc and cannot steer.
       if(this.player.underground){const u=this.player.underground;input={};if(this.elapsed-u.start>=u.dur){this.player.x=u.to.x;this.player.y=u.to.y;this.player.underground=null;this.motion.resetPlayer?.(this.player);this.events.push('tunnel');this.updateVisibility(true);}}
-      if(this.player.flight){this.slideVelocity.x=0;this.slideVelocity.y=0;const f=this.player.flight,t=Math.min(1,(this.elapsed-f.start)/f.dur);this.player.x=f.from.x+(f.to.x-f.from.x)*t;this.player.y=f.from.y+(f.to.y-f.from.y)*t;input={};if(t>=1){this.player.flight=null;this.events.push('hop');}}
+      if(this.player.flight){this.slideVelocity.x=0;this.slideVelocity.y=0;const f=this.player.flight,t=Math.min(1,(this.elapsed-f.start)/f.dur);this.player.x=f.from.x+(f.to.x-f.from.x)*t;this.player.y=f.from.y+(f.to.y-f.from.y)*t;input={};if(t>=1){this.player.flight=null;this.events.push('hop');if(f.skid){this.player.skid={...f.skid};this.player.bounceReady=true;}}}
       // Digging in: held on a soft dirt patch, Sally scrabbles for 0.75 s (noisy, dust flying), then
       // lies buried, hidden from everything and safe, until the button is let go.
       if(this.soil.size){const q=this.player;
@@ -807,8 +818,10 @@
       p.camo=this.camoUntil>this.elapsed;
       if(this.puffs.length)this.updatePuffs();else if(this.clouds.length)this.clouds=this.clouds.filter(c=>c.until>this.elapsed);
       // A gust blows a spore cloud downwind along its lane.
+      // The skid off a springy cap carries Sally on a little after she lands, easing off quickly.
+      if(p.skid){for(const axis of ['x','y']){const next={...p,[axis]:p[axis]+p.skid[axis]*dt};if(this.fits(next))p[axis]=next[axis];else p.skid[axis]=0;}const k=Math.exp(-6*dt);p.skid.x*=k;p.skid.y*=k;if(Math.hypot(p.skid.x,p.skid.y)<.05||p.flight)p.skid=null;}
       if(this.clouds.length&&this.wind.length)for(const c of this.clouds){const w=this.wind.find(w=>this.gustPhase(w).active&&w.keys.has(this.tileKey(c)));if(w){c.x+=w.dir[0]*w.strength*.5*dt;c.y+=w.dir[1]*w.strength*.5*dt;}}
-      if(this.caps.length&&!p.flight&&p.moving){const cap=this.caps.find(c=>c.key===this.tileKey(p)&&this.elapsed>=c.readyAt);if(cap){p.flight={from:centre(...cap.at),to:centre(...cap.to),start:this.elapsed,dur:.55};cap.readyAt=this.elapsed+1;this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+.6);this.events.push('hop');}}
+      if(this.caps.length&&!p.flight&&(p.moving||p.bounceReady)){const cap=this.caps.find(c=>c.key===this.tileKey(p)&&this.elapsed>=c.readyAt);p.bounceReady=false;if(cap){p.flight=this.capFlight(cap,p.sprinting);cap.readyAt=this.elapsed+1;this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+.6);this.events.push('hop');}}
       p.hidden=Boolean(p.underground)||this.inRayShadow(p)||!p.moving&&!this.heldBy&&(this.grid[Math.floor(p.y)][Math.floor(p.x)]==='L'||p.camo)||this.clouds.length>0&&!this.heldBy&&this.inCloud(p);
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
       // A crawl makes no sound, even on gravel.

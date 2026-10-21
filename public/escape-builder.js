@@ -204,6 +204,8 @@
   const pageAt=(model,x,y)=>(model.pages||[]).findIndex(p=>same(p.at,[x,y]));
   // A bounce cap flings Sally from one tile to another; click the cap, then where it lands.
   function addCap(model,x,y){if(!walkable(at(model,x,y))||(model.caps||[]).some(c=>same(c.at,[x,y]))||(model.caps||[]).length>=12)return false;model.caps=model.caps||[];model.caps.push({at:[x,y],to:null});return true;}
+  // Spring 0 is a plain cap; 1-3 lets a sprint carry Sally that many tiles further.
+  function setCap(model,i,changes){const c=(model.caps||[])[i];if(!c)return false;if(changes.spring!==undefined){const v=clampInt(changes.spring,0,3);if(v>0)c.spring=v;else delete c.spring;}return true;}
   function setCapEnd(model,x,y){const c=(model.caps||[]).find(c=>!c.to);if(!c||!walkable(at(model,x,y))||same(c.at,[x,y]))return false;c.to=[x,y];return true;}
   // Wind lanes, trigger areas: a rectangle dragged between two corners.
   const rect=(x1,y1,x2,y2)=>[Math.min(x1,x2),Math.min(y1,y2),Math.max(x1,x2),Math.max(y1,y2)];
@@ -457,7 +459,7 @@ function validate(model){
     Object.assign(model,EXTRAS());setSettings(model,{hint:r.hint||'',tailDrop:r.tailDrop,unlimited:r.unlimited,gaze:r.gaze,dark:r.dark,living:r.living,abyss:r.abyss,timeLimit:r.timeLimit||0,camos:r.camos||0,seeds:r.seeds||0,diggers:r.diggers||0,glows:r.glows||0,spores:r.spores||0,cunning:r.cunning??2,sightRadius:r.sightRadius||0,biome:r.biome||'',
       hawk:r.hawk||null,storm:r.storm||null,tide:r.tide||null});
     for(const k of Object.keys(LAYERS))model[k]=pts(r[k],120);
-    model.caps=list(r.caps,12).map(c=>({at:point(c?.at,w,h),to:point(c?.to,w,h)})).filter(c=>c.at);
+    model.caps=list(r.caps,12).map(c=>({at:point(c?.at,w,h),to:point(c?.to,w,h),...(Number(c?.spring)>0?{spring:clampInt(c.spring,1,3)}:{})})).filter(c=>c.at);
     model.wind=list(r.wind,12).map(z=>({area:area(z?.area),dir:DIRS.find(([dx,dy])=>dx===z?.dir?.[0]&&dy===z?.dir?.[1])?.slice()||[1,0],period:clampNum(z?.period,1,30,5),on:clampNum(z?.on,.2,30,1.6),offset:clampNum(z?.offset,0,30,0),...(Number(z?.strength)>0&&Number(z.strength)!==2.3?{strength:clampNum(z.strength,.5,4,2.3)}:{})})).filter(z=>z.area);
     model.echoes=list(r.echoes,8).map(area).filter(Boolean);
     model.currents=list(r.currents,12).map(z=>({area:area(z?.area),dir:DIRS.find(([dx,dy])=>dx===z?.dir?.[0]&&dy===z?.dir?.[1])?.slice()||[1,0],speed:clampNum(z?.speed,.4,3,1.2),...(z?.surface==='ground'?{surface:'ground'}:{}),...(z?.surface!=='ground'&&Number(z?.pulse)>0?{pulse:clampNum(z.pulse,2,20,6),...(Number(z.phase)>0?{phase:clampNum(z.phase,0,.99,0)}:{})}:{})})).filter(z=>z.area);
@@ -484,7 +486,7 @@ function validate(model){
   const api={TILES,MARKS,ENEMIES,POSTED,LIMITS,COLORS,MODES,TRIGGERS,HAZARDS,SPEEDS,blank,paint,resize,addEnemy,removeEnemy,turnEnemy,addPatrol,clearPatrol,setSleep,
     paintDoor,removeDoorTile,setDoor,addTrigger,removeAt,toggleLink,linksFrom,linksTo,sourceAt,doorAt,triggerAt,hazardAt,guardAt,addHazard,setLogEnd,setHazard,paintClimate,doorName,
     validate,toRoute,fromRoute,treasureTotal,exportText,importText,sanitize,loadAll,saveOne,removeOne,
-    LOOKS,PROPS,toggleCheckpoint,toggleCrate,addSign,setSign,signAt,toggleProp,setMillWheel,LAYERS,DIRS,toggleLayer,addPage,setPage,pageAt,PAGE_LIMIT,addCap,setCapEnd,addWind,setWind,addEcho,addCurrent,setCurrent,addTunnel,addRegion,setRegion,addAntPoint,setAnts,addSeedCrossing,setRootWheel,toggleRival,removeExtraAt,setGuard,setSettings,setMessage,setLinkAction,regionAt};
+    LOOKS,PROPS,toggleCheckpoint,toggleCrate,addSign,setSign,signAt,toggleProp,setMillWheel,LAYERS,DIRS,toggleLayer,addPage,setPage,pageAt,PAGE_LIMIT,addCap,setCap,setCapEnd,addWind,setWind,addEcho,addCurrent,setCurrent,addTunnel,addRegion,setRegion,addAntPoint,setAnts,addSeedCrossing,setRootWheel,toggleRival,removeExtraAt,setGuard,setSettings,setMessage,setLinkAction,regionAt};
   root.EscapeBuilder=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
