@@ -856,7 +856,7 @@
         if(p.moving&&this.elapsed>=this.trailAt){this.glowTrail.push({...copy(p),born:this.elapsed,expires:this.elapsed+8});this.trailAt=this.elapsed+.18;}
       }
       if(this.thinIce.size&&!p.flight&&!p.underground&&!p.swimming){const t=this.thinIce.get(this.tileKey(p));
-        if(t&&!t.broken){t.crack+=(crawl?.12:p.sprinting?1.5:p.moving?.42:.85)*dt;
+        if(t&&!t.broken){t.crack+=(crawl?.15:p.sprinting?2.4:p.moving?.95:1.5)*dt;
           if(!t.warned&&t.crack>=.5){t.warned=true;this.events.push('creak');this.notice('The thin ice creaks! Keep moving, or crawl to spread your weight.','warning');}
           if(t.crack>=1)this.breakIce(t);}}
       if(this.crates.length)this.updateCrates();
