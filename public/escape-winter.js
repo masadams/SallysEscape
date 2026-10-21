@@ -2,7 +2,7 @@
 (function(root){const routes=[
   {
     "id": "winter-welcome",
-    "thinIce": [[8, 1], [9, 1], [10, 1], [8, 2], [9, 2], [10, 2]],
+    "thinIce": [[8, 2], [9, 2], [10, 2], [8, 3], [9, 3], [10, 3], [11, 3]],
     "name": "The Snowy Welcome",
     "index": 0,
     "revision": 1,
@@ -152,7 +152,7 @@
       ]
     ],
     "brief": "A new village, one old switch and a serpent dressed for Christmas.",
-    "hint": "Blue opens the candy garden. Try the little ice slope: chevrons point downhill. Step sideways onto snow to leave the slide; hold Crawl to brake. The star key opens the short way home. The pale ice in the north room is thin: keep moving or crawl across it.",
+    "hint": "Blue opens the candy garden. Try the little ice slope: chevrons point downhill. Step sideways onto snow to leave the slide; hold Crawl to brake. The star key opens the short way home. The way through the middle room is thin ice: it creaks when you cross back, so never stop on it, or crawl.",
     "currents": [
       {
         "area": [
