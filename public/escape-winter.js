@@ -2,6 +2,7 @@
 (function(root){const routes=[
   {
     "id": "winter-welcome",
+    "thinIce": [[8, 1], [9, 1], [10, 1], [8, 2], [9, 2], [10, 2]],
     "name": "The Snowy Welcome",
     "index": 0,
     "revision": 1,
@@ -151,7 +152,7 @@
       ]
     ],
     "brief": "A new village, one old switch and a serpent dressed for Christmas.",
-    "hint": "Blue opens the candy garden. Try the little ice slope: chevrons point downhill. Step sideways onto snow to leave the slide; hold Crawl to brake. The star key opens the short way home.",
+    "hint": "Blue opens the candy garden. Try the little ice slope: chevrons point downhill. Step sideways onto snow to leave the slide; hold Crawl to brake. The star key opens the short way home. The pale ice in the north room is thin: keep moving or crawl across it.",
     "currents": [
       {
         "area": [
@@ -196,6 +197,7 @@
   },
   {
     "id": "winter-pond",
+    "thinIce": [[1, 12], [2, 12], [3, 12], [1, 13], [2, 13], [3, 13]],
     "crates": [[11, 4], [10, 10]],
     "name": "The Skating Pond",
     "index": 1,
@@ -613,7 +615,7 @@
       ]
     ],
     "brief": "Skate between little snow islands and find the gate keeper's star key.",
-    "hint": "The west switch opens the north crossing. Snow islands are good places to slow down. The key opens the south crossing. Snow blocks on the islands can be shoved onto the ice, and they slide until something stops them.",
+    "hint": "The west switch opens the north crossing. Snow islands are good places to slow down. The key opens the south crossing. Snow blocks on the islands can be shoved onto the ice, and they slide until something stops them. The corner by the bank is thin ice; do not stand about on it.",
     "reactions": [
       {
         "id": "pond-key",

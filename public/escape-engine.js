@@ -51,7 +51,7 @@
       this.cunning=CUNNING[Math.max(0,Math.min(3,Math.round(this.level.cunning??2)))];
       this.grid=catalog.escapeGridFor(this.level);this.height=this.grid.length;this.width=this.grid[0].length;
       // Crates: solid, so they block walking, sight, hunters and throws; Sally can shove one a tile at a time.
-      this.crateAt=new Uint8Array(this.width*this.height);this.crates=(this.level.crates||[]).filter(([x,y])=>this.floor(x,y)&&this.grid[y][x]!=='U'&&!this.crateAt[y*this.width+x]).map(([x,y],i)=>{this.crateAt[y*this.width+x]=1;return {id:i,x,y,from:null,start:0,dir:[0,0]};});this.crateVersion=0;this.crateNoiseUntil=-1;this.lean=null;
+      this.crateAt=new Uint8Array(this.width*this.height);this.crates=(this.level.crates||[]).filter(([x,y])=>this.floor(x,y)&&this.grid[y][x]!=='U'&&!this.crateAt[y*this.width+x]).map(([x,y],i)=>{this.crateAt[y*this.width+x]=1;return {id:i,x,y,from:null,start:0,dir:[0,0]};});this.crateVersion=0;this.loudUntil=-1;this.lean=null;
       this.player={...centre(...this.level.spawn),facing:{x:0,y:-1},tongueAim:null,stamina:100,exhausted:false,moving:false,sprinting:false,crawling:false,hidden:false,noisy:false};
       this.hunters=this.level.guards.map(guard=>this.makeHunter(guard));for(const h of this.hunters)h.restState=h.state;
       // Gentle levels (Little Explorers, for young children) can't be lost: a catch is an "Oops!"
@@ -84,7 +84,9 @@
       this.antTrails=(this.level.antTrails||[]).map(t=>({tiles:expandTrail(t.path),groups:t.groups||3,size:t.size||4,gap:t.gap||5,speed:t.speed||1.6,offset:t.offset||0}));
       this.carried=[];this.thefts=0;this.recoveries=0;this.stolen=0;
       // Frost Hollow: only marked rooms are cold; warm stones thaw Sally quickly.
-      this.slippery=new Set((this.level.slippery||[]).map(p=>p.join(',')));this.softSand=new Set((this.level.softSand||[]).map(p=>p.join(',')));this.slideVelocity={x:0,y:0};
+      this.slippery=new Set((this.level.slippery||[]).map(p=>p.join(',')));
+      // Thin ice cracks under Sally (fastest when she stands or runs, barely when she crawls) and gives way to water.
+      this.thinIce=new Map((this.level.thinIce||[]).filter(([x,y])=>this.floor(x,y)&&this.grid[y][x]!=='U').map(([x,y])=>[x+','+y,{x,y,crack:0,broken:false,warned:false}]));this.softSand=new Set((this.level.softSand||[]).map(p=>p.join(',')));this.slideVelocity={x:0,y:0};
       this.cold=new Set();for(const [x1,y1,x2,y2] of this.level.cold||[])for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)this.cold.add(x+','+y);
       this.warm=new Set((this.level.warm||[]).map(([x,y])=>x+','+y));
       // Steam Vents: wall vents fire jets down a lane on a fixed rhythm.
@@ -298,13 +300,15 @@
     // Leaning into a crate square-on for a moment shoves it one tile, with a loud scrape. It will not
     // cover the key, the exit, a switch or plate, a gate, water or a creature; pushed into a gap it
     // drops in and fills it (a way across), and pushed onto ice it slides until something stops it.
+    breakIce(t){t.broken=true;t.crack=1;this.grid[t.y][t.x]='U';this.events.push('splash','creak');this.loudUntil=this.elapsed+.9;
+      for(const h of this.hunters){h.path=[];h.targetId=null;}this.updateVisibility(true);if(this.tileKey(this.player)===t.x+','+t.y)this.notice('Splash! The thin ice gave way.','warning');}
     crateTile(x,y){return this.crates.find(c=>!c.sunk&&c.x===x&&c.y===y)||null;}
     leanOnCrate(axis,s,dt){
       const p=this.player,other=axis==='x'?'y':'x',tx=Math.floor(p.x+(axis==='x'?s*.3:0)),ty=Math.floor(p.y+(axis==='y'?s*.3:0)),c=this.crateTile(tx,ty);
       if(!c||c.from||Math.abs(p[other]-(c[other]+.5))>.38)return;
       const dir=axis==='x'?[s,0]:[0,s],l=this.lean,same=l&&l.c===c&&l.dir[0]===dir[0]&&l.dir[1]===dir[1]&&l.at>=this.elapsed-.05;
       this.lean={c,dir,at:this.elapsed,t:(same?l.t:0)+dt};
-      if(this.lean.t>=.3){this.lean.t=0;if(this.shoveCrate(c,dir,.32)){this.crateNoiseUntil=this.elapsed+.45;this.events.push('scrape');}}
+      if(this.lean.t>=.3){this.lean.t=0;if(this.shoveCrate(c,dir,.32)){this.loudUntil=this.elapsed+.45;this.events.push('scrape');}}
     }
     crateRoom(x,y){
       const at=q=>q&&Math.floor(q.x)===x&&Math.floor(q.y)===y;
@@ -316,9 +320,10 @@
     shoveCrate(c,dir,dur){
       const nx=c.x+dir[0],ny=c.y+dir[1],t=this.grid[ny]?.[nx];
       if(t===undefined||!this.crateRoom(nx,ny))return false;
-      const gap=t==='P';if(!gap&&(!this.floor(nx,ny)||t==='U'))return false;
+      const gap=t==='P',ice=this.thinIce.get(nx+','+ny);if(!gap&&(!this.floor(nx,ny)||t==='U'))return false;
       this.crateAt[c.y*this.width+c.x]=0;c.from={x:c.x,y:c.y};c.start=this.elapsed;c.dur=dur;c.dir=dir;c.x=nx;c.y=ny;
       if(gap){c.sunk=true;this.grid[ny][nx]='.';this.events.push('clack');this.notice('The crate drops into the gap. A way across!');}
+      else if(ice&&!ice.broken){c.sunk=true;c.lost=true;this.breakIce(ice);this.notice('The crate crashes through the thin ice!');}
       else this.crateAt[ny*this.width+nx]=1;
       this.crateVersion++;for(const h of this.hunters){h.path=[];h.targetId=null;}this.updateVisibility(true);return true;
     }
@@ -837,13 +842,17 @@
       // A crawl makes no sound, even on gravel.
       p.silent=this.moss.size>0&&this.moss.has(this.tileKey(p));p.loud=p.sprinting&&!p.silent;
       // Gravel crunches underfoot; mud splashes when Sally runs through it.
-      p.noisy=p.loud||this.elapsed<this.crateNoiseUntil||(p.moving&&!p.crawling&&!p.silent&&(this.grid[Math.floor(p.y)][Math.floor(p.x)]==='N'||p.sprinting&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M'));
+      p.noisy=p.loud||this.elapsed<this.loudUntil||(p.moving&&!p.crawling&&!p.silent&&(this.grid[Math.floor(p.y)][Math.floor(p.x)]==='N'||p.sprinting&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M'));
       if(p.dig){if(p.dig.buried){p.hidden=true;p.noisy=false;this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+.05);}else p.noisy=true;}
       if(p.noisy&&this.echoes.length&&this.elapsed>=(this.echoAt||0)&&this.inEcho(p)){this.echoAt=this.elapsed+1.2;this.events.push('echo');}
       if(this.level.dark){
         this.glowTrail=this.glowTrail.filter(t=>t.expires>this.elapsed);
         if(p.moving&&this.elapsed>=this.trailAt){this.glowTrail.push({...copy(p),born:this.elapsed,expires:this.elapsed+8});this.trailAt=this.elapsed+.18;}
       }
+      if(this.thinIce.size&&!p.flight&&!p.underground&&!p.swimming){const t=this.thinIce.get(this.tileKey(p));
+        if(t&&!t.broken){t.crack+=(crawl?.12:p.sprinting?1.5:p.moving?.42:.85)*dt;
+          if(!t.warned&&t.crack>=.5){t.warned=true;this.events.push('creak');this.notice('The thin ice creaks! Keep moving, or crawl to spread your weight.','warning');}
+          if(t.crack>=1)this.breakIce(t);}}
       if(this.crates.length)this.updateCrates();
       this.activateSwitches();this.reactToMaze('enter');this.updateVisibility();
       if(this.flights.length||this.lights.length)this.updateFlights();
