@@ -21,7 +21,7 @@ The old maps had roughly 400–650 walkable tiles. These layouts have 161–246,
 
 Routes are revision 2. Valid revision-1 records migrate into an earlier-route collection: earned lanterns, outfit and menu keepsakes remain owned, including partial progress. New layouts start with fresh best times and treasure records; old times are never compared against new ones. An earlier clear is labelled explicitly until the rebuilt layout is played. IDs and player-scoped storage keys stay the same.
 
-There are **nine short trail notes** across the pack, including a separate introduction to the roast turkey. Step onto a paper sign to read it. Creatures and timers pause while reading; leave and return to read again. Guiding dots are optional and start **off**, so these play like traditional levels. Enable them under **Levels & keepsakes** if wanted.
+There are **nine short trail notes** across the pack, including a separate introduction to the roast turkey. Stand by a paper sign and press A, Enter or Space (or tap Read) to read it; signs no longer pop up on their own. Creatures and timers pause while reading; leave and return to read again. Guiding dots are optional and start **off**, so these play like traditional levels. Enable them under **Levels & keepsakes** if wanted.
 
 ## Creatures
 

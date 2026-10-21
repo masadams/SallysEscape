@@ -91,12 +91,14 @@ test('every kids adventure renders on desktop and touch, and supplied tools show
  }
 });
 
-test('an optional trail note opens a card, freezes the real engine, and resumes without reopening in place',()=>{
+test('an optional trail note waits for A/Enter, opens a card, freezes the real engine, and resumes',()=>{
  const h=harness();h.run('globalThis.readSign=null;globalThis.signDone=null;showEscapeStory=(entry,fresh,done)=>{readSign=entry;escapeStoryOpen=entry;signDone=()=>{escapeStoryOpen=null;done();};};startEscape({kidsId:"beetle-courtyard",skipIntro:true});escapeGame.player.x=11.5;escapeGame.player.y=13.5;tickEscapeKidsSign(escapeGame);');
- assert.equal(h.run('readSign.card.title'),'Watch the horn');assert.match(h.run('readSign.card.body[0]'),/Step sideways/);
+ assert.equal(h.run('readSign'),null,'touching a sign no longer pops it up');assert.equal(h.run('escapeNearSign.title'),'Watch the horn');
+ h.run('useEscapeLook()');assert.equal(h.run('readSign.card.title'),'Watch the horn','A (look) reads the sign Sally stands by');assert.match(h.run('readSign.card.body[0]'),/Step sideways/);
  const t=h.run('escapeGame.elapsed');h.run('draw();draw();');assert.equal(h.run('escapeGame.elapsed'),t,'creatures and timers wait while reading');
- h.run('signDone();readSign=null;draw();draw();tickEscapeKidsSign(escapeGame);');assert.equal(h.run('readSign'),null,'closing the card does not instantly reopen it');
- assert.ok(h.run('escapeGame.elapsed')>t);h.run('escapeGame.player.x=9.5;tickEscapeKidsSign(escapeGame);escapeGame.player.x=11.5;tickEscapeKidsSign(escapeGame);');assert.equal(h.run('readSign.card.title'),'Watch the horn','returning later can reread it');
+ h.run('signDone();readSign=null;draw();draw();tickEscapeKidsSign(escapeGame);');assert.equal(h.run('readSign'),null,'closing the card does not reopen it');
+ assert.ok(h.run('escapeGame.elapsed')>t);h.run('escapeKeyPressed("enter",13)');assert.equal(h.run('readSign.card.title'),'Watch the horn','Enter rereads it');
+ h.run('signDone();readSign=null;escapeGame.player.x=6.5;tickEscapeKidsSign(escapeGame)');assert.equal(h.run('escapeNearSign'),null,'walking away clears the prompt');
 });
 test('the standalone world enters the real engine and renders the result in its existing playfield',()=>{const h=harness();h.run('showEscapeSelect();startEscape({levelId:"quiet-vault"});draw();escapeGame.elapsed=20;escapeGame.hasKey=true;escapeGame.finish("won","escaped");draw();escapeMoment.hold=0;draw();');assert.equal(h.run('gameState'),'escapeResult');assert.equal(h.el('game-container').style.display,'block');assert.equal(h.el('escape-result').style.display,'block');assert.equal(h.el('escape-menu-btn').textContent,'World map');assert.equal(h.run('escapeProgress.unlocked("crumbling-hall")'),true);});
 test('Sally celebrates the finished run, keeps retry available, and resets her expression on retry',()=>{
@@ -231,6 +233,7 @@ test('seasonal walking follows the hub paths, stops on collection panels and sup
 
 test('seasonal notes pause the real engine, resume once and stay independent of collected campaign pages',()=>{
  const h=harness();h.run('globalThis.readSeason=null;globalThis.finishSeasonNote=null;showEscapeStory=(entry,fresh,done)=>{readSeason=entry;escapeStoryOpen=entry;finishSeasonNote=()=>{escapeStoryOpen=null;done()}};startEscape({seasonalId:"autumn-mill",skipIntro:true});escapeGame.player.x=16.5;escapeGame.player.y=4.5;tickEscapeKidsSign(escapeGame);');
+ assert.equal(h.run('readSeason'),null,'the note waits to be read');h.run('readEscapeNearSign()');
  assert.equal(h.run('readSeason.card.kind'),'season-sign');assert.match(h.run('readSeason.card.title'),/roast turkey/);const time=h.run('escapeGame.elapsed');h.run('draw();draw()');assert.equal(h.run('escapeGame.elapsed'),time);h.run('finishSeasonNote();readSeason=null;tickEscapeKidsSign(escapeGame)');assert.equal(h.run('readSeason'),null);
 });
 
