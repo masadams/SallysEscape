@@ -24,6 +24,11 @@ test('nothing catches Sally while she swings',()=>{
   const g=make();Object.assign(g.player,{x:4.5,y:2.5});run(g,.05);assert.ok(g.player.flight?.rope);
   assert.ok(g.invulnerableUntil>g.elapsed+1.5,'safe for the whole swing');
 });
+test('swinging over water Sally is in the air, not swimming',()=>{
+  const g=make({map:['############','#@...~~....#','#....~~....#','#K...~~...X#','############']});Object.assign(g.player,{x:4.5,y:2.5});
+  let sawWater=false;for(let i=0;i<240&&g.status==='playing';i++){g.advance(1/120,{});if(g.player.flight?.rope&&g.water(g.player)){sawWater=true;assert.equal(g.player.swimming,false);}}
+  assert.ok(sawWater,'the swing passed over the water');
+});
 test('the builder places a rope by its two ends, sets its swing, and keeps it through saving',()=>{
   const B=require('../public/escape-builder.js');const m=B.blank(21,13);
   assert.ok(B.addRope(m,3,3));assert.equal(B.addRope(m,5,5),false,'finish one rope first');assert.ok(B.setRopeEnd(m,8,3));

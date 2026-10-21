@@ -825,7 +825,8 @@
         // drifts on a little before the still water lets go. Climbing onto land stops the drift.
         else{const s=c?this.flowSpeed(c):0,k=1-Math.exp(-(c?3:2.2)*dt);f.x+=((c?c.dir[0]*s:0)-f.x)*k;f.y+=((c?c.dir[1]*s:0)-f.y)*k;if(!c&&!this.water(p)){f.x=0;f.y=0;}
           for(const axis of ['x','y']){if(Math.abs(f[axis])<1e-4)continue;const next={...p,[axis]:p[axis]+f[axis]*dt};if(this.fits(next))p[axis]=next[axis];else f[axis]=0;}}}
-      p.swimming=this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);
+      // In the air (a rope swing or a cap hop over water) Sally isn't swimming.
+      p.swimming=!p.flight&&this.water(p);if(p.swimming)this.swimDistance+=distance(old,p);
       // Mud sucks at a lizard that lingers: after a second standing still she sinks (slowly if she crawls), and the
       // deeper she is the harder it is to move; keeping on the move pulls her free again.
       {const inMud=!this.water(p)&&!p.flight&&!p.underground&&this.grid[Math.floor(p.y)][Math.floor(p.x)]==='M',was=p.sink||0,moving=distance(old,p)>0.0001;

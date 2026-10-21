@@ -880,6 +880,8 @@ function escapeLayout(g){
   const a=fit(below);if(a.follow)return {x:pad,y:barBottom,w:width-pad*2,h:height-barBottom-bottom};
   const b=beside.w>200?fit(beside):null;return b&&!b.follow&&b.cell>a.cell*1.02?beside:below;
 }
+// How high Sally rides over her shadow mid-flight (a cap hop or a rope swing); the rope's end follows her.
+function escapeFlightLift(g,cell){const f=g.player.flight;if(!f)return 0;const s=f.rope&&g.ropeSwing?g.ropeSwing(f.rope):0,t=f.rope?(f.toward?s:1-s):(g.elapsed-f.start)/f.dur;return Math.sin(Math.max(0,Math.min(1,t))*Math.PI)*cell*.9*Math.max(.8,Math.min(1.6,Math.hypot(f.to.x-f.from.x,f.to.y-f.from.y)/6));}
 function drawEscapeVault(){
   const g=escapeGame,area=escapeLayout(g),close=Boolean(area.close),view=escapeCameraFor(g,area.w,area.h,escapeProgress.data.view==='overview',close,mobile?1:ESCAPE_ZOOMS[escapeZoomStep()]);escapeCameraMotion(view,g,area.w,area.h);view.ox+=area.x;view.oy+=area.y;const {cell,ox,oy}=view;
   const palettes=[[[16,30,36],[39,65,74],[65,93,101]],[[19,34,29],[48,74,56],[78,103,76]],[[33,29,26],[77,63,48],[108,89,66]],[[21,28,37],[46,61,80],[75,91,109]],[[22,24,41],[54,57,85],[86,89,124]],[[14,31,26],[38,68,49],[58,92,66]],[[34,29,20],[80,67,39],[123,102,60]],[[16,30,39],[34,61,73],[55,90,103]],[[26,22,37],[62,48,76],[100,81,116]]];
@@ -968,7 +970,7 @@ function drawEscapeVault(){
   for(const r of g.ropes||[]){const [ax,ay]=r.from,[bx,by]=r.to;if(view.follow&&!g.visibleTile(ax,ay)&&!g.visibleTile(bx,by))continue;
     const vine=/jungle|garden|hollow|meadow|orchard|spring|grotto/.test(String(g.level.seasonalTheme||g.level.biome||g.level.id)),e=g.player.flight?.rope===r?g.player:g.ropeEnd(r),hx=(ax+bx+1)/2*cell,hy=(ay+by+1)/2*cell-cell*1.6;
     noStroke();fill(255,220,150,45);for(const [x,y] of [[ax,ay],[bx,by]])ellipse((x+.5)*cell,(y+.5)*cell,cell*.55,cell*.55);
-    noFill();stroke(...(vine?[78,128,62]:[150,118,78]));strokeWeight(Math.max(1.5,cell*.07));const ex=e.x*cell,ey=e.y*cell-(g.player.flight?.rope===r?cell*.5:0);
+    noFill();stroke(...(vine?[78,128,62]:[150,118,78]));strokeWeight(Math.max(1.5,cell*.07));const ex=e.x*cell,ey=e.y*cell-(g.player.flight?.rope===r?escapeFlightLift(g,cell)+cell*.15:0);
     bezier(hx,hy,hx+(ex-hx)*.3,hy+(ey-hy)*.7+cell*.25,ex-(ex-hx)*.1,ey-cell*.2,ex,ey);noStroke();fill(...(vine?[96,156,74]:[120,92,60]));ellipse(hx,hy,cell*.22,cell*.22);
     if(vine)for(const k of [.35,.6,.8]){fill(110,176,84);ellipse(hx+(ex-hx)*k+cell*.07,hy+(ey-hy)*k,cell*.16,cell*.09);}else{fill(170,136,90);ellipse(ex,ey,cell*.16,cell*.16);}}
   for(const cap of g.caps||[]){const [ax,ay]=cap.at,[tx,ty]=cap.to;if(view.follow&&!g.visibleTile(ax,ay))continue;const x=(ax+.5)*cell,y=(ay+.5)*cell,ex=(tx+.5)*cell,ey=(ty+.5)*cell,mx=(x+ex)/2,my=(y+ey)/2-cell*1.2;
@@ -1045,7 +1047,7 @@ function drawEscapeVault(){
   drawingContext.save();drawingContext.globalAlpha*=g.player.hidden?.48:1;
   for(const h of g.hunters)if(h.state==='clash'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noFill();stroke(255,193,107,180);strokeWeight(cell*.035);ellipse(h.x*cell,h.y*cell,cell*(.9+Math.sin(g.elapsed*14)*.08),cell*.75);}
   // Mid-flight off a bounce cap, Sally rises over her shadow.
-  const flight=g.player.flight,lift=flight?Math.sin(Math.min(1,(g.elapsed-flight.start)/flight.dur)*Math.PI)*cell*.9*Math.max(.8,Math.min(1.6,Math.hypot(flight.to.x-flight.from.x,flight.to.y-flight.from.y)/6)):0;
+  const flight=g.player.flight,lift=escapeFlightLift(g,cell);
   if(flight){noStroke();fill(0,0,0,70);ellipse(g.player.x*cell,g.player.y*cell+cell*.1,cell*.7,cell*.25);push();translate(0,-lift);}
   // Crawling, Sally hugs the ground: a little smaller and dimmer, with a hush mark over her.
   const low=g.player.crawling;if(low){push();translate(g.player.x*cell,g.player.y*cell);scale(.86);translate(-g.player.x*cell,-g.player.y*cell);drawingContext.globalAlpha=.82;}
