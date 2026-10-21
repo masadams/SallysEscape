@@ -729,6 +729,9 @@
       const p=this.player,old=copy(p),length=Math.hypot(input.x||0,input.y||0);
       const dx=length>0?(input.x||0)/Math.max(1,length):0,dy=length>0?(input.y||0)/Math.max(1,length):0;
       if(length&&this.elapsed>=(this.lookUntil||0)){p.facing=Math.abs(dx)>=Math.abs(dy)?{x:Math.sign(dx),y:0}:{x:0,y:Math.sign(dy)};p.tongueAim={x:(input.x||0)/length,y:(input.y||0)/length};}
+      // A controller's right stick turns Sally's head: the tongue and throws aim where she looks. Which way
+      // she faces (what hunters and gaze levels go by) still follows her feet.
+      const look=input.look,lookLength=look?Math.hypot(look.x||0,look.y||0):0;if(lookLength>=.35){p.lookAim={x:look.x/lookLength,y:look.y/lookLength};p.tongueAim={...p.lookAim};}else p.lookAim=null;
       if(p.stamina<=0)p.exhausted=true;
       if(p.exhausted&&p.stamina>=25)p.exhausted=false;
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));

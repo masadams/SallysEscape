@@ -95,7 +95,9 @@
         const travelled=distance(model.head,actor),speed=travelled/dt;
         if(actor.kind==='millipede'&&travelled<1e-7)continue;
         if(kind==='lizard'){
-          const target=travelled>1e-7?Math.atan2(actor.y-model.head.y,actor.x-model.head.x):Math.atan2(actor.facing.y,actor.facing.x);
+          let target=travelled>1e-7?Math.atan2(actor.y-model.head.y,actor.x-model.head.x):Math.atan2(actor.facing.y,actor.facing.x);
+          // Looking round with the right stick turns her head there; on the move she can glance about a quarter-turn each side.
+          if(actor.lookAim){const want=Math.atan2(actor.lookAim.y,actor.lookAim.x);target=travelled>1e-7?target+clamp(difference(want,target),-1.2,1.2):want;}
           // On ice the body lags the slide and wobbles, so Sally skids rather than walks.
           const turn=this.sliding?1.4:9;model.headAngle+=clamp(difference(target,model.headAngle),-turn*dt,turn*dt)+(this.sliding?Math.sin(this.clock*6.3)*1.1*dt:0);
         }else model.headAngle=actor.facing; // The nose and visible gaze agree with actual perception.

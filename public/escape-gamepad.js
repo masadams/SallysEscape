@@ -76,7 +76,7 @@ function pollEscapePad(){
   // View opens the map on a level that has one; elsewhere it steps the zoom (closer, then back out).
   if(pressed(ESCAPE_PAD.VIEW)){if(escapeGame?.level.explore)escapeKeyPressed('g',71);else if(typeof escapeZoomCycle==='function')escapeZoomCycle();return;}
   // The right stick looks around: push it to peek ahead in that direction; let go and the view
-  // springs back to Sally.
+  // springs back to Sally. Sally turns her head that way too, so the tongue and throws aim where she looks.
   {let rx=pad.axes[2]||0,ry=pad.axes[3]||0;const m=Math.hypot(rx,ry);if(m<ESCAPE_PAD_DEAD){rx=0;ry=0;}else{const k=Math.min(1,(m-ESCAPE_PAD_DEAD)/(1-ESCAPE_PAD_DEAD))/m;rx*=k;ry*=k;}escapePad.peekX=rx;escapePad.peekY=ry;}
   // A start card or a big moment: any button moves on, as any key does.
   // On the intro card Y shows the hint, like H; any other button starts.
