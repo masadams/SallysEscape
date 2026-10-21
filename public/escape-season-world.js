@@ -64,9 +64,19 @@
    const length=Math.hypot(x,y),speed=(input.sprint?5:3.1)*dt/Math.max(1,length),old={x:this.player.x,y:this.player.y};if(length)this.player.facing=Math.abs(x)>=Math.abs(y)?{x:Math.sign(x),y:0}:{x:0,y:Math.sign(y)};
    const max=this.target?Math.hypot(this.target[0].x-this.player.x,this.target[0].y-this.player.y):Infinity,step=Math.min(speed,max),onIce=this.slippery.has(Math.floor(this.player.x)+','+Math.floor(this.player.y)),skating=this.sled.riding||onIce||Math.hypot(this.slideVelocity.x,this.slideVelocity.y)>.018;
    const flow=!this.sled.riding&&Ice.currentAt(this.currents,this.player),fx=flow?flow.dir[0]*flow.speed:0,fy=flow?flow.dir[1]*flow.speed:0;const pace=this.sled.riding?4.5:input.sprint?5:3.1;
-   const q=skating?Ice.steer(this.slideVelocity,{x:x*Math.min(1,max/.6)-(this.target?fx/pace:0),y:y*Math.min(1,max/.6)-(this.target?fy/pace:0)},this.sled.riding?4.5:input.sprint?5:3.1,dt,{ice:this.sled.riding||onIce,brake:!!input.crawl||!!this.target&&max<.8}):{x:x*step,y:y*step};
+   // Walking onto ice keeps the speed Sally had, and on the ice she glides exactly as in a level: input
+   // only pushes, momentum carries on and only Crawl brakes. A clicked route walks with sure feet so it
+   // still arrives, and the sled keeps its own grip.
+   const glide=onIce&&!this.sled.riding&&!this.target;
+   if(glide&&!this.wasOnIce&&Math.hypot(this.slideVelocity.x,this.slideVelocity.y)<.05&&length){this.slideVelocity.x=x/Math.max(1,length)*pace;this.slideVelocity.y=y/Math.max(1,length)*pace;}
+   this.wasOnIce=glide;
+   const q=skating?Ice.steer(this.slideVelocity,{x:x*Math.min(1,max/.6)-(this.target?fx/pace:0),y:y*Math.min(1,max/.6)-(this.target?fy/pace:0)},this.sled.riding?4.5:input.sprint?5:3.1,dt,{ice:this.sled.riding||onIce,brake:!!input.crawl||!!this.target&&max<.8,glide}):{x:x*step,y:y*step};
    let nx=this.player.x+q.x+fx*dt,ny=this.player.y+q.y+fy*dt;if(this.sled.riding){nx=Math.max(59.3,Math.min(66.7,nx));ny=Math.max(24.3,Math.min(29.7,ny));if(nx===59.3||nx===66.7)this.slideVelocity.x=0;if(ny===24.3||ny===29.7)this.slideVelocity.y=0;}
-   const clear=(a,b)=>[-.2,.2].every(dx=>[-.2,.2].every(dy=>this.floor(a+dx,b+dy)));if(clear(nx,this.player.y))this.player.x=nx;else this.slideVelocity.x=0;if(clear(this.player.x,ny))this.player.y=ny;else this.slideVelocity.y=0;if(!onIce&&!this.sled.riding&&Math.hypot(this.slideVelocity.x-x*(input.sprint?5:3.1),this.slideVelocity.y-y*(input.sprint?5:3.1))<.04){this.slideVelocity.x=0;this.slideVelocity.y=0;}if(this.target&&max<.04&&!flow){this.slideVelocity.x=0;this.slideVelocity.y=0;}
+   const clear=(a,b)=>[-.2,.2].every(dx=>[-.2,.2].every(dy=>this.floor(a+dx,b+dy)));
+   // On ice a wall knocks Sally back a little instead of stopping her dead, with a scrape when she hits hard.
+   const knock=axis=>{const hit=this.slideVelocity[axis];this.slideVelocity[axis]=glide?-hit*.35:0;if(glide&&Math.abs(hit)>1.6)this.iceBumpAt=this.elapsed;};
+   if(clear(nx,this.player.y))this.player.x=nx;else knock('x');if(clear(this.player.x,ny))this.player.y=ny;else knock('y');
+   this.player.sliding=onIce&&!this.sled.riding&&Math.hypot(this.slideVelocity.x,this.slideVelocity.y)>.12;if(!onIce&&!this.sled.riding&&Math.hypot(this.slideVelocity.x-x*(input.sprint?5:3.1),this.slideVelocity.y-y*(input.sprint?5:3.1))<.04){this.slideVelocity.x=0;this.slideVelocity.y=0;}if(this.target&&max<.04&&!flow){this.slideVelocity.x=0;this.slideVelocity.y=0;}
    this.player.moving=Math.hypot(old.x-this.player.x,old.y-this.player.y)>1e-6;this.player.sprinting=Boolean(input.sprint&&this.player.moving);this.motion.update(dt,this);
   }
  }

@@ -20,3 +20,7 @@ test('the tunnel kit digs an entrance, then an exit, and the pair carries Sally 
  ticks(g,.5);g.player.x=1.5;g.player.y=1.5;assert.ok(g.burrow());ticks(g,1.2);assert.ok(Math.hypot(g.player.x-8.5,g.player.y-1.5)<.2,'came up out of the far mound');
  const again=new EscapeAdventure({level:build(route)});again.digTunnel();assert.ok(again.digTunnel()&&!again.pendingDig&&again.diggers===1,'digging by the entrance fills it in');
  const m=B.fromRoute(build(route));assert.equal(m.diggers,1);assert.equal(B.toRoute(m).diggers,1);});
+test('the winter map glides like a level: walking on keeps the speed, the glide builds and coasts, a clicked route stays sure-footed',()=>{const w=new EscapeSeasonWorld();assert.ok(w.travel('winter'));w.target=null;w.player.x=48.5;w.player.y=24.5;w.slideVelocity={x:0,y:0};
+ while(w.player.x<49.9)w.advance(1/120,{x:1});ticks(w,.15,{x:1});assert.equal(w.player.sliding,true,'sliding on the first ice tile');const entry=w.slideVelocity.x;assert.ok(entry>2.5,'no stall where the ice starts');
+ ticks(w,.5,{x:1});assert.ok(w.slideVelocity.x>entry,'pushing along the slide builds speed');const x=w.player.x;ticks(w,.3);assert.ok(w.player.x>x+.5,'letting go, she coasts on');
+ const v={...w.slideVelocity};w.player.x=48.5;w.player.y=24.5;w.slideVelocity={x:0,y:0};w.target=[{x:60,y:24.5}];w.advance(1/120);assert.ok(Math.hypot(w.slideVelocity.x,w.slideVelocity.y)<3.2,'a clicked route walks with sure feet');assert.ok(v.x>0);});
