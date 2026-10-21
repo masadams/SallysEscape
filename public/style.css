@@ -480,7 +480,6 @@ body:not(.mobile-game) #game-toolbar.toolbar-open #menu-button { order:-1; }
 .title-menu .controls-note { margin:6px 0 0; font-size:.75rem; line-height:1.5; text-align:center; }
 .title-touch { display:none; } .mobile-game .title-keys { display:none; } .mobile-game .title-touch { display:block; }
 .title-ios { margin:0; font-size:.78rem; color:#f0d98a; text-align:center; }
-.title-admin { position:absolute; right:18px; bottom:12px; z-index:2; font-size:.8rem; opacity:.7; }
 @media (prefers-reduced-motion: reduce) { .title-glow { animation:none; opacity:.7; } .title-sky, .title-night, .title-orbit, .title-hill { animation-play-state:paused; } }
 /* Phones held sideways: art and menu side by side, everything on one screen. */
 @media (max-height:520px) and (orientation:landscape) {
@@ -489,7 +488,10 @@ body:not(.mobile-game) #game-toolbar.toolbar-open #menu-button { order:-1; }
   .title-art { min-height:0; height:100%; } .title-sally { width:min(90%,240px); margin-bottom:10%; }
   .title-menu { gap:6px; padding:12px 14px; } .title-menu h1 { font-size:clamp(1.6rem,6vh,2.2rem); } .title-sub { margin:0; font-size:.9rem; }
   .title-play { min-height:44px; } .title-small { min-height:36px; font-size:.82rem; } .title-where { font-size:.74rem; margin:0; }
-  .title-menu .controls-note { display:none; } .title-admin { bottom:6px; right:10px; }
+  .title-menu .controls-note { display:none; }
+  /* With Extras open the four extra buttons sit in one row and the small print steps aside. */
+  .title-menu .title-extras { grid-template-columns:repeat(4,1fr); }
+  .title-menu.extras-open .title-where, .title-menu.extras-open .title-copyright, .title-menu.extras-open .eyebrow { display:none; }
 }
 /* Upright narrow screens: art above the menu. */
 @media (max-width:700px) and (orientation:portrait) {

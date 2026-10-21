@@ -13,7 +13,9 @@ The canvas draws at most 2 device pixels per CSS pixel on a desktop and 1.5 on a
 (`escapeDensityCap`): a phone screen's 3× would be nine times the drawing for little visible
 gain. When frames run slower than about 30 fps for three seconds, quality steps down by itself:
 sharpness to 1.5×, then 1×, then Simple lighting (shown as "Simple (auto)") until the player
-picks again.
+picks again. The automatic step keeps the terrain art (ground, water edges and walls are one still
+layer drawn once, so they cost almost nothing); it drops lighting, weather, sway and critters. Only
+choosing Simple yourself brings back the plain tiles.
 
 ## Darkness
 

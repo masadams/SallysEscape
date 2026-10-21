@@ -201,7 +201,7 @@ function setupMenus(){
   $('options-close')&&($('options-close').onclick=closeOptions);$('options-fullscreen')&&($('options-fullscreen').onclick=()=>{toggleFullscreen();setTimeout(()=>{const b=$('options-fullscreen');if(b)b.textContent=isFullscreen()?'Exit full screen':'Full screen';},300);});
   $('players-button')&&($('players-button').onclick=openPlayers);$('players-close')&&($('players-close').onclick=()=>{$('players-panel').style.display='none';});
   $('players-new')&&($('players-new').onsubmit=e=>{e.preventDefault();const name=$('players-name').value;const p=EscapePlayers.create(name,playersNewColor);if(p){EscapePlayers.select(p.id);location.reload();}});
-  $('extras-button')&&($('extras-button').onclick=()=>{const box=$('title-extras'),open=box.style.display==='none';box.style.display=open?'':'none';$('extras-button').setAttribute('aria-expanded',String(open));});
+  $('extras-button')&&($('extras-button').onclick=()=>{const box=$('title-extras'),open=box.style.display==='none';box.style.display=open?'':'none';box.parentElement?.classList?.toggle?.('extras-open',open);$('extras-button').setAttribute('aria-expanded',String(open));});
   for(const id of ['options-panel','players-panel'])$(id)?.addEventListener('pointerdown',e=>{if(e.target.id===id)$(id).style.display='none';});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')for(const id of ['options-panel','players-panel'])if($(id)?.style.display==='flex'){$(id).style.display='none';e.stopPropagation();}},true);
   playerChip();
