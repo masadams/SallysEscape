@@ -58,6 +58,8 @@
       // that hops Sally back to the last checkpoint she reached, and the creatures move slower.
       this.gentle=this.level.gentle?{pace:typeof this.level.gentle==='number'?this.level.gentle:.6}:null;this.oopses=0;
       this.checkpoints=(this.level.checkpoints||[]).map(c=>({...centre(...c),reached:false}));this.checkpoint={...centre(...this.level.spawn)};
+      // Builder, community and Little Explorers runs let Sally plant her own flag: a catch brings her back to it.
+      this.canPlantFlag=Boolean(options.plantFlag);this.flag=null;this.flagsPlanted=0;
       this.pendingSpawns=[];this.spawnedReinforcements=new Set();this.webs=[];this.glowTrail=[];this.trailAt=0;
       this.hunter=this.hunters[0]||null;this.patrol=this.hunter?.patrol||[];
       this.gates=(this.level.gates||[]).map(g=>({...g,open:Boolean(g.initialOpen),sealed:false,closingAt:null,expiresAt:null,pressed:false,warned:false,activations:0,switch:g.switch?centre(...g.switch):null,plates:(g.plates||[]).map(p=>centre(...p)),levers:(g.levers||[]).map(p=>centre(...p)),heavyPlates:(g.heavyPlates||[]).map(p=>centre(...p)),tiles:g.tiles.map(p=>p.slice())}));
@@ -620,7 +622,7 @@
     shedTail(captor){
       // Who caught her and where, for the play summary; a caught run ends in finish() just after.
       this.lastCaptor={by:captor?.kind||null,at:this.elapsed};
-      if(this.gentle&&this.status==='playing')return this.oops(captor);
+      if((this.gentle||this.flag)&&this.status==='playing')return this.oops(captor);
       if(!this.tailDrop||!this.hasTail||this.status!=='playing')return false;
       this.noteCatch(captor?.kind||null,true);this.lastCaptor=null;
       const p=this.player;this.hasTail=false;this.tailsDropped++;
@@ -645,8 +647,17 @@
       this.heldUntil=0;this.heldBy=null;this.invulnerableUntil=this.elapsed+2.5;
       for(const h of this.hunters){h.graceUntil=Math.max(h.graceUntil||0,this.elapsed+3);h.awareness=0;h.lastKnown=null;h.aim=null;h.path=[];h.targetId=null;h.tailLureUntil=0;
         if(h.restState)h.state=h.restState;}
-      this.notice('Oops! Try again from here.','oops');
+      this.notice(this.checkpoint.flag?'Oops! Back to your flag.':'Oops! Try again from here.','oops');
       return true;
+    }
+    // Plant (or move) Sally's flag where she stands: open, dry ground, and not with a creature
+    // close by or already after her, so it can't drop her straight back into a catch.
+    plantFlag(){
+      if(!this.canPlantFlag||!this.active())return false;const p=this.player,x=Math.floor(p.x),y=Math.floor(p.y);
+      if(p.flight||p.underground||p.dig||p.swimming||this.heldBy||!this.floor(x,y)||this.water(p)){this.notice('Plant the flag on open, dry ground.');return false;}
+      if(this.hunters.some(h=>!h.eaten&&!h.dead&&(distance(h,p)<3||EscapeAdventure.FLAG_DANGER.has(h.state)&&distance(h,p)<8))){this.notice('Too close to danger to plant a flag.');return false;}
+      const at=centre(x,y);this.flag={x:at.x,y:at.y,at:this.elapsed};this.checkpoint={x:at.x,y:at.y,flag:true};this.flagsPlanted++;
+      this.notice('Flag planted! A catch brings Sally back here.','checkpoint');return true;
     }
     updateCheckpoints(){
       const p=this.player;
@@ -911,7 +922,7 @@
     lit(){const p=this.player;return this.hunters.some(m=>m.kind==='moth'&&!m.eaten&&distance(m,p)<=2.6&&this.clear(m,p,true));}
     seesPlayer(h=this.hunter){
       // Just after a gentle level's "Oops!" nothing notices her for a moment.
-      if(this.player.underground||this.player.dig?.buried||this.gentle&&this.elapsed<this.invulnerableUntil)return false;
+      if(this.player.underground||this.player.dig?.buried||(this.gentle||this.flag)&&this.elapsed<this.invulnerableUntil)return false;
       const p=this.player,d=distance(p,h),lit=this.hunters.length>1&&this.lit()||this.lights.length>0&&this.inLight(p);
       if(this.clouds.length&&this.inCloud(h))return false;
       if(this.elapsed<this.flashUntil&&d<=9&&this.clear(h,p,true)&&!(this.clouds.length&&this.inCloud(p)))return true;
@@ -1796,7 +1807,7 @@
     cue(name,at){this.events.push(name);if(at)(this.eventAt||(this.eventAt={}))[name]={x:at.x,y:at.y};}
     drainEvents(){const events=this.events;this.events=[];this.lastEventAt=this.eventAt||{};this.eventAt={};return events;}
   }
-  EscapeAdventure.CUNNING=CUNNING;EscapeAdventure.DIG_TIME=.75;
+  EscapeAdventure.CUNNING=CUNNING;EscapeAdventure.DIG_TIME=.75;EscapeAdventure.FLAG_DANGER=new Set(['alert','chase','windup','charge','sting','leap','rise','glimmer','swoop','reveal','lunge','dive','stalk']);
   root.EscapeAdventure=EscapeAdventure;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeAdventure};
 })(typeof globalThis!=='undefined'?globalThis:this);
