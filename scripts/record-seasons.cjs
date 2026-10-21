@@ -1408,7 +1408,15 @@ const tours={
    ],
    [
     10,
-    12
+    8,
+    false,
+    true
+   ],
+   [
+    10,
+    12,
+    false,
+    true
    ],
    [
     2,
@@ -1437,14 +1445,7 @@ const tours={
     2
    ],
    {
-    "face": [
-     1,
-     0
-    ]
-   },
-   {
-    "action": "pebble",
-    "power": 0
+    "wait": 1.5
    },
    [
     10,
@@ -1525,10 +1526,6 @@ const tours={
     19,
     4
    ],
-   [
-    20,
-    4
-   ],
    {
     "face": [
      1,
@@ -1540,8 +1537,12 @@ const tours={
     "power": 0
    },
    {
-    "wait": 0.5
+    "wait": 0.3
    },
+   [
+    20,
+    4
+   ],
    [
     20,
     5
@@ -1592,13 +1593,18 @@ const tours={
     false,
     true
    ],
+   {
+    "wait": 3
+   },
    [
     10,
-    13
+    13,
+    true
    ],
    [
     2,
-    14
+    14,
+    true
    ]
   ]
  }
