@@ -17,6 +17,14 @@ picks again. The automatic step keeps the terrain art (ground, water edges and w
 layer drawn once, so they cost almost nothing); it drops lighting, weather, sway and critters. Only
 choosing Simple yourself brings back the plain tiles.
 
+**Start-up.** Measured in Chromium with the CPU slowed four times (roughly a TV box), the first
+frames arrive about 1.3 s after the page is opened. p5.js takes about 350 ms of that, building the
+level catalogue about 110 ms (it was about 210 ms before each text map was read in a single pass
+instead of once per tile kind) and Tone.js about 100 ms. The game's own fifty-odd scripts cost
+almost nothing up front, because the browser only compiles a function when it first runs, so
+bundling them would not make a noticeable difference; on the Android app they are read from the
+device, not the network.
+
 ## Darkness
 
 In fogged and dark levels, what Sally cannot see is darkened through a one-pixel-per-tile

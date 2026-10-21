@@ -8740,7 +8740,9 @@
   // What an edited escape keeps from the game's own copy: its place on the trail and its ties.
   const EDIT_KEEP=['unlockAfter','unlockChallenges','unlockAny','hidden','bonus','secret','stars','noAids','revision'];
   function fromMap(level){
-    const rows=level.map,tiles=(chars)=>{const out=[];rows.forEach((row,y)=>[...row].forEach((ch,x)=>{if(chars.includes(ch))out.push([x,y]);}));return out;};
+    // One pass over the map sorts every tile by its character; each list stays in reading order.
+    const rows=level.map,byChar={};rows.forEach((row,y)=>{for(let x=0;x<row.length;x++)(byChar[row[x]]||=[]).push([x,y]);});
+    const tiles=chars=>chars.length===1?(byChar[chars]||[]).map(t=>[t[0],t[1]]):[...chars].flatMap(ch=>byChar[ch]||[]).sort((a,b)=>a[1]-b[1]||a[0]-b[0]).map(t=>[t[0],t[1]]);
     const one=ch=>{const found=tiles(ch);if(found.length!==1)throw new Error(level.id+' needs exactly one '+ch);return found[0];};
     level.width=Math.max(...rows.map(r=>r.length));level.height=rows.length;level.rooms=[];
     rows.forEach((row,y)=>{let start=null;[...row,'#'].forEach((ch,x)=>{const open=ch!=='#'&&ch!==' ';if(open&&start===null)start=x;if(!open&&start!==null){level.rooms.push([start,y,x-1,y]);start=null;}});});
