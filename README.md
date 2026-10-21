@@ -13,8 +13,9 @@ their own progress and settings), with Continue, Little Explorers, Players, Opti
 catches golden flies and enters escapes at their flags; the Journal holds the Story pages, the Great
 Map and the Bestiary. In an escape the only button on screen is Pause (Esc, or Start on a controller); pausing opens
 one centred panel, the same in every kind of escape: Resume, Map, Restart, Options and Leave (named
-for where it leads, such as Back to Sunshore Cove). Options holds sound, music and ambience volume, lighting,
-start cards and full screen.
+for where it leads, such as Back to Sunshore Cove). Options has three short sections: Sound (effects, music and ambience), Screen (lighting, text size,
+full screen) and Play (hard mode, start cards, play data); the device checks (frame rate, sound
+route, test sound) are folded under Advanced.
 
 **Escapes.** Early escapes are one-touch; from Venom Depths (escape 24) Sally can drop her tail once
 as a decoy, and pink regrowth bugs grow it back. Every hunter has its own job (`docs/ENEMIES.md`), and

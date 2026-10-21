@@ -82,7 +82,7 @@ function setupVolumePanel(){const sound=document.getElementById('sound-volume'),
   for(const el of [sound,music,ambience].filter(Boolean))el.addEventListener('pointerdown',e=>e.stopPropagation(),true);}
 function saveSettings(){try{escapeStore.setItem('sally-escape-settings',JSON.stringify({muted:isMuted,music:musicOn,cards:introMode,hard:escapeHardMode,lighting:typeof escapeLightingMode==='string'?escapeLightingMode:'full',sound:soundVolume,musicLevel:musicVolume,ambience:ambienceVolume,ui:uiScale}));}catch(_){}updateToolbar();}
 function setup(){mobile=isMobileDevice();document.getElementById('menu-button').onclick=e=>{e.stopPropagation();const bar=document.getElementById('game-toolbar'),open=!bar.classList.contains('toolbar-open');bar.classList.toggle('toolbar-open',open);e.currentTarget.setAttribute('aria-expanded',String(open));};
- wirePausePanel();document.getElementById('fullscreen-button').onclick=()=>{toggleFullscreen();closeToolbarMenu();};document.getElementById('view-button').onclick=()=>{toggleEscapeCloseView();closeToolbarMenu();};
+ wirePausePanel();{const adv=document.getElementById('options-advanced-toggle');if(adv)adv.onclick=()=>{const box=document.getElementById('options-advanced'),open=box.hidden;box.hidden=!open;adv.setAttribute('aria-expanded',String(open));adv.textContent='Advanced '+(open?'▾':'▸');};}document.getElementById('fullscreen-button').onclick=()=>{toggleFullscreen();closeToolbarMenu();};document.getElementById('view-button').onclick=()=>{toggleEscapeCloseView();closeToolbarMenu();};
  document.addEventListener('fullscreenchange',updateToolbar);document.addEventListener('webkitfullscreenchange',updateToolbar);
  // A tap outside the open menu closes it; on a phone any tap goes back to full screen.
  document.addEventListener('pointerdown',e=>{if(!e.target.closest?.('#game-toolbar'))closeToolbarMenu();if(mobile&&fullscreenAvailable()&&!isFullscreen())enterFullscreen();},true);
@@ -153,7 +153,7 @@ function openOptions(){const panel=document.getElementById('options-panel');if(!
   const fs=document.getElementById('options-fullscreen');if(fs){fs.style.display=fullscreenAvailable()?'':'none';fs.textContent=isFullscreen()?'Exit full screen':'Full screen';}
   panel.style.display='flex';document.getElementById('options-close')?.focus();}
 function closeOptions(){const panel=document.getElementById('options-panel');if(panel)panel.style.display='none';syncPausePanel();}
-// Credits and copyright, from the title screen's Extras or from Options; shows the build it is.
+// Credits and copyright, from the title screen's Extras; shows the build it is.
 function openCredits(){const panel=document.getElementById('credits-panel');if(!panel)return;closeOptions();closeToolbarMenu();if(gameState==='escape'&&!paused)togglePause();
   panel.style.display='flex';document.getElementById('credits-close')?.focus();const v=document.getElementById('credits-version');
   if(v){const facts=()=>{const c=escapeAudio,fps=typeof frameRate==='function'?Math.round(frameRate()):0;
