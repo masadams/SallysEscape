@@ -11,7 +11,7 @@ function openLittleExplorers(focusId){
   const done=escapeKidsDone(),levels=escapeKidsLevels(),next=levels.find(l=>!done.includes(l.id)),t=escapeText;
   panel.innerHTML='<div class="kids-picker"><div class="builder-head"><button id="kids-back" class="escape-secondary">← Main menu</button></div>'
     +'<h2 class="kids-title">Little Explorers</h2><p class="kids-sub">Help Sally on '+levels.length+' little adventures. Every one you finish gives you a sticker!</p>'
-    +'<button id="kids-guide-toggle" class="escape-secondary" aria-pressed="'+escapeKidsGuideOn()+'">Guiding dots: '+(escapeKidsGuideOn()?'On':'Off')+'</button><p class="kids-guide-note">Follow the dots, or turn them off and explore. Your tools never run out. Step on a trail note to read it.</p>'
+    +'<button id="kids-guide-toggle" class="escape-secondary" aria-pressed="'+escapeKidsGuideOn()+'">Guiding dots: '+(escapeKidsGuideOn()?'On':'Off')+'</button><p class="kids-guide-note">Follow the dots, or turn them off and explore. Your tools never run out. Stand by a sign and press A, Enter or Read to read it.</p>'
     +'<h3 class="kids-section-title">Little discoveries</h3><ol class="kids-stones">'+levels.map((l,i)=>{const got=done.includes(l.id);
       const section=l.adventure&&!levels[i-1]?.adventure?'</ol><h3 class="kids-section-title">Bigger adventures</h3><p class="kids-sub">Six journeys with room to explore. Every treasure is optional.</p><ol class="kids-stones" start="'+(i+1)+'">':'';
       return section+'<li><button class="kids-stone'+(got?' kids-done':'')+(l===next?' kids-next':'')+'" data-id="'+t(l.id)+'" aria-label="'+(i+1)+'. '+t(l.name)+(got?', finished':'')+'">'

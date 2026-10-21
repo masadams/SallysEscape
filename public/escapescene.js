@@ -608,9 +608,9 @@ function toggleEscapeCloseView(){try{escapeStore.setItem(ESCAPE_CLOSE_VIEW_KEY,e
 // the layer is redrawn only when the map itself changes (a smashed wall, flattened leaves).
 let escapeTileCache=null,escapeTerrainBase=null;
 function drawEscapeStillTiles(g,cell,palette,index){
-  // Full lighting draws continuous ground, water and solid walls first (escape-terrain.js); Simple
-  // keeps the plain tiles.
-  const terrain=escapeLightingFull()&&typeof drawEscapeTerrainGround==='function',deepWater=terrain&&escapeTerrainDeepIsWater(index);
+  // Full lighting draws continuous ground, water and solid walls first (escape-terrain.js), and keeps
+  // them if the game steps down by itself; choosing Simple keeps the plain tiles.
+  const terrain=escapeTerrainOn()&&typeof drawEscapeTerrainGround==='function',deepWater=terrain&&escapeTerrainDeepIsWater(index);
   if(terrain){const base=escapeTerrainBase;if(base?.layer)image(base.layer,0,0,g.width*cell,g.height*cell);else{drawEscapeTerrainGround(g,cell,palette);drawEscapeTerrainWater(g,cell,index,palette);drawEscapeTerrainWalls(g,cell,palette);}}
   for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++){
     const tile=g.grid[y][x],floor=g.floor(x,y);
@@ -669,7 +669,7 @@ function drawEscapeTiles(g,screenCell,palette,index){
   else{
     // The terrain has a layer of its own that only changes when walls or water do, so a gate
     // opening redraws the light tile layer without redrawing the ground beneath it.
-    if(escapeLightingFull()&&typeof drawEscapeTerrainGround==='function'){const baseKey=g.level.id+'|'+cell+'|'+index+'|'+g.grid.map(r=>r.join('')).join('/').replace(/G/g,'g');
+    if(escapeTerrainOn()&&typeof drawEscapeTerrainGround==='function'){const baseKey=g.level.id+'|'+cell+'|'+index+'|'+g.grid.map(r=>r.join('')).join('/').replace(/G/g,'g');
       if(escapeTerrainBase?.key!==baseKey){if(!escapeTerrainBase||escapeTerrainBase.w!==w||escapeTerrainBase.h!==h||escapeTerrainBase.d!==pixelDensity()){escapeTerrainBase?.layer.remove();escapeTerrainBase={layer:createGraphics(w,h),w,h,d:pixelDensity()};}
         const layer=escapeTerrainBase.layer,host=p5.instance,renderer=host._renderer;layer.clear();
         host._renderer=layer._renderer;try{push();drawEscapeTerrainGround(g,cell,palette);drawEscapeTerrainWater(g,cell,index,palette);drawEscapeTerrainWalls(g,cell,palette);pop();}finally{host._renderer=renderer;}
@@ -689,6 +689,9 @@ function drawEscapeTiles(g,screenCell,palette,index){
 // Lighting: Full (soft darkness, glowing light sources, each area's mood) or Simple (the plain,
 // flat look). Full drops to Simple by itself if the frame rate sags, until the player picks again.
 let escapeLightingMode='full',escapeLightingAuto=false,escapeFrameAvg=16,escapeSlowFrames=0,escapeFogCanvas=null;
+// The terrain art (ground, water edges, solid walls) is a still layer drawn once, so it stays when the
+// frame rate makes the game drop to Simple by itself; only choosing Simple brings back the plain tiles.
+function escapeTerrainOn(){return escapeLightingMode==='full'&&typeof document!=='undefined'&&Boolean(drawingContext?.createRadialGradient&&drawingContext.drawImage);}
 function escapeLightingFull(){return escapeLightingMode==='full'&&!escapeLightingAuto&&typeof document!=='undefined'&&Boolean(drawingContext?.createRadialGradient&&drawingContext.drawImage);}
 function escapeWatchFrameRate(dt){
   const density=pixelDensity(),full=escapeLightingMode==='full'&&!escapeLightingAuto;
