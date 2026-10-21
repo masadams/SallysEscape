@@ -774,10 +774,21 @@ function drawEscapeMood(ctx,mood,W,H,clock){
 // Nothing is drawn when she is clear of it.
 // Crates: a wooden crate, a packed snow block in winter, a hay bale in autumn. One that dropped into a
 // gap shows as its lid, flush with the ground.
+// Thin ice: a pale, glassy sheet; cracks spread across it as Sally's weight works on it, and it
+// shivers just before it gives way. Broken ice is open water (drawn with the water).
+function drawEscapeThinIce(g,view,cell){
+  if(!g.thinIce?.size)return;
+  for(const t of g.thinIce.values()){if(t.broken||view.follow&&!g.visibleTile(t.x,t.y))continue;const shake=t.crack>.75?Math.sin(g.elapsed*50)*cell*.015:0,x=t.x*cell+shake,y=t.y*cell;
+    noStroke();fill(206,232,246,150);rect(x+cell*.04,y+cell*.04,cell*.92,cell*.92,cell*.14);fill(255,255,255,90);ellipse(x+cell*.32,y+cell*.3,cell*.3,cell*.1);
+    stroke(120,170,200,90);strokeWeight(Math.max(1,cell*.02));noFill();ellipse(x+cell*.5,y+cell*.5,cell*.5,cell*.5);
+    if(t.crack>.05){stroke(70,110,140,200);strokeWeight(Math.max(1,cell*.03));const n=Math.ceil(t.crack*6),cx=x+cell*.5,cy=y+cell*.5;
+      for(let i=0;i<n;i++){const a=(i*2.399+(t.x*7+t.y*13)%6.28),r=cell*(.15+.33*Math.min(1,t.crack*1.3));const mx=cx+Math.cos(a+.3)*r*.5,my=cy+Math.sin(a+.3)*r*.5;line(cx,cy,mx,my);line(mx,my,cx+Math.cos(a)*r,cy+Math.sin(a)*r);}}}
+}
 function drawEscapeCrates(g,view,cell){
   if(!g.crates?.length)return;const theme=String(g.level.seasonalTheme||''),skin=theme.startsWith('winter')?'snow':theme.startsWith('autumn')?'hay':'wood';
   const tone={wood:[[134,96,58],[102,70,40],[164,124,80]],snow:[[214,226,238],[170,188,206],[240,246,252]],hay:[[198,160,82],[156,120,56],[226,196,118]]}[skin];
   for(const c of g.crates){const q=g.cratePos(c);if(view.follow&&!g.visibleTile(c.x,c.y))continue;const x=q.x*cell,y=q.y*cell;noStroke();
+    if(c.lost&&!c.from)continue;
     if(c.sunk&&!c.from){fill(...tone[1],230);rect(x+cell*.06,y+cell*.06,cell*.88,cell*.88,cell*.08);stroke(...tone[0]);strokeWeight(Math.max(1,cell*.04));for(const k of [.32,.68])line(x+cell*.1,y+cell*k,x+cell*.9,y+cell*k);continue;}
     const drop=c.sunk?Math.min(1,(g.elapsed-c.start)/c.dur):0,sz=1-drop*.12;
     fill(0,0,0,60);rect(x+cell*.1,y+cell*.2,cell*.86,cell*.86,cell*.1);
@@ -940,7 +951,7 @@ function drawEscapeVault(){
     push();translate((x+.5)*cell,(y+.5)*cell);rotate(ang);line((t-.5)*cell-cell*.25,-cell*.18,(t-.5)*cell+cell*.1,-cell*.18);line(((t+.5)%1-.5)*cell-cell*.2,cell*.16,((t+.5)%1-.5)*cell+cell*.12,cell*.16);pop();}}
   // Spore puffballs (a spent one is a flat stub until it regrows) and bounce caps, each cap with
   // a dotted arc to where it lands Sally.
-  drawEscapeCrates(g,view,cell);
+  drawEscapeThinIce(g,view,cell);drawEscapeCrates(g,view,cell);
   for(const puff of g.puffs||[]){if(view.follow&&!g.visibleTile(puff.x,puff.y))continue;const x=(puff.x+.5)*cell,y=(puff.y+.5)*cell,ready=g.elapsed>=puff.readyAt;noStroke();
     if(ready){const breathe=1+Math.sin(g.elapsed*2+puff.x)*.04;fill(0,0,0,50);ellipse(x,y+cell*.22,cell*.62,cell*.2);fill(236,226,196);ellipse(x,y,cell*.62*breathe,cell*.54*breathe);fill(206,190,150);for(const [dx,dy] of [[-.12,-.08],[.1,-.12],[.05,.08],[-.06,.1]])ellipse(x+dx*cell,y+dy*cell,cell*.07,cell*.07);fill(255,255,255,120);ellipse(x-cell*.1,y-cell*.12,cell*.16,cell*.1);}
     else{fill(150,136,104);ellipse(x,y+cell*.1,cell*.32,cell*.14);}}
