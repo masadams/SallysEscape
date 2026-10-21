@@ -214,9 +214,10 @@
  },
  {
   id:'spring-lanterns',name:'Lanterns After Rain',index:6,revision:1,difficulty:'Hard',seasonalTheme:'spring-dusk',cunning:3,
+  wet:[[16,1],[17,1],[18,1],[19,1],[20,1],[16,2],[17,2],[18,2],[19,2],[20,2],[16,3],[17,3],[18,3],[19,3],[20,3],[16,4],[17,4],[18,4],[19,4],[20,4],[16,5],[17,5],[18,5],[19,5],[20,5],[16,6],[17,6],[18,6],[19,6],[20,6],[16,7],[17,7],[18,7],[19,7],[20,7],[10,9],[11,9],[12,9],[10,10],[11,10],[12,10],[10,11],[11,11],[12,11]],currents:[{area:[17,1,19,5],dir:[0,1],speed:.9,surface:'ground'}],
   pebbles:1,tongues:1,glows:2,
   brief:'Twilight in three hedge rooms: a lantern moth over the leaves, a weaver and a serpent by the key, and a toad on the way home.',
-  hint:'Cross the middle room while the moth is at the far end of its loop; its light shows you even in leaves. At the bottom alley, throw a glow mushroom ahead: the weaver backs out of the light. A serpent sweeps the room above the key, and in the glow it sees you from further off: go in while it heads away east. Take the key and come back through the alley; the key opens the low gate home. A toad watches the last stretch, and crawling does not fool it. You have one pebble: toss it past the toad from the low gate and slip home while it hops after the sound.',
+  hint:'Cross the middle room while the moth is at the far end of its loop; its light shows you even in leaves. At the bottom alley, throw a glow mushroom ahead: the weaver backs out of the light. A serpent sweeps the room above the key, and in the glow it sees you from further off: go in while it heads away east. Take the key and come back through the alley; the key opens the low gate home. A toad watches the last stretch, and crawling does not fool it. You have one pebble: toss it past the toad from the low gate and slip home while it hops after the sound. The rain has left the stones slick: Sally slides a little on the wet patches, and the wet slope in the east room runs her down past its foot unless she crawls.',
   gates:[{id:'home-gate',name:'home gate',tiles:[[6,12]],color:[236,170,196]}],
   guards:[
    {kind:'moth',spawn:[9,6],patrol:[[9,6],[12,9]],facing:0},

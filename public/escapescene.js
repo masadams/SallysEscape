@@ -774,6 +774,14 @@ function drawEscapeMood(ctx,mood,W,H,clock){
 // Nothing is drawn when she is clear of it.
 // Crates: a wooden crate, a packed snow block in winter, a hay bale in autumn. One that dropped into a
 // gap shows as its lid, flush with the ground.
+// Wet ground: a darker, glossy sheen with a slow moving highlight and the odd raindrop ring, so a slick
+// patch reads before Sally steps on it.
+function drawEscapeWet(g,view,cell){
+  if(!g.wet?.size)return;noStroke();
+  for(const key of g.wet){const [x,y]=key.split(',').map(Number);if(view.follow&&!g.visibleTile(x,y))continue;const px=x*cell,py=y*cell,h=((x*928371+y*12377)%1000)/1000;
+    fill(40,60,80,55);rect(px,py,cell,cell);fill(200,225,240,40+25*Math.sin(g.elapsed*1.3+h*6));ellipse(px+cell*(.3+.4*h),py+cell*(.35+.3*((h*7)%1)),cell*.5,cell*.12);
+    const ring=(g.elapsed*.6+h*3)%3;if(ring<1){noFill();stroke(210,230,245,120*(1-ring));strokeWeight(Math.max(1,cell*.02));ellipse(px+cell*(.25+.5*((h*13)%1)),py+cell*(.25+.5*((h*17)%1)),cell*.5*ring,cell*.25*ring);noStroke();}}
+}
 // Thin ice: a pale, glassy sheet; cracks spread across it as Sally's weight works on it, and it
 // shivers just before it gives way. Broken ice is open water (drawn with the water).
 function drawEscapeThinIce(g,view,cell){
@@ -951,7 +959,7 @@ function drawEscapeVault(){
     push();translate((x+.5)*cell,(y+.5)*cell);rotate(ang);line((t-.5)*cell-cell*.25,-cell*.18,(t-.5)*cell+cell*.1,-cell*.18);line(((t+.5)%1-.5)*cell-cell*.2,cell*.16,((t+.5)%1-.5)*cell+cell*.12,cell*.16);pop();}}
   // Spore puffballs (a spent one is a flat stub until it regrows) and bounce caps, each cap with
   // a dotted arc to where it lands Sally.
-  drawEscapeThinIce(g,view,cell);drawEscapeCrates(g,view,cell);
+  drawEscapeWet(g,view,cell);drawEscapeThinIce(g,view,cell);drawEscapeCrates(g,view,cell);
   for(const puff of g.puffs||[]){if(view.follow&&!g.visibleTile(puff.x,puff.y))continue;const x=(puff.x+.5)*cell,y=(puff.y+.5)*cell,ready=g.elapsed>=puff.readyAt;noStroke();
     if(ready){const breathe=1+Math.sin(g.elapsed*2+puff.x)*.04;fill(0,0,0,50);ellipse(x,y+cell*.22,cell*.62,cell*.2);fill(236,226,196);ellipse(x,y,cell*.62*breathe,cell*.54*breathe);fill(206,190,150);for(const [dx,dy] of [[-.12,-.08],[.1,-.12],[.05,.08],[-.06,.1]])ellipse(x+dx*cell,y+dy*cell,cell*.07,cell*.07);fill(255,255,255,120);ellipse(x-cell*.1,y-cell*.12,cell*.16,cell*.1);}
     else{fill(150,136,104);ellipse(x,y+cell*.1,cell*.32,cell*.14);}}

@@ -92,6 +92,9 @@ Sally takes that. (Plates and levers work doors; only the key and chests wake en
 - **Thin ice** (Extras layer, paint it on floor) cracks under Sally: slowly as she walks, faster if she stands
   still, fastest if she sprints, and hardly at all if she crawls. It creaks a warning halfway, then gives way
   to water with a loud splash. A crate shoved onto it crashes straight through.
+- **Wet ground** (Extras layer) is slick but gentler than ice: Sally keeps a little speed when she lets go and
+  turns wider. Paint it over a **ground slope** (a Ground current) and the slope speeds her slide up instead of
+  carrying her at a steady pace, so she runs on past its foot; Crawl grips and holds the steady pace.
 - **Ice** (Layers) is the same glide ice as the game's: Sally keeps her speed, overshoots, coasts and
   crashes into walls, and only Crawl brakes. Only the marked tiles are slippery.
 - **❄ Cold** ground chills Sally; a **◍ Warm stone** thaws her.
