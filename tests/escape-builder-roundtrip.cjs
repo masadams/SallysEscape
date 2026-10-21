@@ -57,3 +57,17 @@ test('seasonal and Little Explorers adventures survive the builder round trip wi
 test('every Little Explorers level, even the smallest, opens in the builder and passes its checks',()=>{
   for(const level of EscapeCatalog.kids){const m=B.sanitize(JSON.parse(JSON.stringify(B.fromRoute(level))));assert.ok(m,level.id);assert.deepEqual(B.validate(m),[],level.id);}
 });
+// Seasonal and Little Explorers levels open in the builder too: everything that changes how they play
+// (ice, slopes, snowball logs and vent warnings, signs, checkpoints, the gentle pace, cunning) comes back out.
+test('every seasonal and kids level keeps its gameplay through a builder round trip',()=>{
+  const failed=[],same=(a,b)=>JSON.stringify(a??null)===JSON.stringify(b??null);
+  for(const level of [...EscapeCatalog.seasonal,...EscapeCatalog.kids]){
+    const model=B.sanitize(JSON.parse(JSON.stringify(B.fromRoute(level))));if(!model){failed.push(level.id+': does not sanitize');continue;}
+    const r=escapeBuildCustom(B.toRoute(model));
+    for(const k of ['slippery','currents','checkpoints','gentle','cunning','tunnels','caps'])if(!same(level[k],r[k])&&!(k==='cunning'&&(level[k]??2)===(r[k]??2)))failed.push(level.id+': '+k);
+    if(!same((level.logs||[]).map(l=>[l.warn,l.skin]),(r.logs||[]).map(l=>[l.warn,l.skin])))failed.push(level.id+': log warning or look');
+    if(!same((level.vents||[]).map(v=>v.warn),(r.vents||[]).map(v=>v.warn)))failed.push(level.id+': vent warning');
+    if(!same((level.fieldNotes||[]).map(n=>[n.at,n.body]),(r.fieldNotes||[]).map(n=>[n.at,n.body])))failed.push(level.id+': signs');
+  }
+  assert.deepEqual(failed,[]);
+});

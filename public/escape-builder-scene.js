@@ -13,7 +13,7 @@ const ESCAPE_BUILDER_ARROW=['→','↓','←','↑'];
 const ESCAPE_BUILDER_EXTRAS={'layer:shade':['⛱','Awning: shade where the hawk cannot dive'],'layer:glowPlants':['✺','Glow plant: light in a dark level'],'layer:regrowth':['✿','Regrowth bug: grows back a lost tail'],'layer:slippery':['❄','Glide ice: Sally keeps her speed, then slides faster; Crawl brakes'],
   cap:['🍄','Bounce cap: click the cap, then where it throws Sally'],wind:['≋','Wind lane: click two opposite corners'],current:['⇶','Current or slope: click two corners; choose Water or Ground in the inspector'],echo:['◎','Echo hall: click two corners; sound carries further inside'],tunnel:['⛏','Burrow pair: click one mound, then its partner'],area:['▢','Trigger area: click two corners; walking in can open doors or wake enemies'],
   ants:['🐜','Ant column: click the points of its loop in order'],seedbed:['🌱','Seed bed: click the two banks either side of a gap; a planted seed grows a crossing'],wheel:['✣','Root wheel'],rival:['⚔','Rivals: click two enemies who fight when they meet'],page:['📜','Page: a note lying on the floor for players to find and read after the run (up to 3)'],
-  sign:['🪧','Trail sign: a short note read the moment Sally steps on it (up to 4)'],checkpoint:['⚐','Checkpoint: in a gentle level a catch sends Sally back to the last one reached'],
+  sign:['🪧','Trail sign: a short note Sally reads when she stands by it and presses Read (up to 4)'],checkpoint:['⚐','Checkpoint: in a gentle level a catch sends Sally back to the last one reached'],
   'prop:lantern':['🏮','Lantern post: autumn scenery'],'prop:tree':['🍂','Autumn tree: scenery'],'prop:pumpkin':['🎃','Pumpkin: scenery'],'prop:brazier':['🔥','Brazier: winter scenery that glows'],'prop:pine':['🌲','Pine tree: winter scenery'],'prop:gift':['🎁','Gift: winter scenery'],'prop:blossom':['🌸','Blossom tree: spring scenery'],'prop:flowerpot':['🪴','Flower pot: spring scenery'],'prop:wateringcan':['🚿','Watering can: spring scenery'],'prop:flowerlantern':['🏵','Flower lantern: spring scenery that glows'],'prop:parasol':['⛱','Beach parasol: summer scenery'],'prop:sandcastle':['🏰','Sandcastle: summer scenery'],'prop:buoy':['🛟','Buoy: summer scenery'],'prop:crate':['📦','Fish crate: summer scenery'],'prop:bunting':['🎏','Bunting: summer scenery'],'prop:harbourlantern':['🪔','Harbour lantern: summer scenery that glows'],'prop:rowboat':['🛶','Rowing boat: summer scenery'],'prop:lighthouse':['🗼','Lighthouse: summer scenery'],millwheel:['☸','Mill wheel: scenery']};
 
 function escapeBuilderApi(path,options={}){return fetch('/api/'+path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});}
@@ -278,6 +278,8 @@ function escapeBuilderInspector(){
       '<label class="builder-check"><input type="checkbox" data-insp="offset"'+(h.offset?' checked':'')+'> Half a beat later</label>'+
       (h.type==='vent'?' <label>Reach <input type="number" min="1" max="6" data-insp="length" value="'+h.length+'"></label> · ↻ Turn sets its direction':'')+
       (h.type==='log'?' · '+(h.to?'rolls to '+h.to.join(','):'<b>click a tile in the same row or column to set where it rolls to</b>'):'')+
+      (h.type!=='thorns'?' <label>Warning <input type="number" step="0.1" min="0" max="10" data-insp="hwarn" value="'+(h.warn??'')+'" title="Seconds it '+(h.type==='vent'?'hisses':'rumbles')+' before it goes; empty for the usual"> s</label>':'')+
+      (h.type==='log'?'<label class="builder-check"><input type="checkbox" data-insp="hsnow"'+(h.skin==='snowball'?' checked':'')+'> Rolling snowball</label>':'')+
       '<br>Exact timing (seconds, overrides the speed): <label>every <input type="number" step="0.1" min="0" max="30" data-insp="hperiod" value="'+(h.period??'')+'"></label><label>'+(h.type==='log'?'roll speed':h.type==='vent'?'blowing for':'up for')+' <input type="number" step="0.1" min="0" max="30" data-insp="hon" value="'+(h.on??'')+'"></label><label>delay <input type="number" step="0.1" min="0" max="30" data-insp="hdelay" value="'+(h.delay??'')+'"></label>';}
   else if(p.kind==='wind'){const z=m.wind[p.index];if(!z)return '';const dir=B.DIRS.findIndex(([dx,dy])=>dx===z.dir[0]&&dy===z.dir[1]);
     html='<b>≋ Wind lane</b> '+z.area.slice(0,2).join(',')+'–'+z.area.slice(2).join(',')+' blows <select data-insp="wdir">'+ESCAPE_BUILDER_ARROW.map((a,i)=>'<option value="'+i+'"'+(i===dir?' selected':'')+'>'+a+'</option>').join('')+'</select>'+
@@ -292,7 +294,7 @@ function escapeBuilderInspector(){
       +'<br><label class="builder-hint">Words <textarea data-insp="pbody" maxlength="320" rows="3" placeholder="What does the note say? Players read it after the run.">'+escapeHtml(pg.body||'')+'</textarea></label>'+(pg.body?'':'<br><i>A page with no words is left out of the level.</i>');}
   else if(p.kind==='sign'){const q=(m.signs||[])[p.index];if(!q)return '';
     html='<b>🪧 Trail sign</b> at '+q.at.join(',')+'<br><label>Title <input data-insp="stitle" maxlength="40" value="'+escapeHtml(q.title||'')+'"></label>'
-      +'<br><label class="builder-hint">Words <textarea data-insp="sbody" maxlength="200" rows="3" placeholder="What does the sign say? Sally reads it when she steps on it.">'+escapeHtml(q.body||'')+'</textarea></label>';}
+      +'<br><label class="builder-hint">Words <textarea data-insp="sbody" maxlength="320" rows="3" placeholder="What does the sign say? Sally reads it when she stands by it and presses Read (A or Enter).">'+escapeHtml(q.body||'')+'</textarea></label>';}
   else if(p.kind==='cap'){const c=m.caps[p.index];if(!c)return '';html='<b>🍄 Bounce cap</b> at '+c.at.join(',')+' · '+(c.to?'throws Sally to '+c.to.join(','):'<b>click where it throws Sally</b>');}
   return '<div class="builder-inspector">'+html+'</div>';
 }
@@ -521,6 +523,8 @@ function wireEscapeBuilder(){
   if(insp('seconds'))insp('seconds').onchange=e=>{B.setDoor(m,p.id,{seconds:e.target.value});rerender();};
   if(insp('speed'))insp('speed').onchange=e=>{B.setHazard(m,p.id,{speed:e.target.value});rerender();};
   if(insp('offset'))insp('offset').onchange=e=>{B.setHazard(m,p.id,{offset:e.target.checked});rerender();};
+  if(insp('hwarn'))insp('hwarn').onchange=e=>{B.setHazard(m,p.id,{warn:e.target.value===''?0:Number(e.target.value)});rerender();};
+  if(insp('hsnow'))insp('hsnow').onchange=e=>{B.setHazard(m,p.id,{skin:e.target.checked?'snowball':''});rerender();};
   if(insp('length'))insp('length').onchange=e=>{B.setHazard(m,p.id,{length:e.target.value});rerender();};
   const val=e=>e.target.value===''?null:Number(e.target.value);
   for(const [k,f] of [['hperiod','period'],['hon','on'],['hdelay','delay']])if(insp(k))insp(k).onchange=e=>{const h=m.hazards.find(q=>q.id===p.id);B.setHazard(m,p.id,{[f]:val(e)});

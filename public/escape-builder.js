@@ -180,7 +180,11 @@
     if(changes.speed&&SPEEDS[changes.speed])h.speed=changes.speed;if(changes.offset!==undefined)h.offset=changes.offset?.5:0;
     if(changes.length!==undefined&&h.type==='vent')h.length=clampInt(changes.length,1,8);
     // Exact timing in seconds overrides the preset speed.
-    for(const k of ['period','on','delay'])if(changes[k]!==undefined)h[k]=changes[k]===null?undefined:clampNum(changes[k],0,30);return true;}
+    for(const k of ['period','on','delay'])if(changes[k]!==undefined)h[k]=changes[k]===null?undefined:clampNum(changes[k],0,30);
+    // How long the vent hisses or the log rumbles before it goes; a log can be a rolling snowball.
+    if(changes.warn!==undefined&&h.type!=='thorns'){const v=Number(changes.warn);if(v>0)h.warn=clampNum(v,0,10);else delete h.warn;}
+    if(changes.skin!==undefined&&h.type==='log'){if(changes.skin==='snowball')h.skin='snowball';else delete h.skin;}
+    return true;}
   // Cold ground chills Sally; warm stones thaw her.
   function paintClimate(model,kind,x,y){
     if(!walkable(at(model,x,y)))return false;const spots=kind==='warm'?model.warm:model.cold;
@@ -227,7 +231,7 @@
   // (read when Sally steps on them), scenery props and the mill wheel.
   function toggleCheckpoint(model,x,y){if(!walkable(at(model,x,y)))return false;model.checkpoints=model.checkpoints||[];const i=model.checkpoints.findIndex(p=>same(p,[x,y]));if(i>=0)model.checkpoints.splice(i,1);else{if(model.checkpoints.length>=6)return false;model.checkpoints.push([x,y]);}return true;}
   function addSign(model,x,y){model.signs=model.signs||[];if(!walkable(at(model,x,y))||model.signs.some(q=>same(q.at,[x,y]))||model.signs.length>=4)return false;model.signs.push({at:[x,y],title:'A sign',body:''});return true;}
-  function setSign(model,i,changes){const q=(model.signs||[])[i];if(!q)return false;if(changes.title!==undefined)q.title=cleanText(changes.title,40)||'A sign';if(changes.body!==undefined)q.body=cleanText(changes.body,200);return true;}
+  function setSign(model,i,changes){const q=(model.signs||[])[i];if(!q)return false;if(changes.title!==undefined)q.title=cleanText(changes.title,40)||'A sign';if(changes.body!==undefined)q.body=cleanText(changes.body,320);return true;}
   const signAt=(model,x,y)=>(model.signs||[]).findIndex(q=>same(q.at,[x,y]));
   function toggleProp(model,kind,x,y){if(!PROPS[kind]||!at(model,x,y))return false;model.props=model.props||[];const i=model.props.findIndex(q=>same(q.at,[x,y]));
     if(i>=0){const same_=model.props[i].kind===kind;model.props.splice(i,1);if(same_)return true;}if(model.props.length>=40)return false;model.props.push({at:[x,y],kind});return true;}
@@ -344,9 +348,9 @@ function validate(model){
     const vents=[],thorns=[],logs=[];
     for(const h of model.hazards){const [presetPeriod,presetOn]=TIMING[h.type][h.speed]||TIMING[h.type].medium,exact=h.period!==undefined;
       const period=exact?h.period:presetPeriod,second=exact?h.on:presetOn,offset=exact?(h.delay||0):+(h.offset*period).toFixed(2);
-      if(h.type==='vent')vents.push({at:h.at.slice(),dir:DIRS[h.dir].slice(),length:h.length,period,on:second,offset});
+      if(h.type==='vent')vents.push({at:h.at.slice(),dir:DIRS[h.dir].slice(),length:h.length,period,on:second,offset,...(h.warn?{warn:h.warn}:{})});
       else if(h.type==='thorns')thorns.push({tiles:[h.at.slice()],period,up:second,offset});
-      else if(h.to)logs.push({from:h.at.slice(),to:h.to.slice(),period,offset,speed:second});}
+      else if(h.to)logs.push({from:h.at.slice(),to:h.to.slice(),period,offset,speed:second,...(h.warn?{warn:h.warn}:{}),...(h.skin?{skin:h.skin}:{})});}
     const some=(k,v)=>v&&(!Array.isArray(v)||v.length)?{[k]:v}:{};
     return {id:model.id,name:String(model.name||'My escape').slice(0,40),brief:String(model.brief||'').slice(0,140),hint:String(model.hint||''),map:model.map.slice(),
       guards:awake.map(guard),...(asleep.length?{reinforcements:asleep.map(guard)}:{}),
@@ -400,9 +404,9 @@ function validate(model){
       for(const g of r.spawn||[])if(ids[g])m.links.push([source,ids[g]]);
       m.messages[source]={message:String(r.message||'').slice(0,160),objective:String(r.objective||'').slice(0,100)};
     }
-    m.hazards=[...(route.vents||[]).map(v=>({id:newId(m,'h'),type:'vent',at:v.at.slice(),dir:Math.max(0,DIRS.findIndex(([dx,dy])=>dx===v.dir[0]&&dy===v.dir[1])),length:v.length||3,speed:'medium',offset:0,period:v.period,on:v.on,delay:v.offset||0})),
+    m.hazards=[...(route.vents||[]).map(v=>({id:newId(m,'h'),type:'vent',at:v.at.slice(),dir:Math.max(0,DIRS.findIndex(([dx,dy])=>dx===v.dir[0]&&dy===v.dir[1])),length:v.length||3,speed:'medium',offset:0,period:v.period,on:v.on,delay:v.offset||0,...(v.warn?{warn:v.warn}:{})})),
       ...(route.thorns||[]).flatMap(t=>t.tiles.map(at=>({id:newId(m,'h'),type:'thorns',at:at.slice(),speed:'medium',offset:0,period:t.period,on:t.up,delay:t.offset||0}))),
-      ...(route.logs||[]).map(l=>({id:newId(m,'h'),type:'log',at:l.from.slice(),to:l.to.slice(),speed:'medium',offset:0,period:l.period,on:l.speed,delay:l.offset||0}))];
+      ...(route.logs||[]).map(l=>({id:newId(m,'h'),type:'log',at:l.from.slice(),to:l.to.slice(),speed:'medium',offset:0,period:l.period,on:l.speed,delay:l.offset||0,...(l.warn?{warn:l.warn}:{}),...(l.skin?{skin:l.skin}:{})}))];
     m.cold=(route.cold||[]).flatMap(([x1,y1,x2,y2])=>{const out=[];for(let y=y1;y<=(y2??y1);y++)for(let x=x1;x<=(x2??x1);x++)out.push([x,y]);return out;});
     m.warm=(route.warm||[]).map(p=>p.slice());
     return m;
@@ -436,7 +440,7 @@ function validate(model){
       mode:MODES[d.mode]&&(d.mode!=='crumble'||d.id[0]==='b')?d.mode:'timed',seconds:clampInt(d.seconds||5,1,30),...(d.root?{root:true}:{}),
       ...(typeof d.name==='string'&&d.name?{name:d.name.slice(0,30)}:{}),...(Array.isArray(d.rgb)&&d.rgb.length===3?{rgb:d.rgb.map(v=>clampInt(v,0,255))}:{})})).filter(d=>d.tiles.length);
     model.triggers=list(r.triggers,LIMITS.triggers).filter(t=>TRIGGERS[t?.type]&&point(t.at,w,h)&&safeId(t.id,/^t[0-9]{1,8}$/)).map(t=>({id:t.id,type:t.type,at:point(t.at,w,h)}));
-    model.hazards=list(r.hazards,LIMITS.hazards).filter(z=>HAZARDS[z?.type]&&point(z.at,w,h)&&safeId(z.id,/^h[0-9]{1,8}$/)).map(z=>({id:z.id,type:z.type,at:point(z.at,w,h),speed:SPEEDS[z.speed]?z.speed:'medium',offset:z.offset?.5:0,
+    model.hazards=list(r.hazards,LIMITS.hazards).filter(z=>HAZARDS[z?.type]&&point(z.at,w,h)&&safeId(z.id,/^h[0-9]{1,8}$/)).map(z=>({id:z.id,type:z.type,at:point(z.at,w,h),speed:SPEEDS[z.speed]?z.speed:'medium',offset:z.offset?.5:0,...(Number(z.warn)>0?{warn:Math.min(10,Number(z.warn))}:{}),...(z.type==='log'&&z.skin==='snowball'?{skin:'snowball'}:{}),
       ...(z.type==='vent'?{dir:clampInt(z.dir,0,3),length:clampInt(z.length||3,1,8)}:{}),...(z.type==='log'?{to:point(z.to,w,h)}:{}),
       ...(Number.isFinite(Number(z.period))&&z.period!==null?{period:clampNum(z.period,.2,30),on:clampNum(z.on,0,30),delay:clampNum(z.delay,0,30,0)}:{})}));
     model.cold=list(r.cold,w*h).map(p=>point(p,w,h)).filter(Boolean);model.warm=list(r.warm,60).map(p=>point(p,w,h)).filter(Boolean);
@@ -456,7 +460,7 @@ function validate(model){
     model.rootWheel=point(r.rootWheel,w,h);
     model.gentle=Number(r.gentle)>0?clampNum(r.gentle,.3,1,.6):0;model.foxWarn=clampNum(r.foxWarn,0,3,0);model.look=typeof r.look==='string'&&Object.prototype.hasOwnProperty.call(LOOKS,r.look)?r.look:'';
     model.checkpoints=pts(r.checkpoints,6);model.props=list(r.props,40).map(q=>({at:point(q?.at,w,h),kind:q?.kind})).filter(q=>q.at&&PROPS[q.kind]);model.millWheel=point(r.millWheel,w,h);
-    model.signs=list(r.signs,4).map(q=>({at:point(q?.at,w,h),title:cleanText(q?.title,40)||'A sign',body:cleanText(q?.body,200),...(typeof q?.id==='string'&&/^[a-z0-9-]{1,40}$/.test(q.id)?{id:q.id}:{})})).filter(q=>q.at);
+    model.signs=list(r.signs,4).map(q=>({at:point(q?.at,w,h),title:cleanText(q?.title,40)||'A sign',body:cleanText(q?.body,320),...(typeof q?.id==='string'&&/^[a-z0-9-]{1,40}$/.test(q.id)?{id:q.id}:{})})).filter(q=>q.at);
     model.pages=list(r.pages,PAGE_LIMIT).map(pg=>({at:point(pg?.at,w,h),title:cleanText(pg?.title,40)||'A note',body:cleanText(pg?.body,320),author:cleanText(pg?.author,30),...(typeof pg?.id==='string'&&/^level-note:[a-z]+:[12]$/.test(pg.id)?{id:pg.id}:{})})).filter(pg=>pg.at);
     model.regions=list(r.regions,12).map(q=>({id:safeId(q?.id,/^r[0-9]{1,8}$/),area:area(q?.area),requiresKey:Boolean(q?.requiresKey)})).filter(q=>q.id&&q.area);
     model.rivalries=list(r.rivalries,12).filter(p=>Array.isArray(p)&&typeof p[0]==='string'&&typeof p[1]==='string').map(p=>[p[0],p[1]]);

@@ -3,7 +3,7 @@
 The builder is under **Extras** on the start menu.
 
 ## Signing in with a passkey
-The builder and the **Admin** area (a link under the start menu buttons) need an admin signed in
+The builder and the **Admin** area (in the title screen's Extras) need an admin signed in
 with a passkey: Face ID, a fingerprint, the device PIN or a security key. There is no password.
 Playing **Community levels** needs nothing.
 
@@ -64,6 +64,10 @@ Sally takes that. (Plates and levers work doors; only the key and chests wake en
 - **⋀ Thorns**: rise and fall on a tile.
 - **● Rolling log**: click its start, then where it rolls to (same row or column).
 - Select a hazard to set **slow / medium / fast**, or **half a beat later** to stagger two of them.
+- A vent or log can also take a **Warning** time (how long it hisses or rumbles before it goes), and a log
+  can be a **Rolling snowball**, as in the winter levels.
+- **Ice** (Layers) is the same glide ice as the game's: Sally keeps her speed, overshoots, coasts and
+  crashes into walls, and only Crawl brakes. Only the marked tiles are slippery.
 - **❄ Cold** ground chills Sally; a **◍ Warm stone** thaws her.
 
 **Level settings** also set how many **glow mushrooms** Sally carries (0–5). Each one, thrown,
