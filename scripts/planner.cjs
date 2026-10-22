@@ -47,13 +47,14 @@ function triggers(g,reach){
 // When the key or the hatch is behind a closed door, the switch that opens it comes first.
 function goals(g){
   const reach=t=>g.route(g.player,t).length>0||Math.hypot(t.x-g.player.x,t.y-g.player.y)<.5;
-  const r=rush(g);if(r)return [r];
+  // Dashing through an open timed door comes first; the usual goals stay as a fallback.
+  const r=rush(g),first=r?[r]:[];
   const blocked=(!g.hasKey&&!reach(g.key))||(g.exitUnlocked()&&!reach(g.exit))||(g.hasKey&&!reach(g.exit));
-  if(blocked){const t=triggers(g,reach);if(t.length)return [...t,...goalsOpen(g,reach)];
+  if(blocked){const t=triggers(g,reach);if(t.length)return [...first,...t,...goalsOpen(g,reach)];
     // Only a beetle's weight opens the way: wait somewhere safe until its heavy plate lifts the door.
     const heavy=g.gates.findIndex(gate=>!gate.open&&!gate.sealed&&!gate.shut&&(gate.heavy||gate.heavyPlates?.length));
-    if(heavy>=0)return [{x:g.player.x,y:g.player.y,what:'await',gate:heavy},...goalsOpen(g,reach)];}
-  return goalsOpen(g,reach);
+    if(heavy>=0)return [...first,{x:g.player.x,y:g.player.y,what:'await',gate:heavy},...goalsOpen(g,reach)];}
+  return [...first,...goalsOpen(g,reach)];
 }
 // A timed door is open (a plate just pressed, or a beetle on its heavy plate): dash straight through
 // it, no stopping at cover, to the first tile past it on the way to the key, the hatch or a switch.
@@ -128,13 +129,9 @@ function* windows(state,to){
 function plan(options,{budget=60000,branch=3}={}){
   const start={g:new EscapeAdventure(options),rec:[]},t0=Date.now();let best=start,tries=0;
   // Depth-first over hops, keeping a couple of windows per hop for backtracking.
-  // A route never comes back to a situation it has already been in (same tile, key, treasure and
-  // doors): no pacing back and forth across a bridge whose plates re-open it from either side. The
-  // same spot reached by another route, at another moment, is still worth trying.
-  const seen=new Set(),sig=g=>Math.floor(g.player.x)+','+Math.floor(g.player.y)+'|'+g.hasKey+'|'+g.treasure+'|'+g.gates.map(x=>x.open?1:x.sealed?2:0).join('');
   function solve(state,depth){
     if(state.g.status==='won')return state;if(Date.now()-t0>budget||depth>200)return null;
-    const here=sig(state.g);if(seen.has(here))return null;seen.add(here);try{
+
     if(state.g.elapsed>best.g.elapsed)best=state;
     for(const goal of goals(state.g).slice(0,2)){
       const route=hops(state.g,goal),to=route[0];let n=0;
@@ -142,7 +139,7 @@ function plan(options,{budget=60000,branch=3}={}){
       for(const next of windows(state,to)){tries++;
         const done=solve(next,depth+1);if(done)return done;if(++n>=branch)break;}
     }
-    return null;}finally{seen.delete(here);}
+    return null;
   }
   const done=solve(start,0);
   return {won:Boolean(done),commands:(done||best).rec,tries,seconds:(Date.now()-t0)/1000,reached:(done||best).g.elapsed};
