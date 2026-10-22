@@ -9,6 +9,8 @@ function escapeRecordSummary(level,saved,challenge=false){
 }
 function escapeToolkit(level){return [[level.camos||0,'camouflage'],[level.seeds||0,'seed pod'],[level.tongues||0,'tongue grab'],[level.glows||0,'glow mushroom'],[level.spores||0,'spore pouch'],[level.burrows,'burrow'],[level.pebbles,level.seasonal==='winter'?'snowball':'pebble']].filter(([n])=>n>0).map(([n,label])=>n+' '+label+(n>1&&label!=='camouflage'?'s':'')).concat(level.requiredTreasure?[level.requiredTreasure+' treasure to escape']:[],level.timeLimit?[level.timeLimit+' second escape']:[],level.tailDrop?['spare tail']:[],level.soil?.length?['soft dirt to dig into (hold '+(typeof escapePadActive==='function'&&escapePadActive()?'B':typeof mobile!=='undefined'&&mobile?'Burrow':'E')+')']:[],level.regrowth?.length?[level.regrowth.length+' pink regrowth bug'+(level.regrowth.length>1?'s':'')]:[],level.hawk?['hawk overhead']:[],level.antTrails?[level.antTrails.length+' ant column'+(level.antTrails.length>1?'s':'')]:[],level.guards.some(h=>h.kind==='gecko')?['gecko thief']:[],level.cold?['cold rooms']:[],level.vents?[level.vents.length+' steam vents']:[]);}
 let escapeGame=null,escapeIntroOpen=false,escapeCharacter=null;
+// The level workshop's "Watch": a recorded winning run driving Sally, frame for frame, instead of the player.
+let escapeAutoplay=null;
 // Leaving a route part-way counts as an attempt, so the first-try bonus stays honest.
 // Anonymous play data: a run left part-way counts as quit once it has really started.
 const escapeDevice=()=>typeof mobile!=='undefined'&&mobile?'touch':'desk';
@@ -173,6 +175,7 @@ function startEscape(options={}){
   if(options.glowbugs===undefined&&!options.challengeId&&!options.custom&&!options.kidsId&&!options.seasonalId&&Math.random()<ESCAPE_GLOWBUG_CHANCE)options={...options,glowbugs:1+Math.floor(Math.random()*1e6)};
   startRun('escape');escapeGame=new EscapeAdventure(options.custom?{level:escapeBuildCustom(options.custom),plantFlag:true}:{...options,plantFlag:Boolean(options.kidsId)});escapeMetCount=0;escapeBestiaryNote=null;escapeCharacter=new SallyCharacter({reducedMotion:Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)});document.getElementById('escape-builder').style.display='none';escapeResultShown=false;escapeHudAt=-Infinity;
   escapeCrawlTip(escapeGame);
+  escapeAutoplay=Array.isArray(options.autoplay)?{commands:options.autoplay,i:0,left:null,budget:0}:null;if(escapeAutoplay)escapeGame.notice('Watching the recorded winning run.');
   escapeOptions=options.custom?{custom:options.custom,from:options.from||'builder'}:escapeGame.level.seasonal?{seasonalId:escapeGame.level.id,from:'seasonal'}:escapeGame.level.kids?{kidsId:escapeGame.level.id,from:'kids'}:escapeGame.level.hidden?{hiddenId:escapeGame.level.id}:{levelId:escapeGame.level.id,challengeId:escapeGame.challenge?.id||null};
   gameState='escape';escapeLibraryOpen=false;document.getElementById('game-area').classList.remove('escape-world-open');mountEscapeChrome(true);
   document.getElementById('game-area').classList.toggle('escape-exploring',Boolean(escapeGame.level.explore));
@@ -306,12 +309,20 @@ function toggleEscapeMap(){
   document.getElementById('escape-map').innerHTML='<h3>'+(all?'Maze overview':'Your explored map')+'</h3><p>Paused · Bright dot: Sally. Gold square: key. Gold dots: treasure. Green: hatch. Pink: sealed passage.'+(g.level.seeds?' Leaf diamonds: vine banks.':'')+'</p>'+svg+'<p>'+g.gates.map(g=>escapeText(g.name)+': '+(g.bracedUntil>escapeGame.elapsed?'braced · '+Math.ceil(g.bracedUntil-escapeGame.elapsed)+'s':g.closingAt!==null?'sealing':g.sealed?'sealed':g.duration?g.open?'open · '+Math.max(0,Math.ceil(g.expiresAt-escapeGame.elapsed))+'s':'step on either turquoise plate':g.open?'open':g.switch?'find its matching switch':'awaits a mechanism')).join(' · ')+'</p><button id="escape-map-close" class="escape-primary">Resume game [G]</button>';
   document.getElementById('escape-map').style.display='block';document.getElementById('game-area').classList.add('escape-map-open');document.getElementById('escape-map-close').onclick=toggleEscapeMap;document.getElementById('escape-map-close').focus();
 }
+// Plays the recording at the game's own pace: one recorded frame per 1/120 s, tools used in between.
+function stepEscapeAutoplay(seconds){
+  const a=escapeAutoplay,g=escapeGame,act=EscapeAdventure.RUN_ACTIONS;a.budget+=Math.min(seconds,.1);
+  while(a.budget>=1/120&&g.active()){const c=a.commands[a.i];if(!c){escapeAutoplay=null;g.notice('That was the whole recorded run.');return;}
+    if(c.kind!=='move'){g[act[c.kind]]?.(c.power);a.i++;continue;}
+    if(a.left===null)a.left=c.frames;if(a.left>0){g.advance(1/120,c);a.left--;a.budget-=1/120;}if(a.left<=0){a.i++;a.left=null;}}
+}
 function playEscape(){
   if(!escapeGame)return;
   escapeGame.paused=paused||Boolean(typeof escapeStoryOpen!=='undefined'&&escapeStoryOpen);
   if(!paused&&gameState==='escape')escapeWatchFrameRate(deltaTime);
   if(escapeIntroOpen&&gameState==='escape'&&!paused){const m=escapeMovement();if(m.x||m.y)hideEscapeIntro();}
-  if(gameState==='escape'&&!escapeGame.paused&&!skipSimulationFrame&&!escapeIntroOpen){
+  if(escapeAutoplay&&gameState==='escape'&&!escapeGame.paused&&!skipSimulationFrame&&!escapeIntroOpen)stepEscapeAutoplay(deltaTime/1000);
+  else if(gameState==='escape'&&!escapeGame.paused&&!skipSimulationFrame&&!escapeIntroOpen){
     let {x,y,sprint,crawl,dig}=escapeMovement();
     // A key held for a throw can be let go while the window was away: drop the throw then.
     if(escapeCharge?.source==='key'&&!keyIsDown({glow:76,spore:90}[escapeCharge.kind]||81))releaseEscapeCharge();

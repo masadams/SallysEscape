@@ -154,6 +154,13 @@ its area builds every level. **Edit** opens one in the builder with everything i
 this browser only: drafts never go to the community shelf and change nothing for players.
 **Back to the game's version** reloads the original; **Discard draft** deletes the draft.
 
+**🏁 Winning run** (in the menu bar while editing a game level) draws the escape's recorded winning run
+over the map: the dashed route, blue rings where Sally waits (with the seconds), icons where she uses a
+tool, ✓ or ✗ where it ends. The bar under it says whether the run still wins on the level as it stands
+in the builder; after an edit, **↻ Re-check** replays it on your version. Pick the treasure run where
+there is one. **▶ Watch** plays the level with the recorded run driving Sally, at normal speed. The runs
+come from the server (admin only; they are the answers).
+
 **Test drafts in game** (in the workshop) swaps each draft in for its escape in this browser, so it
 plays from the map with its unlocks and ties unchanged, marked ✎. Runs on a draft never count
 toward stars or progress. Turning it on or off reloads the page.
