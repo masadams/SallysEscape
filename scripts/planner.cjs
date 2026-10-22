@@ -145,8 +145,15 @@ function* windows(state,to){
     if(g.gates[to.gate].open)yield {g,rec,w:0,sprint:false};return;}
   // Through an open timed door: go now, sprinting first; being past it is what counts.
   if(to.rush){for(const sprint of [true,false]){const g=clone(state.g),rec=state.rec.map(c=>({...c}));if(walk(g,rec,to,sprint))yield {g,rec,w:0,sprint};}return;}
-  const snaps=forecast(state),order=ranked(state,snaps,to).slice(0,TRY);
-  for(const {w,sprint} of order){if(Date.now()>deadline)break;
+  // The plain list of waits comes first, shortest first: it usually works and costs no forecast.
+  // Only when it runs dry is the danger map drawn up, and its best timings (finer waits, up to
+  // 12 s) tried as well.
+  const tried=new Set(),key=(w,sprint)=>w+(sprint?'s':'w');
+  function* order(){
+    for(const w of WAITS)for(const sprint of [false,true])yield {w,sprint};
+    for(const c of ranked(state,forecast(state),to).slice(0,TRY))yield c;
+  }
+  for(const {w,sprint} of order()){if(Date.now()>deadline)break;if(tried.has(key(w,sprint)))continue;tried.add(key(w,sprint));
     const g=clone(state.g),rec=state.rec.map(c=>({...c}));
     if(!hold(g,rec,w)||!walk(g,rec,to,sprint))continue;
     // The hatch counts only if Sally gets through it.
