@@ -228,6 +228,56 @@ function escapeLeaveWorkshop(){if(!escapeBuilderWorkshop)return;escapeBuilderWor
 function escapeWorkshopLabel(key){const [kind,id]=key.split(':'),l=escapeGameLevel(key);if(!l)return key;return (kind==='hidden'?'★ ':kind==='kids'?'🌼 ':kind==='seasonal'?'✦ ':(EscapeCatalog.levels.findIndex(x=>x.id===id)+1)+' · ')+l.name;}
 // The route a draft plays: a seasonal or Little Explorers escape keeps what the builder doesn't handle.
 function escapeWorkshopRoute(key,model){const route=EscapeBuilder.toRoute(model);return /^(kids|seasonal):/.test(key)?EscapeBuilder.mergeInto(escapeSourceRoute(key),escapeGameLevel(key),route):route;}
+// The workshop's winning runs: the recorded runs that prove an escape can be won (admin only, from
+// the server), traced on the level as it stands in the builder. The route is drawn over the map, and
+// the trace says whether the run still wins on the edit or where it now goes wrong. Tracing replays
+// the whole run, so it happens when asked (turning it on, picking a run, Re-check), not on every edit.
+let escapeBuilderRun={key:null,on:false,runs:null,pick:0,trace:null,sig:'',busy:false,error:''};
+const ESCAPE_RUN_NAMES={main:'Winning run',treasure:'Treasure run'};
+const ESCAPE_RUN_TOOLS={pebble:'🪨',glow:'✨',spore:'☁',tongue:'👅',burrow:'⤓',seed:'🌱',camo:'🍃'};
+function escapeBuilderRunLevel(key,m){const route=escapeWorkshopRoute(key,m);return /^(kids|seasonal):/.test(key)?escapeBuildAs(key,route):escapeBuildCustom(route);}
+function escapeBuilderRunSig(){return JSON.stringify(escapeBuilderModel)+'#'+escapeBuilderRun.pick;}
+async function escapeBuilderRunToggle(){
+  const r=escapeBuilderRun,key=escapeBuilderWorkshop?.key;if(!key)return;
+  if(r.key!==key)Object.assign(r,{key,on:false,runs:null,pick:0,trace:null,sig:'',error:''});
+  r.on=!r.on;if(!r.on){renderEscapeBuilder();return;}
+  if(!r.runs){r.busy=true;renderEscapeBuilder();
+    try{const res=await escapeBuilderApi('admin/runs?key='+encodeURIComponent(key),{method:'GET'});const body=await res.json().catch(()=>({}));
+      if(res.ok)r.runs=Array.isArray(body.runs)?body.runs:[];else r.error=body.error||'Could not load the recorded runs.';}
+    catch(_){r.error='Could not reach the server for the recorded runs.';}
+    r.busy=false;}
+  escapeBuilderRunTrace();
+}
+// Replays the picked run on the builder's level (after a frame, so "Tracing…" shows first).
+function escapeBuilderRunTrace(){
+  const r=escapeBuilderRun,run=r.runs?.[r.pick],key=r.key;if(!run||!escapeBuilderWorkshop){renderEscapeBuilder();return;}
+  r.busy=true;renderEscapeBuilder();
+  setTimeout(()=>{try{r.trace=EscapeAdventure.trace({level:escapeBuilderRunLevel(key,escapeBuilderModel)},run.commands);r.error='';}catch(e){r.trace=null;r.error='This level does not build yet: '+e.message;}
+    r.sig=escapeBuilderRunSig();r.busy=false;renderEscapeBuilder();},30);
+}
+function escapeBuilderRunBar(){
+  const r=escapeBuilderRun;if(!r.on||!escapeBuilderWorkshop||r.key!==escapeBuilderWorkshop.key)return '';
+  const t=r.trace,stale=t&&r.sig!==escapeBuilderRunSig();
+  const status=r.busy?'Tracing the run…':r.error?'⚠ '+escapeHtml(r.error):!r.runs?.length?'No recorded run for this escape yet.':!t?'':
+    t.status==='won'?'✓ Still wins on this version, in '+t.time+'s'+(t.waits.length?' · '+t.waits.length+' wait'+(t.waits.length>1?'s':''):'')+(t.tools.length?' · '+t.tools.length+' tool use'+(t.tools.length>1?'s':''):''):
+    '✗ '+(t.status==='playing'?'The run ends at '+t.time+'s without escaping':'At '+t.time+'s: '+escapeHtml(t.message||t.status))+' (the ✗ on the map)';
+  return '<div class="builder-runbar'+(t&&t.status!=='won'?' bad':'')+'">'+
+    (r.runs?.length>1?'<select id="builder-run-pick" aria-label="Which recorded run">'+r.runs.map((x,i)=>'<option value="'+i+'"'+(i===r.pick?' selected':'')+'>'+escapeHtml(ESCAPE_RUN_NAMES[x.variant]||x.variant)+'</option>').join('')+'</select>':'<b>'+escapeHtml(ESCAPE_RUN_NAMES[r.runs?.[0]?.variant]||'Winning run')+'</b>')+
+    '<span>'+status+'</span>'+(stale?'<button id="builder-run-recheck" class="escape-secondary">↻ Re-check on your edit</button>':'')+
+    (r.runs?.length?'<button id="builder-run-watch" class="escape-secondary" title="Play the level with the recorded run driving Sally">▶ Watch</button>':'')+'</div>';
+}
+// The route over the map, in tile units: the path, waits (rings with seconds), tools used, the end.
+function escapeBuilderRunSvg(w,h){
+  const r=escapeBuilderRun,t=r.trace;if(!r.on||!t||r.key!==escapeBuilderWorkshop?.key)return '';
+  const pts=t.points.map(p=>p.x+','+p.y).join(' '),won=t.status==='won';
+  return '<svg class="builder-route" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true">'+
+    '<polyline points="'+pts+'" fill="none" stroke="#1b1206" stroke-opacity=".55" stroke-width=".26" stroke-linejoin="round" stroke-linecap="round"/>'+
+    '<polyline points="'+pts+'" fill="none" stroke="#ffd25a" stroke-width=".13" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray=".35 .18"/>'+
+    t.waits.map(q=>'<circle cx="'+q.x+'" cy="'+q.y+'" r="'+Math.min(.7,.25+q.s*.06)+'" fill="#7fd3ff" fill-opacity=".25" stroke="#7fd3ff" stroke-width=".06"/><text x="'+q.x+'" y="'+(q.y-.45)+'" font-size=".42" text-anchor="middle" fill="#dff4ff" stroke="#0b1714" stroke-width=".08" paint-order="stroke">'+q.s+'s</text>').join('')+
+    t.tools.map(q=>'<text x="'+q.x+'" y="'+(q.y+.18)+'" font-size=".55" text-anchor="middle">'+(ESCAPE_RUN_TOOLS[q.kind]||'•')+'</text>').join('')+
+    '<circle cx="'+t.points[0].x+'" cy="'+t.points[0].y+'" r=".22" fill="#9be38f"/>'+
+    '<text x="'+t.end.x+'" y="'+(t.end.y+.22)+'" font-size=".7" text-anchor="middle" fill="'+(won?'#9be38f':'#ff6b5a')+'" stroke="#0b1714" stroke-width=".08" paint-order="stroke">'+(won?'✓':'✗')+'</text></svg>';
+}
 function escapeWorkshopEdit(key){
   const draft=EscapeEdits.get(key),model=draft?.model&&EscapeBuilder.sanitize(draft.model);
   if(!escapeBuilderWorkshop)escapeBuilderOwnModel=escapeBuilderModel;
@@ -465,6 +515,7 @@ function escapeBuilderMenuBar(problems){
     '<input id="builder-name" class="builder-name-inline" maxlength="40" aria-label="Level name" value="'+escapeHtml(escapeBuilderModel.name)+'">'+
     (([icon,name])=>'<span class="builder-brush" title="The brush in hand">'+icon+' '+escapeHtml(name)+'</span>')(escapeBuilderBrush())+
     '<button id="builder-hints" class="builder-chip'+(escapeBuilderHintsOn()?' on':'')+'" title="Show what a tool or tile is when you rest the pointer on it" aria-pressed="'+escapeBuilderHintsOn()+'">💬 Hints '+(escapeBuilderHintsOn()?'on':'off')+'</button>'+
+    (ws?'<button id="builder-route" class="builder-chip'+(escapeBuilderRun.on&&escapeBuilderRun.key===ws.key?' on':'')+'" title="Show the recorded winning run over the map and check it still wins on your edit">🏁 Winning run</button>':'')+
     '<button id="builder-problems" class="builder-chip'+(problems.length?' bad':'')+'" title="'+escapeHtml(problems.join(' '))+'">'+(problems.length?'⚠ '+problems.length+' to fix':'✓ Ready')+'</button>'+
     '<button id="builder-play" class="escape-primary"'+(problems.length?' disabled':'')+'>▶ Playtest</button></div>';
 }
@@ -498,7 +549,7 @@ function renderEscapeBuilder(){
   const side=escapeBuilderPick?'<aside class="builder-side-right">'+escapeBuilderInspector()+'</aside>':'';
   panel.innerHTML='<div class="builder-app">'+escapeBuilderMenuBar(problems)+(escapeBuilderMenu?.kind==='menu'?'<div class="builder-scrim" data-close-menu="1"></div>':'')+
     '<div class="builder-body'+(side?' builder-body-inspect':'')+'">'+escapeBuilderRail()+
-    '<main class="builder-canvas">'+escapeBuilderFlyoutHtml()+'<div id="builder-grid" class="builder-grid" style="grid-template-columns:repeat('+w+',1fr);--w:'+w+'">'+m.map.map((row,y)=>[...row].map((ch,x)=>escapeBuilderCell(x,y,ch,linked)).join('')).join('')+'</div>'+
+    '<main class="builder-canvas">'+escapeBuilderFlyoutHtml()+'<div id="builder-grid" class="builder-grid" style="grid-template-columns:repeat('+w+',1fr);--w:'+w+'">'+m.map.map((row,y)=>[...row].map((ch,x)=>escapeBuilderCell(x,y,ch,linked)).join('')).join('')+escapeBuilderRunSvg(w,m.map.length)+'</div>'+escapeBuilderRunBar()+
     (escapeBuilderNote?'<p class="builder-toast" role="status">'+escapeHtml(escapeBuilderNote)+'</p>':'')+
     (escapeBuilderWorkshop?'<p class="builder-badge">Workshop draft · saved only in this browser</p>':'')+'</main>'+side+'</div></div>'+escapeBuilderDialogHtml()+escapeBuilderContextHtml();
   // A message shows for a few seconds, then clears.
@@ -648,6 +699,9 @@ function wireEscapeBuilder(){
   document.onpointerup=()=>{escapeBuilderPainting=false;escapeBuilderStroke=null;};
   on('builder-play',()=>{if(!B.validate(m).length)startEscape({custom:B.toRoute(m),from:'builder'});});
   if(ws){
+    on('builder-route',()=>escapeBuilderRunToggle());on('builder-run-recheck',()=>escapeBuilderRunTrace());
+    if($('builder-run-pick'))$('builder-run-pick').onchange=e=>{escapeBuilderRun.pick=Number(e.target.value)||0;escapeBuilderRunTrace();};
+    on('builder-run-watch',()=>{const run=escapeBuilderRun.runs?.[escapeBuilderRun.pick];if(run&&!B.validate(m).length)startEscape({custom:escapeWorkshopRoute(ws.key,m),from:'builder',skipIntro:true,autoplay:run.commands});});
     on('workshop-save',act(()=>{const model=B.sanitize(m),ok=model&&EscapeEdits.save(ws.key,model,B.validate(model).length?null:escapeWorkshopRoute(ws.key,model));
       escapeBuilderNote=!ok?'Could not save the draft.':B.validate(model).length?'Draft saved. Fix the problems before it can be played in game.':'Draft saved'+(EscapeEdits.active()?'. Reload to play it from the map.':'.');rerender();}));
     on('workshop-export1',act(()=>{escapeBuilderDialog='share';rerender();const t=$('builder-text');if(t)escapeWorkshopExport([ws.key],t);}));

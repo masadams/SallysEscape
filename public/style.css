@@ -785,3 +785,9 @@ body.pad-nav .pad-glyph { display:inline-block; }
 .pad-glyph.pad-view { width:auto; padding:0 .45em; border-radius:.75em; background:#5b6670; }
 .playdata-card { width:min(440px,100%); } .playdata-card p { margin:0 0 10px; line-height:1.45; } .playdata-small { font-size:.85rem; opacity:.8; }
 .playdata-card .options-foot { gap:10px; margin-top:6px; }
+/* The workshop's winning run: the route drawn over the map, and a bar saying whether it still wins. */
+.builder-grid { position:relative; }
+.builder-route { position:absolute; inset:1px; width:calc(100% - 2px); height:calc(100% - 2px); pointer-events:none; overflow:visible; }
+.builder-runbar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:8px; padding:6px 10px; border-radius:8px; background:#14261f; border:1px solid #2f5a45; color:#dff0d8; font-size:13px; }
+.builder-runbar.bad { border-color:#a8473c; background:#2a1714; }
+.builder-runbar select { font:inherit; }

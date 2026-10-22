@@ -1793,6 +1793,22 @@
       for(const k of Object.keys(out))if(!(out[k]>0))delete out[k];return out;}
     noteCatch(by,tail){const p=this.player;if(this.catches.length<12)this.catches.push({x:Math.floor(p.x),y:Math.floor(p.y),t:+this.elapsed.toFixed(1),by:by||'?',...(tail?{tail:true}:{})});}
     // What caught Sally when no creature did: the sky, the wind, a trap.
+    // A recorded run (the input, frame by frame, with tool uses between) played on a level, with
+    // where Sally went: a point every tenth of a second, where she used each tool, where she stood
+    // and waited, and how it ended. The level workshop draws it over the map.
+    static trace(options,commands,{every=12,minWait=.5}={}){
+      const g=new EscapeAdventure(options),A=EscapeAdventure.RUN_ACTIONS,at=()=>({x:+g.player.x.toFixed(2),y:+g.player.y.toFixed(2)});
+      const points=[at()],tools=[],waits=[];let frames=0,still=null;
+      for(const c of commands){if(!g.active())break;
+        if(c.kind!=='move'){tools.push({...at(),kind:c.kind,t:+(frames/120).toFixed(1)});g[A[c.kind]]?.(c.power);continue;}
+        for(let n=0;n<c.frames&&g.active();n++){g.advance(1/120,c);frames++;
+          const idle=!c.x&&!c.y;if(idle&&!still)still={...at(),from:frames};
+          if((!idle||!g.active())&&still){const s=(frames-still.from)/120;if(s>=minWait)waits.push({x:still.x,y:still.y,s:+s.toFixed(1)});still=null;}
+          if(frames%every===0)points.push(at());}}
+      if(still){const s=(frames-still.from)/120;if(s>=minWait)waits.push({x:still.x,y:still.y,s:+s.toFixed(1)});}
+      points.push(at());
+      return {status:g.status,time:+(frames/120).toFixed(1),message:g.status==='playing'?'':g.message,points,tools,waits,end:at()};
+    }
     static causeOf(message){return [['hawk',/hawk/i],['wind',/gust/i],['ants',/ant column/i],['log',/log/i],['thorns',/thorns/i],['vine',/vine/i],['scorpion',/scorpion/i],['toad',/toad/i]].find(([,re])=>re.test(message||''))?.[0]||'?';}
     winterMessage(message){if(typeof message!=='string')return message;return message.replace(/pebbles/gi,'snowballs').replace(/pebble/gi,'snowball').replace(/snow fox/gi,'Gift Snatcher').replace(/beetle/gi,'Yeti').replace(/lowers its horn/gi,'raises its arms').replace(/spider/gi,'Krampus').replace(/The toad's tongue snapped Sally up/g,'A snowball from the snowman knocked Sally flat').replace(/toad/gi,'snowman').replace(/owl/gi,'wisp').replace(/sentinel/gi,'Nutcracker').replace(/rolling log/gi,'rolling snowball').replace(/thorns/gi,'icicles').replace(/silk/gi,'tangled ribbon');}
     finish(status,message){
@@ -1807,7 +1823,7 @@
     cue(name,at){this.events.push(name);if(at)(this.eventAt||(this.eventAt={}))[name]={x:at.x,y:at.y};}
     drainEvents(){const events=this.events;this.events=[];this.lastEventAt=this.eventAt||{};this.eventAt={};return events;}
   }
-  EscapeAdventure.CUNNING=CUNNING;EscapeAdventure.DIG_TIME=.75;EscapeAdventure.FLAG_DANGER=new Set(['alert','chase','windup','charge','sting','leap','rise','glimmer','swoop','reveal','lunge','dive','stalk']);
+  EscapeAdventure.CUNNING=CUNNING;EscapeAdventure.RUN_ACTIONS={pebble:'throwDecoy',burrow:'burrow',tongue:'useTongue',seed:'plantSeed',camo:'camouflage',glow:'throwGlow',spore:'throwSpore'};EscapeAdventure.DIG_TIME=.75;EscapeAdventure.FLAG_DANGER=new Set(['alert','chase','windup','charge','sting','leap','rise','glimmer','swoop','reveal','lunge','dive','stalk']);
   root.EscapeAdventure=EscapeAdventure;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeAdventure};
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -13,6 +13,8 @@ WORKDIR /app
 RUN mkdir -p /data && chown node:node /data
 COPY --from=build --chown=node:node /app/public ./public
 COPY --chown=node:node server ./server
+# The recorded winning runs: the admin's level workshop draws and replays them.
+COPY --chown=node:node tests/fixtures ./tests/fixtures
 VOLUME /data
 USER node
 EXPOSE 8080
