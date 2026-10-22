@@ -9,7 +9,8 @@
   const store=(()=>{try{return typeof localStorage==='undefined'?null:localStorage;}catch(_){return null;}})();
   function read(){try{const s=JSON.parse(store?.getItem(KEY)||'{}');return {on:Boolean(s.on),drafts:s.drafts&&typeof s.drafts==='object'?s.drafts:{}};}catch(_){return {on:false,drafts:{}};}}
   function write(state){try{store?.setItem(KEY,JSON.stringify(state));return true;}catch(_){return false;}}
-  // Drafts are keyed 'level:<id>' for trail escapes and 'hidden:<id>' for the Gilded Burrow's.
+  // Drafts are keyed 'level:<id>' for trail escapes, 'hidden:<id>' for the Gilded Burrow's, 'seasonal:<id>'
+  // and 'kids:<id>' for the seasonal and Little Explorers adventures.
   const api={
     KEY,
     all(){return read().drafts;},

@@ -225,7 +225,9 @@ function escapeQuickBuild(fresh){
   renderEscapeBuilder();
 }
 function escapeLeaveWorkshop(){if(!escapeBuilderWorkshop)return;escapeBuilderWorkshop=null;escapeBuilderModel=escapeBuilderOwnModel;escapeBuilderOwnModel=null;escapeBuilderPick=null;}
-function escapeWorkshopLabel(key){const [kind,id]=key.split(':'),l=escapeGameLevel(key);if(!l)return key;return (kind==='hidden'?'★ ':(EscapeCatalog.levels.findIndex(x=>x.id===id)+1)+' · ')+l.name;}
+function escapeWorkshopLabel(key){const [kind,id]=key.split(':'),l=escapeGameLevel(key);if(!l)return key;return (kind==='hidden'?'★ ':kind==='kids'?'🌼 ':kind==='seasonal'?'✦ ':(EscapeCatalog.levels.findIndex(x=>x.id===id)+1)+' · ')+l.name;}
+// The route a draft plays: a seasonal or Little Explorers escape keeps what the builder doesn't handle.
+function escapeWorkshopRoute(key,model){const route=EscapeBuilder.toRoute(model);return /^(kids|seasonal):/.test(key)?EscapeBuilder.mergeInto(escapeSourceRoute(key),escapeGameLevel(key),route):route;}
 function escapeWorkshopEdit(key){
   const draft=EscapeEdits.get(key),model=draft?.model&&EscapeBuilder.sanitize(draft.model);
   if(!escapeBuilderWorkshop)escapeBuilderOwnModel=escapeBuilderModel;
@@ -240,11 +242,13 @@ function escapeWorkshopExport(keys,out){
 async function openEscapeWorkshop(message=''){
   const panel=escapeBuilderShow();escapeLeaveWorkshop();
   if(!escapeAdminSignedIn){panel.innerHTML='<p>Checking…</p>';const s=await escapeAdminStatus();if(!s?.signedIn){renderEscapeAdminLock({title:'Admin',next:()=>openEscapeWorkshop(),status:s});return;}}
-  const drafts=EscapeEdits.all(),on=EscapeEdits.active(),live=[...EscapeCatalog.levels,...EscapeCatalog.hidden].filter(l=>l.draft).length,day=t=>String(t||'').slice(0,16).replace('T',' ');
+  const drafts=EscapeEdits.all(),on=EscapeEdits.active(),live=[...EscapeCatalog.levels,...EscapeCatalog.hidden,...EscapeCatalog.kids,...EscapeCatalog.seasonal].filter(l=>l.draft).length,day=t=>String(t||'').slice(0,16).replace('T',' ');
   const row=key=>{const d=drafts[key];return '<div class="builder-saved"><b>'+escapeHtml(escapeWorkshopLabel(key))+'</b> <span>'+(d?'✎ draft saved '+day(d.savedAt)+(d.route?'':' · has problems, not playable in game'):'')+'</span><button data-wedit="'+key+'">Edit</button>'+
     (d?'<button data-wexport="'+key+'">Export</button><button data-wdiscard="'+key+'">Discard</button>':'')+'</div>';};
   let list='';EscapeCatalog.levels.forEach((l,i)=>{const chapter=EscapeWorld?.chapters?.find(c=>c.start===i);if(chapter)list+='<h4>'+escapeHtml(chapter.name)+'</h4>';list+=row('level:'+l.id);});
   list+='<h4>The Gilded Burrow and bonus escapes</h4>'+EscapeCatalog.hidden.map(l=>row('hidden:'+l.id)).join('');
+  for(const pack of (typeof EscapeSeasons!=='undefined'?EscapeSeasons.packs:[]))list+='<h4>Seasonal · '+escapeHtml(pack.name)+'</h4>'+EscapeCatalog.seasonal.filter(l=>l.seasonal===pack.id).map(l=>row('seasonal:'+l.id)).join('');
+  list+='<h4>Little Explorers</h4>'+EscapeCatalog.kids.map(l=>row('kids:'+l.id)).join('');
   const count=Object.keys(drafts).length;
   panel.innerHTML='<div class="builder-head"><button id="builder-back" class="escape-secondary">← Admin</button><h2>Level workshop</h2></div>'+(message?'<p class="builder-status">'+escapeHtml(message)+'</p>':'')+
     '<p>Edit any escape behind the scenes. Drafts stay in this browser: they never reach the community shelf and change nothing for players until you export them and they are brought into the game.</p>'+
@@ -644,7 +648,7 @@ function wireEscapeBuilder(){
   document.onpointerup=()=>{escapeBuilderPainting=false;escapeBuilderStroke=null;};
   on('builder-play',()=>{if(!B.validate(m).length)startEscape({custom:B.toRoute(m),from:'builder'});});
   if(ws){
-    on('workshop-save',act(()=>{const model=B.sanitize(m),ok=model&&EscapeEdits.save(ws.key,model,B.validate(model).length?null:B.toRoute(model));
+    on('workshop-save',act(()=>{const model=B.sanitize(m),ok=model&&EscapeEdits.save(ws.key,model,B.validate(model).length?null:escapeWorkshopRoute(ws.key,model));
       escapeBuilderNote=!ok?'Could not save the draft.':B.validate(model).length?'Draft saved. Fix the problems before it can be played in game.':'Draft saved'+(EscapeEdits.active()?'. Reload to play it from the map.':'.');rerender();}));
     on('workshop-export1',act(()=>{escapeBuilderDialog='share';rerender();const t=$('builder-text');if(t)escapeWorkshopExport([ws.key],t);}));
     on('workshop-revert',act(()=>{if(!confirm('Load the game’s version into the builder? Your saved draft stays until you save over it or discard it.'))return rerender();escapeBuilderModel=B.fromRoute(escapeGameLevel(ws.key));escapeBuilderPick=null;escapeBuilderNote='Loaded the game’s version.';rerender();}));
