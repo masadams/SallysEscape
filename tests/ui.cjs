@@ -300,3 +300,12 @@ test('returning to campaign after a seasonal or kids run keeps the last campaign
 test('controller A enters the campaign world even when a hidden keyboard list button still has focus',()=>{const h=harness(),pad={index:0,connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:16},()=>({pressed:false,value:0}))};h.c.navigator.getGamepads=()=>[pad];h.run('showEscapeSelect();openEscapeWorld("quiet-vault");document.getElementById("world-list-back").focus();pollEscapePad()');pad.buttons[0].pressed=true;h.run('pollEscapePad()');assert.equal(h.run('gameState'),'escape');assert.equal(h.run('escapeGame.level.id'),'quiet-vault');});
 test('seasonal overview hides the movement controls and follow view restores the same touch stick',()=>{const h=harness();h.el('season-hub').querySelectorAll=()=>[];h.run('mobile=true;escapeUseInput("touch");openSeasonalHub();seasonToggleOverview()');assert.equal(h.el('touch-controls').style.display,'none');h.run('seasonEnter()');assert.equal(h.run('gameState'),'seasonalHub');assert.equal(h.run('seasonOverview'),false);assert.equal(h.el('touch-controls').style.display,'flex');});
 test('Enter/A chooses the displayed winter level ahead of a nearby parked sled',()=>{const h=harness();h.el('season-hub').querySelectorAll=()=>[];h.run('openSeasonalHub("winter","winter-bells");seasonWorld.sled.at={x:seasonWorld.player.x,y:seasonWorld.player.y};seasonEnter()');assert.equal(h.run('gameState'),'escape');assert.equal(h.run('escapeGame.level.id'),'winter-bells');});
+
+test('the frame-rate guard ignores a level opening and one-off hitches, and says when it switches to Simple lighting',()=>{
+  const h=harness();h.run('escapeProgress.unlocked=()=>true;escapeLightingMode="full";escapeLightingAuto=false;startEscape({levelId:"quiet-vault",skipIntro:true});');
+  h.run('escapeGame.elapsed=1;for(let i=0;i<600;i++)escapeWatchFrameRate(60);');assert.equal(h.run('escapeLightingAuto'),false,'slow frames while the level opens do not count');
+  h.run('escapeGame.elapsed=10;for(let i=0;i<600;i++)escapeWatchFrameRate(i%20?16:400);');assert.equal(h.run('escapeLightingAuto'),false,'an occasional long hitch is not slowness');
+  h.run('for(let i=0;i<120;i++)escapeWatchFrameRate(30);');assert.equal(h.run('escapeLightingAuto'),false,'a few seconds is not enough');
+  h.run('for(let i=0;i<200;i++)escapeWatchFrameRate(30);');assert.equal(h.run('escapeLightingAuto'),true,'steady slowness switches');
+  assert.match(h.run('escapeGame.message'),/Lighting switched to Simple/);
+});
