@@ -715,11 +715,16 @@ function escapeTerrainOn(){return escapeLightingMode==='full'&&typeof document!=
 function escapeLightingFull(){return escapeLightingMode==='full'&&!escapeLightingAuto&&typeof document!=='undefined'&&Boolean(drawingContext?.createRadialGradient&&drawingContext.drawImage);}
 function escapeWatchFrameRate(dt){
   const density=pixelDensity(),full=escapeLightingMode==='full'&&!escapeLightingAuto;
-  if((!full&&density<=1)||!dt)return;escapeFrameAvg=escapeFrameAvg*.95+Math.min(100,dt)*.05;
-  // Three seconds of frames under about 45 a second steps quality down: sharpness first (2× to 1.5×
-  // to 1×), then Simple lighting. Sharpness steps down with Simple lighting picked too.
-  escapeSlowFrames=escapeFrameAvg>22?escapeSlowFrames+Math.min(100,dt):0;if(escapeSlowFrames<3000)return;escapeSlowFrames=0;escapeFrameAvg=16;
+  if((!full&&density<=1)||!dt)return;
+  // The first seconds of a level (loading, the curtain, music starting) don't count.
+  if(!escapeGame||escapeGame.elapsed<4){escapeFrameAvg=16;escapeSlowFrames=0;return;}
+  // A one-off hitch (a sound starting, the browser tidying memory) counts as no worse than a 20 fps frame.
+  escapeFrameAvg=escapeFrameAvg*.95+Math.min(50,dt)*.05;
+  // Five seconds of frames steadily under about 42 a second steps quality down: sharpness first (2× to
+  // 1.5× to 1×), then Simple lighting, with a note saying so. Sharpness steps down with Simple picked too.
+  escapeSlowFrames=escapeFrameAvg>24?escapeSlowFrames+Math.min(50,dt):0;if(escapeSlowFrames<5000)return;escapeSlowFrames=0;escapeFrameAvg=16;
   if(density>1){pixelDensity(density>1.5?1.5:1);return;}escapeLightingAuto=true;updateToolbar();
+  escapeGame.notice('Lighting switched to Simple to keep things smooth. Options → Lighting to change it back.');
 }
 // Where a level sits, for its mood: its region (and how far into it), or a place of its own.
 function escapePlace(level){
