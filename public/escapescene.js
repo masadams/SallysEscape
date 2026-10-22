@@ -590,7 +590,7 @@ function escapeAidsHidden(g=escapeGame){if(g?.level?.seasonal)return false;retur
 const escapeMarkPops=new WeakMap();
 function escapeHunterMark(h,cell,g){
   // A creature bonked by a pebble sees stars for a moment (shown even in hard mode: it is the creature's own tell).
-  if(h.bonkFrom&&h.state==='steamed'){push();noStroke();fill(255,226,120);textAlign(CENTER,CENTER);textSize(cell*.28);for(let i=0;i<3;i++){const a=g.elapsed*6+i*2.09;text('★',h.x*cell+Math.cos(a)*cell*.32,(h.y-.55)*cell+Math.sin(a)*cell*.12);}pop();}
+  if((h.bonkFrom||h.dazed)&&h.state==='steamed'){push();noStroke();fill(255,226,120);textAlign(CENTER,CENTER);textSize(cell*.28);for(let i=0;i<3;i++){const a=g.elapsed*6+i*2.09;text('★',h.x*cell+Math.cos(a)*cell*.32,(h.y-.55)*cell+Math.sin(a)*cell*.12);}pop();}
   if(escapeAidsHidden(g))return;
   const mark=h.state==='alert'?'?':['chase','windup','charge','sting','leap','glimmer','swoop','reveal','lunge','snap','peek','scuttle','aim','raise','stir','surface','ripple'].includes(h.state)?'!':h.state==='decoy'?'♪':'…';
   let seen=escapeMarkPops.get(h);if(!seen||seen.mark!==mark){seen={mark,at:escapeFxClock};escapeMarkPops.set(h,seen);}

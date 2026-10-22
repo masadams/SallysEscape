@@ -20,6 +20,8 @@
   const MAGPIE_DEAF=new Set(['magpie','ladybird','owl','moth','cricket','angler','mimic','flytrap','sentinel','cloudray','echofrog','toad','scorpion','millipede','heron','mantis','wasp','eel','crab','gecko']);
   // lead is how far ahead it reads Sally: 1 aims where she will be by the time it gets there, 0 where she is.
   const MOMENTUM={snake:{turn:2.4,grip:.55,accel:1.6,pulse:1.5,lead:.85},cobra:{turn:2,grip:.5,accel:1.3,pulse:1.1,lead:1},'sea-snake':{turn:2.4,grip:.55,accel:1.6,pulse:1.4,lead:.85},fish:{turn:4.5,grip:.6,accel:2.5,pulse:2.2,lead:.5},chameleon:{turn:3.5,grip:.55,accel:2,pulse:1,lead:.4}};
+  // Creatures a trap on the ground cannot reach: fliers, swimmers and the rooted.
+  const TRAP_PROOF=new Set(['owl','magpie','moth','dragonfly','wasp','bat','cloudray','fish','eel','angler','flytrap','mimic','heron','sentinel','mole']);
   // Hunters heavy enough to press a heavy plate.
   const HEAVY=new Set(['beetle']);
   // Creatures a thrown pebble can bonk on the way: the ones that walk the floor in the open.
@@ -714,6 +716,10 @@
       }
     }
     tileKey(p){return Math.floor(p.x)+','+Math.floor(p.y);}
+    // A trap (a rolling log, thorns springing up) knocks a creature silly: it reels with stars over
+    // its head for a few seconds, forgets what it was after, then goes back to its rounds. Unlike a
+    // pebble's bonk it doesn't come looking afterwards: nobody threw the trap at it.
+    daze(h){h.state='steamed';h.phaseUntil=this.elapsed+EscapeAdventure.TRAP_DAZE;h.path=[];h.targetId=null;h.aim=null;h.awareness=0;h.dazed=true;this.events.push('clash');}
     updateWarmth(dt){
       const p=this.player,key=this.tileKey(p),before=p.warmth;
       p.warmth=this.warm.has(key)?Math.min(100,p.warmth+45*dt):this.cold.has(key)?Math.max(0,p.warmth-(p.sprinting?14:9)*dt):Math.min(100,p.warmth+6*dt);
@@ -887,7 +893,7 @@
       if(this.antTrails.length&&this.elapsed>=this.invulnerableUntil&&this.antAt(p)){this.alarms++;if(!this.shedTail(null)){this.finish('caught','The ant column marched right over Sally. Cross in the gaps between groups.');return;}}
       const sniper=this.elapsed>=this.invulnerableUntil&&!p.hidden&&this.toadTongueHit();
       if(sniper){this.alarms++;if(this.shedTail(sniper))return;this.finish('caught','The toad\'s tongue snapped Sally up. Break its line of sight behind pillars or cover.');return;}
-      const stinger=this.hunters.find(h=>h.kind==='scorpion'&&h.state==='sting'&&h.aim&&distance(h,h.aim)<=(h.reach||1.8)+1&&distance(p,h.aim)<.9&&this.clear(h,p,true));
+      const stinger=this.hunters.find(h=>h.kind==='scorpion'&&h.state==='sting'&&h.aim&&distance(h,h.aim)<=(h.reach||1.8)+1&&distance(p,h.aim)<.81&&this.clear(h,p,true));
       if(this.elapsed>=this.invulnerableUntil&&stinger&&this.shedTail(stinger))return;
       if(this.elapsed>=this.invulnerableUntil&&stinger){this.finish('caught','The scorpion struck. Cross its ring while the tail is down, or change direction when it strikes.');return;}
       // Capture wins over picking up the key or escaping in the same simulation step.
@@ -934,7 +940,7 @@
     updateHunter(dt,h=this.hunter){
       this.hunterDt=dt;
       if(h.eaten)return;
-      if(h.state==='steamed'){if(this.elapsed>=h.phaseUntil){h.state=h.kind==='mimic'?'rooted':'patrol';h.graceUntil=this.elapsed+.5;
+      if(h.state==='steamed'){if(this.elapsed>=h.phaseUntil){h.state=h.kind==='mimic'?'rooted':'patrol';h.graceUntil=this.elapsed+.5;h.dazed=false;
         if(h.bonkFrom){if(['snake','sea-snake','cobra','chameleon','spider','toad','beetle','gecko'].includes(h.kind)){h.state='search';h.lastKnown=h.bonkFrom;h.searchUntil=this.elapsed+this.cunning.search+1.5;}h.bonkFrom=null;}}return;}
       if(this.updateGlowFear(dt,h))return;
       if(h.tailLureUntil){
@@ -1601,7 +1607,7 @@
         return;
       }
       if(h.state==='emerge'){if(this.elapsed>=h.phaseUntil)h.state='patrol';return;}
-      if(h.state==='raise'){h.tailUp=true;if(this.elapsed>=h.phaseUntil){if(inRing){h.aim=this.lead(.3*this.cunning.aim);h.state='windup';h.phaseUntil=this.elapsed+.3*this.cunning.warn;}else h.state='alert';}return;}
+      if(h.state==='raise'){h.tailUp=true;if(this.elapsed>=h.phaseUntil){if(inRing){h.aim=this.lead(.27*this.cunning.aim);h.state='windup';h.phaseUntil=this.elapsed+.33*this.cunning.warn;}else h.state='alert';}return;}
       if(h.state==='windup'){
         if(this.elapsed>=h.phaseUntil){h.state='sting';h.phaseUntil=this.elapsed+.2;this.cue('sting',h);}
         return;
@@ -1616,7 +1622,7 @@
       h.tailUp=this.elapsed>=(h.restUntil||0)&&(cycle<2||this.elapsed<(h.alertUntil||0));
       if(inRing){
         h.facing=Math.atan2(p.y-h.y,p.x-h.x);this.alarms++;
-        if(h.tailUp){h.aim=this.lead(.3*this.cunning.aim);h.state='windup';h.phaseUntil=this.elapsed+.4*this.cunning.warn;this.notice('Scorpion strike! Change direction!','tail');}
+        if(h.tailUp){h.aim=this.lead(.27*this.cunning.aim);h.state='windup';h.phaseUntil=this.elapsed+.44*this.cunning.warn;this.notice('Scorpion strike! Change direction!','tail');}
         else{h.state='raise';h.phaseUntil=this.elapsed+.6;h.alertUntil=this.elapsed+2.5;this.notice('The scorpion raises its tail!','tail');}
         return;
       }
@@ -1686,11 +1692,13 @@
         log.warning=phase>=startAt-log.warn&&phase<startAt;if(log.warning&&!log.warned){log.warned=true;this.events.push('rumble');}
         log.rolling=phase>=startAt;if(!log.rolling){log.pos=null;if(!log.warning)log.warned=false;continue;}
         const f=(phase-startAt)/travel;log.pos={x:log.from.x+(log.to.x-log.from.x)*f,y:log.from.y+(log.to.y-log.from.y)*f};
-        for(const h of this.hunters)if(distance(h,log.pos)<.6&&!['owl','magpie','moth'].includes(h.kind)&&h.state!=='steamed'){h.state='steamed';h.phaseUntil=t+2;h.path=[];this.events.push('clash');}
+        for(const h of this.hunters)if(distance(h,log.pos)<.6&&!['owl','magpie','moth'].includes(h.kind)&&h.state!=='steamed')this.daze(h);
         if(distance(p,log.pos)<.6&&t>=this.invulnerableUntil){this.alarms++;if(this.shedTail(null))continue;this.finish('caught','A rolling log flattened Sally. Wait in a side pocket until it passes.');return;}
       }
       for(const th of this.thorns){
         const phase=(t+th.offset)%th.period,down=th.period-th.up;th.raised=phase>=down;th.warning=phase>=down-.5&&!th.raised;
+        // Thorns spring up under creatures too: anything on the ground there is dazed.
+        if(th.raised)for(const h of this.hunters)if(th.keys.has(this.tileKey(h))&&!TRAP_PROOF.has(h.kind)&&!h.eaten&&!['steamed','stunned','buried','dig','emerge','rise'].includes(h.state))this.daze(h);
         if(th.raised&&th.keys.has(here)&&t>=this.invulnerableUntil){this.alarms++;if(this.shedTail(null)){this.invulnerableUntil=t+th.up;continue;}this.finish('caught','Thorns sprang up under Sally. Cross when they sink.');return;}
       }
       if(this.level.crumble){
@@ -1823,7 +1831,7 @@
     cue(name,at){this.events.push(name);if(at)(this.eventAt||(this.eventAt={}))[name]={x:at.x,y:at.y};}
     drainEvents(){const events=this.events;this.events=[];this.lastEventAt=this.eventAt||{};this.eventAt={};return events;}
   }
-  EscapeAdventure.CUNNING=CUNNING;EscapeAdventure.RUN_ACTIONS={pebble:'throwDecoy',burrow:'burrow',tongue:'useTongue',seed:'plantSeed',camo:'camouflage',glow:'throwGlow',spore:'throwSpore'};EscapeAdventure.DIG_TIME=.75;EscapeAdventure.FLAG_DANGER=new Set(['alert','chase','windup','charge','sting','leap','rise','glimmer','swoop','reveal','lunge','dive','stalk']);
+  EscapeAdventure.CUNNING=CUNNING;EscapeAdventure.TRAP_DAZE=4;EscapeAdventure.RUN_ACTIONS={pebble:'throwDecoy',burrow:'burrow',tongue:'useTongue',seed:'plantSeed',camo:'camouflage',glow:'throwGlow',spore:'throwSpore'};EscapeAdventure.DIG_TIME=.75;EscapeAdventure.FLAG_DANGER=new Set(['alert','chase','windup','charge','sting','leap','rise','glimmer','swoop','reveal','lunge','dive','stalk']);
   root.EscapeAdventure=EscapeAdventure;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeAdventure};
 })(typeof globalThis!=='undefined'?globalThis:this);
