@@ -123,11 +123,11 @@ Levels opt into each trap through their level data.
 | One-use bridge | `once: true` on a bridge gate | Rises from its plate once; when it closes it is gone for good. |
 | Crumbling bridge | `crumble: true` on a bridge gate | Holds for one crossing, then falls away behind Sally. |
 | Crumbling floor | `c` in a text map, or `crumble: [[x, y]]` | Cracks under Sally and collapses into a gap once she leaves it. There is no way back. |
-| Rolling log | `logs: [{from, to, period, offset, speed}]` | Rumbles as a warning, then sweeps a straight lane. It flattens Sally and knocks hunters down. |
+| Rolling log | `logs: [{from, to, period, offset, speed}]` | Rumbles as a warning, then sweeps a straight lane. It flattens Sally; a creature it hits is dazed for 4 seconds (stars over its head), then goes back to its rounds. |
 | Tangle vine | `T` in a text map | Holds Sally still for about a second and a half. If a hunter sees her while she is held, she is caught (a spare tail tears her free instead). Then the vine withers for a few seconds and regrows. |
 | Crack | `S` in a text map | A narrow split in a wall. Sally slips through; no hunter can follow or see into it, so it ends a chase. |
 | Heavy plate | `heavy: true` on a timed gate | Ignores Sally. Only a big hunter's weight (a beetle on its rounds) presses it, opening the gate for its duration. Wait for the beetle, then sneak through. |
-| Thorns | `thorns: [{tiles, period, up, offset}]` | Tremble, then rise on a rhythm. They only catch Sally while raised. |
+| Thorns | `thorns: [{tiles, period, up, offset}]` | Tremble, then rise on a rhythm. They only catch Sally while raised; a creature on the ground when they spring up is dazed for 4 seconds. |
 | Spore puffball | `o` in a text map | Sally stepping on it, a hunter walking over it or a pebble landing by it bursts it into a spore cloud for about four and a half seconds. Inside the cloud Sally is hidden even while moving, and a hunter inside it cannot see. It regrows after ten seconds. |
 | Bounce cap | `caps: [{at, to}]` | Stepping onto the cap flings Sally in a half-second arc to its landing tile, over gaps, water or walls. She cannot be caught in the air, and the flight makes no footsteps. The arc is marked. |
 | Wind lane | `wind: [{area: [x1, y1, x2, y2], dir, period, on, offset}]` | Streaks always show the lane and its direction; they thicken and race just before a gust. While it gusts, Sally inside is shoved along the lane, out of cover, and counts as moving. |
