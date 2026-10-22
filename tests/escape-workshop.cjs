@@ -64,3 +64,35 @@ test('apply-level-edits writes drafts into the source and they play as edited',(
   }
   assert.deepEqual(failed,[]);
 });
+
+// Seasonal and Little Explorers adventures are in the workshop too: a draft keeps everything the
+// builder doesn't handle (sticker, theme, place in its pack...) and is built the way its pack builds.
+test('seasonal and Little Explorers drafts stand in for their escapes and keep their pack details',()=>{
+  const {escapeSourceRoute,escapeGameLevel:own}=require('../public/escape-levels.js');
+  const kid=EscapeCatalog.kids[2],season=EscapeCatalog.seasonal.find(l=>l.seasonal==='winter');
+  const draft=key=>{const m=B.fromRoute(own(key));m.name='Edited';return B.mergeInto(escapeSourceRoute(key),own(key),B.toRoute(m));};
+  const {EscapeCatalog:c,escapeGameLevel}=catalogWith({['kids:'+kid.id]:draft('kids:'+kid.id),['seasonal:'+season.id]:draft('seasonal:'+season.id)});
+  const k=c.kids.find(l=>l.id===kid.id),s=c.seasonal.find(l=>l.id===season.id);
+  assert.equal(k.draft,true);assert.equal(k.name,'Edited');assert.equal(k.kids,true);assert.equal(k.sticker,kid.sticker);assert.equal(k.gentle,kid.gentle);
+  assert.equal(s.draft,true);assert.equal(s.name,'Edited');assert.equal(s.seasonal,'winter');assert.equal(s.seasonalTheme,season.seasonalTheme);assert.equal(s.cunning,season.cunning);
+  assert.equal(escapeGameLevel('seasonal:'+season.id).name,season.name,'the game’s own copy stays reachable');
+  assert.equal(c.seasonal.length,EscapeCatalog.seasonal.length);
+});
+
+test('apply-level-edits writes seasonal and Little Explorers drafts and their recorded runs still win',()=>{
+  const {replaceWhole}=require('../scripts/apply-level-edits.cjs'),{escapeSourceRoute,escapeBuildAs,escapeGameLevel:own}=require('../public/escape-levels.js');
+  const ACT2={...ACT,glow:'throwGlow',spore:'throwSpore'},play=(options,commands)=>{const g=new EscapeAdventure(options);for(const c of commands){if(c.kind==='move'){for(let n=0;n<c.frames;n++)g.advance(1/120,c);}else g[ACT2[c.kind]](c.power);}return g;};
+  const files=['kids','autumn','winter','spring','summer'].map(f=>path.join(__dirname,'../public/escape-'+f+'.js'));
+  const recs=[...require('./fixtures/escape-kids-adventures.json'),...require('./fixtures/escape-seasons.json'),...require('./fixtures/escape-winter.cjs'),...require('./fixtures/escape-spring.cjs'),...require('./fixtures/escape-summer.cjs')];
+  const failed=[];let runs=0;
+  for(const [kind,list] of [['kids',EscapeCatalog.kids],['seasonal',EscapeCatalog.seasonal]])for(const game of list){
+    const key=kind+':'+game.id,route=B.mergeInto(escapeSourceRoute(key),own(key),B.toRoute(B.sanitize(JSON.parse(JSON.stringify(B.fromRoute(game))))));
+    const file=files.find(f=>fs.readFileSync(f,'utf8').includes('"'+game.id+'"')||fs.readFileSync(f,'utf8').includes("'"+game.id+"'"));
+    const text=replaceWhole(fs.readFileSync(file,'utf8'),game.id,route),entry=entries(text).map(([a,b])=>Function('PI','return ('+text.slice(a,b)+');')(Math.PI)).find(r=>r.id===game.id);
+    const level=escapeBuildAs(key,entry);
+    for(const k of ['sticker','seasonalTheme','index','difficulty','gentle','kids','unlimited','seasonal'])if(game[k]!==undefined)assert.deepEqual(level[k],game[k],game.id+' keeps '+k);
+    for(const r of recs.filter(r=>(r.options.kidsId||r.options.seasonalId)===game.id)){runs++;const g=play({level},r.commands);
+      if(g.status!=='won'||r.time!==undefined&&Math.abs(g.elapsed-r.time)>.01)failed.push(game.id+' '+r.variant+': '+g.status+' at '+g.elapsed.toFixed(2)+'s');}
+  }
+  assert.ok(runs>=80,'recorded runs replayed: '+runs);assert.deepEqual(failed,[]);
+});

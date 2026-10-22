@@ -25,7 +25,7 @@ function openLittleExplorers(focusId){
 }
 // The results of a Little Explorers level: a sticker, always a way on, and never a world map.
 function escapeKidsResult(r){
-  const level=escapeGame.level,levels=escapeKidsLevels(),next=levels[levels.indexOf(level)+1],fresh=escapeKidsMark(level.id),t=escapeText;
+  const level=escapeGame.level,levels=escapeKidsLevels(),next=levels[levels.indexOf(level)+1],fresh=!r.draft&&escapeKidsMark(level.id),t=escapeText;
   document.getElementById('escape-result-medals').innerHTML='<span class="kids-reward"><span class="kids-reward-sticker" aria-hidden="true">'+t(level.sticker||'⭐')+'</span>'+(fresh?'A new sticker for your collection!':'Well done!')+'</span>';
   document.getElementById('escape-result-challenge').textContent=r.oopses?'Sally said "Oops!" '+r.oopses+' time'+(r.oopses>1?'s':'')+' and kept going. Brave!':'No oopses at all. Super sneaky!';
   const nextButton=document.getElementById('escape-next-btn'),menu=document.getElementById('escape-menu-btn');

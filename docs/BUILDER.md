@@ -148,7 +148,9 @@ player's best time. Level makers can copy a community level into the builder or 
 
 ## The level workshop (game levels)
 **Admin → Open the level workshop** lists every escape in the game, the Gilded Burrow and the bonus
-escapes. **Edit** opens one in the builder with everything it has. **Save draft** keeps the draft in
+escapes, each seasonal area's adventures and the Little Explorers levels. A seasonal or Little Explorers draft
+keeps everything the builder doesn't handle (its sticker, theme and place in its area) and is built the way
+its area builds every level. **Edit** opens one in the builder with everything it has. **Save draft** keeps the draft in
 this browser only: drafts never go to the community shelf and change nothing for players.
 **Back to the game's version** reloads the original; **Discard draft** deletes the draft.
 
@@ -160,7 +162,10 @@ toward stars or progress. Turning it on or off reloads the page.
 text to copy. To bring an export into the game:
 
     node scripts/apply-level-edits.cjs edits.json           # check: builds, lint, recorded run
-    node scripts/apply-level-edits.cjs edits.json --write   # write into escape-rebuilt.js / escape-hidden.js
+    node scripts/apply-level-edits.cjs edits.json --write   # write into the escape's own source file
+
+(`escape-rebuilt.js`, `escape-hidden.js`, `escape-kids.js` or the season's `escape-autumn.js` / `-winter` /
+`-spring` / `-summer`.) The check replays every recorded winning run of each edited escape.
 
 An edited escape keeps its id and revision, so players' records stand. If the check says the
 recorded winning run no longer wins, record a new one before the tests pass again.

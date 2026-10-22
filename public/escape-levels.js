@@ -8792,19 +8792,25 @@
   // Little Explorers (escape-kids.js): gentle levels for young children, outside the trail like the
   // Gilded Burrow. Slow, simple creatures (cunning 0, moving at 60%) and catches that can't end a run.
   const kidsRoutes=typeof module!=='undefined'&&module.exports?require('./escape-kids.js'):root.EscapeKids||[];
-  const kids=kidsRoutes.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,gentle:.6,...route,kids:true,unlimited:true,revision:1}));
-  // Workshop drafts (escape-edits.js), only while its test-in-game switch is on in this browser.
-  // A draft keeps its escape's place: id, unlock rules, secret and bonus ties stay the game's.
-  // A draft that fails to build is skipped, so a bad edit can never stop the game loading.
-  const edits=root.EscapeEdits?.overrides?.()||{},originals={};
-  for(const [list,prefix] of [[levels,'level:'],[hidden,'hidden:']])list.forEach((old,i)=>{const route=edits[prefix+old.id];if(!route)return;
-    try{list[i]=applyEdit(old,route);originals[prefix+old.id]=freeze(old);}catch(e){if(typeof console!=='undefined')console.warn('Workshop draft for '+old.id+' skipped: '+e.message);}});
+  const makeKid=route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,gentle:.6,...route,kids:true,unlimited:true,revision:1});
+  const kids=kidsRoutes.map(makeKid);
   // Seasonal content has its own catalog and saves. It never joins the campaign trail.
   const autumn=typeof module!=='undefined'&&module.exports?require('./escape-autumn.js'):root.EscapeAutumn||[];
   const winter=typeof module!=='undefined'&&module.exports?require('./escape-winter.js'):root.EscapeWinter||[];
   const spring=typeof module!=='undefined'&&module.exports?require('./escape-spring.js'):root.EscapeSpring||[];
   const summer=typeof module!=='undefined'&&module.exports?require('./escape-summer.js'):root.EscapeSummer||[];
-  const seasonal=[...autumn.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,...route,seasonal:'autumn-hollow'})),...winter.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,...route,seasonal:'winter'})),...spring.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,...route,seasonal:'spring'})),...summer.map(route=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,...route,seasonal:'summer'}))];
+  const seasonRoutes=[[autumn,'autumn-hollow'],[winter,'winter'],[spring,'spring'],[summer,'summer']];
+  const makeSeason=(route,tag)=>fromMap({burrows:0,pebbles:0,tongues:0,cunning:0,...route,seasonal:tag});
+  const seasonal=seasonRoutes.flatMap(([routes,tag])=>routes.map(route=>makeSeason(route,tag)));
+  // Workshop drafts (escape-edits.js), only while its test-in-game switch is on in this browser.
+  // A draft keeps its escape's place: id, unlock rules, secret and bonus ties stay the game's.
+  // A draft that fails to build is skipped, so a bad edit can never stop the game loading.
+  const edits=root.EscapeEdits?.overrides?.()||{},originals={};
+  // A seasonal or Little Explorers draft already carries its whole route (EscapeBuilder.mergeInto), so it is
+  // built the way its pack builds every level.
+  const remake={kids:(old,route)=>makeKid({...route,id:old.id,draft:true}),seasonal:(old,route)=>makeSeason({...route,id:old.id,draft:true},old.seasonal)};
+  for(const [list,kind] of [[levels,'level'],[hidden,'hidden'],[kids,'kids'],[seasonal,'seasonal']])list.forEach((old,i)=>{const key=kind+':'+old.id,route=edits[key];if(!route)return;
+    try{list[i]=(remake[kind]||applyEdit)(old,route);originals[key]=freeze(old);}catch(e){if(typeof console!=='undefined')console.warn('Workshop draft for '+old.id+' skipped: '+e.message);}});
   const catalog=freeze({levels,challenges,regions,hidden,kids,seasonal});
   // Custom levels from the builder go through the same text-map path as every rebuilt route.
   function applyEdit(old,route){const keep={};for(const k of EDIT_KEEP)if(old[k]!==undefined)keep[k]=old[k];
@@ -8816,7 +8822,12 @@
   const buildCustom=route=>freeze(fromMap({burrows:0,pebbles:0,tongues:0,...JSON.parse(JSON.stringify(route)),...lookOf(route.look),custom:true,revision:1}));
   root.EscapeCatalog=catalog;root.escapeGridFor=gridFor;root.escapeBuildCustom=buildCustom;
   // The game's own copy of an escape, even while a workshop draft stands in for it.
-  const gameLevel=key=>{const [kind,id]=key.split(':');return originals[key]||(kind==='hidden'?hidden:levels).find(l=>l.id===id)||null;};root.escapeGameLevel=gameLevel;
-  if(typeof module!=='undefined'&&module.exports)module.exports={EscapeCatalog:catalog,escapeGridFor:gridFor,escapeBuildCustom:buildCustom,escapeGameLevel:gameLevel,EDIT_KEEP};
+  const lists={level:levels,hidden,kids,seasonal};
+  const gameLevel=key=>{const [kind,id]=key.split(':');return originals[key]||(lists[kind]||[]).find(l=>l.id===id)||null;};root.escapeGameLevel=gameLevel;
+  // A seasonal or Little Explorers escape's source entry (what the workshop keeps of it), and a level
+  // built from a whole route the way its pack builds it.
+  const sourceRoute=key=>{const [kind,id]=key.split(':');return kind==='kids'?kidsRoutes.find(r=>r.id===id)||null:kind==='seasonal'?seasonRoutes.flatMap(([r])=>r).find(r=>r.id===id)||null:null;};root.escapeSourceRoute=sourceRoute;
+  const buildAs=(key,route)=>{const [kind]=key.split(':'),old=gameLevel(key);return freeze(kind==='kids'?makeKid({...route,id:old.id}):makeSeason({...route,id:old.id},old.seasonal));};root.escapeBuildAs=buildAs;
+  if(typeof module!=='undefined'&&module.exports)module.exports={EscapeCatalog:catalog,escapeGridFor:gridFor,escapeBuildCustom:buildCustom,escapeGameLevel:gameLevel,escapeSourceRoute:sourceRoute,escapeBuildAs:buildAs,EDIT_KEEP};
 })(typeof globalThis!=='undefined'?globalThis:this);
 

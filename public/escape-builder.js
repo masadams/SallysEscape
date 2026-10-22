@@ -383,6 +383,15 @@ function validate(model){
   }
   // Any escape in the game as a builder model, so it can be edited. Nothing the game plays is lost:
   // toRoute(fromRoute(route)) plays the same escape.
+  // A seasonal or Little Explorers escape edited in the workshop keeps what the builder doesn't
+  // handle (its sticker, theme, place in its pack, revision...): every key of its source entry that
+  // the builder's round trip leaves out stays as it was. Cunning is always written out, because the
+  // builder leaves out its own default (2) and these packs default to 0.
+  function mergeInto(source,game,route){
+    const managed=new Set(Object.keys(toRoute(fromRoute(game)))),out={};
+    for(const [k,v] of Object.entries(source||{}))if(!managed.has(k)&&k!=='id'&&k!=='cunning')out[k]=JSON.parse(JSON.stringify(v));
+    const {id,custom,draft,...play}=route;return {...out,...play,cunning:play.cunning??2,id:source?.id??game.id};
+  }
   function fromRoute(route){
     const m=blank(route.map[0].length,route.map.length);m.map=route.map.slice();m.id='custom-'+String(route.id||'escape').toLowerCase().replace(/[^a-z0-9-]/g,'-').slice(0,40);
     Object.assign(m,{name:String(route.name||'').slice(0,40),brief:String(route.brief||'').slice(0,140),hint:String(route.hint||'').slice(0,400),burrows:route.burrows||0,pebbles:route.pebbles||0,tongues:route.tongues||0,
@@ -489,7 +498,7 @@ function validate(model){
 
   const api={TILES,MARKS,ENEMIES,POSTED,LIMITS,COLORS,MODES,TRIGGERS,HAZARDS,SPEEDS,blank,paint,resize,addEnemy,removeEnemy,turnEnemy,addPatrol,clearPatrol,setSleep,
     paintDoor,removeDoorTile,setDoor,addTrigger,removeAt,toggleLink,linksFrom,linksTo,sourceAt,doorAt,triggerAt,hazardAt,guardAt,addHazard,setLogEnd,setHazard,paintClimate,doorName,
-    validate,toRoute,fromRoute,treasureTotal,exportText,importText,sanitize,loadAll,saveOne,removeOne,
+    validate,toRoute,fromRoute,mergeInto,treasureTotal,exportText,importText,sanitize,loadAll,saveOne,removeOne,
     LOOKS,PROPS,toggleCheckpoint,toggleCrate,addSign,setSign,signAt,toggleProp,setMillWheel,LAYERS,DIRS,toggleLayer,addPage,setPage,pageAt,PAGE_LIMIT,addCap,setCap,setCapEnd,addRope,setRopeEnd,setRope,addWind,setWind,addEcho,addCurrent,setCurrent,addTunnel,addRegion,setRegion,addAntPoint,setAnts,addSeedCrossing,setRootWheel,toggleRival,removeExtraAt,setGuard,setSettings,setMessage,setLinkAction,regionAt};
   root.EscapeBuilder=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
