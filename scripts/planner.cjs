@@ -16,6 +16,34 @@ const {clone,go,frame,bad,verify,optionsFor}=require(path.join(__dirname,'route-
 const NEAR=[];for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)if(Math.abs(dx)+Math.abs(dy)<=2)NEAR.push([dx,dy]);
 NEAR.sort((a,b)=>Math.abs(a[0])+Math.abs(a[1])-Math.abs(b[0])-Math.abs(b[1]));
 const WAITS=[0,.25,.5,.75,1,1.5,2,2.5,3,4,5,6,8];
+// The danger map. The planner knows what the player can't: it lets the clock run on while Sally
+// stays where she is, keeping a snapshot of the whole level every tenth of a second. Asking a
+// snapshot "would anything see her on this tile now?" is cheap, so every wait-then-go timing can be
+// scored before any is played out, and only the most promising few are tried for real.
+const STEP=.1,HORIZON=20,TRY=12;let deadline=Infinity;
+function forecast(state){
+  const g=clone(state.g),snaps=[];
+  for(let k=0;k*STEP<=HORIZON&&g.status==='playing'&&Date.now()<deadline;k++){snaps.push(clone(g));for(let i=0;i<STEP*120&&g.status==='playing';i++)g.advance(1/120,{});}
+  return snaps;
+}
+// How exposed a step is: something on top of her, or a hunter that would spot her moving there.
+function exposed(snap,p){
+  const me=snap.player,keep={x:me.x,y:me.y,hidden:me.hidden,moving:me.moving};
+  me.x=p.x;me.y=p.y;me.hidden=false;me.moving=true;
+  let n=0;for(const h of snap.hunters){if(h.eaten)continue;if(Math.hypot(h.x-p.x,h.y-p.y)<.8)n+=3;else if(snap.seesPlayer(h))n++;}
+  Object.assign(me,keep);return n;
+}
+// Every timing scored against the snapshots: wait w, then walk or sprint the engine's route to the hop.
+function ranked(state,snaps,to){
+  const g=state.g,path=[...g.route(g.player,to),to],out=[];
+  for(let w=0;w<=12;w+=.25)for(const sprint of [false,true]){
+    let t=w,at=g.player,cost=0;
+    for(const p of path){const d=Math.hypot(p.x-at.x,p.y-at.y),wet=g.water(p);t+=d/((sprint?4:2.45)*(wet?.55:1));at=p;
+      const k=Math.round(t/STEP);cost+=k<snaps.length?exposed(snaps[k],p):.5;}
+    out.push({w,sprint,cost:cost+w*.02});
+  }
+  return out.sort((a,b)=>a.cost-b.cost);
+}
 const tile=p=>[Math.floor(p.x),Math.floor(p.y)];
 const calm=g=>!g.hunters.some(h=>['chase','windup','charge','rear','strike','dive','pounce','lunge','swoop'].includes(h.state));
 
@@ -117,7 +145,8 @@ function* windows(state,to){
     if(g.gates[to.gate].open)yield {g,rec,w:0,sprint:false};return;}
   // Through an open timed door: go now, sprinting first; being past it is what counts.
   if(to.rush){for(const sprint of [true,false]){const g=clone(state.g),rec=state.rec.map(c=>({...c}));if(walk(g,rec,to,sprint))yield {g,rec,w:0,sprint};}return;}
-  for(const w of WAITS)for(const sprint of [false,true]){
+  const snaps=forecast(state),order=ranked(state,snaps,to).slice(0,TRY);
+  for(const {w,sprint} of order){if(Date.now()>deadline)break;
     const g=clone(state.g),rec=state.rec.map(c=>({...c}));
     if(!hold(g,rec,w)||!walk(g,rec,to,sprint))continue;
     // The hatch counts only if Sally gets through it.
@@ -127,7 +156,7 @@ function* windows(state,to){
   yield* noticed;
 }
 function plan(options,{budget=60000,branch=3}={}){
-  const start={g:new EscapeAdventure(options),rec:[]},t0=Date.now();let best=start,tries=0;
+  const start={g:new EscapeAdventure(options),rec:[]},t0=Date.now();deadline=t0+budget;let best=start,tries=0;
   // Depth-first over hops, keeping a couple of windows per hop for backtracking.
   function solve(state,depth){
     if(state.g.status==='won')return state;if(Date.now()-t0>budget||depth>200)return null;
