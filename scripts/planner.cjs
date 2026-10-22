@@ -15,7 +15,7 @@ const {clone,go,frame,bad,verify,optionsFor}=require(path.join(__dirname,'route-
 // Cover counts as on the way when it is within two steps of the path.
 const NEAR=[];for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)if(Math.abs(dx)+Math.abs(dy)<=2)NEAR.push([dx,dy]);
 NEAR.sort((a,b)=>Math.abs(a[0])+Math.abs(a[1])-Math.abs(b[0])-Math.abs(b[1]));
-const WAITS=[0,.25,.5,.75,1,1.5,2,2.5,3,4,5,6,8];
+const WAITS=[0,.25,.5,.75,1,1.5,2,2.5,3,4,5,6,8],TOSS_WAITS=[.5,1,1.5,2,3,4];
 const tile=p=>[Math.floor(p.x),Math.floor(p.y)];
 const calm=g=>!g.hunters.some(h=>['chase','windup','charge','rear','strike','dive','pounce','lunge','swoop'].includes(h.state));
 
@@ -117,12 +117,27 @@ function* windows(state,to){
     if(g.gates[to.gate].open)yield {g,rec,w:0,sprint:false};return;}
   // Through an open timed door: go now, sprinting first; being past it is what counts.
   if(to.rush){for(const sprint of [true,false]){const g=clone(state.g),rec=state.rec.map(c=>({...c}));if(walk(g,rec,to,sprint))yield {g,rec,w:0,sprint};}return;}
-  for(const w of WAITS)for(const sprint of [false,true]){
+  // One try: an optional move first (a pebble), then a wait, then the walk or sprint to the hop.
+  function* attempt(w,sprint,before){
     const g=clone(state.g),rec=state.rec.map(c=>({...c}));
-    if(!hold(g,rec,w)||!walk(g,rec,to,sprint))continue;
+    if(before&&!before(g,rec))return;
+    if(!hold(g,rec,w)||!walk(g,rec,to,sprint))return;
     // The hatch counts only if Sally gets through it.
-    if(to.hatch){hold(g,rec,1.5);if(g.status==='won')yield {g,rec,w,sprint};continue;}
+    if(to.hatch){hold(g,rec,1.5);if(g.status==='won')yield {g,rec,w,sprint};return;}
     if(to.cover||calm(g)||g.status==='won')yield {g,rec,w,sprint};else if(noticed.length<3)noticed.push({g,rec,w,sprint});
+  }
+  let found=0;
+  for(const w of WAITS)for(const sprint of [false,true])for(const r of attempt(w,sprint)){found++;yield r;}
+  // Nothing gets through by waiting: throw a pebble to pull a creature away, then go. Sally faces
+  // one way (a single frame of input) and tosses it up to three tiles that way; throws away from
+  // where she is heading come first, so the creature is drawn off the path, not onto it.
+  if(!found&&state.g.decoys>0){
+    const dx=to.x-state.g.player.x,dy=to.y-state.g.player.y;
+    const dirs=[[1,0],[-1,0],[0,1],[0,-1]].sort((a,b)=>(a[0]*dx+a[1]*dy)-(b[0]*dx+b[1]*dy));
+    for(const [fx,fy] of dirs){
+      const toss=(g,rec)=>{frame(g,rec,fx,fy,false);if(bad(g)||!g.throwDecoy())return false;rec.push({kind:'pebble'});return !bad(g);};
+      for(const w of TOSS_WAITS)for(const sprint of [false,true])yield* attempt(w,sprint,toss);
+    }
   }
   yield* noticed;
 }
