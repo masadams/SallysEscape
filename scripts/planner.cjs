@@ -19,10 +19,39 @@ const WAITS=[0,.25,.5,.75,1,1.5,2,2.5,3,4,5,6,8];
 const tile=p=>[Math.floor(p.x),Math.floor(p.y)];
 const calm=g=>!g.hunters.some(h=>['chase','windup','charge','rear','strike','dive','pounce','lunge','swoop'].includes(h.state));
 
+// Switches, levers and plates Sally can press for a closed door (never one that slams a door shut,
+// and not a heavy plate: that wants a beetle's weight). A trigger whose door opens the way to the
+// key, the hatch or another trigger comes first: that is the "find the switch to carry on" step.
+function triggers(g,reach){
+  const out=[],shut=new Set();
+  for(const gate of g.gates)if(gate.shut)for(const p of [...(gate.switch?[gate.switch]:[]),...gate.plates,...(gate.levers||[])])shut.add(Math.floor(p.x)+','+Math.floor(p.y));
+  g.gates.forEach((gate,i)=>{if(gate.open||gate.sealed||gate.shut||gate.heavy)return;
+    for(const p of [...(gate.switch?[gate.switch]:[]),...(gate.heavy?[]:gate.plates),...(gate.levers||[])])
+      if(!shut.has(Math.floor(p.x)+','+Math.floor(p.y))&&reach(p))out.push({x:p.x,y:p.y,what:'trigger',gate:i,timed:Boolean(gate.duration)});});
+  if(!out.length)return out;
+  // What each door would open up: flip its tiles open for a moment and see what becomes reachable.
+  // Doors open in a chain through a level, so another door's switch counts as opened up too.
+  const others=i=>g.gates.flatMap((gate,j)=>j===i||gate.open||gate.sealed||gate.shut||gate.heavy?[]:[...(gate.switch?[gate.switch]:[]),...gate.plates,...(gate.levers||[])]);
+  const wants=i=>[...(g.hasKey?[]:[g.key]),g.exit,...g.loot.filter(l=>!l.taken),...others(i)];
+  const score=t=>{const gate=g.gates[t.gate],old=gate.tiles.map(([x,y])=>g.grid[y][x]);
+    for(const [x,y] of gate.tiles)g.grid[y][x]=gate.bridge?'W':'g';
+    const list=wants(t.gate),n=list.filter(w=>!reach(w)&&g.route(g.player,w).length>0).length*3+(list.slice(0,g.hasKey?1:2).some(w=>!reach(w)&&g.route(g.player,w).length>0)?10:0);
+    gate.tiles.forEach(([x,y],k)=>{g.grid[y][x]=old[k];});return n;};
+  for(const t of out)t.opens=score(t);
+  // If no door visibly opens anything, try them all anyway, nearest first: some open the way later.
+  const near=(a,b)=>Math.hypot(a.x-g.player.x,a.y-g.player.y)-Math.hypot(b.x-g.player.x,b.y-g.player.y);
+  const useful=out.filter(t=>t.opens>0);return useful.length?useful.sort((a,b)=>b.opens-a.opens||near(a,b)):out.sort(near);
+}
 // What to fetch next, in the order a player would think of it: the hatch once it opens, the key,
 // and treasure only when the hatch wants more or nothing else can be reached (it may open the way).
+// When the key or the hatch is behind a closed door, the switch that opens it comes first.
 function goals(g){
   const reach=t=>g.route(g.player,t).length>0||Math.hypot(t.x-g.player.x,t.y-g.player.y)<.5;
+  const blocked=(!g.hasKey&&!reach(g.key))||(g.exitUnlocked()&&!reach(g.exit))||(g.hasKey&&!reach(g.exit));
+  if(blocked){const t=triggers(g,reach);if(t.length)return [...t,...goalsOpen(g,reach)];}
+  return goalsOpen(g,reach);
+}
+function goalsOpen(g,reach){
   if(g.exitUnlocked()&&reach(g.exit))return [{x:g.exit.x,y:g.exit.y,what:'hatch'}];
   const out=[],loot=g.loot.filter(l=>!l.taken&&reach(l)).sort((a,b)=>Math.hypot(a.x-g.player.x,a.y-g.player.y)-Math.hypot(b.x-g.player.x,b.y-g.player.y)).map(l=>({x:l.x,y:l.y,what:'treasure'}));
   if(!g.hasKey&&reach(g.key))out.push({x:g.key.x,y:g.key.y,what:'key'});
@@ -92,7 +121,7 @@ function plan(options,{budget=60000,branch=3}={}){
   const done=solve(start,0);
   return {won:Boolean(done),commands:(done||best).rec,tries,seconds:(Date.now()-t0)/1000,reached:(done||best).g.elapsed};
 }
-module.exports={plan,goals,hops};
+module.exports={plan,goals,hops,triggers};
 
 if(require.main===module){
   const args=process.argv.slice(2),flag=n=>args.includes('--'+n),val=(n,d)=>{const i=args.indexOf('--'+n);return i<0?d:args[i+1];};
