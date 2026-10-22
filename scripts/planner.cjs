@@ -137,10 +137,13 @@ function* windows(state,to){
   // Through an open timed door: go now, sprinting first; being past it is what counts.
   if(to.rush){for(const sprint of [true,false]){const g=clone(state.g),rec=state.rec.map(c=>({...c}));if(walk(g,rec,to,sprint))yield {g,rec,w:0,sprint};}return;}
   // One try: an optional move first (a pebble), then a wait, then the walk or sprint to the hop.
+  // Where plain tries came to grief: a pebble thrown from just short of there is the targeted fix.
+  const caughtAt=[];
   function* attempt(w,sprint,before){
     const g=clone(state.g),rec=state.rec.map(c=>({...c}));
     if(before&&!before(g,rec))return;
-    if(!hold(g,rec,w)||!walk(g,rec,to,sprint))return;
+    if(!hold(g,rec,w))return;
+    if(!walk(g,rec,to,sprint)){if(!before&&w===0)caughtAt.push({x:g.player.x,y:g.player.y});return;}
     // At a tongue spot: face the item, flick, and wait for the tongue to bring it in.
     if(to.tongue){const [fx,fy]=to.tongue.face;frame(g,rec,fx,fy,false);if(bad(g)||!g.useTongue())return;rec.push({kind:'tongue'});
       for(let i=0;i<120&&g.tongue&&g.status==='playing';i++){frame(g,rec,0,0,false);if(bad(g))return;}}
@@ -158,6 +161,15 @@ function* windows(state,to){
     const dirs=[[1,0],[-1,0],[0,1],[0,-1]].sort((a,b)=>(a[0]*dx+a[1]*dy)-(b[0]*dx+b[1]*dy));
     for(const [fx,fy] of dirs){
       const toss=(g,rec)=>{frame(g,rec,fx,fy,false);if(bad(g)||!g.throwDecoy())return false;rec.push({kind:'pebble'});return !bad(g);};
+      for(const w of TOSS_WAITS)for(const sprint of [false,true])yield* attempt(w,sprint,toss);
+    }
+    // Still nothing: walk to a point one to three tiles short of where Sally was caught, throw from
+    // there (each way, away from the hop first), wait for the creature to go and look, then go on.
+    const path=state.g.route(state.g.player,to),mids=[];
+    for(const c of caughtAt){const i=path.findIndex(p=>Math.hypot(p.x-c.x,p.y-c.y)<.75);if(i<0)continue;
+      for(const back of [1,2,3]){const m=path[i-back];if(m&&!mids.some(q=>q.x===m.x&&q.y===m.y))mids.push(m);}}
+    for(const mid of mids.slice(0,4))for(const [fx,fy] of dirs){
+      const toss=(g,rec)=>{if(!walk(g,rec,mid,false))return false;frame(g,rec,fx,fy,false);if(bad(g)||!g.throwDecoy())return false;rec.push({kind:'pebble'});return !bad(g);};
       for(const w of TOSS_WAITS)for(const sprint of [false,true])yield* attempt(w,sprint,toss);
     }
   }
