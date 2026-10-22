@@ -75,6 +75,24 @@ function goalsOpen(g,reach){
   if(g.treasure<g.requiredTreasure&&out[0]?.what==='key'&&loot[0]&&Math.hypot(loot[0].x-g.player.x,loot[0].y-g.player.y)<Math.hypot(g.key.x-g.player.x,g.key.y-g.player.y))out.unshift(out.splice(out.indexOf(out.find(o=>o.what==='treasure')),1)[0]);
   return out;
 }
+// The tongue reaches a key, treasure, switch or lever up to three tiles off in a straight line, so
+// the item can be had from a spot along its row or column instead of walking onto it: further off
+// first, then nearer Sally. Each spot is a goal of its own; arriving there, Sally faces the item and flicks.
+// The key is always worth a try, even where no path reaches it on foot: that is often the point.
+function tongueGoals(g,goal){
+  if(!g.tongues)return [];
+  const items=[...(g.hasKey?[]:[{x:g.key.x,y:g.key.y,what:'key'}]),...(goal&&goal.what!=='key'&&['treasure','trigger'].includes(goal.what)&&(goal.what!=='trigger'||g.gates[goal.gate]?.switch||g.gates[goal.gate]?.levers?.length)?[goal]:[])];
+  return items.flatMap(item=>tongueSpots(g,item)).slice(0,4);
+}
+function tongueSpots(g,goal){
+  const [tx,ty]=tile(goal),out=[];
+  for(const [fx,fy] of [[1,0],[-1,0],[0,1],[0,-1]])for(let k=Math.floor(g.tongueRange);k>=2;k--){
+    const x=tx-fx*k,y=ty-fy*k,spot={x:x+.5,y:y+.5};
+    if(!g.actorFloor(x,y,null)||!g.clear(spot,goal,true)||!g.route(g.player,spot).length)continue;
+    out.push({...spot,what:'tongue',face:[fx,fy],item:goal,k});
+  }
+  return out.sort((a,b)=>b.k-a.k||Math.hypot(a.x-g.player.x,a.y-g.player.y)-Math.hypot(b.x-g.player.x,b.y-g.player.y)).slice(0,3);
+}
 // The quickest way rather than the shortest: swimming is slow, so water costs more than land and
 // the path hops from island to island the way a player would.
 function costPath(g,from,to){
@@ -86,6 +104,7 @@ function costPath(g,from,to){
 }
 // The hops toward a goal: every piece of cover the path passes beside becomes a resting place.
 function hops(g,goal){
+  if(goal.what==='tongue'){const out=hops(g,{...goal,what:'spot'});out[out.length-1]={...out[out.length-1],tongue:goal};return out;}
   if(goal.what==='rush'||goal.what==='await')return [{...goal,rush:goal.what==='rush',await:goal.what==='await'}];
   const path=costPath(g,g.player,goal);if(!path.length)return [{x:goal.x,y:goal.y,hatch:goal.what==='hatch'}];
   const out=[],seen=new Set([Math.floor(g.player.x)+','+Math.floor(g.player.y)]);
@@ -122,6 +141,9 @@ function* windows(state,to){
     const g=clone(state.g),rec=state.rec.map(c=>({...c}));
     if(before&&!before(g,rec))return;
     if(!hold(g,rec,w)||!walk(g,rec,to,sprint))return;
+    // At a tongue spot: face the item, flick, and wait for the tongue to bring it in.
+    if(to.tongue){const [fx,fy]=to.tongue.face;frame(g,rec,fx,fy,false);if(bad(g)||!g.useTongue())return;rec.push({kind:'tongue'});
+      for(let i=0;i<120&&g.tongue&&g.status==='playing';i++){frame(g,rec,0,0,false);if(bad(g))return;}}
     // The hatch counts only if Sally gets through it.
     if(to.hatch){hold(g,rec,1.5);if(g.status==='won')yield {g,rec,w,sprint};return;}
     if(to.cover||calm(g)||g.status==='won')yield {g,rec,w,sprint};else if(noticed.length<3)noticed.push({g,rec,w,sprint});
@@ -148,7 +170,8 @@ function plan(options,{budget=60000,branch=3}={}){
     if(state.g.status==='won')return state;if(Date.now()-t0>budget||depth>200)return null;
 
     if(state.g.elapsed>best.g.elapsed)best=state;
-    for(const goal of goals(state.g).slice(0,2)){
+    const top=goals(state.g).slice(0,2);
+    for(const goal of [...top,...tongueGoals(state.g,top[0])]){
       const route=hops(state.g,goal),to=route[0];let n=0;
       if(process.env.DEBUG)console.error(' '.repeat(depth)+'t'+state.g.elapsed.toFixed(1),'at',state.g.player.x.toFixed(1)+','+state.g.player.y.toFixed(1),goal.what,goal.x+','+goal.y,'hop',to.x+','+to.y);
       for(const next of windows(state,to)){tries++;
