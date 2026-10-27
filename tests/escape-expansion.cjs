@@ -16,9 +16,10 @@ test('every route has closed borders; static gate puzzles have permanently opena
   // A cracked wall may stand in the way only when the route can be opened twice over:
   // two burrows (in and back out) or a beetle that can smash it.
   const cracked=g.grid.map(row=>row.map(c=>c==='B'?'.':c)),smashable=level.burrows>=2||level.guards.some(h=>h.kind==='beetle'),open=new EscapeAdventure({levelId:level.id});open.grid=cracked;open.gates=g.gates;
-  // Bounce caps carry Sally across gaps, so they count as links when looking for a walking route.
-  const capReach=(()=>{if(!g.caps.length)return null;const start=g.tileKey(g.player),seen=new Set([start]),q=[start];
-    while(q.length){const [x,y]=q.shift().split(',').map(Number);const next=[[x+1,y],[x-1,y],[x,y+1],[x,y-1]].filter(([a,b])=>g.fits({x:a+.5,y:b+.5})).map(t=>t.join());for(const c of g.caps)if(c.key===x+','+y)next.push(c.to.join());for(const k of next)if(!seen.has(k)){seen.add(k);q.push(k);}}return seen;})();
+  // Bounce caps and ropes carry Sally across gaps, so they count as links when looking for a walking
+  // route (a rope either way between its two ends).
+  const capReach=(()=>{if(!g.caps.length&&!g.ropes.length)return null;const start=g.tileKey(g.player),seen=new Set([start]),q=[start];
+    while(q.length){const [x,y]=q.shift().split(',').map(Number);const next=[[x+1,y],[x-1,y],[x,y+1],[x,y-1]].filter(([a,b])=>g.fits({x:a+.5,y:b+.5})).map(t=>t.join());for(const c of g.caps)if(c.key===x+','+y)next.push(c.to.join());for(const r of g.ropes){if(r.from.join()===x+','+y)next.push(r.to.join());if(r.to.join()===x+','+y)next.push(r.from.join());}for(const k of next)if(!seen.has(k)){seen.add(k);q.push(k);}}return seen;})();
   const fliers=g.hunters.filter(h=>['dragonfly','bat'].includes(h.kind));
   for(const p of [g.key,g.exit,...g.loot,...g.hunters.filter(h=>!fliers.includes(h)),...g.hunters.filter(h=>!fliers.includes(h)).flatMap(h=>h.patrol)]){
    assert.ok(g.fits(p),'spawn and goals fit inside floor');
