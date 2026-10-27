@@ -79,6 +79,8 @@ function walkingGraph(level){
   // A heavy plate opens whenever its beetle comes round, so Sally can always wait for it.
   g.gates.forEach((gate,k)=>{if(!gate.heavy||gate.open||gate.sealed)return;const j=add(apply({...n,open:n.open|(1<<k)}).n);edges[j].push(i);});
   for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const x=n.x+dx,y=n.y+dy;if(!g.floor(x,y))continue;const next=apply({...n,x,y}).n,j=add(next);edges[j].push(i);}
+  // A rope or vine swings back and forth for ever, so riding it is a walking link either way.
+  for(const r of g.ropes||[])for(const [p,q] of [[r.from,r.to],[r.to,r.from]])if(n.x===p[0]&&n.y===p[1]){const j=add(apply({...n,x:q[0],y:q[1]}).n);edges[j].push(i);}
   // Seed crossings and braced roots can reach extra components. Treat
   // their far banks as spent-seed entry states, then prove a walking return.
   if(level.seeds){

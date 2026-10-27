@@ -1511,7 +1511,7 @@
  "#.........#....L......#.......#",
  "#X..2.....#.....3.....#..K..2.#",
  "###############################"]},
-{append:true,explore:false,tailDrop:true,id:"ruins-road",revision:2,name:"Old Ruins Road",brief:"Back through the ruins, where the walls still crack and the floor has fallen in.",hint:"The key vault's two doorways have fallen into the cellar: shove a crate into a gap to bridge it (the scrape is loud), or burrow through a cracked wall. A beetle charges the long hall; a crate in its lane stops it short. The scorpion stings while its tail is up.",crates:[[18,8],[25,8],[12,6]],pebbles:2,tongues:1,burrows:2,guards:[{kind:"beetle",spawn:[16,7],facing:PI,patrol:[[8,7],[20,7]]},{kind:"scorpion",spawn:[12,12],facing:PI,patrol:[[12,12]]},{kind:"spider",spawn:[24,2],facing:0,patrol:[[20,2],[28,4]]},{spawn:[20,12],facing:PI,patrol:[[17,11],[21,13]]}],map:[
+{append:true,explore:false,tailDrop:true,id:"ruins-road",revision:2,name:"Old Ruins Road",brief:"Back through the ruins, where the walls still crack and the floor has fallen in.",hint:"The key vault's west doorway has fallen into the cellar. Shove the crate inside it north into the gap (the scrape is loud) for a quick way out near the hatch, or go back the long way past the beetle. A beetle charges the long hall: step out of its striped lane, or let it smash a cracked wall for you. The scorpion stings while its tail is up.",crates:[[18,10]],pebbles:2,tongues:1,burrows:2,guards:[{kind:"beetle",spawn:[16,7],facing:PI,patrol:[[8,7],[20,7]]},{kind:"scorpion",spawn:[12,12],facing:PI,patrol:[[12,12]]},{kind:"spider",spawn:[24,2],facing:0,patrol:[[20,2],[28,4]]},{spawn:[22,12],facing:PI,patrol:[[19,11],[24,13]]}],map:[
  "###############################",
  "#@....#.....L.....#......1....#",
  "#.....#...........#...........#",
@@ -1521,7 +1521,7 @@
  "#.........L...........L.......#",
  "#1...........N................#",
  "#.........L...........L.......#",
- "####.#####B#######_######_#####",
+ "####.#####B#######_######.#####",
  "#..L..#.........#.....L...#...#",
  "#X....#...3.....#.......K.#..2#",
  "#.....B.........B.........B...#",
