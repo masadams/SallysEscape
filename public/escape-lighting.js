@@ -49,7 +49,8 @@
     'secret:ice-cave':{grade:[180,220,255,.24],vignette:.45},
     'secret:sunken-wreck':{grade:[100,150,170,.26],shafts:[170,230,240],wash:{from:'top',color:[150,220,230],alpha:.14},vignette:.45},
     'secret:blind-grove':{grade:[130,140,180,.24],wash:{from:'top',color:[90,100,150],alpha:.16},vignette:.55},
-    'secret:magpie-roost':{grade:[255,225,160,.18],shafts:[255,240,200],wash:{from:'top',color:[255,240,200],alpha:.14},vignette:.3}
+    'secret:magpie-roost':{grade:[255,225,160,.18],shafts:[255,240,200],wash:{from:'top',color:[255,240,200],alpha:.14},vignette:.3},
+    'secret:far-coast':{grade:[150,180,210,.2],shafts:[220,235,255],wash:{from:'top',color:[200,225,245],alpha:.12},vignette:.38}
   };
   // The Road Home warms toward sunset as Sally nears the end: step 0 is its first escape.
   function moodFor(key,step=0){

@@ -28,6 +28,15 @@ Four short scenes come with progress, as soon as the area they lead into opens: 
 Journal so the ending can rest first: **Beyond the Last Line** (a map page from a coast no one knows,
 the sequel hook) and **Tomorrow's Work**.
 
+## The Far Coast (the start of Episode 2)
+
+Once Home is cleared, a causeway opens from the Home courtyard across the sea to **the Far Coast**, the coast
+from the map page in the bottle. It holds two escapes built on the new physics: **Bottle Beach** (a rip
+current, soft sand and the key on a sandbar) and **The Silent Beacon** (a rope over a chasm, a gusting ledge
+with clefts and a bounce cap up to the dark lantern). Winning the first earns **The Far Coast**, a landing
+page; winning the second earns **To Be Continued**. A little boat waits at the island's south shore, its sail
+still furled: *Episode 2: coming soon.* None of this counts toward stars or unlocks.
+
 ## Fennel's notes
 
 Fennel, a Wayfinder who sailed with the expedition, left a note in every secret spot (Star Garden,

@@ -13,7 +13,7 @@ test('every secret spot has a door off the trail that stays shut until its rule 
 });
 test('secret escapes stand inside their clearings and can be entered once the spot is open',()=>{
   let open=false;const w=new EscapeWorld(()=>true,null,()=>false,()=>false,()=>open),secret=EscapeCatalog.hidden.filter(l=>l.secret);
-  assert.equal(secret.length,15);assert.equal(w.secretNodes.length,15);
+  assert.equal(secret.length,17);assert.equal(w.secretNodes.length,17);
   for(const n of w.secretNodes){const s=w.secrets.find(s=>s.id===n.secret);assert.ok(Math.abs(n.x-s.x)<=s.rx&&Math.abs(n.y-s.y)<=s.ry,n.id+' inside '+s.id);assert.equal(w.grid[n.y][n.x],'.');}
   const n=w.secretNodes.find(n=>n.id==='frozen-run');Object.assign(w.player,{x:n.x,y:n.y});assert.equal(w.enter(),null);open=true;assert.equal(w.enter(),'hidden:frozen-run');
   const b=w.secrets.find(s=>s.id==='sallys-burrow');Object.assign(w.player,{x:b.x+.5,y:b.y+.5});assert.equal(w.enter(),'room:sallys-burrow');

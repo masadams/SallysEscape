@@ -27,11 +27,13 @@
     {id:'fairy-ring',name:'Fairy Ring',x:84,y:89,rx:0,ry:0},{id:'struck-oak',name:'Struck Oak',x:95,y:89,rx:0,ry:0},
     {id:'blind-grove',name:'Blind Grove',x:89,y:31,rx:3,ry:3},
     {id:'magpie-roost',name:'Magpie Roost',x:81,y:56,rx:7,ry:3},
-    {id:'sallys-burrow',name:'Sally\'s Burrow',x:31,y:118,rx:4,ry:3,via:'home'}
+    {id:'sallys-burrow',name:'Sally\'s Burrow',x:31,y:118,rx:4,ry:3,via:'home'},
+    // Across the sea south of Home: the coast from the map page in the bottle, reached by a causeway.
+    {id:'far-coast',name:'The Far Coast',x:57,y:140,rx:8,ry:4,via:'home',sea:[33,124,81,149],island:true}
   ];
   class EscapeWorld{
     constructor(unlocked=()=>true,focusId=null,hiddenOpen=()=>false,bonusOpen=()=>false,secretOpen=()=>false){
-      this.width=116;this.height=131;this.secrets=secrets;this.chapters=chapters;this.caches=caches;this.signs=signs;this.npcs=npcs;this.found=new Set();this.onCache=null;
+      this.width=116;this.height=150;this.secrets=secrets;this.chapters=chapters;this.caches=caches;this.signs=signs;this.npcs=npcs;this.found=new Set();this.onCache=null;
       // Golden flies drift in now and then; Sally can chase them down or grab one with her tongue.
       // The Gilded Burrow lies north of the Garden Ruins. It is solid rock until it opens.
       this.hiddenOpen=hiddenOpen;this.hiddenCarved=false;this.terrainVersion=0;
@@ -58,7 +60,16 @@
       for(const n of this.nodes)room(n.x-1,n.y-1,n.x+1,n.y+1);
       for(const n of this.bonusNodes){room(n.x-6,n.y-3,n.x+6,n.y+3);room(n.lock.x,n.y+4,n.lock.x,n.lock.y+1);for(const [dx,dy] of [[-5,-2],[5,-2],[-5,2],[5,2]])this.grid[n.y+dy][n.x+dx]='L';}
 
-      for(const s of secrets)if(s.rx)room(s.x-s.rx,s.y-s.ry,s.x+s.rx,s.y+s.ry);
+      // A spot across the water sits in open sea; the narrow way out to it is a causeway.
+      // The sea is a bay with a wandering shore, not a box: an ellipse inside the given bounds, its edge
+      // pushed in and out so the forest meets the water in coves and headlands.
+      for(const s of secrets)if(s.sea){const [x1,y1,x2,y2]=s.sea,cx=(x1+x2)/2,cy=(y1+y2)/2,rx=(x2-x1)/2,ry=(y2-y1)/2;
+        for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++){const dx=(x-cx)/rx,dy=(y-cy)/ry,a=Math.atan2(dy,dx),edge=1+.09*Math.sin(a*4+1.3)+.06*Math.sin(a*7+.4)+.04*Math.sin(a*11);if(dx*dx+dy*dy<=edge*edge&&this.grid[y]?.[x]==='#'&&y<this.height-2&&x>0&&x<this.width-1)this.grid[y][x]='P';}}
+      for(const s of secrets)if(s.rx&&!s.island)room(s.x-s.rx,s.y-s.ry,s.x+s.rx,s.y+s.ry);
+      // An island is a rounded, irregular coast rather than a box: an ellipse whose edge wanders in and out.
+      for(const s of secrets)if(s.island)for(let y=s.y-s.ry-1;y<=s.y+s.ry+1;y++)for(let x=s.x-s.rx-1;x<=s.x+s.rx+1;x++){
+        const dx=(x-s.x)/(s.rx+.5),dy=(y-s.y)/(s.ry+.5),a=Math.atan2(dy,dx),edge=EscapeWorld.islandEdge(a);
+        if(dx*dx+dy*dy<=edge*edge||(x===s.x&&y<=s.y))this.grid[y][x]='.';}
       // Each secret clearing is joined to the nearest open ground by a narrow way, stopped by a door
       // (a hedge, a crack or a rockfall) until whatever opens it is done.
       this.secretDoors=[];for(const s of secrets)if(s.rx){const door=this.carveSecretWay(s);if(door)this.secretDoors.push({id:s.id,...door});}
@@ -69,6 +80,8 @@
       const at=(theme,dx,dy)=>{const c=chapters.find(c=>c.theme===theme);return {x:c.x+dx,y:c.y+dy};};
       this.lostItems=[{id:'spectacles',name:'Old Moss\u2019s spectacles',...at('ruins',-6,-4)},{id:'pocket-watch',name:'Old Moss\u2019s pocket watch',...at('jungle',6,-4)},{id:'scarf',name:'Old Moss\u2019s scarf',...at('frost',-6,5)}];
       const ring=secrets.find(s=>s.id==='fairy-ring');this.fairyCaps=[[-2,-1],[2,-1],[0,2]].map(([dx,dy])=>({x:ring.x+dx,y:ring.y+dy}));this.fairyStep=0;
+      // A little boat waits at the Far Coast's south shore for Episode 2.
+      const coast=secrets.find(s=>s.id==='far-coast'),bx=coast.x+3;let by=coast.y;while(this.grid[by+1]?.[bx]==='.')by++;this.boat={x:bx,y:by};
       this.oak=secrets.find(s=>s.id==='struck-oak');this.itemsFound=new Set();this.onItem=null;this.onSecretCache=null;
       this.refreshRegions();this.tracks=[];
       const track=(a,b,side=false)=>{const from={x:a.x+.5,y:a.y+.5},to={x:b.x+.5,y:b.y+.5},path=this.route(to,from,true);if(path)this.tracks.push({points:[from,...path],side,from:a.id,to:b.id});};
@@ -143,12 +156,13 @@
     // The door of a secret spot that is still shut, when Sally stands by it.
     nearbySecretDoor(){return this.secretDoors.find(d=>!this.secretOpen(d.id)&&Math.hypot(d.x+.5-this.player.x,d.y+.5-this.player.y)<=2.2)||null;}
     // Sally's Burrow and Old Moss's Den are rooms, not escapes: standing at the heart of one lets her go inside.
+    nearbyBoat(){return this.secretOpen('far-coast')&&Math.hypot(this.boat.x+.5-this.player.x,this.boat.y+.5-this.player.y)<=1.6;}
     nearbyRoom(){return secrets.find(s=>['sallys-burrow','moss-den'].includes(s.id)&&this.secretOpen(s.id)&&Math.hypot(s.x+.5-this.player.x,s.y+.5-this.player.y)<=1.6)||null;}
     // The secret world shows itself once the Gilded Burrow is found.
     revealed(){return Boolean(this.hiddenOpen());}
     // In Storm Heights, lightning flashes every eleven seconds; only then does the struck oak show its glint.
     stormFlash(){return this.revealed()&&chapters[this.chapterAt()]?.theme==='storm'&&this.elapsed%11<.45;}
-    enter(){const room=this.nearbyRoom();if(room)return 'room:'+room.id;const node=this.nearby();return node?.bonus&&!this.bonusOpen(node.id)?null:node?.hidden?'hidden:'+node.id:node&&this.unlocked(node.id)?node.id:null;}
+    enter(){const room=this.nearbyRoom();if(room)return 'room:'+room.id;if(this.nearbyBoat())return 'boat';const node=this.nearby();return node?.bonus&&!this.bonusOpen(node.id)?null:node?.hidden?'hidden:'+node.id:node&&this.unlocked(node.id)?node.id:null;}
     walkTo(id){this.refreshRegions();const n=this.nodes.find(n=>n.id===id);if(!n)return false;const route=this.route({x:n.x,y:n.y+1});if(!route)return false;route.push({x:n.x,y:n.y+1});this.target=route;return true;}
     travel(chapter){this.refreshRegions();const c=chapters[chapter];if(!c||!this.regionOpen(chapter))return false;const node=this.nodes.filter(n=>n.chapter===chapter).find(n=>this.unlocked(n.id))||this.nodes[c.start];this.player.x=node.x;this.player.y=node.y+1;this.player.facing={x:0,y:-1};this.target=null;this.accumulator=0;this.motion.resetPlayer(this.player);return true;}
     advance(seconds,input={}){
@@ -174,6 +188,9 @@
       this.player.moving=Math.hypot(old.x-this.player.x,old.y-this.player.y)>1e-6;this.player.sprinting=Boolean(input.sprint&&this.player.moving);this.motion.update(dt,this);
     }
   }
+  // How far an island's shore reaches out at angle a, as a share of its radius (the same wobble the
+  // map is carved with and the scene draws its coastline from).
+  EscapeWorld.islandEdge=a=>1+.16*Math.sin(a*3+.7)+.1*Math.sin(a*5+2.1)-.06*Math.cos(a*7);
   EscapeWorld.chapters=chapters;EscapeWorld.secrets=secrets;
   root.EscapeWorld=EscapeWorld;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeWorld};

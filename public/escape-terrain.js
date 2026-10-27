@@ -17,7 +17,7 @@ const ESCAPE_TERRAIN_SETS={
   grotto:['rock','cave'],glow:['rock','cave'],vents:['rock','cave'],storm:['rock','cave'],ants:['rock','earth'],
   desert:['sand','sand'],coast:['rock','sand'],tide:['rock','sand'],rooftops:['sand','roof'],frost:['ice','snow'],
   'secret:bestiary-grove':['hedge','grass'],'secret:star-garden':['hedge','grass'],'secret:blind-grove':['hedge','grass'],'secret:challenge-shrine':['stone','flag'],
-  'secret:mossy-well':['rock','cave'],'secret:sunken-wreck':['rock','sand'],'secret:cloud-nest':['rock','cave'],'secret:ice-cave':['ice','snow'],'secret:magpie-roost':['stone','flag']
+  'secret:mossy-well':['rock','cave'],'secret:sunken-wreck':['rock','sand'],'secret:cloud-nest':['rock','cave'],'secret:ice-cave':['ice','snow'],'secret:magpie-roost':['stone','flag'],'secret:far-coast':['rock','sand']
 };
 function escapeTerrainSet(g){
   const place=typeof escapePlace==='function'?escapePlace(g.level):null,set=place&&ESCAPE_TERRAIN_SETS[place.key];

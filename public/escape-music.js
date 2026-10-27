@@ -107,7 +107,8 @@
     'secret:sunken-wreck':{mood:'wreck',lead:'ghost',bpm:78,groove:2},
     'secret:blind-grove':{mood:'blind',lead:'bell',bpm:70,groove:3},
     // The Magpie Roost: a bright, bouncy bonus tune, like the shrine's but quicker and higher.
-    'secret:magpie-roost':{mood:'shrine',lead:'pluck',bpm:100,groove:2,transpose:2}
+    'secret:magpie-roost':{mood:'shrine',lead:'pluck',bpm:100,groove:2,transpose:2},
+    'secret:far-coast':{mood:'wreck',lead:'pluck',bpm:84,groove:1,transpose:-2}
   };
   // Each season plays on its own band, so the areas sound unmistakably different, not just in another
   // key: winter on sleigh bells, a music-box celesta and a soft choir; spring on harp and birdsong;

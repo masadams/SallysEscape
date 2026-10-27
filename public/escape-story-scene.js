@@ -26,7 +26,7 @@ function tickEscapeStory(){
 // waits, unopened, in Sally's Burrow (and the Journal) so the ending can rest.
 function escapeStoryForResult(level,won){
   if(!won||typeof EscapeStory==='undefined'||level.custom)return;
-  const spot=EscapeStory.spotFor(level);if(spot)queueEscapeStory('note:'+spot);
+  const card=EscapeStory.cardFor(level);if(card)queueEscapeStory(card);
   if(level.id==='home'&&!level.hidden)queueEscapeStory('finale');
 }
 // The cards that wait after the ending: open once the finale has been read.
