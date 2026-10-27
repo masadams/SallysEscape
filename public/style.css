@@ -508,7 +508,7 @@ body:not(.mobile-game) #game-toolbar.toolbar-open #menu-button { order:-1; }
    the right, with dialogs and a right-click menu, all in the game's dark-green panels. */
 .escape-builder:has(.builder-app) { max-width:none; padding:0; }
 .builder-app { display:grid; grid-template-rows:auto minmax(0,1fr); height:calc(100vh - 24px); min-height:560px; background:#0f2526; border:1px solid #3f6a55; border-radius:16px; overflow:hidden; color:#e4edd6; }
-.builder-bar { position:relative; z-index:20; display:flex; align-items:center; gap:6px; padding:8px 12px; background:#143032; border-bottom:1px solid #2f5248; }
+.builder-bar { position:relative; z-index:20; display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:8px 12px; background:#143032; border-bottom:1px solid #2f5248; }
 .builder-back { border:1px solid #4f7a66; background:#1c3d36; color:#e4edd6; border-radius:8px; padding:5px 10px; font:inherit; }
 .builder-title { font-weight:700; color:#f6edc8; margin:0 8px 0 4px; white-space:nowrap; }
 .builder-menu { position:relative; }
@@ -793,7 +793,7 @@ body.pad-nav .pad-glyph { display:inline-block; }
 .builder-runbar select { font:inherit; }
 .builder-runbar em { font-style:normal; font-size:11px; padding:1px 6px; border-radius:6px; background:#4a3a12; color:#ffe2a0; }
 .builder-runbar .on, .builder-steps .on > button { outline:2px solid #ffd25a; }
-.builder-runside { flex:0 0 340px; max-width:100%; display:flex; flex-direction:column; gap:6px; margin-left:12px; }
+.builder-runside { flex:0 0 340px; max-width:100%; display:flex; flex-direction:column; gap:6px; margin:24px 0 0 12px; }
 .builder-runside .builder-runbar { margin-top:0; }
 .builder-runside button.escape-secondary, .builder-runside .builder-steps-bar button { padding:4px 10px; font-size:13px; min-height:0; min-width:0; }
 .builder-steps { margin-top:0; padding:6px 10px; border-radius:8px; background:#101d18; border:1px solid #2f5a45; color:#dff0d8; font-size:13px; max-height:min(60vh,520px); overflow:auto; }
