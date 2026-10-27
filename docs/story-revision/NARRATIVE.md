@@ -526,6 +526,36 @@ For now, her stone was warm. The new page could dry beside it.
 
 *The end of the first journey.*
 
+### coast:landing — The Far Coast
+
+Authoring direction: earned by winning Bottle Beach, the first escape on the Far Coast (opens once Home is cleared). Episode 2's first page.
+
+The causeway ended on soft, cold sand.
+
+The footprints from the map page were real. They were smaller than Sally's, and they went up the beach without stopping.
+
+Someone had come ashore here and known exactly where they were going.
+
+On the cliff above, the lantern from the page stood dark.
+
+Sally tucked the map page into her pouch and followed the footprints up the path.
+
+### note:far-coast — To Be Continued
+
+Authoring direction: earned by winning The Silent Beacon. Keeps the hook open for Episode 2; nothing is explained.
+
+The lantern at the top of the cliff was cold. Someone had cleaned the glass not long ago, and left the wick trimmed and ready.
+
+Beside it, scratched into the stone, was a Wayfinder's mark, and an arrow pointing out to sea, towards an island Sally could only just make out.
+
+The footprints went back down to the water's edge, and stopped.
+
+Sally sat by the lantern until the light went, watching the island.
+
+"Not yet," she said, to nobody in particular. "But soon."
+
+*To be continued in Sally's Escape: Episode 2.*
+
 ## Existing secret victory cards — complete replacement text
 
 Authoring direction: retain current `note:<spot>` IDs and secret-win triggers. These are not the physical level notes in LEVEL-NOTES.md. Each fragment stands alone; even the wreck confirms only a planned departure and repair, not arrival or survival. Signatures are part of the text.

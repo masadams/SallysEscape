@@ -46,6 +46,10 @@
   const FINALE={id:'finale',kind:'map',title:"Home",body:["Sally turned sideways and slipped through the hole beneath the gate.\nHer stone was still there.\nShe spread the map beside it and drew the last small line: from the path, beneath the gate, to the lantern bracket.\nThen she walked it.","Light gathered in the old marks. It passed beneath her feet, through the gate and out beyond the wall.\nAcross the garden, lanterns began to answer.\nSome had keepers waiting beside them. Others would need new glass or a handful of glow bugs. But the paths between them held.","Old Moss arrived as the sun reached the stone.\n\"You took the long way,\" he said.\nSally looked at the crowded map.\n\"Somebody needed it.\"\nAt the wall, a little snail crossed a twig laid over the drainage groove. Beyond her, the next lantern shone.","Sally climbed onto her stone. There was room at the edge for the map, weighted down against the wind.\nThis time, when she closed her eyes, she knew where the paths went."]};
   const AFTER={id:'after',kind:'note',title:"Beyond the Last Line",body:["A few mornings later, Shelly brought something the tide had left in a bottle.\nIt was a map page.\nThe coast on it was unfamiliar. Beyond the shore stood a lantern, drawn in ink that had run a little. Beside it were small lizard footprints.\nSomeone had marked the route after arriving.","Old Moss laid the page beside the others.\n\"That isn't one of ours,\" he said.\nSally looked towards the sea.\nFor now, her stone was warm. The new page could dry beside it.","*The end of the first journey.*"]};
   const BURROW={id:'burrow:tomorrows-work',kind:'journal',title:"Tomorrow's Work",body:["Old Moss made a list.","*Glass for Wick. Wire for Rivet. Ask the crabs about the beach brackets.*","Sally added:","*A better roof for the snail shelter.*","Then she put the list beneath a pebble. It would still be there after her nap."]};
+  // Episode 2's first steps, on the Far Coast across the sea: a landing page for its first escape;
+  // the spot's own note (To Be Continued) waits for the last.
+  const COAST={id:'coast:landing',kind:'note',title:"The Far Coast",body:["The causeway ended on soft, cold sand.\nThe footprints from the map page were real. They were smaller than Sally's, and they went up the beach without stopping.","Someone had come ashore here and known exactly where they were going.\nOn the cliff above, the lantern from the page stood dark.","Sally tucked the map page into her pouch and followed the footprints up the path."]};
+  const COAST_LAST='silent-beacon';
   const NOTES=[
     {spot:'star-garden',title:"Something Bright",body:["I planted these beds when the western beacon first went dark. A lantern needs a keeper, but a flower is willing to do a little work by itself.\nIf the seeds have taken, tread between the rows. If they haven't, please admire the intention.\n— F."]},
     {spot:'mossy-well',title:"A Good Listener",body:["I told the well where I was going. It repeated every word.\nOld Moss says that does not count as leaving a message with someone responsible.\nI have left one with him too.\n— F."]},
@@ -54,6 +58,7 @@
     {spot:'bestiary-grove',title:"A Friend I Never Saw",body:["A chameleon lives here. I have never seen him.\nEach morning there is a beetle on my pillow. Each evening I leave a berry on his branch.\nNeither of us has asked the other to explain.\n— F."]},
     {spot:'ice-cave',title:"A Promise",body:["I told the sentinels we would return. One lowered its head, as though it had put my words somewhere safe.\nIt is a strange feeling, being trusted by something that can wait longer than you can imagine.\n— F."]},
     {spot:'sunken-wreck',title:"The First Launch",body:["The first boat struck the rocks before we cleared the cove. Everyone got ashore. Most of the lunch did not.\nWe have moved the sound planks to higher ground. Next launch: wait for the full tide. Check every seam. Bring more string.\n— Fennel, Wayfinder"]},
+    {spot:'far-coast',title:"To Be Continued",body:["The lantern at the top of the cliff was cold. Someone had cleaned the glass not long ago, and left the wick trimmed and ready.","Beside it, scratched into the stone, was a Wayfinder's mark, and an arrow pointing out to sea, towards an island Sally could only just make out.","The footprints went back down to the water's edge, and stopped.\nSally sat by the lantern until the light went, watching the island.","\"Not yet,\" she said, to nobody in particular. \"But soon.\"","*To be continued in Sally's Escape: Episode 2.*"]},
     {spot:'magpie-roost',title:"Borrowed Shine",body:["We used to leave spare pebbles here. The magpies called it their collection. We called it our stores.\nAn arrangement satisfactory to everyone, until somebody counted.\nTake only what you can use. They notice the shiny things first.\n— F."]},
     {spot:'blind-grove',title:"Looking Properly",body:["I practised here until I stopped staring at my own feet.\nA snake tells you where it will look next. The turn begins in its head. I had been watching the path so carefully that I kept missing the snake.\n— F."]},
     {spot:'gilded',title:"The Wrong Treasure",body:["Counted the gold. Counted it again. Tried holding a piece under the lantern hook.\nStill dark.\nI have left the gold where it is and gone to find the keeper.\n— F."]},
@@ -91,14 +96,17 @@
   const areaCard=(a,i)=>({id:'area:'+a.theme,kind:a.kind||'journal',title:a.title,body:a.body,area:i,part:PARTS.filter(p=>i>=p.from).length});
   // A moment sits in the story just before the area whose opening brings it.
   const momentCard=m=>({id:m.id,kind:'moment',title:m.title,body:m.body,opens:m.opens,part:PARTS.filter(p=>m.opens>=p.from).length});
-  const CARDS=[{...OPENING,part:1},...AREAS.flatMap((a,i)=>[...MOMENTS.filter(m=>m.opens===i).map(momentCard),areaCard(a,i)]),{...FINALE,part:3},{...AFTER,part:3,later:true},{...BURROW,part:3,later:true},...NOTES.map(n=>({id:'note:'+n.spot,kind:'note',title:n.title,body:n.body,spot:n.spot}))];
+  const CARDS=[{...OPENING,part:1},...AREAS.flatMap((a,i)=>[...MOMENTS.filter(m=>m.opens===i).map(momentCard),areaCard(a,i)]),{...FINALE,part:3},{...AFTER,part:3,later:true},{...BURROW,part:3,later:true},{...COAST,spot:'far-coast'},...NOTES.map(n=>({id:'note:'+n.spot,kind:'note',title:n.title,body:n.body,spot:n.spot}))];
   const byId=id=>CARDS.find(c=>c.id===id)||null;
   const partFor=area=>PARTS.filter(p=>area>=p.from).at(-1)||PARTS[0];
   // Which secret spot a hidden escape belongs to, for its note.
   const spotFor=level=>level?.secret||(level?.bonus?(level.id==='bramble-maze'?'bramble':null):level?.hidden?'gilded':null);
+  // The card a won escape in a spot earns: the spot's note, but on the Far Coast the landing page first
+  // and the note only for its last escape.
+  const cardFor=level=>{const spot=spotFor(level);if(!spot)return null;return spot==='far-coast'&&level.id!==COAST_LAST?COAST.id:'note:'+spot;};
   // A local's line: their new line, or once their area has recovered, the after-line.
   const localLine=(area,theme,now)=>{const l=LOCALS[area];if(!l)return null;return now>=(AFTER_STAGE[theme]||4)?l.after:l.line;};
-  const api={PARTS,CARDS,AREAS,MOMENTS,NOTES,LOCALS,AFTER_STAGE,byId,partFor,spotFor,stage,localLine,areaCard:i=>byId('area:'+AREAS[i]?.theme)};
+  const api={PARTS,CARDS,AREAS,MOMENTS,NOTES,LOCALS,AFTER_STAGE,byId,partFor,spotFor,cardFor,stage,localLine,areaCard:i=>byId('area:'+AREAS[i]?.theme)};
   root.EscapeStory=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

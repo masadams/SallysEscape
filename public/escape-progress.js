@@ -18,7 +18,9 @@
     'blind-grove':{name:'the Blind Grove',story:true,areas:4},
     // A bonus area for everyone halfway along the trail: five escapes where Sally's pouches never run out.
     'magpie-roost':{name:'the Magpie Roost',story:true,areas:6},
-    'sallys-burrow':{name:'Sally\u2019s Burrow',story:true,cleared:'home',clue:'Home is just through here. Clear escape 100, Home, to reach it.'}
+    'sallys-burrow':{name:'Sally\u2019s Burrow',story:true,cleared:'home',clue:'Home is just through here. Clear escape 100, Home, to reach it.'},
+    // Episode 2's first steps: the coast from the map page in the bottle, across the sea south of Home.
+    'far-coast':{name:'the Far Coast',story:true,cleared:'home',clue:'A causeway runs out across the sea to a coast no one knows. Clear escape 100, Home, to cross it.'}
   };
   const GLOW_GIFTS=[{at:40,skin:'firefly',text:'40 glow bugs freed! Sally can wear Firefly colours.'},{at:75,skin:'moonbeam',text:'75 glow bugs freed! Sally can wear Moonbeam colours.'},{at:100,companion:true,text:'100 glow bugs freed! One of them stays with Sally now, a little sea-green light of her own.'}];
   class EscapeProgress{

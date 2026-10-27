@@ -317,6 +317,38 @@
  "#...2.........L....L.........3..#",
  "#X..............................#",
  "#################################"]}
+,
+  {id:"bottle-beach",name:"Bottle Beach",secret:"far-coast",explore:false,tailDrop:true,brief:"The coast from the map page. Small lizard footprints run up the soft sand, and the key glints on a sandbar out in the rip.",hint:"The rip runs east along the shore: wade in upstream of the sandbar and let it carry you, or grab the key with your tongue from the water's edge. Soft sand slows you and keeps your tracks. Over the dune ridge, keep to the grass.",pebbles:2,tongues:1,currents:[{area:[1,1,25,3],dir:[1,0],speed:1.1,pulse:6}],guards:[{kind:"fish",spawn:[12,2],facing:0,patrol:[[6,2],[22,2]]},{kind:"crab",spawn:[12,6],facing:0,patrol:[[3,6],[23,6]]},{spawn:[20,9],facing:PI,patrol:[[2,8],[24,8],[24,10],[2,10]]}],map:[
+ "###########################",
+ "#~~~~~~~~~~~~~~~~~K~~~~~~~#",
+ "#~~~~~~~~~~~~~~~~~~~~~~~~~#",
+ "#~~~~~~~~~~~~~~~~~~~~~~~~~#",
+ "#s@sssss1sssssssssss2sssss#",
+ "#sssssLssssssssssLsssssss3#",
+ "#sssssssssssssssssssssssss#",
+ "####.#################.####",
+ "#.....L.............L.....#",
+ "#..1......L.....L.........#",
+ "#...........L..........3..#",
+ "#............X............#",
+ "###########################"]}
+,
+  {id:"silent-beacon",name:"The Silent Beacon",secret:"far-coast",explore:false,tailDrop:true,brief:"A cliff path to a lantern that has gone dark. The footprints climb ahead of you.",hint:"Ride the rope across the lower chasm when it swings to your side. The ledge gusts east towards two clefts: crawl to brace, and never stand upwind of a cleft in a gust. A bounce cap by the clefts hops the upper chasm to the beacon.",pebbles:2,tongues:1,ropes:[{from:[14,11],to:[14,9],period:4.5}],caps:[{at:[27,6],to:[27,3]}],wind:[{area:[1,6,27,7],dir:[1,0],period:5.5,on:1.6,offset:0}],guards:[{spawn:[12,12],facing:0,patrol:[[3,12],[25,12]]},{spawn:[8,6],facing:PI,patrol:[[4,6],[12,6]]},{kind:"owl",spawn:[14,3],facing:PI/2,patrol:[[4,3],[24,3]]}],map:[
+ "#############################",
+ "#.............X.............#",
+ "#.1...L...............L....3#",
+ "#...........................#",
+ "#...........................#",
+ "#__##_______________________#",
+ "#.3.....L.......L...........#",
+ "#.......................__K.#",
+ "#########.############.######",
+ "#...........................#",
+ "#___________________________#",
+ "#...........................#",
+ "#....L....1.........L.......#",
+ "#@.........................2#",
+ "#############################"]}
   ];
   root.EscapeHidden=routes;
   if(typeof module!=='undefined'&&module.exports)module.exports=routes;

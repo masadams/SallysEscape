@@ -156,7 +156,9 @@ function openEscapeLibrary(){
   escapeLibraryOpen=true;clearTouchInput();suppressHeldKeys();document.getElementById('game-area').classList.remove('escape-world-open');
   document.getElementById('game-container').style.display='none';document.getElementById('escape-select').style.display='block';document.getElementById('world-list-back').focus();updateToolbar();
 }
-function enterEscapeWorld(){const id=escapeWorld?.enter();if(id==='room:sallys-burrow'){const waiting=escapeStoryWaiting();if(waiting.length){for(const c of waiting)queueEscapeStory(c.id);return;}openEscapeTrophies();return;}if(id==='room:moss-den'){openEscapeMossDen();return;}if(id?.startsWith('hidden:'))startEscape({hiddenId:id.slice(7)});else if(id)startEscape({levelId:id});}
+// The boat at the Far Coast: where Episode 2 will set out from.
+const ESCAPE_BOAT_LINE='A little boat, its sail still furled, pointed at the island. Episode 2: coming soon.';
+function enterEscapeWorld(){const id=escapeWorld?.enter();if(id==='room:sallys-burrow'){const waiting=escapeStoryWaiting();if(waiting.length){for(const c of waiting)queueEscapeStory(c.id);return;}openEscapeTrophies();return;}if(id==='room:moss-den'){openEscapeMossDen();return;}if(id==='boat'){escapeWorldToast(ESCAPE_BOAT_LINE);return;}if(id?.startsWith('hidden:'))startEscape({hiddenId:id.slice(7)});else if(id)startEscape({levelId:id});}
 // The Gilded Burrow's three escapes, shown only to those who found it.
 function renderEscapeHiddenHUD(node){
   document.getElementById('world-route')?.classList.remove('world-route-idle');
@@ -172,6 +174,7 @@ function renderEscapeWorldHUD(){
   const w=escapeWorld,c=w.chapters[w.chapterAt()]||w.chapters[0],node=w.nearby();if(node?.hidden){renderEscapeHiddenHUD(node);return;}const level=node&&EscapeCatalog.levels[node.index],saved=node&&escapeProgress.data.levels[node.id],unlocked=node&&escapeProgress.unlocked(node.id);
   escapeWorldAnnounceSecrets();const door=w.nearbySecretDoor?.();if(door){const t=document.getElementById('world-toast'),info=escapeProgress.secret(door.id,EscapeWorld.chapters);if(t&&info?.hint)t.textContent=info.hint+(info.need>1?' ('+Math.min(info.have,info.need)+' / '+info.need+')':'');}
   const room=w.nearbyRoom?.();if(room){const t=document.getElementById('world-toast');if(t)t.textContent=room.name+'. Press Enter to go inside.';}
+  if(w.nearbyBoat?.()){const t=document.getElementById('world-toast');if(t)t.textContent=ESCAPE_BOAT_LINE;}
   if(w.revealed()){const ring=w.secrets.find(s=>s.id==='fairy-ring');if(!escapeProgress.data.secrets.includes('fairy-ring')&&Math.hypot(ring.x+.5-w.player.x,ring.y+.5-w.player.y)<3.5){const t=document.getElementById('world-toast');if(t)t.textContent=EscapeProgress.SECRET_RULES['fairy-ring'].clue+' Press R by each one.';}}
   const lock=w.nearbyBonusLock?.();if(lock){const t=document.getElementById('world-toast');if(t)t.textContent='A thorny hedge. Earn every star in the first '+lock.bonus.areas+' areas to open '+lock.name+'.';}
   // Passing news only: a door's or room's hint while Sally stands by it, the area's caches when she
@@ -359,7 +362,7 @@ function drawEscapeWorld(){
   const next=w.nodes.find(n=>escapeWorldUnlocked(n.id)&&!escapeProgress.data.levels[n.id]?.cleared&&w.regionOpen(n.chapter));
   if(next){const pulse=(sin(w.elapsed*3)+1)/2;noFill();stroke(255,226,120,90+pulse*130);strokeWeight(cell*.09);ellipse(next.x*cell,next.y*cell,cell*(1.9+pulse*.6),cell*(1.9+pulse*.6));}
   for(const gate of w.gates){if(w.regionOpen(gate.chapter))continue;const x=gate.x+.5,y=gate.y+.5;stroke(224,187,99);strokeWeight(cell*.1);for(const d of [-1.2,-.8,-.4,0,.4,.8,1.2]){if(gate.vertical)line((x+d)*cell,(y-.32)*cell,(x+d)*cell,(y+.32)*cell);else line((x-.32)*cell,(y+d)*cell,(x+.32)*cell,(y+d)*cell);}noStroke();fill(245,223,151);textAlign(CENTER,CENTER);const need=EscapeCatalog.levels[w.chapters[gate.chapter].start]?.unlockChallenges;textSize(cell*(need?.42:.34));text(need?'⚑'+need:'◇',x*cell,y*cell);}
-  for(const s of w.secrets||[])if(Math.abs(s.x-w.player.x)<width/cell+s.rx+4&&Math.abs(s.y-w.player.y)<height/cell+s.ry+4){if(s.id!=='sallys-burrow'&&!w.revealed?.())continue;drawEscapeWorldSecret(s,cell,w.elapsed,w.secretOpen?.(s.id));}
+  for(const s of w.secrets||[])if(Math.abs(s.x-w.player.x)<width/cell+s.rx+4&&Math.abs(s.y-w.player.y)<height/cell+s.ry+4){if(!['sallys-burrow','far-coast'].includes(s.id)&&!w.revealed?.())continue;drawEscapeWorldSecret(s,cell,w.elapsed,w.secretOpen?.(s.id));}
   drawEscapeWorldRecovery(w,cell,near);
   for(const sign of w.signs)if(w.regionOpen(sign.chapter)&&near(sign.x,sign.y,4))drawEscapeWorldSign(sign,w.chapters[sign.chapter],escapeRegionStars(sign.chapter),cell);
   for(const cache of w.caches)if(w.regionOpen(cache.chapter)&&near(cache.x,cache.y))drawEscapeWorldCache(cache,w.found.has(cache.id),cell,w.elapsed,Math.hypot(cache.x+.5-w.player.x,cache.y+.5-w.player.y));
@@ -378,7 +381,7 @@ function drawEscapeWorld(){
     noStroke();fill(160,220,120,open?40+pulse*50:18);ellipse(x,y,cell*(1.8+pulse*.3),cell*(1.8+pulse*.3));fill(44,84,40);rect(x-cell*.5,y-cell*.5,cell,cell,cell*.2);fill(open?190:110,open?230:140,open?140:110);rect(x-cell*.38,y-cell*.38,cell*.76,cell*.76,cell*.16);fill(30,60,30);textAlign(CENTER,CENTER);textSize(cell*.42);text(open?(n.bonus.areas>5?'✹':'✣'):'🔒',x,y);
     if(saved){textSize(cell*.36);for(let i=0;i<3;i++){fill(...(i<saved.stars?[255,196,40]:[40,58,46,160]));text('★',x+(i-1)*cell*.36,y+cell*1.02);}}}
   // Secret doors: a cracked hedge to push through, or a thorny hedge until the spot opens.
-  for(const d of w.secretDoors||[])if(!w.secretOpen(d.id)&&(d.id==='sallys-burrow'||w.revealed())){const x=d.x*cell,y=d.y*cell,bump=EscapeProgress.SECRET_RULES[d.id]?.bump;noStroke();fill(46,92,52);rect(x-cell*.05,y-cell*.05,cell*1.1,cell*1.1,cell*.25);
+  for(const d of w.secretDoors||[])if(!w.secretOpen(d.id)&&(['sallys-burrow','far-coast'].includes(d.id)||w.revealed())){const x=d.x*cell,y=d.y*cell,bump=EscapeProgress.SECRET_RULES[d.id]?.bump;noStroke();fill(46,92,52);rect(x-cell*.05,y-cell*.05,cell*1.1,cell*1.1,cell*.25);
     if(bump){stroke(24,48,28);strokeWeight(cell*.06);line(x+cell*.3,y+cell*.1,x+cell*.5,y+cell*.45);line(x+cell*.5,y+cell*.45,x+cell*.35,y+cell*.8);line(x+cell*.5,y+cell*.45,x+cell*.75,y+cell*.6);noStroke();}
     else{fill(196,70,90);for(let k=0;k<3;k++)ellipse(x+cell*(.2+k*.3),y+cell*(.3+(k%2)*.4),cell*.16,cell*.16);}}
   for(const n of w.secretNodes||[]){if(!w.secretOpen(n.secret))continue;const x=n.x*cell,y=n.y*cell,saved=escapeProgress.data.hidden[n.id],open=escapeProgress.hiddenLevelOpen(n.id,EscapeWorld.chapters),pulse=(sin(w.elapsed*1.8+n.index)+1)/2;
@@ -452,6 +455,9 @@ function drawEscapeWorldSecret(s,cell,clock,open=false){
   const x=(s.x+.5)*cell,y=(s.y+.5)*cell,glow=.5+.5*Math.sin(clock*1.3+s.x);noStroke();
   // Once open, a spot's escapes mark it; the burrow shows its round front door with a lamp lit.
   if(open&&s.id==='sallys-burrow'){fill(0,0,0,60);ellipse(x,y+cell*.6,cell*2.2,cell*.5);fill(92,66,40);ellipse(x,y,cell*2,cell*2);fill(150,96,52);ellipse(x,y+cell*.05,cell*1.6,cell*1.6);stroke(110,70,36);strokeWeight(cell*.05);for(const o of [-.4,0,.4])line(x+o*cell,y-cell*.7,x+o*cell,y+cell*.8);noStroke();fill(230,190,90);ellipse(x+cell*.45,y+cell*.1,cell*.16,cell*.16);fill(255,214,120,60+60*glow);ellipse(x-cell*1.2,y-cell*.6,cell*.7,cell*.7);fill(255,226,150);ellipse(x-cell*1.2,y-cell*.6,cell*.26,cell*.3);return;}
+  // The Far Coast: the dark lantern from the map page on its rock, and the boat waiting for Episode 2.
+  if(open&&s.id==='far-coast'){const lx=(s.x-s.rx+1.5)*cell,ly=(s.y-s.ry+.6)*cell;fill(0,0,0,60);ellipse(lx,ly+cell*.7,cell*1.1,cell*.3);fill(96,92,88);rect(lx-cell*.12,ly-cell*.2,cell*.24,cell*.9);fill(60,64,72);rect(lx-cell*.3,ly-cell*.62,cell*.6,cell*.46,cell*.08);fill(120,130,150,80);rect(lx-cell*.2,ly-cell*.54,cell*.4,cell*.3);
+    const bx=(escapeWorld.boat.x+.5)*cell,by=(escapeWorld.boat.y+1.1)*cell,bob=Math.sin(clock*1.6)*cell*.05;fill(20,40,60,70);ellipse(bx,by+cell*.25,cell*1.6,cell*.3);fill(120,78,46);arc(bx,by+bob,cell*1.4,cell*.7,0,PI,CHORD);fill(150,100,60);rect(bx-cell*.7,by+bob-cell*.06,cell*1.4,cell*.08);stroke(90,62,40);strokeWeight(cell*.05);line(bx,by+bob,bx,by+bob-cell*.8);noStroke();fill(236,228,206);rect(bx-cell*.04,by+bob-cell*.7,cell*.3,cell*.1,cell*.04);return;}
   if(open&&EscapeProgress.SECRET_RULES?.[s.id])return;
   if(s.area){for(let i=0;i<4;i++)drawEscapeRegionCloud({x:s.x+[-8,8,-8,8][i],y:s.y+[-3,-3,4,4][i]},20+i,cell,clock);return;}
   if(s.id==='fairy-ring'){for(let k=0;k<7;k++){const a=k*TWO_PI/7,px=x+Math.cos(a)*cell*.9,py=y+Math.sin(a)*cell*.6;fill(240,230,210);rect(px-cell*.03,py,cell*.06,cell*.1);fill(214,70,58);arc(px,py+cell*.02,cell*.2,cell*.16,PI,TWO_PI);}fill(220,200,255,40+50*glow);ellipse(x,y,cell*1.4,cell*1);return;}
