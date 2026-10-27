@@ -171,6 +171,15 @@ level's paths, and the bar says whether it still wins. **▶ Watch** then plays 
 and `scripts/apply-level-edits.cjs --write` puts it in place of the recording in `tests/fixtures/`
 if it wins on the new version. **↺ Recorded run** goes back to the recording.
 
+**🤖 Solve** (in the menu bar, for your own levels and workshop drafts alike) lets the route planner
+try the level as it stands, for up to about a minute, without freezing the builder (■ Stop ends it).
+It plays the way a careful player does: hide, watch, go, using pebbles, camouflage and the tongue.
+What it finds becomes the run shown over the map: **▶ Watch** it, **✎ Edit steps**, or on a workshop
+draft **💾 Save run**. If it gets stuck, the run shows how far it got (the ✗). Walking steps end where
+Sally picks up the key or treasure or opens a door, so the steps follow the level's beats. The planner
+escapes most levels but not all (84 of the 100 trail escapes); a level it cannot solve is not
+necessarily unsolvable. The same planner runs from the command line: `node scripts/planner.cjs <level-id>`.
+
 **Test drafts in game** (in the workshop) swaps each draft in for its escape in this browser, so it
 plays from the map with its unlocks and ties unchanged, marked ✎. Runs on a draft never count
 toward stars or progress. Turning it on or off reloads the page.

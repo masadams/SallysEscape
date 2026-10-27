@@ -11,18 +11,10 @@
 // changes wherever the real hunters would catch Sally, keeping whatever gets furthest.
 const path=require('path');
 const {EscapeAdventure}=require(path.join(__dirname,'../public/escape-engine.js'));
+const {clone,push,bad,frame,go}=require(path.join(__dirname,'../public/escape-planner.js'));
 const ACT={pebble:'throwDecoy',burrow:'burrow',tongue:'useTongue',seed:'plantSeed',camo:'camouflage'};
 const optionsFor=id=>id.startsWith('challenge:')?{challengeId:id.slice(10)}:id.startsWith('hidden:')?{hiddenId:id.slice(7)}:id.startsWith('kids:')?{kidsId:id.slice(5)}:{levelId:id};
 
-// Deep clone that keeps prototypes, Maps, Sets and shared references; frozen catalog data is shared.
-function clone(value,memo=new Map()){
-  if(value===null||typeof value!=='object'||Object.isFrozen(value))return value;
-  if(memo.has(value))return memo.get(value);let out;
-  if(Array.isArray(value)){out=new Array(value.length);memo.set(value,out);for(let i=0;i<value.length;i++)out[i]=clone(value[i],memo);return out;}
-  if(value instanceof Map){out=new Map();memo.set(value,out);for(const [k,v] of value)out.set(clone(k,memo),clone(v,memo));return out;}
-  if(value instanceof Set){out=new Set();memo.set(value,out);for(const v of value)out.add(clone(v,memo));return out;}
-  out=Object.create(Object.getPrototypeOf(value));memo.set(value,out);for(const k of Object.keys(value))out[k]=clone(value[k],memo);return out;
-}
 // The same rules with nothing hunting Sally: used to lay out a route from hints.
 class Peaceful extends EscapeAdventure{
   // With no beetle about, a heavy plate's door simply stands open; the search then waits for the real one.
@@ -31,7 +23,6 @@ class Peaceful extends EscapeAdventure{
   // No hunters to steam here, so a steam-trap hatch opens on the key alone; the real search must still steam them.
   exitUnlocked(){const c=this.challenge;if(!c?.steamTraps)return super.exitUnlocked();this.challenge={...c,steamTraps:0};const open=super.exitUnlocked();this.challenge=c;return open;}
 }
-function push(rec,cmd){const last=rec.at(-1);if(cmd.kind==='move'&&last&&last.kind==='move'&&last.x===cmd.x&&last.y===cmd.y&&last.sprint===cmd.sprint)last.frames+=cmd.frames;else rec.push({...cmd});}
 function record(Engine,options,hints){
   const g=new Engine(options),out=[],move=(x,y,sprint,frames)=>{for(let i=0;i<frames&&g.status==='playing';i++){g.advance(1/120,{x,y,sprint});push(out,{kind:'move',frames:1,x,y,sprint});}};
   for(const c of hints.split(/\s+/).filter(Boolean)){
@@ -74,21 +65,7 @@ function extractPlan(Engine,recording){
 // A recorded run never leans on the forgiving tail drop: losing the tail counts as caught.
 // ALLOW_TAIL=1 lets a bonus escape's run drop its tail (any finish will do there).
 // STEALTH=1 treats any chase as failure, for long routes where a chase started early dooms the run far beyond the search window.
-const bad=g=>g.status==='caught'||g.status==='failed'||(g.tailsDropped>0&&!process.env.ALLOW_TAIL)||(g.challenge?.noChase&&g.alarms>0)||(process.env.STEALTH&&g.hunters.some(h=>h.state==='chase'));
-function frame(g,rec,x,y,sprint){g.advance(1/120,{x,y,sprint});push(rec,{kind:'move',frames:1,x,y,sprint});}
 function wait(g,rec,t){for(let i=0;i<Math.round(t*120)&&g.status==='playing';i++)frame(g,rec,0,0,false);return !bad(g);}
-function go(g,rec,item,sprint){
-  const limit=Math.ceil((Math.hypot(item.x-g.player.x,item.y-g.player.y)+1.5)*120);
-  for(let i=0;i<limit&&g.status==='playing';i++){
-    // Reaching a bounce cap launches Sally: ride the flight out, and the waypoint counts as reached.
-    if(g.player.flight){while(g.player.flight&&g.status==='playing'){frame(g,rec,0,0,false);if(bad(g))return false;}return true;}
-    const dx=item.x-g.player.x,dy=item.y-g.player.y,L=Math.hypot(dx,dy);if(L<(item.exact?.004:.12))return true;
-    // Near an exact spot, a shorter input moves Sally only part of a step, so she lands on it.
-    const step=(item.exact?2.45:sprint?4:2.45)/120,scale=item.exact&&L<step?L/step:1;
-    frame(g,rec,+(dx/L*scale).toFixed(4),+(dy/L*scale).toFixed(4),item.exact?false:sprint);if(bad(g))return false;
-  }
-  return g.status==='won'||(g.status==='playing'&&Math.hypot(item.x-g.player.x,item.y-g.player.y)<.3);
-}
 function finish(g,rec){
   for(let tries=0;tries<3&&g.status==='playing';tries++){
     for(const pt of g.route(g.player,g.exit)||[])if(!go(g,rec,{x:pt.x,y:pt.y},false))return g.status==='won';

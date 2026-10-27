@@ -8,6 +8,9 @@
   const ACT={pebble:'throwDecoy',burrow:'burrow',tongue:'useTongue',seed:'plantSeed',camo:'camouflage',glow:'throwGlow',spore:'throwSpore'};
   const push=(rec,cmd)=>{const last=rec[rec.length-1];if(cmd.kind==='move'&&last&&last.kind==='move'&&last.x===cmd.x&&last.y===cmd.y&&last.sprint===cmd.sprint&&!last.crawl&&!cmd.crawl)last.frames+=cmd.frames;else rec.push({...cmd});};
   const round=v=>Math.round(v*100)/100;
+  // A door Sally opened herself: it opened this frame and she is at one of its switches, levers or plates.
+  const shut=g=>(g.gates||[]).filter(gate=>!gate.open);
+  const pressed=(g,before)=>before.some(gate=>gate.open&&[...(gate.switch?[gate.switch]:[]),...(gate.plates||[]),...(gate.levers||[])].some(p=>Math.hypot(p.x-g.player.x,p.y-g.player.y)<1.2));
 
   // The steps of a recording. Each remembers the frame it starts at, so a replay can take everything
   // before it straight from the recording, and a go keeps its own input to replay as it was.
@@ -17,8 +20,11 @@
     for(const c of commands){
       if(c.kind!=='move'){const aim=lastInput&&(lastInput.x||lastInput.y)?{x:Math.sign(Math.round(lastInput.x)),y:Math.sign(Math.round(lastInput.y))}:null;
         items.push({act:{type:'act',kind:c.kind,aim,frame,at:{x:round(g.player.x),y:round(g.player.y)},...(c.power!==undefined?{power:c.power}:{})}});g[ACT[c.kind]]?.(c.power);continue;}
-      for(let n=0;n<c.frames;n++){const from={x:g.player.x,y:g.player.y},flying=Boolean(g.player.flight),crates=g.crateVersion;
-        g.advance(1/120,c);items.push({frame,input:c,from,to:{x:g.player.x,y:g.player.y},moving:Boolean(c.x||c.y),cap:!flying&&Boolean(g.player.flight),pushed:g.crateVersion!==crates});frame++;if(c.x||c.y)lastInput=c;}
+      for(let n=0;n<c.frames;n++){const from={x:g.player.x,y:g.player.y},flying=Boolean(g.player.flight),crates=g.crateVersion,had=[g.hasKey,g.treasure,shut(g)];
+        g.advance(1/120,c);
+        // What Sally got on this frame (the key, treasure, a door opened): a go ends there, so the steps follow the level's beats.
+        const got=!had[0]&&g.hasKey?'key':g.treasure>had[1]?'treasure':pressed(g,had[2])?'door':null;
+        items.push({frame,input:c,from,to:{x:g.player.x,y:g.player.y},moving:Boolean(c.x||c.y),cap:!flying&&Boolean(g.player.flight),pushed:g.crateVersion!==crates,got});frame++;if(c.x||c.y)lastInput=c;}
     }
     // Then group: a stretch of movement is one go (pauses under a quarter second inside it belong to
     // it), a longer pause is a wait, and each tool use is a step of its own. Every frame lands in
@@ -31,12 +37,12 @@
     while(i<items.length){const it=items[i];
       if(it.act){steps.push(it.act);i++;continue;}
       let j=i;while(j<items.length&&!items[j].act&&!items[j].moving)j++;
-      const last=steps[steps.length-1],intoGo=last&&last.type==='go',moveNext=j<items.length&&!items[j].act;
+      const last=steps[steps.length-1],intoGo=last&&last.type==='go'&&!last.got,moveNext=j<items.length&&!items[j].act;
       if(j>i&&(j-i>=30||!intoGo&&!moveNext)){const w={type:'wait',t:round((j-i)/120),frames:j-i,frame:it.frame,at:{x:round(it.from.x),y:round(it.from.y)},raw:[]};for(;i<j;i++)add(w,items[i]);steps.push(w);continue;}
       let go=intoGo?last:null;
       if(!go){go={type:'go',frame:it.frame,from:{x:round(it.from.x),y:round(it.from.y)},exact:{...it.from},points:[],raw:[],sprinted:0,moved:0,to:{x:round(it.from.x),y:round(it.from.y)}};steps.push(go);}
       for(;i<j;i++)add(go,items[i]);
-      for(;i<items.length&&items[i].moving&&!items[i].act;i++)add(go,items[i]);
+      for(;i<items.length&&items[i].moving&&!items[i].act;i++){add(go,items[i]);if(items[i].got){go.got=items[i].got;i++;break;}}
     }
     for(const s of steps)if(s.type==='go'){s.sprint=s.sprinted*2>s.moved;delete s.sprinted;delete s.moved;}
     steps.push({type:'end',frame});
@@ -74,9 +80,10 @@
 
   // One line for a step, for the list.
   const NAMES={pebble:'Throw a pebble',tongue:'Tongue',camo:'Camouflage',burrow:'Burrow',seed:'Plant a seed',glow:'Throw a glow mushroom',spore:'Throw a spore pouch'};
+  const GOT={key:' for the key',treasure:' for treasure',door:', opening a door'};
   const WAY=a=>!a?'':a.x>0?' →':a.x<0?' ←':a.y>0?' ↓':' ↑';
   function describe(s){
-    if(s.type==='go')return (s.sprint?'Sprint':'Walk')+' to '+Math.floor(s.to.x)+','+Math.floor(s.to.y)+(s.cap?' (bounce cap)':s.pushes?' (pushing)':'');
+    if(s.type==='go')return (s.sprint?'Sprint':'Walk')+' to '+Math.floor(s.to.x)+','+Math.floor(s.to.y)+(GOT[s.got]||'')+(s.cap?' (bounce cap)':s.pushes?' (pushing)':'');
     if(s.type==='wait')return 'Wait '+s.t+' s';
     if(s.type==='act')return (NAMES[s.kind]||s.kind)+WAY(s.aim);
     return 'Escape';
