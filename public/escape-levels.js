@@ -8756,7 +8756,7 @@
   const rebuilt=typeof module!=='undefined'&&module.exports?require('./escape-rebuilt.js'):root.EscapeRebuilt||[];
   for(const route of rebuilt){
     // New areas add their escapes to the end of the trail.
-    if(route.append){if(levels.some(l=>l.id===route.id))throw new Error('Duplicate route '+route.id);const {append,...rest}=route;levels.push({burrows:0,pebbles:0,tongues:0,...rest,revision:1});continue;}
+    if(route.append){if(levels.some(l=>l.id===route.id))throw new Error('Duplicate route '+route.id);const {append,...rest}=route;levels.push({burrows:0,pebbles:0,tongues:0,...rest,revision:rest.revision||1});continue;}
     const i=levels.findIndex(l=>l.id===route.id);if(i<0)throw new Error('Unknown rebuilt route '+route.id);
     const old=levels[i],keep={};for(const k of ['unlockAfter','unlockChallenges'])if(old[k]!==undefined)keep[k]=old[k];
     // A route redrawn again names its revision, so the records from its last layout retire too.
