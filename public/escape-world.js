@@ -29,7 +29,7 @@
     {id:'magpie-roost',name:'Magpie Roost',x:81,y:56,rx:7,ry:3},
     {id:'sallys-burrow',name:'Sally\'s Burrow',x:31,y:118,rx:4,ry:3,via:'home'},
     // Across the sea south of Home: the coast from the map page in the bottle, reached by a causeway.
-    {id:'far-coast',name:'The Far Coast',x:57,y:140,rx:6,ry:3,via:'home',sea:[40,127,74,147]}
+    {id:'far-coast',name:'The Far Coast',x:57,y:140,rx:8,ry:4,via:'home',sea:[33,124,81,149],island:true}
   ];
   class EscapeWorld{
     constructor(unlocked=()=>true,focusId=null,hiddenOpen=()=>false,bonusOpen=()=>false,secretOpen=()=>false){
@@ -61,8 +61,15 @@
       for(const n of this.bonusNodes){room(n.x-6,n.y-3,n.x+6,n.y+3);room(n.lock.x,n.y+4,n.lock.x,n.lock.y+1);for(const [dx,dy] of [[-5,-2],[5,-2],[-5,2],[5,2]])this.grid[n.y+dy][n.x+dx]='L';}
 
       // A spot across the water sits in open sea; the narrow way out to it is a causeway.
-      for(const s of secrets)if(s.sea)room(...s.sea,'P');
-      for(const s of secrets)if(s.rx)room(s.x-s.rx,s.y-s.ry,s.x+s.rx,s.y+s.ry);
+      // The sea is a bay with a wandering shore, not a box: an ellipse inside the given bounds, its edge
+      // pushed in and out so the forest meets the water in coves and headlands.
+      for(const s of secrets)if(s.sea){const [x1,y1,x2,y2]=s.sea,cx=(x1+x2)/2,cy=(y1+y2)/2,rx=(x2-x1)/2,ry=(y2-y1)/2;
+        for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++){const dx=(x-cx)/rx,dy=(y-cy)/ry,a=Math.atan2(dy,dx),edge=1+.09*Math.sin(a*4+1.3)+.06*Math.sin(a*7+.4)+.04*Math.sin(a*11);if(dx*dx+dy*dy<=edge*edge&&this.grid[y]?.[x]==='#'&&y<this.height-2&&x>0&&x<this.width-1)this.grid[y][x]='P';}}
+      for(const s of secrets)if(s.rx&&!s.island)room(s.x-s.rx,s.y-s.ry,s.x+s.rx,s.y+s.ry);
+      // An island is a rounded, irregular coast rather than a box: an ellipse whose edge wanders in and out.
+      for(const s of secrets)if(s.island)for(let y=s.y-s.ry-1;y<=s.y+s.ry+1;y++)for(let x=s.x-s.rx-1;x<=s.x+s.rx+1;x++){
+        const dx=(x-s.x)/(s.rx+.5),dy=(y-s.y)/(s.ry+.5),a=Math.atan2(dy,dx),edge=EscapeWorld.islandEdge(a);
+        if(dx*dx+dy*dy<=edge*edge||(x===s.x&&y<=s.y))this.grid[y][x]='.';}
       // Each secret clearing is joined to the nearest open ground by a narrow way, stopped by a door
       // (a hedge, a crack or a rockfall) until whatever opens it is done.
       this.secretDoors=[];for(const s of secrets)if(s.rx){const door=this.carveSecretWay(s);if(door)this.secretDoors.push({id:s.id,...door});}
@@ -74,7 +81,7 @@
       this.lostItems=[{id:'spectacles',name:'Old Moss\u2019s spectacles',...at('ruins',-6,-4)},{id:'pocket-watch',name:'Old Moss\u2019s pocket watch',...at('jungle',6,-4)},{id:'scarf',name:'Old Moss\u2019s scarf',...at('frost',-6,5)}];
       const ring=secrets.find(s=>s.id==='fairy-ring');this.fairyCaps=[[-2,-1],[2,-1],[0,2]].map(([dx,dy])=>({x:ring.x+dx,y:ring.y+dy}));this.fairyStep=0;
       // A little boat waits at the Far Coast's south shore for Episode 2.
-      const coast=secrets.find(s=>s.id==='far-coast');this.boat={x:coast.x+4,y:coast.y+coast.ry};
+      const coast=secrets.find(s=>s.id==='far-coast'),bx=coast.x+3;let by=coast.y;while(this.grid[by+1]?.[bx]==='.')by++;this.boat={x:bx,y:by};
       this.oak=secrets.find(s=>s.id==='struck-oak');this.itemsFound=new Set();this.onItem=null;this.onSecretCache=null;
       this.refreshRegions();this.tracks=[];
       const track=(a,b,side=false)=>{const from={x:a.x+.5,y:a.y+.5},to={x:b.x+.5,y:b.y+.5},path=this.route(to,from,true);if(path)this.tracks.push({points:[from,...path],side,from:a.id,to:b.id});};
@@ -181,6 +188,9 @@
       this.player.moving=Math.hypot(old.x-this.player.x,old.y-this.player.y)>1e-6;this.player.sprinting=Boolean(input.sprint&&this.player.moving);this.motion.update(dt,this);
     }
   }
+  // How far an island's shore reaches out at angle a, as a share of its radius (the same wobble the
+  // map is carved with and the scene draws its coastline from).
+  EscapeWorld.islandEdge=a=>1+.16*Math.sin(a*3+.7)+.1*Math.sin(a*5+2.1)-.06*Math.cos(a*7);
   EscapeWorld.chapters=chapters;EscapeWorld.secrets=secrets;
   root.EscapeWorld=EscapeWorld;
   if(typeof module!=='undefined'&&module.exports)module.exports={EscapeWorld};

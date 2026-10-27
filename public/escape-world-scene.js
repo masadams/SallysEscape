@@ -306,6 +306,7 @@ function drawEscapeWorldTerrain(d,w,palettes,cell,x1,x2,y1,y2){
     if(rocky){d.fill(7,26,19,45);d.ellipse(px,py+r*.2,r*1.05,r*.55);d.fill(...p[2]);d.ellipse(px,py,r,r*.7);d.fill(255,255,255,35);d.ellipse(px-r*.18,py-r*.15,r*.4,r*.18);}
     else{d.fill(0,0,0,40);d.ellipse(px+cell*.05,py+cell*.12,r,r*.85);d.fill(...p[1]);d.ellipse(px,py,r,r*.9);d.fill(...p[2],60);d.ellipse(px-r*.18,py-r*.2,r*.5,r*.42);if(hash===1){d.fill(236,140,180);for(const [ox,oy] of [[-.2,0],[.15,-.15],[.1,.2]])d.ellipse(px+ox*r,py+oy*r,cell*.13,cell*.13);}}
   }
+  drawEscapeWorldCoast(d,w,cell,x1,x2,y1,y2);
   // Border trees, dune rocks and ruined masonry echo the level art without tiling the whole map.
   for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++){const tile=w.grid[y][x],c=w.chapters[w.chapterAt({x,y})],p=palettes[c.theme];
     if(tile==='#'){
@@ -325,6 +326,67 @@ function drawEscapeWorldTerrain(d,w,palettes,cell,x1,x2,y1,y2){
       }
     }else if(tile==='L'){d.noStroke();d.fill(46,110,67,200);for(const [dx,dy]of [[.3,.4],[.65,.3],[.5,.65]])d.ellipse((x+dx)*cell,(y+dy)*cell,cell*.5,cell*.45);}
   }
+}
+// The sea south of Home and the Far Coast island, painted (and cached) as one natural shore: the water
+// deepens away from land, the sand rounds off into a wet rim, rocks line the causeway and the forest's
+// edge, and dune grass and shells dot the island. Tiles stay the collision; this is only the look.
+function escapeWorldCoastInfo(w){
+  if(w.coastInfo)return w.coastInfo;const s=w.secrets?.find(s=>s.id==='far-coast');if(!s?.sea)return w.coastInfo={area:null};
+  const [x1,y1,x2,y2]=s.sea,area={x1:x1-1,y1:y1-1,x2:x2+1,y2:y2+1},inArea=(x,y)=>x>=area.x1&&x<=area.x2&&y>=area.y1&&y<=area.y2;
+  // How far each sea tile is from land (island, causeway or the Home shore), up to 6.
+  const dist=new Map(),queue=[];for(let y=area.y1;y<=area.y2;y++)for(let x=area.x1;x<=area.x2;x++)if(w.grid[y]?.[x]==='.'){dist.set(x+','+y,0);queue.push([x,y]);}
+  for(let i=0;i<queue.length;i++){const [x,y]=queue[i],d=dist.get(x+','+y);if(d>=6)continue;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy,k=nx+','+ny;if(!inArea(nx,ny)||dist.has(k)||w.grid[ny]?.[nx]!=='P')continue;dist.set(k,d+1);queue.push([nx,ny]);}}
+  // Where land meets water: the edges the foam laps at, and the forest's rocky lip.
+  const shore=[],rocks=[];for(let y=area.y1;y<=area.y2;y++)for(let x=area.x1;x<=area.x2;x++){const t=w.grid[y]?.[x];if(t!=='.'&&t!=='#')continue;
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])if(w.grid[y+dy]?.[x+dx]==='P')(t==='.'?shore:rocks).push({x,y,dx,dy});}
+  return w.coastInfo={area,inArea,dist,shore,rocks,spot:s};
+}
+function drawEscapeWorldCoast(d,w,cell,x1,x2,y1,y2){
+  const c=escapeWorldCoastInfo(w);if(!c.area||x2<c.area.x1||x1>c.area.x2||y2<c.area.y1||y1>c.area.y2)return;
+  const deep=[22,70,104],shallow=[86,182,178],mid=[40,120,146],cx1=Math.max(x1,c.area.x1),cx2=Math.min(x2,c.area.x2),cy1=Math.max(y1,c.area.y1),cy2=Math.min(y2,c.area.y2);d.noStroke();
+  // Deep water first, then the shallows: soft rings around the island, a band along the causeway and the Home shore.
+  for(let y=cy1;y<=cy2;y++)for(let x=cx1;x<=cx2;x++)if(w.grid[y][x]==='P'){d.fill(...deep);d.rect(x*cell,y*cell,cell+1,cell+1);}
+  const s=c.spot,shape=(grow)=>{d.beginShape();for(let i=0;i<=72;i++){const a=i/72*TWO_PI-PI,r=EscapeWorld.islandEdge(a)+grow;d.curveVertex((s.x+.5+Math.cos(a)*(s.rx+.5)*r)*cell,(s.y+.5+Math.sin(a)*(s.ry+.5)*r)*cell);}d.endShape(CLOSE);};
+  const top=c.area.y1+2,neck=s.y+.5-(s.ry+.5)*EscapeWorld.islandEdge(-PI/2),shoreY=w.secretDoors.find(q=>q.id==='far-coast')?.y??top;
+  for(const [g,col,alpha] of [[1.1,mid,22],[.8,mid,30],[.55,shallow,40],[.38,shallow,55],[.26,shallow,75]]){d.fill(...col,alpha);shape(g);
+    const half=(.5+g*3)*cell;d.rect((s.x+.5)*cell-half,(shoreY)*cell,half*2,(neck-shoreY-g)*cell,half);
+    // The Home shore's shallows wander in and out instead of running as one straight band.
+    d.beginShape();d.vertex(c.area.x1*cell,(shoreY+.2)*cell);for(let x=c.area.x1;x<=c.area.x2;x+=.5)d.curveVertex(x*cell,(shoreY+.2+(.2+g*2.2)*(1+.35*Math.sin(x*.55+g*4)+.2*Math.sin(x*1.3)))*cell);d.vertex(c.area.x2*cell,(shoreY+.2)*cell);d.endShape(CLOSE);}
+  for(let y=cy1;y<=cy2;y++)for(let x=cx1;x<=cx2;x++){if(w.grid[y][x]!=='P')continue;const h=(x*37+y*91)%11,k=c.dist.get(x+','+y)??9;if(h<3){d.stroke(255,255,255,k<=2?40:20);d.strokeWeight(cell*.035);d.line((x+.15+h*.1)*cell,(y+.35+h*.12)*cell,(x+.55+h*.1)*cell,(y+.35+h*.12)*cell);d.noStroke();}}
+  // The island as one smooth coastline (wet sand, then dry), the causeway as a single sandbar to it.
+  d.fill(178,160,118);shape(.16);d.rect((s.x+.5)*cell-cell*.78,shoreY*cell,cell*1.56,(neck-shoreY+.4)*cell,cell*.5);
+  // Where the sandbar meets the island it flares out, so the two read as one spit of sand.
+  d.ellipse((s.x+.5)*cell,(neck+.35)*cell,cell*3.6,cell*1.7);
+  d.fill(222,204,158);shape(.07);d.rect((s.x+.5)*cell-cell*.6,(shoreY-.2)*cell,cell*1.2,(neck-shoreY+.8)*cell,cell*.4);d.ellipse((s.x+.5)*cell,(neck+.45)*cell,cell*3,cell*1.3);
+  const land=[];for(let y=cy1;y<=cy2;y++)for(let x=cx1;x<=cx2;x++)if(w.grid[y][x]==='.'&&y>shoreY)land.push([x,y]);
+  // Ripples drawn into the sand, and the island's dune grass, shells and driftwood.
+  for(const [x,y] of land){const h=(x*7919+y*104729)%23,px=(x+.5)*cell,py=(y+.5)*cell;
+    if(h%5===0){d.noFill();d.stroke(196,176,128,140);d.strokeWeight(cell*.03);d.arc(px,py,cell*.7,cell*.22,PI*1.1,PI*1.9);d.noStroke();}
+    else if(h===3&&y<c.spot.y+2){d.stroke(112,140,78);d.strokeWeight(cell*.05);for(const o of [-.14,0,.12])d.line(px+o*cell,py+cell*.15,px+o*cell*1.8,py-cell*.28);d.noStroke();}
+    else if(h===7){d.fill(246,232,222);d.arc(px,py,cell*.24,cell*.2,PI,TWO_PI);d.stroke(214,176,156);d.strokeWeight(cell*.02);d.line(px,py,px-cell*.05,py-cell*.09);d.line(px,py,px+cell*.05,py-cell*.09);d.noStroke();}
+    else if(h===11){d.fill(140,108,76);d.rect(px-cell*.35,py-cell*.05,cell*.7,cell*.1,cell*.05);}}
+  // Rocks along the causeway and where the forest drops into the water.
+  for(const r of c.rocks){if(r.x<x1-1||r.x>x2+1||r.y<y1-1||r.y>y2+1)continue;const h=(r.x*31+r.y*17+r.dx*5)%9,px=(r.x+.5+r.dx*.5)*cell,py=(r.y+.5+r.dy*.5)*cell,rr=cell*(.45+h*.04);
+    d.fill(8,30,40,70);d.ellipse(px+cell*.05,py+cell*.12,rr*1.1,rr*.6);d.fill(104,110,108);d.ellipse(px,py,rr,rr*.7);d.fill(150,156,150);d.ellipse(px-rr*.15,py-rr*.12,rr*.45,rr*.25);}
+  for(let y=c.area.y1;y<=c.area.y2;y++){const x=c.spot.x;if(w.grid[y]?.[x]!=='.'||y>=c.spot.y-c.spot.ry-1||y<y1-1||y>y2+1)continue;if((y*7)%3)continue;
+    for(const side of [-1,1]){const px=(x+.5+side*.75)*cell,py=(y+.5)*cell;d.fill(8,30,40,70);d.ellipse(px+cell*.04,py+cell*.1,cell*.5,cell*.3);d.fill(112,118,112);d.ellipse(px,py,cell*.46,cell*.34);}}
+}
+// What moves on the Far Coast's sea, every frame: foam lapping at the shore, glints on the deep water
+// and gulls wheeling over the island. Still when the player asks for less motion.
+function drawEscapeWorldCoastLife(cell,clock){
+  const c=escapeWorld&&escapeWorldCoastInfo(escapeWorld);if(!c?.area)return;const t=escapeLightingFull?.()===false?0:clock;noStroke();
+  // Foam along the island's coastline and both sides of the causeway, swelling and easing back.
+  const sp=c.spot,neck=sp.y+.5-(sp.ry+.5)*(EscapeWorld.islandEdge(-PI/2)+.18),shoreY=escapeWorld.secretDoors.find(q=>q.id==='far-coast')?.y??c.area.y1;noFill();
+  for(let i=0;i<60;i++){const a=i/60*TWO_PI-PI,phase=t*1.3+i*.9,swell=.5+.5*Math.sin(phase),r=EscapeWorld.islandEdge(a)+.18+swell*.05,px=(sp.x+.5+Math.cos(a)*(sp.rx+.5)*r)*cell,py=(sp.y+.5+Math.sin(a)*(sp.ry+.5)*r)*cell;
+    if(Math.sin(a)<0&&Math.abs(px/cell-sp.x-.5)<1.3)continue;stroke(255,255,255,50+80*swell);strokeWeight(cell*.07);const tx=-Math.sin(a)*cell*.32,ty=Math.cos(a)*cell*.32*(sp.ry/sp.rx+.3);line(px-tx,py-ty,px+tx,py+ty);}
+  for(let y=shoreY+1;y<neck-.9;y++)for(const side of [-1,1]){const swell=.5+.5*Math.sin(t*1.5+y*.8+side),px=(sp.x+.5+side*(.82+swell*.06))*cell;stroke(255,255,255,40+70*swell);strokeWeight(cell*.07);line(px,(y+.1)*cell,px,Math.min(y+.9,neck-.9)*cell);}
+  noStroke();
+  for(let i=0;i<14;i++){const x=c.area.x1+3+(i*53%(c.area.x2-c.area.x1-6)),y=c.area.y1+3+(i*29%(c.area.y2-c.area.y1-5));if(escapeWorld.grid[y]?.[x]!=='P'||(c.dist.get(x+','+y)??6)<3)continue;
+    const tw=Math.max(0,Math.sin(t*2.2+i*1.7));if(tw<.3)continue;fill(255,255,255,170*tw);const px=(x+.5)*cell,py=(y+.5)*cell,r=cell*.12*tw;rect(px-r,py-cell*.02,r*2,cell*.04);rect(px-cell*.02,py-r,cell*.04,r*2);}
+  stroke(240,244,248,220);strokeWeight(cell*.05);noFill();
+  for(let g=0;g<2;g++){const a=t*(.35+g*.12)+g*2.4,gx=(c.spot.x+.5+Math.cos(a)*(5+g*2))*cell,gy=(c.spot.y-2+Math.sin(a)*(2.5+g))*cell,flap=Math.sin(t*6+g)*cell*.08;
+    beginShape();vertex(gx-cell*.32,gy-flap);vertex(gx,gy+cell*.08);vertex(gx+cell*.32,gy-flap);endShape();}
+  noStroke();
 }
 // The panels over the map, re-measured a few times a second rather than every frame (measuring makes
 // the browser lay the page out again, which is slow on a TV box).
@@ -455,8 +517,9 @@ function drawEscapeWorldSecret(s,cell,clock,open=false){
   const x=(s.x+.5)*cell,y=(s.y+.5)*cell,glow=.5+.5*Math.sin(clock*1.3+s.x);noStroke();
   // Once open, a spot's escapes mark it; the burrow shows its round front door with a lamp lit.
   if(open&&s.id==='sallys-burrow'){fill(0,0,0,60);ellipse(x,y+cell*.6,cell*2.2,cell*.5);fill(92,66,40);ellipse(x,y,cell*2,cell*2);fill(150,96,52);ellipse(x,y+cell*.05,cell*1.6,cell*1.6);stroke(110,70,36);strokeWeight(cell*.05);for(const o of [-.4,0,.4])line(x+o*cell,y-cell*.7,x+o*cell,y+cell*.8);noStroke();fill(230,190,90);ellipse(x+cell*.45,y+cell*.1,cell*.16,cell*.16);fill(255,214,120,60+60*glow);ellipse(x-cell*1.2,y-cell*.6,cell*.7,cell*.7);fill(255,226,150);ellipse(x-cell*1.2,y-cell*.6,cell*.26,cell*.3);return;}
+  if(s.id==='far-coast')drawEscapeWorldCoastLife(cell,clock);
   // The Far Coast: the dark lantern from the map page on its rock, and the boat waiting for Episode 2.
-  if(open&&s.id==='far-coast'){const lx=(s.x-s.rx+1.5)*cell,ly=(s.y-s.ry+.6)*cell;fill(0,0,0,60);ellipse(lx,ly+cell*.7,cell*1.1,cell*.3);fill(96,92,88);rect(lx-cell*.12,ly-cell*.2,cell*.24,cell*.9);fill(60,64,72);rect(lx-cell*.3,ly-cell*.62,cell*.6,cell*.46,cell*.08);fill(120,130,150,80);rect(lx-cell*.2,ly-cell*.54,cell*.4,cell*.3);
+  if(open&&s.id==='far-coast'){const lx=(s.x-4.5)*cell,ly=(s.y-1.2)*cell;fill(0,0,0,60);ellipse(lx,ly+cell*.7,cell*1.1,cell*.3);fill(96,92,88);rect(lx-cell*.12,ly-cell*.2,cell*.24,cell*.9);fill(60,64,72);rect(lx-cell*.3,ly-cell*.62,cell*.6,cell*.46,cell*.08);fill(120,130,150,80);rect(lx-cell*.2,ly-cell*.54,cell*.4,cell*.3);const glint=Math.max(0,Math.sin(clock*.7))**8;fill(200,225,255,150*glint);ellipse(lx,ly-cell*.4,cell*.5*glint+1,cell*.5*glint+1);
     const bx=(escapeWorld.boat.x+.5)*cell,by=(escapeWorld.boat.y+1.1)*cell,bob=Math.sin(clock*1.6)*cell*.05;fill(20,40,60,70);ellipse(bx,by+cell*.25,cell*1.6,cell*.3);fill(120,78,46);arc(bx,by+bob,cell*1.4,cell*.7,0,PI,CHORD);fill(150,100,60);rect(bx-cell*.7,by+bob-cell*.06,cell*1.4,cell*.08);stroke(90,62,40);strokeWeight(cell*.05);line(bx,by+bob,bx,by+bob-cell*.8);noStroke();fill(236,228,206);rect(bx-cell*.04,by+bob-cell*.7,cell*.3,cell*.1,cell*.04);return;}
   if(open&&EscapeProgress.SECRET_RULES?.[s.id])return;
   if(s.area){for(let i=0;i<4;i++)drawEscapeRegionCloud({x:s.x+[-8,8,-8,8][i],y:s.y+[-3,-3,4,4][i]},20+i,cell,clock);return;}
