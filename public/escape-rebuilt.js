@@ -152,7 +152,7 @@
  tongues:2,pebbles:1,explore:false,currents:[{area:[1,3,21,7],dir:[1,0],speed:1,pulse:6}],map:[
  '#######################',
  '#2..L......N.....L..@.#',
- '#..1.........L........#',
+ '#..2.........L........#',
  '#~~~~~~~~~~~~~~~~~~~~~#',
  '#~~~~~~~~~~~~~~~~~~~~~#',
  '#~~~~3~~~~~~LKL~~~~~~~#',
@@ -177,7 +177,7 @@
  gates:[{id:'blue',name:'Blue',color:[106,195,236],switch:[13,4],tiles:[[15,1],[15,2]]}],
  guards:[{kind:'ladybird',spawn:[23,4],patrol:[[23,4],[24,4]]},{kind:'beetle',spawn:[24,8],facing:PI,patrol:[[6,7],[24,7],[24,8],[6,8]]},{spawn:[19,5],facing:PI,patrol:[[5,4],[20,4],[20,5],[5,5]]}]},
 {id:'stillwater-vault',revision:3,name:'Stillwater Vault',brief:'A still pool in a ring of mud, and a key on its island.',hint:'Mud slows you, and if you stop in it you sink: cross in one go. Sprinting through it splashes loudly, and the snakes circling the ring will come to look. Swim the still pool to the island.',
- tongues:1,explore:true,map:[
+ tongues:2,explore:true,map:[
  '#########################',
  '#X1...L.......L.......2.#',
  '#..MMMMMMMMMMMMMMMMMMM..#',
