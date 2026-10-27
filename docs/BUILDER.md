@@ -161,6 +161,16 @@ in the builder; after an edit, **↻ Re-check** replays it on your version. Pick
 there is one. **▶ Watch** plays the level with the recorded run driving Sally, at normal speed. The runs
 come from the server (admin only; they are the answers).
 
+**✎ Edit steps** shows the run as a numbered list (and numbers on the map): walk or sprint to a tile,
+wait, use a tool facing a way, escape. Pick a step to change it: sprint on or off, **⌖ Move its end**
+then click a tile, the seconds of a wait, the way a tool faces, ✕ to remove it. **＋ Add after…** puts
+a go, wait or tool use after the picked step. **▶ Re-run steps** plays the list on the level as it
+stands: steps before your first change replay exactly as recorded, a changed go walks there along the
+level's paths, and the bar says whether it still wins. **▶ Watch** then plays the edited run.
+**💾 Save run** keeps it with the draft (saving the draft makes one if needed); **Export** carries it,
+and `scripts/apply-level-edits.cjs --write` puts it in place of the recording in `tests/fixtures/`
+if it wins on the new version. **↺ Recorded run** goes back to the recording.
+
 **Test drafts in game** (in the workshop) swaps each draft in for its escape in this browser, so it
 plays from the map with its unlocks and ties unchanged, marked ✎. Runs on a draft never count
 toward stars or progress. Turning it on or off reloads the page.

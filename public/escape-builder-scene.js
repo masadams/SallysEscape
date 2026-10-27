@@ -232,52 +232,116 @@ function escapeWorkshopRoute(key,model){const route=EscapeBuilder.toRoute(model)
 // the server), traced on the level as it stands in the builder. The route is drawn over the map, and
 // the trace says whether the run still wins on the edit or where it now goes wrong. Tracing replays
 // the whole run, so it happens when asked (turning it on, picking a run, Re-check), not on every edit.
-let escapeBuilderRun={key:null,on:false,runs:null,pick:0,trace:null,sig:'',busy:false,error:''};
+let escapeBuilderRun={key:null,on:false,runs:null,pick:0,trace:null,sig:'',busy:false,error:'',commands:null,steps:null,sel:-1,editing:false,picking:false,dirty:false};
 const ESCAPE_RUN_NAMES={main:'Winning run',treasure:'Treasure run'};
 const ESCAPE_RUN_TOOLS={pebble:'🪨',glow:'✨',spore:'☁',tongue:'👅',burrow:'⤓',seed:'🌱',camo:'🍃'};
 function escapeBuilderRunLevel(key,m){const route=escapeWorkshopRoute(key,m);return /^(kids|seasonal):/.test(key)?escapeBuildAs(key,route):escapeBuildCustom(route);}
-function escapeBuilderRunSig(){return JSON.stringify(escapeBuilderModel)+'#'+escapeBuilderRun.pick;}
+function escapeBuilderRunSig(){return JSON.stringify(escapeBuilderModel)+'#'+escapeBuilderRun.pick+'#'+(escapeBuilderRun.commands?.length||0);}
+// The run being shown: the one edited in the step list (or saved with the draft), else the recorded one.
+function escapeBuilderRunCommands(){const r=escapeBuilderRun;return r.commands||r.runs?.[r.pick]?.commands||null;}
+function escapeBuilderRunVariant(){return escapeBuilderRun.runs?.[escapeBuilderRun.pick]?.variant||'main';}
+function escapeBuilderRunLoadSaved(){const r=escapeBuilderRun;r.commands=EscapeEdits.get(r.key)?.runs?.[escapeBuilderRunVariant()]||null;r.steps=null;r.sel=-1;r.picking=false;r.dirty=false;}
 async function escapeBuilderRunToggle(){
   const r=escapeBuilderRun,key=escapeBuilderWorkshop?.key;if(!key)return;
-  if(r.key!==key)Object.assign(r,{key,on:false,runs:null,pick:0,trace:null,sig:'',error:''});
-  r.on=!r.on;if(!r.on){renderEscapeBuilder();return;}
+  if(r.key!==key)Object.assign(r,{key,on:false,runs:null,pick:0,trace:null,sig:'',error:'',commands:null,steps:null,sel:-1,editing:false,picking:false,dirty:false});
+  r.on=!r.on;if(!r.on){r.picking=false;renderEscapeBuilder();return;}
   if(!r.runs){r.busy=true;renderEscapeBuilder();
     try{const res=await escapeBuilderApi('admin/runs?key='+encodeURIComponent(key),{method:'GET'});const body=await res.json().catch(()=>({}));
       if(res.ok)r.runs=Array.isArray(body.runs)?body.runs:[];else r.error=body.error||'Could not load the recorded runs.';}
     catch(_){r.error='Could not reach the server for the recorded runs.';}
-    r.busy=false;}
+    r.busy=false;escapeBuilderRunLoadSaved();}
   escapeBuilderRunTrace();
 }
-// Replays the picked run on the builder's level (after a frame, so "Tracing…" shows first).
+// Replays the shown run on the builder's level (after a frame, so "Tracing…" shows first).
 function escapeBuilderRunTrace(){
-  const r=escapeBuilderRun,run=r.runs?.[r.pick],key=r.key;if(!run||!escapeBuilderWorkshop){renderEscapeBuilder();return;}
+  const r=escapeBuilderRun,commands=escapeBuilderRunCommands(),key=r.key;if(!commands||!escapeBuilderWorkshop){renderEscapeBuilder();return;}
   r.busy=true;renderEscapeBuilder();
-  setTimeout(()=>{try{r.trace=EscapeAdventure.trace({level:escapeBuilderRunLevel(key,escapeBuilderModel)},run.commands);r.error='';}catch(e){r.trace=null;r.error='This level does not build yet: '+e.message;}
+  setTimeout(()=>{try{const level=escapeBuilderRunLevel(key,escapeBuilderModel);r.trace=EscapeAdventure.trace({level},commands);if(r.editing)r.steps=EscapeSteps.toSteps({level},commands);r.dirty=false;r.error='';}
+    catch(e){r.trace=null;r.error='This level does not build yet: '+e.message;}
     r.sig=escapeBuilderRunSig();r.busy=false;renderEscapeBuilder();},30);
+}
+// The step list: the run as steps to change, then ▶ Re-run plays them on the level as it stands.
+// Steps before the first change replay exactly as recorded; a changed go walks (or sprints) to its
+// new end, along the level's paths when a wall is in the way.
+function escapeBuilderStepsRun(){
+  const r=escapeBuilderRun;if(!r.steps)return;r.busy=true;renderEscapeBuilder();
+  setTimeout(()=>{try{const level=escapeBuilderRunLevel(r.key,escapeBuilderModel),res=EscapeSteps.play({level},r.steps);r.commands=res.commands;
+      r.trace=EscapeAdventure.trace({level},res.commands);r.steps=EscapeSteps.toSteps({level},res.commands);r.sel=Math.min(r.sel,r.steps.length-1);r.dirty=false;r.error='';
+      escapeBuilderNote=res.status==='won'?'The edited run wins. Save it with the draft to keep it.':'The edited run does not win yet: see the ✗ on the map.';}
+    catch(e){r.error='Could not play the steps: '+e.message;}
+    r.sig=escapeBuilderRunSig();r.busy=false;renderEscapeBuilder();},30);
+}
+function escapeBuilderStepsHtml(){
+  const r=escapeBuilderRun;if(!r.editing||!r.steps)return '';
+  const way=a=>!a?'':a.x>0?'right':a.x<0?'left':a.y>0?'down':'up';
+  const row=(s,i)=>{const sel=i===r.sel;let ctl='';
+    if(sel&&s.type==='go')ctl='<label><input type="checkbox" data-step-sprint'+(s.sprint?' checked':'')+'> Sprint</label><button data-step-move class="escape-secondary'+(r.picking?' on':'')+'">'+(r.picking?'Click a tile…':'⌖ Move its end')+'</button>';
+    if(sel&&s.type==='wait')ctl='<label>Seconds <input type="number" min="0" max="60" step="0.25" value="'+s.t+'" data-step-wait></label>';
+    if(sel&&s.type==='act')ctl='<label>Facing <select data-step-aim>'+['right','left','up','down'].map(d=>'<option'+(way(s.aim)===d?' selected':'')+'>'+d+'</option>').join('')+'</select></label>';
+    if(sel&&s.type!=='end')ctl+='<button data-step-del class="escape-secondary" title="Remove this step">✕</button>';
+    return '<li class="'+(sel?'on':'')+(s.edited?' edited':'')+'"><button data-step="'+i+'">'+(i+1)+'. '+escapeHtml(EscapeSteps.describe(s))+(s.edited?' ✎':'')+'</button>'+(ctl?'<span class="builder-step-ctl">'+ctl+'</span>':'')+'</li>';};
+  return '<div class="builder-steps"><div class="builder-steps-bar"><b>Steps</b>'+
+    '<select id="builder-step-add" aria-label="Add a step after the picked one"><option value="">＋ Add after '+(r.sel>=0?r.sel+1:'start')+'…</option><option value="go">Go to a tile</option><option value="wait">Wait</option>'+
+    ['pebble','tongue','camo','glow','spore','burrow','seed'].map(k=>'<option value="'+k+'">'+escapeHtml(EscapeSteps.describe({type:'act',kind:k}))+'</option>').join('')+'</select>'+
+    '<button id="builder-steps-run" class="'+(r.dirty?'':'escape-secondary')+'">▶ Re-run steps</button>'+
+    (r.commands?'<button id="builder-steps-save" class="escape-secondary" title="Keep this run with the draft; Export carries it into the game’s recordings">💾 Save run</button><button id="builder-steps-reset" class="escape-secondary" title="Go back to the recorded run">↺ Recorded run</button>':'')+
+    '</div><ol>'+r.steps.map(row).join('')+'</ol></div>';
 }
 function escapeBuilderRunBar(){
   const r=escapeBuilderRun;if(!r.on||!escapeBuilderWorkshop||r.key!==escapeBuilderWorkshop.key)return '';
   const t=r.trace,stale=t&&r.sig!==escapeBuilderRunSig();
   const status=r.busy?'Tracing the run…':r.error?'⚠ '+escapeHtml(r.error):!r.runs?.length?'No recorded run for this escape yet.':!t?'':
-    t.status==='won'?'✓ Still wins on this version, in '+t.time+'s'+(t.waits.length?' · '+t.waits.length+' wait'+(t.waits.length>1?'s':''):'')+(t.tools.length?' · '+t.tools.length+' tool use'+(t.tools.length>1?'s':''):''):
+    t.status==='won'?'✓ '+(r.commands?'Your edited run wins':'Still wins on this version')+', in '+t.time+'s'+(t.waits.length?' · '+t.waits.length+' wait'+(t.waits.length>1?'s':''):'')+(t.tools.length?' · '+t.tools.length+' tool use'+(t.tools.length>1?'s':''):''):
     '✗ '+(t.status==='playing'?'The run ends at '+t.time+'s without escaping':'At '+t.time+'s: '+escapeHtml(t.message||t.status))+' (the ✗ on the map)';
-  return '<div class="builder-runbar'+(t&&t.status!=='won'?' bad':'')+'">'+
+  return '<div class="builder-runside"><div class="builder-runbar'+(t&&t.status!=='won'?' bad':'')+'">'+
     (r.runs?.length>1?'<select id="builder-run-pick" aria-label="Which recorded run">'+r.runs.map((x,i)=>'<option value="'+i+'"'+(i===r.pick?' selected':'')+'>'+escapeHtml(ESCAPE_RUN_NAMES[x.variant]||x.variant)+'</option>').join('')+'</select>':'<b>'+escapeHtml(ESCAPE_RUN_NAMES[r.runs?.[0]?.variant]||'Winning run')+'</b>')+
-    '<span>'+status+'</span>'+(stale?'<button id="builder-run-recheck" class="escape-secondary">↻ Re-check on your edit</button>':'')+
-    (r.runs?.length?'<button id="builder-run-watch" class="escape-secondary" title="Play the level with the recorded run driving Sally">▶ Watch</button>':'')+'</div>';
+    (r.commands?'<em>edited</em>':'')+'<span>'+status+'</span>'+(stale?'<button id="builder-run-recheck" class="escape-secondary">↻ Re-check on your edit</button>':'')+
+    (r.runs?.length?'<button id="builder-run-edit" class="escape-secondary'+(r.editing?' on':'')+'" title="Show the run as steps you can change">✎ Edit steps</button><button id="builder-run-watch" class="escape-secondary" title="Play the level with the run driving Sally">▶ Watch</button>':'')+'</div>'+escapeBuilderStepsHtml()+'</div>';
 }
-// The route over the map, in tile units: the path, waits (rings with seconds), tools used, the end.
+// Where a step happens on the map, for its numbered marker.
+function escapeBuilderStepAt(s){return s.type==='go'?s.to:s.at||null;}
+// The route over the map, in tile units: the path, waits (rings with seconds), tools used, the end;
+// while editing, each step's number where it ends.
 function escapeBuilderRunSvg(w,h){
   const r=escapeBuilderRun,t=r.trace;if(!r.on||!t||r.key!==escapeBuilderWorkshop?.key)return '';
   const pts=t.points.map(p=>p.x+','+p.y).join(' '),won=t.status==='won';
+  const order=r.editing&&r.steps?[...r.steps.keys()].sort((a,b)=>(a===r.sel)-(b===r.sel)):[];
+  const marks=order.map(i=>{const s=r.steps[i],p=escapeBuilderStepAt(s);if(!p||s.type==='end')return '';const on=i===r.sel;
+    return '<circle cx="'+p.x+'" cy="'+p.y+'" r="'+(on?.34:.24)+'" fill="'+(on?'#ffd25a':'#1b1206')+'" fill-opacity="'+(on?1:.7)+'" stroke="#ffd25a" stroke-width=".05"/><text x="'+p.x+'" y="'+(p.y+.1)+'" font-size="'+(on?.34:.26)+'" text-anchor="middle" fill="'+(on?'#1b1206':'#ffe9a8')+'">'+(i+1)+'</text>';}).join('');
   return '<svg class="builder-route" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true">'+
     '<polyline points="'+pts+'" fill="none" stroke="#1b1206" stroke-opacity=".55" stroke-width=".26" stroke-linejoin="round" stroke-linecap="round"/>'+
     '<polyline points="'+pts+'" fill="none" stroke="#ffd25a" stroke-width=".13" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray=".35 .18"/>'+
     t.waits.map(q=>'<circle cx="'+q.x+'" cy="'+q.y+'" r="'+Math.min(.7,.25+q.s*.06)+'" fill="#7fd3ff" fill-opacity=".25" stroke="#7fd3ff" stroke-width=".06"/><text x="'+q.x+'" y="'+(q.y-.45)+'" font-size=".42" text-anchor="middle" fill="#dff4ff" stroke="#0b1714" stroke-width=".08" paint-order="stroke">'+q.s+'s</text>').join('')+
     t.tools.map(q=>'<text x="'+q.x+'" y="'+(q.y+.18)+'" font-size=".55" text-anchor="middle">'+(ESCAPE_RUN_TOOLS[q.kind]||'•')+'</text>').join('')+
-    '<circle cx="'+t.points[0].x+'" cy="'+t.points[0].y+'" r=".22" fill="#9be38f"/>'+
+    '<circle cx="'+t.points[0].x+'" cy="'+t.points[0].y+'" r=".22" fill="#9be38f"/>'+marks+
     '<text x="'+t.end.x+'" y="'+(t.end.y+.22)+'" font-size=".7" text-anchor="middle" fill="'+(won?'#9be38f':'#ff6b5a')+'" stroke="#0b1714" stroke-width=".08" paint-order="stroke">'+(won?'✓':'✗')+'</text></svg>';
 }
+// The step list's buttons and fields.
+function wireEscapeBuilderSteps(rerender){
+  const r=escapeBuilderRun,$=id=>document.getElementById(id),q=sel=>document.querySelector(sel),step=()=>r.steps?.[r.sel];
+  const changed=s=>{s.edited=true;r.dirty=true;rerender();};
+  if($('builder-run-edit'))$('builder-run-edit').onclick=()=>{r.editing=!r.editing;r.picking=false;if(r.editing&&!r.steps)escapeBuilderRunTrace();else rerender();};
+  for(const b of document.querySelectorAll('[data-step]'))b.onclick=()=>{r.sel=Number(b.dataset.step);r.picking=false;rerender();};
+  if(q('[data-step-sprint]'))q('[data-step-sprint]').onchange=e=>{const s=step();s.sprint=e.target.checked;changed(s);};
+  if(q('[data-step-wait]'))q('[data-step-wait]').onchange=e=>{const s=step();s.t=Math.max(0,Math.min(60,Number(e.target.value)||0));changed(s);};
+  if(q('[data-step-aim]'))q('[data-step-aim]').onchange=e=>{const s=step();s.aim={right:{x:1,y:0},left:{x:-1,y:0},up:{x:0,y:-1},down:{x:0,y:1}}[e.target.value];changed(s);};
+  if(q('[data-step-move]'))q('[data-step-move]').onclick=()=>{r.picking=!r.picking;escapeBuilderNote=r.picking?'Click the tile where step '+(r.sel+1)+' should end.':'';rerender();};
+  if(q('[data-step-del]'))q('[data-step-del]').onclick=()=>{r.steps.splice(r.sel,1);const next=r.steps[r.sel];if(next)next.edited=true;r.sel=Math.min(r.sel,r.steps.length-1);r.dirty=true;rerender();};
+  if($('builder-step-add'))$('builder-step-add').onchange=e=>{const kind=e.target.value;if(!kind)return;
+    const at=Math.max(0,r.sel+1),before=r.steps[at-1],pos=(before&&escapeBuilderStepAt(before))||r.trace?.points?.[0]||{x:1,y:1};
+    const s=kind==='go'?{type:'go',to:{...pos},sprint:false,points:[]}:kind==='wait'?{type:'wait',t:2}:{type:'act',kind,aim:before?.aim||{x:1,y:0},at:{...pos}};
+    s.edited=true;r.steps.splice(at,0,s);r.sel=at;r.dirty=true;r.picking=kind==='go';escapeBuilderNote=kind==='go'?'Click the tile where the new step should end.':'';rerender();};
+  if($('builder-steps-run'))$('builder-steps-run').onclick=()=>{r.picking=false;escapeBuilderStepsRun();};
+  if($('builder-steps-reset'))$('builder-steps-reset').onclick=()=>{if(!confirm('Go back to the recorded run? Changes to the steps are lost, and a run saved with the draft is dropped.'))return;
+    EscapeEdits.saveRun(r.key,escapeBuilderRunVariant(),null);r.commands=null;r.steps=null;r.sel=-1;r.picking=false;r.dirty=false;escapeBuilderRunTrace();};
+  if($('builder-steps-save'))$('builder-steps-save').onclick=()=>{const key=r.key,B=EscapeBuilder,m=escapeBuilderModel;
+    if(!EscapeEdits.get(key)){const model=B.sanitize(m);if(model)EscapeEdits.save(key,model,B.validate(model).length?null:escapeWorkshopRoute(key,model));}
+    const ok=EscapeEdits.saveRun(key,escapeBuilderRunVariant(),r.commands);
+    escapeBuilderNote=!ok?'Could not save the run.':r.dirty?'Saved the run as it last played; ▶ Re-run to include your newest changes.':r.trace?.status==='won'?'Run saved with the draft. Export carries it into the game’s recordings.':'Run saved with the draft, but it does not win yet.';rerender();};
+}
+// A tile click while a step's end is being picked moves it there instead of painting.
+function escapeBuilderStepPick(x,y){const r=escapeBuilderRun,s=r.on&&r.editing&&r.picking&&r.key===escapeBuilderWorkshop?.key&&r.steps?.[r.sel];if(!s)return false;
+  s.to={x:x+.5,y:y+.5};s.edited=true;r.picking=false;r.dirty=true;escapeBuilderNote='Step '+(r.sel+1)+' now ends at '+x+','+y+'. ▶ Re-run steps to see it play.';return true;}
 function escapeWorkshopEdit(key){
   const draft=EscapeEdits.get(key),model=draft?.model&&EscapeBuilder.sanitize(draft.model);
   if(!escapeBuilderWorkshop)escapeBuilderOwnModel=escapeBuilderModel;
@@ -693,15 +757,16 @@ function wireEscapeBuilder(){
   for(const el of document.querySelectorAll('[data-sky]'))el.onchange=e=>{B.setSettings(m,{[el.dataset.sky]:e.target.checked?skyDefault[el.dataset.sky]:null});rerender();};
   for(const el of document.querySelectorAll('[data-skyf]'))el.onchange=e=>{const [k,f]=el.dataset.skyf.split('.');B.setSettings(m,{[k]:{...m[k],[f]:Number(e.target.value)}});rerender();};
   const grid=$('builder-grid'),cellAt=e=>{const el=document.elementFromPoint(e.clientX,e.clientY)?.closest?.('.builder-cell');return el?[Number(el.dataset.x),Number(el.dataset.y)]:null;};
-  grid.onpointerdown=e=>{if(e.button===2)return;e.preventDefault();const c=cellAt(e);if(!c)return;escapeBuilderStroke={pushed:false};escapeBuilderPainting=escapeBuilderDrags(escapeBuilderTool);if(escapeBuilderApply(...c))rerender();};
+  grid.onpointerdown=e=>{if(e.button===2)return;e.preventDefault();const c=cellAt(e);if(!c)return;if(escapeBuilderStepPick(...c))return rerender();escapeBuilderStroke={pushed:false};escapeBuilderPainting=escapeBuilderDrags(escapeBuilderTool);if(escapeBuilderApply(...c))rerender();};
   grid.onpointermove=e=>{if(!escapeBuilderPainting||!e.buttons)return;const c=cellAt(e);if(c&&escapeBuilderModel.map[c[1]][c[0]]!==escapeBuilderTool&&escapeBuilderApply(...c))rerender();};
   grid.oncontextmenu=e=>{e.preventDefault();const c=cellAt(e);if(!c)return;escapeBuilderMenu={kind:'context',cell:c,left:Math.min(e.clientX,(window.innerWidth||1e4)-230),top:Math.min(e.clientY,(window.innerHeight||1e4)-380)};rerender();};
   document.onpointerup=()=>{escapeBuilderPainting=false;escapeBuilderStroke=null;};
   on('builder-play',()=>{if(!B.validate(m).length)startEscape({custom:B.toRoute(m),from:'builder'});});
   if(ws){
     on('builder-route',()=>escapeBuilderRunToggle());on('builder-run-recheck',()=>escapeBuilderRunTrace());
-    if($('builder-run-pick'))$('builder-run-pick').onchange=e=>{escapeBuilderRun.pick=Number(e.target.value)||0;escapeBuilderRunTrace();};
-    on('builder-run-watch',()=>{const run=escapeBuilderRun.runs?.[escapeBuilderRun.pick];if(run&&!B.validate(m).length)startEscape({custom:escapeWorkshopRoute(ws.key,m),from:'builder',skipIntro:true,autoplay:run.commands});});
+    if($('builder-run-pick'))$('builder-run-pick').onchange=e=>{escapeBuilderRun.pick=Number(e.target.value)||0;escapeBuilderRunLoadSaved();escapeBuilderRunTrace();};
+    on('builder-run-watch',()=>{const commands=escapeBuilderRunCommands();if(commands&&!B.validate(m).length)startEscape({custom:escapeWorkshopRoute(ws.key,m),from:'builder',skipIntro:true,autoplay:commands});});
+    wireEscapeBuilderSteps(rerender);
     on('workshop-save',act(()=>{const model=B.sanitize(m),ok=model&&EscapeEdits.save(ws.key,model,B.validate(model).length?null:escapeWorkshopRoute(ws.key,model));
       escapeBuilderNote=!ok?'Could not save the draft.':B.validate(model).length?'Draft saved. Fix the problems before it can be played in game.':'Draft saved'+(EscapeEdits.active()?'. Reload to play it from the map.':'.');rerender();}));
     on('workshop-export1',act(()=>{escapeBuilderDialog='share';rerender();const t=$('builder-text');if(t)escapeWorkshopExport([ws.key],t);}));

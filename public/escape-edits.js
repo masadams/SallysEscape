@@ -15,7 +15,11 @@
     KEY,
     all(){return read().drafts;},
     get(key){return read().drafts[key]||null;},
-    save(key,model,route){const s=read();s.drafts[key]={model,route,savedAt:new Date().toISOString()};return write(s);},
+    save(key,model,route){const s=read(),runs=s.drafts[key]?.runs;s.drafts[key]={model,route,...(runs?{runs}:{}),savedAt:new Date().toISOString()};return write(s);},
+    // A winning run edited in the builder's step list, kept with the draft ('main' or 'treasure');
+    // null drops it, so the recorded run is used again.
+    saveRun(key,variant,commands){const s=read(),d=s.drafts[key];if(!d)return false;d.runs={...(d.runs||{})};
+      if(commands)d.runs[variant]=commands;else delete d.runs[variant];if(!Object.keys(d.runs).length)delete d.runs;return write(s);},
     remove(key){const s=read();delete s.drafts[key];return write(s);},
     active(){return read().on;},
     setActive(on){const s=read();s.on=Boolean(on);return write(s);},
@@ -23,7 +27,7 @@
     overrides(){const s=read();if(!s.on)return {};const out={};for(const [k,d] of Object.entries(s.drafts))if(d?.route)out[k]=d.route;return out;},
     // The export file: every draft (or the chosen ones), ready for scripts/apply-level-edits.cjs.
     exportFile(keys){const d=read().drafts;return {kind:'sally-level-edits',version:1,exportedAt:new Date().toISOString(),
-      edits:Object.entries(d).filter(([k])=>!keys||keys.includes(k)).map(([key,v])=>({key,savedAt:v.savedAt,model:v.model,route:v.route}))};},
+      edits:Object.entries(d).filter(([k])=>!keys||keys.includes(k)).map(([key,v])=>({key,savedAt:v.savedAt,model:v.model,route:v.route,...(v.runs?{runs:v.runs}:{})}))};},
   };
   root.EscapeEdits=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;

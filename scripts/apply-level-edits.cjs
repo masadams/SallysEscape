@@ -9,7 +9,8 @@
 // An edited escape keeps its id, place on the trail and ties (EDIT_KEEP) and its revision, so
 // players' records stand; a seasonal or Little Explorers escape keeps everything the builder doesn't
 // handle (EscapeBuilder.mergeInto). A recorded winning run that no longer wins means its fixture in
-// tests/fixtures/ needs a new run before the tests pass again.
+// tests/fixtures/ needs a new run before the tests pass again; a run edited in the builder's step
+// list and exported with the draft replaces its recording, if it wins on the new version.
 const path=require('path'),fs=require('fs');
 const ROOT=path.join(__dirname,'..');
 const PI=Math.PI;
@@ -63,7 +64,16 @@ function replaceWhole(text,id,route){
     const {draft,custom,...entry}=route;return text.slice(0,a)+serialize({...entry,id})+text.slice(b);}
   throw new Error('No route '+id+' in this file');
 }
-module.exports={entries,serialize,replaceEntry,replaceWhole,merged};
+// A fixture file written back the way its recorder writes it: the trail's as indented JSON, the
+// packs' one command per line, and the gzipped seasonal ones as a module.
+function writeFixture(f,runs){
+  const lines=records=>'[\n'+records.map(({commands,...r})=>'  '+JSON.stringify(r).slice(0,-1)+',"commands":[\n'+commands.map(c=>'    '+JSON.stringify(c)).join(',\n')+'\n  ]}').join(',\n')+'\n]\n';
+  const file=path.join(ROOT,'tests/fixtures',f);
+  if(f==='escape-playthroughs.json')fs.writeFileSync(file,JSON.stringify(runs,null,2)+'\n');
+  else if(f.endsWith('.json'))fs.writeFileSync(file,lines(runs));
+  else{const head=fs.readFileSync(file,'utf8').split('\n')[0];fs.writeFileSync(file,head+'\nmodule.exports=JSON.parse(require("node:zlib").gunzipSync(Buffer.from(\n'+JSON.stringify(require('node:zlib').gzipSync(lines(runs),{level:9}).toString('base64'))+',"base64")).toString("utf8"));\n');}
+}
+module.exports={entries,serialize,replaceEntry,replaceWhole,merged,writeFixture};
 
 if(require.main===module){
   const file=process.argv[2],write=process.argv.includes('--write');
@@ -81,7 +91,7 @@ if(require.main===module){
   const textOf=file=>texts[file]??=fs.readFileSync(file,'utf8');
   const runsOf=kind=>fixtures[kind]??=FIXTURES[kind].flatMap(f=>require(path.join(ROOT,'tests/fixtures',f)));
   const lists={level:EscapeCatalog.levels,hidden:EscapeCatalog.hidden,kids:EscapeCatalog.kids,seasonal:EscapeCatalog.seasonal};
-  let failed=0;
+  let failed=0;const dirty=new Set();
   for(const e of data.edits){
     const [kind,id]=String(e.key).split(':'),list=lists[kind]||[],game=list.find(l=>l.id===id);
     const say=(...m)=>console.log('  '+m.join(' '));
@@ -106,9 +116,17 @@ if(require.main===module){
     say(changed.length?'changed: '+changed.join(', '):'no gameplay changes');
     const lint=rules(level,{level}).filter(f=>f.level==='error');for(const f of lint)say('⚠ lint:',f.msg);
     const recs=runsOf(kind).filter(runFor(kind,id));if(!recs.length)say('· no recorded winning run to check');
-    for(const rec of recs){const g=replay(level,rec.commands),name=rec.variant&&rec.variant!=='main'?' ('+rec.variant+')':'';say(g.status==='won'?'✓ the recorded winning run'+name+' still wins ('+g.elapsed.toFixed(1)+'s)':'⚠ the recorded winning run'+name+' no longer wins: re-record it before the tests pass again');}
+    // A run edited in the builder's step list replaces its recording, if it wins on the new version.
+    const edited=e.runs&&typeof e.runs==='object'?e.runs:{};
+    for(const rec of recs){const variant=rec.variant||'main',name=variant!=='main'?' ('+variant+')':'',mine=Array.isArray(edited[variant])?edited[variant]:null;
+      if(mine){const g=replay(level,mine);if(g.status==='won'){rec.commands=mine;if(typeof rec.time==='number')rec.time=Math.round(g.elapsed*100)/100;dirty.add(rec);say('✓ your edited run'+name+' wins ('+g.elapsed.toFixed(1)+'s) and replaces the recording');continue;}
+        say('✗ your edited run'+name+' does not win on this version ('+g.status+'): fix it in the builder');failed++;continue;}
+      const g=replay(level,rec.commands);say(g.status==='won'?'✓ the recorded winning run'+name+' still wins ('+g.elapsed.toFixed(1)+'s)':'⚠ the recorded winning run'+name+' no longer wins: re-record it before the tests pass again');}
+    for(const variant of Object.keys(edited))if(!recs.some(r=>(r.variant||'main')===variant)){say('✗ your edited run ('+variant+') has no recording to replace');failed++;}
   }
-  if(write&&!failed){for(const [file,text] of Object.entries(texts))fs.writeFileSync(file,text);console.log('\nWritten. Run npm test.');}
+  if(write&&!failed){for(const [file,text] of Object.entries(texts))fs.writeFileSync(file,text);
+    for(const f of new Set(Object.values(FIXTURES).flat())){const runs=require(path.join(ROOT,'tests/fixtures',f));if(runs.some(r=>dirty.has(r)))writeFixture(f,runs);}
+    console.log('\nWritten. Run npm test.');}
   else if(write)console.log('\nNothing written: fix the drafts marked ✗ first.');
   process.exit(failed?1:0);
 }
