@@ -120,10 +120,11 @@ function costPath(g,from,to,danger=null){
   return [];
 }
 // The hops toward a goal: every piece of cover the path passes beside becomes a resting place.
-function hops(g,goal){
+// mode 0: the plain quickest way; 1: the long way round guarded stretches; 2: that, with stops across open ground.
+function hops(g,goal,mode=0){const stops=mode>=2;
   if(goal.what==='tongue'){const out=hops(g,{...goal,what:'spot'});out[out.length-1]={...out[out.length-1],tongue:goal};return out;}
   if(goal.what==='rush'||goal.what==='await')return [{...goal,rush:goal.what==='rush',await:goal.what==='await'}];
-  const danger=dangerCosts(g),path=costPath(g,g.player,goal,danger);if(!path.length)return [{x:goal.x,y:goal.y,hatch:goal.what==='hatch'}];
+  const danger=mode?dangerCosts(g):null,path=costPath(g,g.player,goal,danger);if(!path.length)return [{x:goal.x,y:goal.y,hatch:goal.what==='hatch'}];
   const out=[],seen=new Set([Math.floor(g.player.x)+','+Math.floor(g.player.y)]);
   path.forEach((p,i)=>{
     for(const [dx,dy] of NEAR){const x=Math.floor(p.x)+dx,y=Math.floor(p.y)+dy,t=g.grid[y]?.[x];
@@ -136,8 +137,12 @@ function hops(g,goal){
   path.forEach((p,i)=>{const [x,y]=tile(p),prev=path[i-1]&&tile(path[i-1]);if(i<path.length-1&&prev&&g.grid[prev[1]][prev[0]]==='U'&&g.grid[y][x]!=='U'&&!seen.has(x+','+y)){seen.add(x+','+y);out.push({x:x+.5,y:y+.5,cover:true,left:path.length-1-i});}});
   // Where the safer way differs from the engine's shortest one, its corners become waypoints too, so
   // Sally actually takes the long way round instead of the short way between hiding places.
-  if(g.route(g.player,goal).length<path.length-1)path.forEach((p,i)=>{const a=path[i-1],b=path[i+1];if(!a||!b)return;
+  if(mode&&g.route(g.player,goal).length<path.length-1)path.forEach((p,i)=>{const a=path[i-1],b=path[i+1];if(!a||!b)return;
     if((p.x-a.x)*(b.y-p.y)-(p.y-a.y)*(b.x-p.x)!==0&&!out.some(o=>Math.hypot(o.x-p.x,o.y-p.y)<2))out.push({x:p.x,y:p.y,pass:true,left:path.length-1-i});});
+  // A long dash across open ground gets stops every five tiles, so Sally can pause midway (and blend in,
+  // with camouflage) instead of crossing a whole field in one go.
+  const marks=stops?[...out.map(o=>o.left),0].sort((a,b)=>b-a):[];let from=path.length-1;
+  for(const m of marks){for(let left=from-5;left>m+2;left-=5){const p=path[path.length-1-left];if(p)out.push({x:p.x,y:p.y,pass:true,open:true,left});}from=m;}
   out.sort((a,b)=>b.left-a.left);out.push({x:goal.x,y:goal.y,hatch:goal.what==='hatch'});return out;
 }
 // Walk to a spot along the engine's route, recording frames; false if caught on the way.
@@ -176,6 +181,12 @@ function* windows(state,to){
   }
   let found=0;
   for(const w of to.pass?[0,.5,1]:WAITS)for(const sprint of [false,true])for(const r of attempt(w,sprint)){found++;yield r;}
+  // Camouflage, when no plain wait works: where Sally stands in the open, blend in and keep still while a
+  // creature goes by, then go.
+  if(!found&&state.g.camos>0&&state.g.grid[Math.floor(state.g.player.y)]?.[Math.floor(state.g.player.x)]!=='L'){
+    const camo=(g,rec)=>{if(!g.camouflage())return false;rec.push({kind:'camo'});return !bad(g);};
+    for(const w of [1,2,3,4])for(const sprint of [false,true])for(const r of attempt(w,sprint,camo)){found++;yield r;}
+  }
   // Nothing gets through by waiting: throw a pebble to pull a creature away, then go. Sally faces
   // one way (a single frame of input) and tosses it up to three tiles that way; throws away from
   // where she is heading come first, so the creature is drawn off the path, not onto it.
@@ -208,12 +219,15 @@ function plan(options,{budget=60000,branch=3}={}){
     const top=goals(state.g).slice(0,2);
     for(const goal of [...top,...tongueGoals(state.g,top[0])]){
       // The next hiding place first; if nothing gets there safely, skip it for the one after (twice at most).
-      const route=hops(state.g,goal);
-      for(const to of route.slice(0,3)){let n=0;
+      // The plain route first; only if nothing on it works, the long way round, then that with stops
+      // across open ground. Each new kind of move is a fallback, so it never spoils a plan that worked.
+      let moved=false;
+      for(const mode of [0,1,2]){if(moved)break;
+      for(const to of hops(state.g,goal,mode).slice(0,3)){let n=0;
         if(process.env.DEBUG)console.error(' '.repeat(depth)+'t'+state.g.elapsed.toFixed(1),'at',state.g.player.x.toFixed(1)+','+state.g.player.y.toFixed(1),goal.what,goal.x+','+goal.y,'hop',to.x+','+to.y);
         for(const next of windows(state,to)){tries++;
           const done=solve(next,depth+1);if(done)return done;if(++n>=branch)break;}
-        if(n)break;}
+        if(n){moved=true;break;}}}
     }
     return null;
   }
