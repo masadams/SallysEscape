@@ -42,6 +42,12 @@ test('the drafts store keeps drafts per escape and exports them',()=>{
     E.setActive(true);assert.deepEqual(Object.keys(E.overrides()),['level:quiet-vault'],'a draft with problems has no route and stays out');
     const out=E.exportFile();assert.equal(out.kind,'sally-level-edits');assert.equal(out.edits.length,2);
     assert.equal(E.exportFile(['hidden:gilded-gate']).edits.length,1);
+    const run=[{kind:'move',frames:5,x:1,y:0,sprint:false}];
+    assert.equal(E.saveRun('kids:none','main',run),false,'a run is kept with a draft, so there must be one');
+    assert.ok(E.saveRun('level:quiet-vault','main',run));assert.deepEqual(E.get('level:quiet-vault').runs,{main:run});
+    E.save('level:quiet-vault',{name:'x2'},{map:['#']});assert.deepEqual(E.get('level:quiet-vault').runs,{main:run},'saving the level again keeps its edited run');
+    assert.deepEqual(E.exportFile(['level:quiet-vault']).edits[0].runs,{main:run});
+    E.saveRun('level:quiet-vault','main',null);assert.equal(E.get('level:quiet-vault').runs,undefined);
     E.remove('level:quiet-vault');assert.deepEqual(E.overrides(),{});
   }finally{delete globalThis.localStorage;delete require.cache[file];}
 });
