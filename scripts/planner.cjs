@@ -16,8 +16,13 @@ const {clone,go,frame,bad,verify,optionsFor}=require(path.join(__dirname,'route-
 const NEAR=[];for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)if(Math.abs(dx)+Math.abs(dy)<=2)NEAR.push([dx,dy]);
 NEAR.sort((a,b)=>Math.abs(a[0])+Math.abs(a[1])-Math.abs(b[0])-Math.abs(b[1]));
 const WAITS=[0,.25,.5,.75,1,1.5,2,2.5,3,4,5,6,8],TOSS_WAITS=[.5,1,1.5,2,3,4],MID_WAITS=[.5,1.5,3];
-// The planner's time budget, checked inside each hop's search as well as between hops.
-let deadline=Infinity;
+// The planner's budget is game time simulated, not seconds on the clock, so a score is the same however
+// busy the machine is. About 50 game seconds simulate in one real second, so a budget of 60 is about a
+// minute on an idle machine. Checked inside each hop's search as well as between hops.
+const SIM_PER_SECOND=50;let simulated=0,simLimit=Infinity;
+const realAdvance=EscapeAdventure.prototype.advance;
+EscapeAdventure.prototype.advance=function(seconds,input){simulated+=seconds;return realAdvance.call(this,seconds,input);};
+const spent=()=>simulated>simLimit;
 const tile=p=>[Math.floor(p.x),Math.floor(p.y)];
 const calm=g=>!g.hunters.some(h=>['chase','windup','charge','rear','strike','dive','pounce','lunge','swoop'].includes(h.state));
 
@@ -153,7 +158,7 @@ function walk(g,rec,to,sprint){
 }
 function hold(g,rec,t){for(let i=0;i<Math.round(t*120)&&g.status==='playing';i++){frame(g,rec,0,0,false);if(bad(g))return false;}return true;}
 // One hop: the shortest pause, then a walk (or a sprint), that arrives safe and unnoticed.
-function* windows(state,to){
+function* windows(state,to,tools=true){
   // Pauses that end unnoticed come first; ones that leave a hunter alerted are kept for later,
   // since slipping in and out of a guarded spot can still work.
   const noticed=[];
@@ -167,7 +172,7 @@ function* windows(state,to){
   // Where plain tries came to grief: a pebble thrown from just short of there is the targeted fix.
   const caughtAt=[];
   function* attempt(w,sprint,before){
-    if(Date.now()>deadline)return;
+    if(spent())return;
     const g=clone(state.g),rec=state.rec.map(c=>({...c}));
     if(before&&!before(g,rec))return;
     if(!hold(g,rec,w))return;
@@ -183,14 +188,14 @@ function* windows(state,to){
   for(const w of to.pass?[0,.5,1]:WAITS)for(const sprint of [false,true])for(const r of attempt(w,sprint)){found++;yield r;}
   // Camouflage, when no plain wait works: where Sally stands in the open, blend in and keep still while a
   // creature goes by, then go.
-  if(!found&&state.g.camos>0&&state.g.grid[Math.floor(state.g.player.y)]?.[Math.floor(state.g.player.x)]!=='L'){
+  if(tools&&!found&&state.g.camos>0&&state.g.grid[Math.floor(state.g.player.y)]?.[Math.floor(state.g.player.x)]!=='L'){
     const camo=(g,rec)=>{if(!g.camouflage())return false;rec.push({kind:'camo'});return !bad(g);};
     for(const w of [1,2,3,4])for(const sprint of [false,true])for(const r of attempt(w,sprint,camo)){found++;yield r;}
   }
   // Nothing gets through by waiting: throw a pebble to pull a creature away, then go. Sally faces
   // one way (a single frame of input) and tosses it up to three tiles that way; throws away from
   // where she is heading come first, so the creature is drawn off the path, not onto it.
-  if(!found&&state.g.decoys>0){
+  if(tools&&!found&&state.g.decoys>0){
     const dx=to.x-state.g.player.x,dy=to.y-state.g.player.y;
     const dirs=[[1,0],[-1,0],[0,1],[0,-1]].sort((a,b)=>(a[0]*dx+a[1]*dy)-(b[0]*dx+b[1]*dy));
     for(const [fx,fy] of dirs){
@@ -210,24 +215,27 @@ function* windows(state,to){
   yield* noticed;
 }
 function plan(options,{budget=60000,branch=3}={}){
-  const start={g:new EscapeAdventure(options),rec:[]},t0=Date.now();deadline=t0+budget;let best=start,tries=0;
+  const start={g:new EscapeAdventure(options),rec:[]},t0=Date.now();simulated=0;simLimit=budget/1000*SIM_PER_SECOND;let best=start,tries=0;
   // Depth-first over hops, keeping a couple of windows per hop for backtracking.
   function solve(state,depth){
-    if(state.g.status==='won')return state;if(Date.now()-t0>budget||depth>200)return null;
+    if(state.g.status==='won')return state;if(spent()||depth>200)return null;
 
     if(state.g.elapsed>best.g.elapsed)best=state;
-    const top=goals(state.g).slice(0,2);
-    for(const goal of [...top,...tongueGoals(state.g,top[0])]){
-      // The next hiding place first; if nothing gets there safely, skip it for the one after (twice at most).
-      // The plain route first; only if nothing on it works, the long way round, then that with stops
-      // across open ground. Each new kind of move is a fallback, so it never spoils a plan that worked.
-      let moved=false;
-      for(const mode of [0,1,2]){if(moved)break;
+    const top=goals(state.g).slice(0,2),all=[...top,...tongueGoals(state.g,top[0])],moved=new Set(),tried=new Set();
+    // Every goal gets the plain route first; only then the long way round, then that with stops across
+    // open ground. Each new kind of move is a fallback, so it never spoils or delays a plan that worked.
+    // Along a route, the next hiding place first; if nothing gets there safely, the one after (twice at most).
+    // The ladder, cheapest first: plain route with waits only; the long way round; then each with pebbles
+    // and camo; then the long way with stops across open ground.
+    for(const [mode,tools] of [[0,false],[1,false],[1,true],[0,true],[2,true]])for(const goal of all){if(moved.has(goal))continue;
       for(const to of hops(state.g,goal,mode).slice(0,3)){let n=0;
-        if(process.env.DEBUG)console.error(' '.repeat(depth)+'t'+state.g.elapsed.toFixed(1),'at',state.g.player.x.toFixed(1)+','+state.g.player.y.toFixed(1),goal.what,goal.x+','+goal.y,'hop',to.x+','+to.y);
-        for(const next of windows(state,to)){tries++;
+        // The same next stop often serves several goals and rungs: each is searched once from here.
+        const key=to.x+','+to.y+'|'+tools+'|'+(to.tongue?to.tongue.item.x+','+to.tongue.item.y:'')+(to.rush?'r':'')+(to.await?'a':'')+(to.hatch?'h':'');
+        if(tried.has(key))continue;tried.add(key);
+        if(process.env.DEBUG)console.error(' '.repeat(depth)+'t'+state.g.elapsed.toFixed(1),'at',state.g.player.x.toFixed(1)+','+state.g.player.y.toFixed(1),goal.what,goal.x+','+goal.y,'hop',to.x+','+to.y,'mode',mode);
+        for(const next of windows(state,to,tools)){tries++;
           const done=solve(next,depth+1);if(done)return done;if(++n>=branch)break;}
-        if(n){moved=true;break;}}}
+        if(n){moved.add(goal);break;}}
     }
     return null;
   }
