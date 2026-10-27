@@ -8759,7 +8759,8 @@
     if(route.append){if(levels.some(l=>l.id===route.id))throw new Error('Duplicate route '+route.id);const {append,...rest}=route;levels.push({burrows:0,pebbles:0,tongues:0,...rest,revision:1});continue;}
     const i=levels.findIndex(l=>l.id===route.id);if(i<0)throw new Error('Unknown rebuilt route '+route.id);
     const old=levels[i],keep={};for(const k of ['unlockAfter','unlockChallenges'])if(old[k]!==undefined)keep[k]=old[k];
-    levels[i]={burrows:0,pebbles:0,tongues:0,...keep,...route,revision:(old.revision||1)+1};
+    // A route redrawn again names its revision, so the records from its last layout retire too.
+    levels[i]={burrows:0,pebbles:0,tongues:0,...keep,...route,revision:Math.max((old.revision||1)+1,route.revision||0)};
   }
   for(const level of levels)if(level.map)fromMap(level);
   // Paired escapes let players choose a way before rejoining the harder path.

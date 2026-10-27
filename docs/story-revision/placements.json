@@ -117,9 +117,9 @@
       "levelName": "Reed Bank",
       "at": [
         21,
-        3
+        2
       ],
-      "staticWalkStepsFromSpawn": 22,
+      "staticWalkStepsFromSpawn": 1,
       "initialFloorDegree": 2,
       "validation": "initial-gate-state floor graph; live hazards, objectives, one-way reactions and collision radius not simulated",
       "placementStatus": "candidate-needs-playtest",

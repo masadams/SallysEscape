@@ -89,8 +89,8 @@ Shared journal sketch: a reed crossing. Each note contributes one half.
 
 ### level-note:river:1 — What the River Kept
 
-- Level: **Reed Bank** (`reed-bank`, revision 3).
-- Proposed anchor: **[21, 3]**; 22 static walk steps from spawn; 2 traversable floor neighbours.
+- Level: **Reed Bank** (`reed-bank`, revision 4).
+- Proposed anchor: **[21, 2]**; 1 static walk step from spawn; 2 traversable floor neighbours.
 - Prop and placement: Bark strip at the northeast room corner, above the drawn floor waterline; no new swim required.
 - Geometry evidence: adjacent solid wall on east.
 - Purpose: mystery.
