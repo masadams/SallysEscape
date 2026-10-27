@@ -64,6 +64,13 @@ function rush(g){
   const open=g.gates.filter(gate=>gate.duration&&gate.open&&!gate.sealed);if(!open.length)return null;
   const tiles=new Set(open.flatMap(gate=>gate.tiles.map(([x,y])=>x+','+y)));
   const wants=[...(g.hasKey?[]:[g.key]),...(g.exitUnlocked()||g.hasKey?[g.exit]:[]),...g.gates.filter(gate=>!gate.open&&!gate.sealed&&!gate.shut).flatMap(gate=>[...(gate.switch?[gate.switch]:[]),...(gate.heavy?[]:gate.plates),...(gate.levers||[])]),...(g.treasure<g.requiredTreasure?g.loot.filter(l=>!l.taken):[])];
+  // Only when nothing worth having is left on this side: otherwise Sally would pace back and forth
+  // through a door whose plates re-open it, fetching one thing from each side in turn.
+  const shut=open.flatMap(gate=>gate.tiles.map(([x,y])=>[x,y,g.grid[y][x]]));
+  for(const [x,y] of shut)g.grid[y][x]='#';
+  const here=wants.some(w=>g.route(g.player,w).length>0);
+  for(const [x,y,c] of shut)g.grid[y][x]=c;
+  if(here)return null;
   for(const w of wants){const path=g.route(g.player,w);let last=-1;path.forEach((p,i)=>{if(tiles.has(Math.floor(p.x)+','+Math.floor(p.y)))last=i;});
     if(last>=0)return {...(path[last+1]||w),what:'rush'};}
   return null;
