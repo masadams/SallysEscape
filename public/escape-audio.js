@@ -168,6 +168,24 @@
     drip:(v)=>{tone(v,{freq:1400,to:2600,dur:.06,type:'sine',gain:.08});tone(v,{freq:900,to:1300,dur:.12,delay:.05,type:'sine',gain:.03});},
     squish:(v)=>{noise(v,{dur:.14,gain:.06,filter:'lowpass',freq:600,to:250,q:3,attack:.02});tone(v,{freq:260,to:150,dur:.1,type:'sine',gain:.04});},
     // A crawl: the faintest brush of leaves.
+    // A creature on the move, heard before it is seen: one stride of its gait, quiet and short.
+    gait:(v,o)=>{switch(o.gait){
+      case 'slither':noise(v,{dur:.34,gain:.075,filter:'bandpass',freq:1900,to:950,q:1.1,attack:.11});noise(v,{dur:.22,delay:.06,gain:.025,filter:'highpass',freq:5200,attack:.08});break;
+      case 'skitter':for(let i=0;i<3;i++)noise(v,{dur:.018,delay:i*.034,gain:.07,filter:'bandpass',freq:3900+i*350,q:5});break;
+      case 'heavy':tone(v,{freq:74,to:48,dur:.12,type:'sine',gain:.12});noise(v,{dur:.07,gain:.07,filter:'lowpass',freq:320});noise(v,{dur:.02,delay:.03,gain:.04,filter:'bandpass',freq:2600,q:4});break;
+      case 'pad':noise(v,{dur:.05,gain:.09,filter:'lowpass',freq:640,q:.7});noise(v,{dur:.04,delay:.09,gain:.06,filter:'lowpass',freq:560,q:.7});break;
+      case 'hop':tone(v,{freq:230,to:120,dur:.08,type:'sine',gain:.05});noise(v,{dur:.07,delay:.05,gain:.07,filter:'lowpass',freq:700,to:300});break;
+      case 'wings':for(let i=0;i<2;i++)noise(v,{dur:.16,delay:i*.17,gain:.085,filter:'bandpass',freq:950,to:480,q:.8,attack:.05});break;
+      case 'buzz':tone(v,{freq:205,dur:.26,type:'sawtooth',gain:.022,wobble:9,wobbleRate:31,attack:.05});tone(v,{freq:412,dur:.24,type:'square',gain:.008,wobble:14,wobbleRate:29,attack:.05});break;
+      case 'swim':noise(v,{dur:.22,gain:.065,filter:'bandpass',freq:760,to:340,q:1.4,attack:.05});break;}},
+    // Physics: thin ice crackling and giving way, a rope's creak and rush, a bounce cap's spring,
+    // a current's burble and mud pulling at Sally's feet.
+    icecrack:(v)=>{for(let i=0;i<4;i++)noise(v,{dur:.012,delay:i*.03+(i%2)*.012,gain:.2,filter:'highpass',freq:4200+i*500});tone(v,{freq:3300,to:1500,dur:.16,type:'sine',gain:.05});tone(v,{freq:2100,to:900,dur:.22,delay:.05,type:'sine',gain:.03});},
+    icebreak:(v)=>{noise(v,{dur:.35,gain:.22,filter:'highpass',freq:2600,attack:.003});for(let i=0;i<5;i++)tone(v,{freq:2400+i*430,to:1700+i*300,dur:.09,delay:.06+i*.05,type:'sine',gain:.05});tone(v,{freq:110,to:60,dur:.25,type:'sine',gain:.12});},
+    swing:(v)=>{tone(v,{freq:150,to:118,dur:.28,type:'sawtooth',gain:.05,wobble:10,wobbleRate:11});noise(v,{dur:.55,delay:.08,gain:.13,filter:'bandpass',freq:420,to:1500,q:.9,attack:.2});},
+    boing:(v)=>{tone(v,{freq:170,to:560,dur:.32,type:'sine',gain:.3,wobble:22,wobbleRate:14});tone(v,{freq:340,to:1120,dur:.2,type:'triangle',gain:.06});noise(v,{dur:.05,gain:.1,filter:'lowpass',freq:500});},
+    flow:(v)=>{noise(v,{dur:.7,gain:.05,filter:'bandpass',freq:650,to:900,q:1.2,attack:.2});for(let i=0;i<4;i++){const f=480+((i*137+Math.random()*260)%420);tone(v,{freq:f,to:f*1.5,dur:.05,delay:.08+i*.13+Math.random()*.05,type:'sine',gain:.035});}},
+    gloop:(v)=>{tone(v,{freq:150,to:58,dur:.22,type:'sine',gain:.12});noise(v,{dur:.2,delay:.03,gain:.07,filter:'lowpass',freq:420,to:160,q:4,attack:.03});tone(v,{freq:340,to:520,dur:.05,delay:.2,type:'sine',gain:.04});},
     crawl:(v)=>{noise(v,{dur:.12,gain:.05,filter:'bandpass',freq:2400,to:1600,q:.8,attack:.03});}
   };
   // Loudness trims, measured by rendering every sound offline (EscapeAudio.measure) and bringing
@@ -178,10 +196,10 @@
   // Each recipe is rendered once to a buffer offline and replayed from then on: one buffer
   // source instead of a fresh graph of oscillators, filters and LFOs per sound. Footsteps and
   // other noisy sounds keep three takes and a slight pitch drift so repeats never sound stamped.
-  const VARIED=new Set(['step','paddle','tail','rustle','skitter','scrape','splash','flutter','clash','wingbeat','tweet','plop','lap','drip']);
+  const VARIED=new Set(['gait','flow','gloop','icecrack','step','paddle','tail','rustle','skitter','scrape','splash','flutter','clash','wingbeat','tweet','plop','lap','drip']);
   const cache=new Map(),rendering=new Set(),lastPlayed=new Map(),active=[];
   const MAX_VOICES=14,REPEAT_GAP=.045;
-  const keyFor=(name,o)=>name+(o.sprint?':s':'')+(o.alt?':a':'')+(o.surface&&o.surface!=='floor'?':'+o.surface:'');
+  const keyFor=(name,o)=>name+(o.gait?':'+o.gait:'')+(o.sprint?':s':'')+(o.alt?':a':'')+(o.surface&&o.surface!=='floor'?':'+o.surface:'');
   function render(ctx,name,options,key){
     const Offline=root.OfflineAudioContext||root.webkitOfflineAudioContext;if(!Offline||rendering.has(key))return;rendering.add(key);
     const takes=VARIED.has(name)?3:1,length=Math.ceil(ctx.sampleRate*1.6),buffers=[];
@@ -226,7 +244,7 @@
       if(now-(lastPlayed.get(key)??-1)<REPEAT_GAP)return false;lastPlayed.set(key,now);
       // Too many voices at once: footsteps give way first, then the oldest sound stops.
       for(let i=active.length-1;i>=0;i--)if(active[i].ends<now)active.splice(i,1);
-      if(active.length>=MAX_VOICES){if(name==='step'||name==='paddle')return false;const oldest=active.shift();try{oldest.src?.stop();}catch(_){}}
+      if(active.length>=MAX_VOICES){if(name==='step'||name==='paddle'||name==='gait')return false;const oldest=active.shift();try{oldest.src?.stop();}catch(_){}}
       const level=Math.min(1,volume*1.6*(options.gain??1)*(TRIM[name]??1)),buffers=cache.get(key);
       if(buffers&&ctx.createBufferSource)replay(ctx,buffers,level,VARIED.has(name),options.pan||0);else{recipe(level,options);active.push({src:null,ends:now+.6});render(ctx,name,options,key);}
       return true;

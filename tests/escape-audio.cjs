@@ -30,3 +30,10 @@ test('each sound renders once offline, then replays from its buffer; rapid repea
   }finally{delete globalThis.OfflineAudioContext;delete globalThis.AudioBuffer;EscapeAudio.reset();}
 });
 
+test('every creature gait the game plays has its own voice, so hunters can be heard coming',()=>{
+  const scene=fs.readFileSync(path.join(__dirname,'../public/escapescene.js'),'utf8'),map=/const ESCAPE_GAITS=\{([\s\S]*?)\};/.exec(scene)[1];
+  const gaits=new Set([...map.matchAll(/\['([a-z]+)',/g)].map(m=>m[1]));assert.ok(gaits.size>=6);
+  const kinds=[...map.matchAll(/'?([a-z-]+)'?:\[/g)].map(m=>m[1]);
+  for(const k of ['snake','beetle','fox','owl','spider','dragonfly'])assert.ok(kinds.includes(k),k+' has a gait');
+  for(const g of gaits){const ctx=fakeContext();ctx.currentTime=5;assert.equal(EscapeAudio.play(ctx,'gait',.25,{gait:g}),true,g);assert.ok(ctx.calls.some(c=>c==='osc'||c==='noise'),g+' makes a sound');}
+});

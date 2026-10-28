@@ -307,7 +307,7 @@
     // Leaning into a crate square-on for a moment shoves it one tile, with a loud scrape. It will not
     // cover the key, the exit, a switch or plate, a gate, water or a creature; pushed into a gap it
     // drops in and fills it (a way across), and pushed onto ice it slides until something stops it.
-    breakIce(t){t.broken=true;t.crack=1;this.grid[t.y][t.x]='U';this.events.push('splash','creak');this.loudUntil=this.elapsed+.9;
+    breakIce(t){t.broken=true;t.crack=1;this.grid[t.y][t.x]='U';this.events.push('splash','icebreak');this.loudUntil=this.elapsed+.9;
       for(const h of this.hunters){h.path=[];h.targetId=null;}this.updateVisibility(true);if(this.tileKey(this.player)===t.x+','+t.y)this.notice('Splash! The thin ice gave way.','warning');}
     crateTile(x,y){return this.crates.find(c=>!c.sunk&&c.x===x&&c.y===y)||null;}
     leanOnCrate(axis,s,dt){
@@ -859,8 +859,8 @@
       if(this.clouds.length&&this.wind.length)for(const c of this.clouds){const w=this.wind.find(w=>this.gustPhase(w).active&&w.keys.has(this.tileKey(c)));if(w){c.x+=w.dir[0]*w.strength*.5*dt;c.y+=w.dir[1]*w.strength*.5*dt;}}
       if(this.ropes.length&&!p.flight&&!p.underground){const here=this.tileKey(p);if(p.ropeLock&&here!==p.ropeLock.from.join(',')&&here!==p.ropeLock.to.join(','))p.ropeLock=null;
         for(const r of this.ropes){if(p.ropeLock===r)continue;const s=this.ropeSwing(r),atFrom=here===r.from.join(',')&&s<.06,atTo=here===r.to.join(',')&&s>.94;
-          if(atFrom||atTo){p.flight={rope:r,toward:atFrom,from:centre(...(atFrom?r.from:r.to)),to:centre(...(atFrom?r.to:r.from)),start:this.elapsed,dur:r.period/2};this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+r.period*.55+.3);this.events.push('rustle');break;}}}
-      if(this.caps.length&&!p.flight&&(p.moving||p.bounceReady)){const cap=this.caps.find(c=>c.key===this.tileKey(p)&&this.elapsed>=c.readyAt);p.bounceReady=false;if(cap){p.flight=this.capFlight(cap,p.sprinting);cap.readyAt=this.elapsed+1;this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+.6);this.events.push('hop');}}
+          if(atFrom||atTo){p.flight={rope:r,toward:atFrom,from:centre(...(atFrom?r.from:r.to)),to:centre(...(atFrom?r.to:r.from)),start:this.elapsed,dur:r.period/2};this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+r.period*.55+.3);this.events.push('swing');break;}}}
+      if(this.caps.length&&!p.flight&&(p.moving||p.bounceReady)){const cap=this.caps.find(c=>c.key===this.tileKey(p)&&this.elapsed>=c.readyAt);p.bounceReady=false;if(cap){p.flight=this.capFlight(cap,p.sprinting);cap.readyAt=this.elapsed+1;this.invulnerableUntil=Math.max(this.invulnerableUntil,this.elapsed+.6);this.events.push('boing');}}
       p.hidden=Boolean(p.underground)||this.inRayShadow(p)||!p.moving&&!this.heldBy&&(this.grid[Math.floor(p.y)][Math.floor(p.x)]==='L'||p.camo)||this.clouds.length>0&&!this.heldBy&&this.inCloud(p);
       p.webbed=this.webs.some(w=>distance(p,w)<.65&&this.clear(p,w));
       // A crawl makes no sound, even on gravel.
@@ -875,7 +875,8 @@
       }
       if(this.thinIce.size&&!p.flight&&!p.underground&&!p.swimming){const t=this.thinIce.get(this.tileKey(p));
         if(t&&!t.broken){t.crack+=(crawl?.15:p.sprinting?2.4:p.moving?.95:1.5)*dt;
-          if(!t.warned&&t.crack>=.5){t.warned=true;this.events.push('creak');this.notice('The thin ice creaks! Keep moving, or crawl to spread your weight.','warning');}
+          if(!t.ticked&&t.crack>=.2){t.ticked=true;this.events.push('icecrack');}
+          if(!t.warned&&t.crack>=.5){t.warned=true;this.events.push('icecrack');this.notice('The thin ice creaks! Keep moving, or crawl to spread your weight.','warning');}
           if(t.crack>=1)this.breakIce(t);}}
       if(this.crates.length)this.updateCrates();
       this.activateSwitches();this.reactToMaze('enter');this.updateVisibility();
