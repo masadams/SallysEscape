@@ -343,7 +343,7 @@ function playEscape(){
   const open=escapeGame.hasKey&&escapeGame.treasure>=escapeGame.requiredTreasure;
   if(open&&!escapeHatchCued&&escapeGame.requiredTreasure>0){escapeHatchCued=true;if(!events.includes('key'))escapeMusic?.cue('hatch');}
   if(!open)escapeHatchCued=false;
-  if(gameState==='escape'&&!paused){if(escapeGame.status==='playing'){escapeFootsteps(escapeGame.player);escapeCreatureSteps(escapeGame);}tickEscapeFx(escapeGame);escapeShakeFor(events);}
+  if(gameState==='escape'&&!paused){if(escapeGame.status==='playing'){escapeFootsteps(escapeGame.player);escapeCreatureSteps(escapeGame);escapePhysicsSounds(escapeGame);}tickEscapeFx(escapeGame);escapeShakeFor(events);}
   if(mobile&&typeof EscapeFeel!=='undefined'&&events.length)EscapeFeel.buzz(events);
   if(events.length&&typeof escapePadRumble==='function')escapePadRumble(events);
   drawEscapeVault();drawEscapeMoment();drawEscapeCurtain();renderEscapeHUD();seasonWarningNames();
@@ -520,6 +520,17 @@ function escapeCreatureSteps(g){
     const d=Math.hypot(h.x-p.x,h.y-p.y);if(d>ESCAPE_GAIT_RANGE||played>=2)continue;
     const near=1-d/ESCAPE_GAIT_RANGE;played++;
     escapeSound('gait',{gait:gait[0],pan:Math.max(-.85,Math.min(.85,(h.x-p.x)/7)),gain:(h.state==='chase'?1.25:.85)*near*near});}
+}
+// The ground and water talking back: a stream burbles when Sally is near it (from its side, louder
+// as she closes in), and mud gloops as it takes her deeper.
+let escapeFlowAt=0,escapeSinkStage=0;
+function escapePhysicsSounds(g){
+  const p=g.player,now=millis()/1000;
+  if(now>=escapeFlowAt){escapeFlowAt=now+1.3;let best=null;
+    for(const c of g.currents||[]){if(c.surface==='ground')continue;const nx=Math.max(c.x1,Math.min(c.x2+1,p.x)),ny=Math.max(c.y1,Math.min(c.y2+1,p.y)),d=Math.hypot(nx-p.x,ny-p.y);if(!best||d<best.d)best={d,x:nx};}
+    if(best&&best.d<5){const near=1-best.d/5;escapeSound('flow',{gain:.4+.8*near*near,pan:Math.max(-.7,Math.min(.7,(best.x-p.x)/5))});}}
+  const sink=p.sink||0,stage=sink>=.85?3:sink>=.6?2:sink>=.3?1:0;
+  if(stage>escapeSinkStage)escapeSound('gloop',{gain:.6+stage*.2});escapeSinkStage=stage;
 }
 // Feel: footprints, dust, leaves, sparks and noise rings, kept in one small pool per run. Rings
 // show how far a noise carries, so they stay on in Simple lighting; the rest is Full only.

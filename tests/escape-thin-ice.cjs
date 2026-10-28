@@ -8,7 +8,7 @@ const run=(g,s,input={})=>{for(let i=0;i<Math.round(s*120)&&g.status==='playing'
 
 test('standing on thin ice cracks it, creaks a warning, then drops Sally into the water',()=>{
   const g=make();Object.assign(g.player,{x:5.5,y:2.5});run(g,.45);
-  assert.ok(g.thinIce.get('5,2').crack>.5);assert.ok(g.drainEvents().includes('creak'),'a warning creak');assert.equal(g.grid[2][5],'.');
+  assert.ok(g.thinIce.get('5,2').crack>.5);assert.ok(g.drainEvents().includes('icecrack'),'a warning crackle');assert.equal(g.grid[2][5],'.');
   run(g,.4);assert.equal(g.grid[2][5],'U','it gave way');assert.equal(g.player.swimming,true,'Sally is in the water');assert.ok(g.player.noisy,'the splash is loud');
 });
 test('walking straight across leaves cracks but gets Sally over; crawling barely marks it',()=>{

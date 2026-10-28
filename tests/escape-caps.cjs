@@ -21,7 +21,7 @@ test('a springy cap never lands Sally in a wall, water or a crate',()=>{
 });
 test('landing on another cap from a springy one bounces Sally straight on',()=>{
   const g=make([{at:[3,2],to:[6,2],spring:1},{at:[6,2],to:[10,1]}]);Object.assign(g.player,{x:1.5,y:2.5});
-  let hops=0,flew=false;for(let i=0;i<600;i++){g.advance(1/120,flew?{}:{x:1,y:0});flew=flew||!!g.player.flight;hops+=g.drainEvents().filter(e=>e==='hop').length;}
+  let hops=0,flew=false;for(let i=0;i<600;i++){g.advance(1/120,flew?{}:{x:1,y:0});flew=flew||!!g.player.flight;hops+=g.drainEvents().filter(e=>e==='boing'||e==='hop').length;}
   assert.ok(hops>=4,'two flights: '+hops);assert.ok(Math.abs(g.player.x-10.5)<.6&&Math.abs(g.player.y-1.5)<.6,'on the second cap\'s mark: '+g.player.x+','+g.player.y);
 });
 test('the builder sets how springy a cap is and keeps it through saving',()=>{
