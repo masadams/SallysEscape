@@ -488,8 +488,10 @@ function tickEscapeMusic(){
   if(escapeAmbience){const key=special||chapter?.theme||'meadow';escapeAmbience.setScape(screen==='menu'?'meadow':EscapeAmbience.SCAPES[key]?key:'meadow',screen==='game'?'level':'world');
     escapeAmbience.setVolume(isMuted?0:ambienceVolume*.33*(screen==='menu'?.45:screen==='world'?.7:1)*(paused?.35:1)*(escapeMusic.state==='chase'?.5:1));escapeAmbience.tick();}
 }
+const ESCAPE_DUCK={thunder:.45,icebreak:.55,smash:.55,tailDrop:.5,clash:.6};
 function escapeSound(event,options={}){
   if(isMuted||paused||!audioUnlocked||soundVolume===0||typeof EscapeAudio==='undefined')return;
+  if(ESCAPE_DUCK[event])escapeMusic?.duck?.(ESCAPE_DUCK[event]);
   try{const voice=gameState==='escape'&&escapeGame?.level.seasonal==='winter'&&['clack','decoy'].includes(event)?'winter-snowball':event;EscapeAudio.play(getAudioContext(),voice,soundVolume,options);if(gameState==='escape'&&escapeGame?.level.seasonal){const cue=seasonSoundCue(event,escapeGame);if(cue)EscapeAudio.play(getAudioContext(),cue,soundVolume*.65,options);}}catch(_){/* Audio feedback remains optional. */}
 }
 // Soft footfalls follow Sally's real travelled distance, louder when sprinting.
