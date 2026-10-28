@@ -708,9 +708,10 @@ function drawEscapeStillTiles(g,cell,palette,index){
     noStroke();fill(150,138,112,200);ellipse(...P(.62,.94),cell*.1,cell*.07);ellipse(...P(.44,.96),cell*.07,cell*.05);}
   if(terrain&&g.ice?.size)drawEscapeZone(g.ice,cell,()=>true,[143,196,220],255,0);
   for(const key of g.ice||[]){const [x,y]=key.split(',').map(Number);noStroke();if(!terrain){fill(143,196,220);rect(x*cell+1,y*cell+1,cell-2,cell-2,cell*.12);}fill(205,235,248,200);triangle(x*cell+cell*.18,y*cell+cell*.2,x*cell+cell*.55,y*cell+cell*.16,x*cell+cell*.2,y*cell+cell*.55);stroke(230,248,255,160);strokeWeight(Math.max(1,cell*.03));line(x*cell+cell*.62,y*cell+cell*.3,x*cell+cell*.8,y*cell+cell*.72);}
-  // Full lighting: soft shadows where floor meets a wall above or to the left, so mazes read in depth.
+  // Full lighting: soft shadows where floor meets a wall above or to the left (the light comes from the
+  // top left), longer below a wall since walls stand tall, so mazes read in depth.
   if(escapeLightingFull())for(let y=1;y<g.height;y++)for(let x=1;x<g.width;x++){if(!g.floor(x,y))continue;noStroke();
-    if(!g.floor(x,y-1))for(let i=0;i<3;i++){fill(0,0,0,[58,32,14][i]);rect(x*cell,y*cell+i*cell*.07,cell,cell*.07);}
+    if(!g.floor(x,y-1))for(let i=0;i<4;i++){fill(0,0,0,[62,40,22,10][i]);rect(x*cell,y*cell+i*cell*.08,cell,cell*.08);}
     if(!g.floor(x-1,y))for(let i=0;i<3;i++){fill(0,0,0,[40,22,10][i]);rect(x*cell+i*cell*.06,y*cell,cell*.06,cell);}}
 }
 function drawEscapeTiles(g,screenCell,palette,index){
@@ -724,9 +725,12 @@ function drawEscapeTiles(g,screenCell,palette,index){
     // The terrain has a layer of its own that only changes when walls or water do, so a gate
     // opening redraws the light tile layer without redrawing the ground beneath it.
     if(escapeTerrainOn()&&typeof drawEscapeTerrainGround==='function'){const baseKey=g.level.id+'|'+cell+'|'+index+'|'+g.grid.map(r=>r.join('')).join('/').replace(/G/g,'g');
-      if(escapeTerrainBase?.key!==baseKey){if(!escapeTerrainBase||escapeTerrainBase.w!==w||escapeTerrainBase.h!==h||escapeTerrainBase.d!==pixelDensity()){escapeTerrainBase?.layer.remove();escapeTerrainBase={layer:createGraphics(w,h),w,h,d:pixelDensity()};}
+      if(escapeTerrainBase?.key!==baseKey){if(!escapeTerrainBase||escapeTerrainBase.w!==w||escapeTerrainBase.h!==h||escapeTerrainBase.d!==pixelDensity()){escapeTerrainBase?.layer.remove();escapeTerrainBase?.lip?.remove();escapeTerrainBase={layer:createGraphics(w,h),w,h,d:pixelDensity()};}
         const layer=escapeTerrainBase.layer,host=p5.instance,renderer=host._renderer;layer.clear();
         host._renderer=layer._renderer;try{push();drawEscapeTerrainGround(g,cell,palette);drawEscapeTerrainWater(g,cell,index,palette);drawEscapeTerrainWalls(g,cell,palette);pop();}finally{host._renderer=renderer;}
+        // The raised strip along every wall's top, kept apart to be drawn again over Sally and the creatures.
+        if(!escapeTerrainBase.lip)escapeTerrainBase.lip=createGraphics(w,h);const lip=escapeTerrainBase.lip;lip.clear();
+        host._renderer=lip._renderer;try{push();drawEscapeTerrainWalls(g,cell,palette,true);pop();}finally{host._renderer=renderer;}
         escapeTerrainBase.key=baseKey;escapeTileCache&&(escapeTileCache.key=null);}}
     if(escapeTileCache?.key!==key){
     if(!escapeTileCache||escapeTileCache.w!==w||escapeTileCache.h!==h||escapeTileCache.d!==pixelDensity()){escapeTileCache?.layer.remove();escapeTileCache={layer:createGraphics(w,h),w,h,d:pixelDensity()};}
@@ -739,6 +743,18 @@ function drawEscapeTiles(g,screenCell,palette,index){
   {const cell=screenCell;if(!escapeLightingFull())for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.grid[y][x]==='U'){
       noStroke();fill(22,99,121);rect(x*cell,y*cell,cell,cell);stroke(112,213,211,100);strokeWeight(cell*.035);const tide=Math.sin(g.elapsed*1.4+x*.5+y)*.05;for(const dy of [.3,.7])line((x+.15)*cell,(y+dy+tide)*cell,(x+.85)*cell,(y+dy-tide)*cell);
     }}
+}
+// The tall walls' tops, over whatever stands just north of them: Sally and the creatures step behind a wall.
+function drawEscapeWallLips(g,cell){const lip=escapeTerrainBase?.lip;if(!lip||!escapeTerrainOn()||!drawingContext.drawImage)return;drawingContext.drawImage(lip.elt,0,0,g.width*cell,g.height*cell);}
+// Everything that stands on the ground casts a soft shadow down and to the right, away from the light.
+const ESCAPE_SHADOW_SIZE={beetle:[.95,.5],fox:[.9,.42],mole:[.8,.45],toad:[.8,.45],echofrog:[.8,.45],crab:[.75,.42],scorpion:[.85,.45],spider:[.8,.5],gecko:[.75,.32],chameleon:[.8,.36],
+  snake:[.85,.32],cobra:[.95,.38],'sea-snake':[.8,.3],millipede:[1,.36],heron:[.7,.4],mantis:[.7,.35],mimic:[.8,.5],flytrap:[.8,.5],sentinel:[.9,.55],ladybird:[.55,.32],cricket:[.5,.28],magpie:[.6,.3],wasp:[.7,.4]};
+const ESCAPE_NO_SHADOW=new Set(['buried','under','lurk','lurking','hidden','asleep','emerge']);
+function drawEscapeContactShadows(g,cell,view){
+  if(!escapeLightingFull())return;noStroke();const dx=cell*.09,dy=cell*.16;
+  const blot=(x,y,w,h,a)=>{fill(0,0,0,a*.55);ellipse(x*cell+dx,y*cell+dy,cell*w*1.25,cell*h*1.25);fill(0,0,0,a);ellipse(x*cell+dx,y*cell+dy,cell*w,cell*h);};
+  for(const h of g.hunters){const size=ESCAPE_SHADOW_SIZE[h.kind];if(!size||ESCAPE_NO_SHADOW.has(h.state)||g.water?.(h))continue;if(view.follow&&!g.visibleTile(Math.floor(h.x),Math.floor(h.y)))continue;blot(h.x,h.y,size[0],size[1],48);}
+  const p=g.player;if(!p.flight&&!p.swimming&&!p.underground&&!p.dig?.buried)blot(p.x,p.y,.62,.3,p.crawling?34:46);
 }
 // Lighting: Full (soft darkness, glowing light sources, each area's mood) or Simple (the plain,
 // flat look). Full drops to Simple by itself if the frame rate sags, until the player picks again.
@@ -1101,6 +1117,7 @@ function drawEscapeVault(){
   g.hunters.filter(h=>h.kind==='angler').forEach(h=>drawEscapeAngler(h,cell,g.elapsed));
   g.motion.refresh?.();
   for(const h of g.hunters)if(h.kind==='flytrap')drawEscapeDew(g,h,cell,view);
+  drawEscapeContactShadows(g,cell,view);
   g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='magpie'||h.kind==='angler'||h.kind==='cloudray')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}const breathing=escapeBreathe(g,h,i,cell);if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))(g.level.seasonal||g.level.costume)&&drawSeasonCreature(h,g.motion.snakes[i],cell,g)?null:h.kind==='ladybird'?drawEscapeLadybird(h,cell,g.elapsed):h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='wasp'?drawEscapeWaspNest(h,cell,g.elapsed):h.kind==='dragonfly'?drawEscapeDragonfly(h,cell,g.elapsed):h.kind==='mole'?drawEscapeMole(h,cell,g.elapsed):h.kind==='bat'?drawEscapeBat(h,cell,g.elapsed,g):h.kind==='eel'?drawEscapeEel(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='echofrog'?drawEscapeEchoFrog(h,cell,g.elapsed):h.kind==='sentinel'?drawEscapeSentinel(h,cell,g.elapsed):h.kind==='chameleon'?drawEscapeChameleon(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');if(breathing)pop();});
   drawingContext.save();drawingContext.globalAlpha*=g.player.hidden?.48:1;
   for(const h of g.hunters)if(h.state==='clash'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noFill();stroke(255,193,107,180);strokeWeight(cell*.035);ellipse(h.x*cell,h.y*cell,cell*(.9+Math.sin(g.elapsed*14)*.08),cell*.75);}
@@ -1128,6 +1145,7 @@ function drawEscapeVault(){
   drawEscapeCompanion(g.player,cell,g.elapsed);
   for(const c of g.clouds||[]){const age=g.elapsed-c.born,fade=Math.min(1,age*4,(c.until-g.elapsed)/1.2);noStroke();for(let k=0;k<7;k++){const a=k*.9+age*.3,r=c.r*cell*(.45+(k%3)*.18);fill(214,232,190,70*fade);ellipse(c.x*cell+Math.cos(a)*r*.6,c.y*cell+Math.sin(a)*r*.5,r*1.3,r*1.1);}fill(240,250,220,45*fade);ellipse(c.x*cell,c.y*cell,c.r*cell*2,c.r*cell*1.8);}
   if(g.player.camo){noFill();stroke(214,190,140,90+60*Math.sin(g.elapsed*6));strokeWeight(cell*.03);ellipse(g.player.x*cell,g.player.y*cell,cell*1.1,cell*1.1);}
+  drawEscapeWallLips(g,cell);
   if(g.hawk)drawEscapeHawk(g.hawk,cell,g.elapsed);
   for(const h of g.hunters)if(h.kind==='cloudray')drawEscapeCloudRay(h,cell,g.elapsed);
   if(g.player.frozenUntil>g.elapsed){const p=g.player,k=Math.min(1,(g.player.frozenUntil-g.elapsed)/1.6);noStroke();fill(200,236,250,120*k);ellipse(p.x*cell,p.y*cell,cell*.9,cell*.9);stroke(235,250,255,200*k);strokeWeight(Math.max(1,cell*.035));for(let a=0;a<6;a++){const r=a*Math.PI/3;line(p.x*cell,p.y*cell,(p.x+Math.cos(r)*.45)*cell,(p.y+Math.sin(r)*.45)*cell);}}

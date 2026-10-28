@@ -116,17 +116,30 @@ function escapeTerrainRoof(g,cell,base,near,W,H){
 // Each wall tile is filled edge to edge so a wall run reads as one mass. Corners that stick out
 // into open ground are rounded; a wall with open ground below shows a darker front face; edges
 // that meet open ground get the material's own silhouette (leafy bumps, rough rock, ice).
-function drawEscapeTerrainWalls(g,cell,palette){
-  const set=escapeTerrainSet(g),wall=escapeTerrainTint(palette[1],set.wall),top=escapeTerrainMix(wall,set.wall==='ice'?.18:.06),face=escapeTerrainMix(wall,-.38),edge=escapeTerrainTint(palette[2],set.wall),W=g.width,H=g.height,fh=.26,r=cell*.3;
-  const open=(x,y)=>!escapeTerrainSolid(g,x,y)&&x>=0&&y>=0&&x<W&&y<H;
+// Walls stand tall: a wall with open ground above it rises a third of a tile over that ground, its top
+// stretched up to meet the new height while its front face stays at its foot. The same raised strip
+// is drawn again over Sally and the creatures (lipOnly), so anything just north of a wall stands behind it.
+const ESCAPE_WALL_LIFT=.24;
+function drawEscapeTerrainWalls(g,cell,palette,lipOnly=false){
+  const set=escapeTerrainSet(g),wall=escapeTerrainTint(palette[1],set.wall),top=escapeTerrainMix(wall,set.wall==='ice'?.18:.06),face=escapeTerrainMix(wall,-.38),edge=escapeTerrainTint(palette[2],set.wall),W=g.width,H=g.height,fh=.36,r=cell*.3,lift=ESCAPE_WALL_LIFT*cell;
+  const open=(x,y)=>!escapeTerrainSolid(g,x,y)&&x>=0&&y>=0&&x<W&&y<H,ctx2d=typeof p5!=='undefined'?p5.instance?._renderer?.drawingContext:null;
+  // Draw one wall clipped to a band of the screen, optionally stretched upward from its anchor line.
+  const band=(y0,y1,anchor,k,draw)=>{if(!ctx2d){draw();return;}ctx2d.save();ctx2d.beginPath();ctx2d.rect(-cell,y0,(W+2)*cell,y1-y0);ctx2d.clip();
+    if(k!==1){push();translate(0,anchor);scale(1,k);translate(0,-anchor);draw();pop();}else draw();ctx2d.restore();};
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const t=g.grid[y][x];if(t!=='#'&&t!=='B')continue;
     const n=open(x,y-1),s=open(x,y+1),e=open(x+1,y),w=open(x-1,y),px=x*cell,py=y*cell,tl=n&&w?r:0,tr=n&&e?r:0,br=s&&e?r:0,bl=s&&w?r:0,topH=s?cell*(1-fh):cell;
-    noStroke();
+    if(lipOnly&&!n)continue;
+    const paint=()=>{noStroke();
     const ox=w?0:.6,oy=n?0:.6,ow=(w?0:.6)+(e?0:.6),oh=(n?0:.6)+(s?0:.6);
     if(s){fill(...face);rect(px-ox,py+cell*(1-fh)-1,cell+ow,cell*fh+1,0,0,br,bl);}
     fill(...top);rect(px-ox,py-oy,cell+ow,topH+(s?1:0)+oh,tl,tr,s?0:br,s?0:bl);
     const ctx={g,x,y,px,py,cell,top,face,edge,n,s,e,w,topH,fh,set};
-    ({'autumn-hedge':escapeTerrainHedge,wood:escapeTerrainWood,hedge:escapeTerrainHedge,stone:escapeTerrainStone,rock:escapeTerrainRock,sand:escapeTerrainSandstone,ice:escapeTerrainIce})[set.wall]?.(ctx);
+    ({'autumn-hedge':escapeTerrainHedge,wood:escapeTerrainWood,hedge:escapeTerrainHedge,stone:escapeTerrainStone,rock:escapeTerrainRock,sand:escapeTerrainSandstone,ice:escapeTerrainIce})[set.wall]?.(ctx);};
+    const anchor=py+topH,k=(topH+lift)/topH;
+    if(lipOnly){band(py-lift-1,py+1,anchor,k,paint);continue;}
+    if(!n){paint();continue;}
+    // Its face as it is, then its top stretched up over the ground in front of it.
+    band(anchor,py+cell+2,anchor,1,paint);band(py-lift-1,anchor,anchor,k,paint);
   }
 }
 function escapeTerrainHedge({x,y,px,py,cell,top,face,n,s,e,w,topH}){
