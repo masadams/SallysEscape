@@ -232,6 +232,12 @@ function drawEscapeTerrainWater(g,cell,index,palette){
     for(const [w,c] of [[.16,[0,0,0,34]],[.05,[220,236,220,36]]]){fill(...c);
       if(dx){const y0=y*cell+inset(0,-1),y1=(y+1)*cell-inset(0,1);rect(dx>0?bx*cell:(bx-w)*cell,y0,w*cell,y1-y0);}
       else{const x0=x*cell+inset(-1,0),x1=(x+1)*cell-inset(1,0);rect(x0,dy>0?by*cell:(by-w)*cell,x1-x0,w*cell);}}}
+    // Water lies a little below the ground: the bank's earth face shows along the far (north) side,
+    // shading the water just under it, and the west bank throws a narrower shadow across it.
+    for(const [dx,dy] of [[0,-1],[-1,0]]){const nx=x+dx,ny=y+dy,nt=at(nx,ny);if(nt===undefined||isW(nt)||escapeTerrainSolid(g,nx,ny))continue;
+      if(dy){const x0=x*cell+(cornerSet.has(x+','+y)?r:0),x1=(x+1)*cell-(cornerSet.has((x+1)+','+y)?r:0);fill(...escapeTerrainMix(ground,-.42),220);rect(x0,y*cell,x1-x0,cell*.14);
+        for(let i=0;i<3;i++){fill(0,0,0,[46,26,12][i]);rect(x0,y*cell+cell*(.14+i*.07),x1-x0,cell*.07);}}
+      else{const y0=y*cell+(cornerSet.has(x+','+y)?r:0),y1=(y+1)*cell-(cornerSet.has(x+','+(y+1))?r:0);for(let i=0;i<2;i++){fill(0,0,0,[34,14][i]);rect(x*cell+i*cell*.06,y0,cell*.06,y1-y0);}}}
     if(at(x,y)==='U'&&ESCAPE_TERRAIN_HASH(x,y,230)<.3){fill(180,200,180,40);for(let i=0;i<3;i++)ellipse((x+.2+.6*ESCAPE_TERRAIN_HASH(x,y,231+i))*cell,(y+.2+.6*ESCAPE_TERRAIN_HASH(x,y,235+i))*cell,cell*.1,cell*.07);}}
 }
 // The moving part, each frame: long soft highlights drifting over the whole body, and foam that
@@ -268,3 +274,33 @@ function drawEscapeZone(keys,cell,seen,color,alpha,edgeAlpha){
 // Leaf litter is a visual texture on ordinary quiet floor, not the noisy gravel mechanic.
 function escapeTerrainAutumn(g,c,base,near,W,H){escapeTerrainEarth(g,c,base,near,W,H);noStroke();for(let i=0;i<W*H*2;i++){const x=ESCAPE_TERRAIN_HASH(i,101,13)*W,y=ESCAPE_TERRAIN_HASH(i,102,13)*H;if(!near(x,y))continue;push();translate(x*c,y*c);rotate(ESCAPE_TERRAIN_HASH(i,103,13)*Math.PI);fill(...[[191,114,48],[218,156,63],[160,74,45]][i%3],90);ellipse(0,0,c*.15,c*.065);pop();}}
 function escapeTerrainWood({x,y,px,py,cell,top,face,s,topH}){stroke(...escapeTerrainMix(top,-.4),150);strokeWeight(Math.max(1,cell*.025));for(let i=1;i<4;i++)line(px+cell*i/4,py,px+cell*i/4,py+topH);for(let i=0;i<4;i++){const xx=px+cell*(i+.5)/4;stroke(...escapeTerrainMix(top,.35),75);line(xx,py+cell*.13,xx,py+topH*.85);noStroke();fill(...escapeTerrainMix(face,-.3));ellipse(xx,py+cell*.08,cell*.025,cell*.025);if(s)ellipse(xx,py+topH+cell*.12,cell*.025,cell*.025);}}
+
+// ---- Depth layers -----------------------------------------------------------------------------------
+// A near layer over the level's rim: leaves hang in over hedges, roots and drips over cave rock, icicles
+// over ice and ivy over stone; bare sand and rooftops have none. Drawn once into a layer a tile wider on
+// every side, then slid against the map as Sally moves, so it reads as closer to the eye than the ground.
+function escapeOverhangKind(g){const s=escapeTerrainSet(g);return s.wall==='ice'?'icicles':s.ground==='cave'?'roots':s.wall==='stone'?'ivy':s.wall==='hedge'||s.wall==='autumn-hedge'?'leaves':null;}
+function drawEscapeOverhang(g,cell,palette){
+  const kind=escapeOverhangKind(g);if(!kind)return false;const W=g.width,H=g.height,autumn=escapeTerrainSet(g).wall==='autumn-hedge';
+  const dark=escapeTerrainMix(escapeTerrainTint(palette[1],autumn?'autumn-hedge':'hedge'),-.5),mid=escapeTerrainMix(dark,.22),rim=escapeTerrainMix(dark,.5);
+  // Points along the rim, every couple of tiles, each pushed a little out past the edge.
+  const spots=[];for(let x=0;x<W;x++){if(ESCAPE_TERRAIN_HASH(x,0,300)<.45)spots.push([x+.5,-.15,0,1]);if(ESCAPE_TERRAIN_HASH(x,H,301)<.3)spots.push([x+.5,H+.2,0,-1]);}
+  for(let y=1;y<H-1;y++){if(ESCAPE_TERRAIN_HASH(0,y,302)<.32)spots.push([-.2,y+.5,1,0]);if(ESCAPE_TERRAIN_HASH(W,y,303)<.32)spots.push([W+.2,y+.5,-1,0]);}
+  noStroke();
+  for(const [sx,sy,ix,iy] of spots){const h=ESCAPE_TERRAIN_HASH(sx*7|0,sy*7|0,310),cx=sx*cell,cy=sy*cell;
+    if(kind==='leaves'){for(let i=0;i<6;i++){const a=ESCAPE_TERRAIN_HASH(sx*9|0,sy*9|0,320+i)*Math.PI*2,d=cell*(.12+.3*ESCAPE_TERRAIN_HASH(sx*9|0,sy*9|0,330+i)),r=cell*(.32+.26*h);
+        const lx=cx+Math.cos(a)*d+ix*cell*.12,ly=cy+Math.sin(a)*d+iy*cell*.12;push();translate(lx,ly);rotate(a);fill(...dark,235);ellipse(0,0,r*1.5,r*.7);fill(...mid,150);ellipse(-r*.1,-r*.08,r*1.1,r*.4);stroke(...rim,90);strokeWeight(Math.max(1,cell*.025));line(-r*.6,0,r*.6,0);noStroke();pop();}}
+    else if(kind==='roots'){if(iy<0)continue;stroke(...dark,230);noFill();for(let i=0;i<3;i++){const len=cell*(.5+.6*ESCAPE_TERRAIN_HASH(sx*5|0,sy*5|0,340+i)),ox=(i-1)*cell*.18;strokeWeight(Math.max(1.5,cell*(.09-.02*i)));
+        bezier(cx+ox,cy,cx+ox+ix*len*.6+cell*.1,cy+iy*len*.4,cx+ox+ix*len*.8-cell*.1,cy+iy*len*.7,cx+ox+ix*len,cy+iy*len+(ix?cell*.2:0));}noStroke();
+      if(iy>0&&h<.5){fill(170,200,210,120);ellipse(cx,cy+cell*1.05,cell*.07,cell*.11);}}
+    else if(kind==='icicles'){if(iy<=0)continue;for(let i=0;i<4;i++){const ox=(i-1.5)*cell*.22,len=cell*(.3+.5*ESCAPE_TERRAIN_HASH(sx*5|0,sy*5|0,350+i));fill(210,232,244,210);triangle(cx+ox-cell*.07,cy,cx+ox+cell*.07,cy,cx+ox,cy+len);fill(255,255,255,140);triangle(cx+ox-cell*.03,cy,cx+ox,cy,cx+ox-cell*.005,cy+len*.8);}}
+    else if(kind==='ivy'){stroke(...dark,220);strokeWeight(Math.max(1.2,cell*.05));noFill();const len=cell*(.6+.5*h);bezier(cx,cy,cx+ix*len*.3+cell*.15,cy+iy*len*.3,cx+ix*len*.6-cell*.15,cy+iy*len*.6,cx+ix*len,cy+iy*len);noStroke();
+      for(let i=1;i<5;i++){const t=i/5,lx=cx+ix*len*t+(i%2?cell*.08:-cell*.08),ly=cy+iy*len*t;fill(...mid,220);ellipse(lx,ly,cell*.2,cell*.13);}}}
+  return true;
+}
+// Far below the level: a dim, soft ground the map floats over, seen where the screen runs past the map.
+function drawEscapeBackdropTile(size,palette){
+  const base=escapeTerrainMix(palette[0],-.55);noStroke();fill(...base);rect(0,0,size,size);
+  for(let i=0;i<46;i++){const x=ESCAPE_TERRAIN_HASH(i,1,400)*size,y=ESCAPE_TERRAIN_HASH(i,2,400)*size,r=size*(.05+.12*ESCAPE_TERRAIN_HASH(i,3,400)),c=escapeTerrainMix(base,(ESCAPE_TERRAIN_HASH(i,4,400)-.5)*.5);
+    for(const [ox,oy] of [[0,0],[size,0],[-size,0],[0,size],[0,-size]]){fill(...c,34);ellipse(x+ox,y+oy,r*2,r*1.6);fill(...c,22);ellipse(x+ox,y+oy,r*2.8,r*2.3);}}
+}
