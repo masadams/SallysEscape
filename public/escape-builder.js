@@ -262,6 +262,39 @@
     if(!hit&&same(model.millWheel,[x,y])){model.millWheel=null;hit=true;}
     if(hit)prune(model);return hit;
   }
+  // Pick up whatever stands on one tile and set it down on another: a creature, trigger, hazard,
+  // Sally, the key, the hatch, a chest, or an extra (a cap, rope end, crate, sign, page, prop...).
+  // Walls, floors and painted ground stay put. Returns false when nothing moves or the tile won't take it.
+  function moveThing(model,from,to){
+    const [fx,fy]=from,[tx,ty]=to,dest=at(model,tx,ty);if(dest===undefined||edge(model,tx,ty)||same(from,to))return false;
+    const free=list=>!(list||[]).some(p=>same(p.at||p,to)),ground=walkable(dest)&&!doorAt(model,tx,ty);
+    const g=guardAt(model,fx,fy);
+    if(g){if(guardAt(model,tx,ty)||!(g.kind==='dragonfly'||g.kind==='cloudray'?dest!=='#':roamable(dest))||doorAt(model,tx,ty))return false;
+      const [dx,dy]=[tx-fx,ty-fy];g.patrol=g.patrol.map(p=>same(p,from)?[tx,ty]:p);g.spawn=[tx,ty];
+      if(g.lure){const l=[g.lure[0]+dx,g.lure[1]+dy];if(at(model,...l)!==undefined)g.lure=l;}return true;}
+    const t=triggerAt(model,fx,fy);
+    if(t){if(!['.','L','N','M'].includes(dest)||doorAt(model,tx,ty)||triggerAt(model,tx,ty)||hazardAt(model,tx,ty))return false;t.at=[tx,ty];return true;}
+    const h=hazardAt(model,fx,fy);
+    if(h){if(hazardAt(model,tx,ty)||doorAt(model,tx,ty))return false;
+      if(h.type==='vent'){if(!solid(dest))return false;const dir=DIRS.findIndex(([dx,dy])=>walkable(at(model,tx+dx,ty+dy)));if(dir<0)return false;h.at=[tx,ty];if(!walkable(at(model,tx+DIRS[h.dir][0],ty+DIRS[h.dir][1])))h.dir=dir;return true;}
+      if(!walkable(dest)||triggerAt(model,tx,ty))return false;
+      if(h.type==='log'){const end=same(h.to,from)?'to':'at';h[end]=[tx,ty];if(h.to&&(same(h.at,h.to)||h.at[0]!==h.to[0]&&h.at[1]!==h.to[1]))h.to=null;return true;}
+      h.at=[tx,ty];return true;}
+    // Sally, the key, the hatch and chests are marks in the map; a chest keeps its links as it moves.
+    const ch=at(model,fx,fy);
+    if(['@','K','X'].includes(ch)||/[1-5]/.test(ch||'')){if(!['.','L','N','M','m','s','d'].includes(dest)||doorAt(model,tx,ty)||triggerAt(model,tx,ty)||guardAt(model,tx,ty))return false;
+      model.map[fy]=replaceAt(model.map[fy],fx,'.');model.map[ty]=replaceAt(model.map[ty],tx,ch);
+      if(/[1-5]/.test(ch)){const a='chest:'+fx+','+fy,b='chest:'+tx+','+ty;for(const l of model.links)if(l[0]===a)l[0]=b;if(model.messages?.[a]){model.messages[b]=model.messages[a];delete model.messages[a];}}
+      return true;}
+    // The extras: single points first, then things with two ends (whichever end was grabbed moves).
+    for(const k of ['crates','checkpoints']){const list=model[k]||[],i=list.findIndex(p=>same(p,from));if(i>=0){if(!ground||!free(list)||k==='crates'&&['~','S','c'].includes(dest))return false;list[i]=[tx,ty];return true;}}
+    for(const k of ['pages','signs','props']){const list=model[k]||[],i=list.findIndex(q=>same(q.at,from));if(i>=0){if(k!=='props'&&!ground||!free(list))return false;list[i].at=[tx,ty];return true;}}
+    for(const c of model.caps||[])for(const end of ['at','to'])if(same(c[end],from)){if(!ground||(model.caps||[]).some(q=>same(q.at,to)||same(q.to,to)))return false;c[end]=[tx,ty];return true;}
+    for(const r of model.ropes||[])for(const end of ['from','to'])if(same(r[end],from)){if(!ground||(model.ropes||[]).some(q=>same(q.from,to)||same(q.to,to)))return false;r[end]=[tx,ty];return true;}
+    for(const tun of model.tunnels||[])for(let i=0;i<2;i++)if(same(tun[i],from)){if(!ground||dest==='~'||same(tun[1-i],to))return false;tun[i]=[tx,ty];return true;}
+    for(const k of ['millWheel','rootWheel'])if(same(model[k],from)){if(k==='rootWheel'&&!ground)return false;model[k]=[tx,ty];return true;}
+    return false;
+  }
   // Per-enemy settings: where an angler's lure dangles, a crab's lane, a heron's looks, a bat's beat...
   function setGuard(model,id,changes){
     const g=model.guards.find(q=>q.id===id);if(!g)return false;
@@ -269,7 +302,11 @@
     if(changes.axis!==undefined)g.axis=changes.axis==='y'?'y':changes.axis==='x'?'x':undefined;
     for(const [k,lo,hi] of [['range',0,12],['every',0,20],['speed',0,8],['offset',0,20]])if(changes[k]!==undefined)g[k]=changes[k]===null||changes[k]===''?undefined:clampNum(changes[k],lo,hi);
     if(changes.looks!==undefined)g.looks=Array.isArray(changes.looks)&&changes.looks.length?changes.looks.slice(0,4).map(Number).filter(Number.isFinite):undefined;
-    if(changes.buried!==undefined)g.buried=Boolean(changes.buried)||undefined;return true;
+    if(changes.buried!==undefined)g.buried=Boolean(changes.buried)||undefined;
+    // Its own cunning (empty follows the level's) and pace (1 is normal; slower or quicker on its feet).
+    if(changes.cunning!==undefined){if(changes.cunning===null||changes.cunning==='')delete g.cunning;else g.cunning=clampInt(changes.cunning,0,3);}
+    if(changes.pace!==undefined){const v=clampNum(changes.pace,.5,1.6,1);if(v===1)delete g.pace;else g.pace=v;}
+    return true;
   }
   // Whole-level settings, the sky and the weather.
   function setSettings(model,changes){
@@ -342,7 +379,7 @@ function validate(model){
     const awake=model.guards.filter(g=>!g.sleep),asleep=model.guards.filter(g=>g.sleep);
     const guard=g=>{const out={id:g.id,kind:g.kind,spawn:g.spawn.slice(),facing:g.facing??Math.PI,patrol:(g.patrol.length?g.patrol:[g.spawn]).map(p=>p.slice())};
       if(g.lure)out.lure=g.lure.slice();if(g.axis)out.axis=g.axis;if(g.looks)out.looks=g.looks.slice();if(g.buried)out.buried=true;
-      for(const k of ['range','every','speed','offset'])if(g[k]!==undefined)out[k]=g[k];return out;};
+      for(const k of ['range','every','speed','offset','cunning','pace'])if(g[k]!==undefined)out[k]=g[k];return out;};
     const triggersFor=(d,type)=>model.triggers.filter(t=>t.type===type&&linksTo(model,d.id).includes(t.id)).map(t=>t.at.slice());
     const gates=model.doors.map(d=>{const sw=triggersFor(d,'switch')[0];return {id:d.id,name:d.name||COLORS[d.color][0],color:d.rgb||COLORS[d.color][1],tiles:d.tiles.map(t=>t.slice()),...(d.bridge?{bridge:true}:{}),...(d.root?{root:true}:{}),
       ...(sw?{switch:sw}:{}),plates:triggersFor(d,'plate'),levers:triggersFor(d,'lever'),heavyPlates:triggersFor(d,'heavy'),
@@ -406,7 +443,7 @@ function validate(model){
     // An official escape brings its story page along, so it can be seen and moved while editing.
     if(!m.pages.length&&root.EscapeNotes){const n=root.EscapeNotes.NOTES.find(q=>q.levelId===route.id);if(n)m.pages=[{at:n.at.slice(),title:n.title,body:n.body,author:n.author,id:n.id}];}
     const ids={},guardOf=(g,sleep)=>{const id=newId(m,'e');if(g.id)ids[g.id]=id;const out={id,kind:g.kind||'snake',spawn:g.spawn.slice(),facing:g.facing??Math.PI,patrol:(g.patrol||[g.spawn]).map(p=>p.slice()),sleep};
-      if(g.lure)out.lure=g.lure.slice();if(g.axis)out.axis=g.axis;if(g.looks)out.looks=g.looks.slice();if(g.buried)out.buried=true;for(const k of ['range','every','speed','offset'])if(g[k]!==undefined)out[k]=g[k];return out;};
+      if(g.lure)out.lure=g.lure.slice();if(g.axis)out.axis=g.axis;if(g.looks)out.looks=g.looks.slice();if(g.buried)out.buried=true;for(const k of ['range','every','speed','offset','cunning','pace'])if(g[k]!==undefined)out[k]=g[k];return out;};
     m.guards=[...(route.guards||[]).map(g=>guardOf(g,false)),...(route.reinforcements||[]).map(g=>guardOf(g,true))];
     m.rivalries=(route.rivalries||[]).map(([a,b])=>[ids[a],ids[b]]).filter(([a,b])=>a&&b);
     const doorIds={};
@@ -455,7 +492,8 @@ function validate(model){
       patrol:list(g.patrol,6).map(p=>point(p,w,h)).filter(Boolean),sleep:Boolean(g.sleep)};
       if(point(g.lure,w,h))out.lure=point(g.lure,w,h);if(g.axis==='x'||g.axis==='y')out.axis=g.axis;if(g.buried)out.buried=true;
       if(Array.isArray(g.looks)&&g.looks.length)out.looks=g.looks.slice(0,4).map(Number).filter(Number.isFinite);
-      for(const [k,lo,hi] of [['range',0,12],['every',0,20],['speed',0,8],['offset',0,20]])if(Number.isFinite(Number(g[k]))&&g[k]!==null&&g[k]!=='')out[k]=clampNum(g[k],lo,hi);return out;});
+      for(const [k,lo,hi] of [['range',0,12],['every',0,20],['speed',0,8],['offset',0,20]])if(Number.isFinite(Number(g[k]))&&g[k]!==null&&g[k]!=='')out[k]=clampNum(g[k],lo,hi);
+      if(Number.isFinite(g.cunning))out.cunning=clampInt(g.cunning,0,3);if(Number(g.pace)>0&&Number(g.pace)!==1)out.pace=clampNum(g.pace,.5,1.6,1);return out;});
     for(const g of model.guards)if(!g.patrol.length)g.patrol=[g.spawn.slice()];
     const seenDoor=new Set();
     model.doors=list(r.doors,LIMITS.doors*2).filter(d=>/^[db][0-5]$/.test(d?.id)&&!seenDoor.has(d.id)&&seenDoor.add(d.id)).map(d=>({id:d.id,color:Number(d.id[1]),bridge:d.id[0]==='b',tiles:list(d.tiles,60).map(p=>point(p,w,h)).filter(Boolean),
@@ -499,7 +537,7 @@ function validate(model){
   const api={TILES,MARKS,ENEMIES,POSTED,LIMITS,COLORS,MODES,TRIGGERS,HAZARDS,SPEEDS,blank,paint,resize,addEnemy,removeEnemy,turnEnemy,addPatrol,clearPatrol,setSleep,
     paintDoor,removeDoorTile,setDoor,addTrigger,removeAt,toggleLink,linksFrom,linksTo,sourceAt,doorAt,triggerAt,hazardAt,guardAt,addHazard,setLogEnd,setHazard,paintClimate,doorName,
     validate,toRoute,fromRoute,mergeInto,treasureTotal,exportText,importText,sanitize,loadAll,saveOne,removeOne,
-    LOOKS,PROPS,toggleCheckpoint,toggleCrate,addSign,setSign,signAt,toggleProp,setMillWheel,LAYERS,DIRS,toggleLayer,addPage,setPage,pageAt,PAGE_LIMIT,addCap,setCap,setCapEnd,addRope,setRopeEnd,setRope,addWind,setWind,addEcho,addCurrent,setCurrent,addTunnel,addRegion,setRegion,addAntPoint,setAnts,addSeedCrossing,setRootWheel,toggleRival,removeExtraAt,setGuard,setSettings,setMessage,setLinkAction,regionAt};
+    LOOKS,PROPS,toggleCheckpoint,toggleCrate,addSign,setSign,signAt,toggleProp,setMillWheel,LAYERS,DIRS,toggleLayer,addPage,setPage,pageAt,PAGE_LIMIT,addCap,setCap,setCapEnd,addRope,setRopeEnd,setRope,addWind,setWind,addEcho,addCurrent,setCurrent,addTunnel,addRegion,setRegion,addAntPoint,setAnts,addSeedCrossing,setRootWheel,toggleRival,removeExtraAt,moveThing,setGuard,setSettings,setMessage,setLinkAction,regionAt};
   root.EscapeBuilder=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

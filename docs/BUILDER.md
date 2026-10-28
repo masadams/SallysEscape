@@ -54,6 +54,18 @@ one door is three links. Linked things light up when you select either end.
 - Starts open, slams shut for good
 - Starts open, crumbles after Sally crosses (bridges only; needs no trigger)
 
+## Moving things
+With **☝ Select**, drag anything that isn't wall or floor to move it: creatures (a patrol keeps its
+other points), triggers, hazards (either end of a log), Sally, the key, the hatch, chests (they keep
+their links), crates, caps and rope ends, signs, pages, props, checkpoints and burrow mounds. It won't
+set something down where it can't stand. One drag is one undo.
+
+## Creature difficulty
+Select a creature to set its own **Difficulty**:
+- **Cunning** 0–3: how quickly it reacts, how long it remembers Sally, how far ahead it reads her and
+  how short its warnings are. **Level's** follows the level's cunning in Level details.
+- **Pace**: Slow, Steady, Normal, Quick or Fast, for how fast it walks and chases.
+
 ## Sleeping enemies
 Select an enemy and tick **Asleep until woken**, then link the key or a chest to it: it appears when
 Sally takes that. (Plates and levers work doors; only the key and chests wake enemies.)

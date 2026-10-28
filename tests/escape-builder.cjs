@@ -94,3 +94,27 @@ test('pages: up to three notes on open floor, carried through save, share and pl
   assert.equal(B.removeExtraAt(m,4,5),true);assert.equal(m.pages.length,2);
   const official=B.fromRoute(EscapeCatalog.levels[0]);assert.equal(official.pages.length,1);assert.equal(official.pages[0].id,'level-note:meadow:1');
 });
+test('each creature can have its own cunning and pace, carried through save, share and play',()=>{
+  const m=B.blank();B.addEnemy(m,'snake',10,5);B.addEnemy(m,'snake',12,8);const [a,b]=m.guards;
+  B.setGuard(m,a.id,{cunning:0,pace:.75});B.setGuard(m,b.id,{cunning:'',pace:1});assert.equal(a.cunning,0);assert.equal(a.pace,.75);assert.equal(b.cunning,undefined);assert.equal(b.pace,undefined);
+  B.setGuard(m,a.id,{cunning:9,pace:5});assert.equal(a.cunning,3);assert.equal(a.pace,1.6);B.setGuard(m,a.id,{cunning:1,pace:.9});
+  const back=B.importText(B.exportText(m));assert.equal(back.guards[0].cunning,1);assert.equal(back.guards[0].pace,.9);assert.equal(back.guards[1].cunning,undefined);
+  const route=B.toRoute(m),again=B.fromRoute(route);assert.equal(again.guards[0].cunning,1);assert.equal(again.guards[0].pace,.9);
+  m.cunning=3;const g=new EscapeAdventure({level:escapeBuildCustom(B.toRoute(m))}),[h1,h2]=g.hunters;
+  assert.ok(h1.cun&&h1.cun!==g.cunning,'its own cunning');assert.equal(h1.pace,.9);assert.equal(h2.cun,undefined,'the other follows the level');assert.equal(h2.pace,undefined);
+  // A slower creature covers less ground for the same budget.
+  const before={x:h1.x,y:h1.y};g.moveHunter({x:h1.x+3,y:h1.y},1,h1);assert.ok(Math.abs(h1.x-before.x-.9)<.05,'paced at 0.9');
+});
+test('dragging moves creatures, triggers, hazards, marks and extras, but not walls or onto walls',()=>{
+  const m=B.blank();B.addEnemy(m,'snake',10,5);B.addPatrol(m,0,14,5);
+  assert.equal(B.moveThing(m,[10,5],[9,6]),true);assert.deepEqual(m.guards[0].spawn,[9,6]);assert.deepEqual(m.guards[0].patrol,[[9,6],[14,5]]);
+  B.paint(m,8,6,'#');assert.equal(B.moveThing(m,[9,6],[8,6]),false,'not onto a wall');assert.equal(B.moveThing(m,[8,6],[7,6]),false,'walls stay put');
+  B.addTrigger(m,'plate',4,4);assert.equal(B.moveThing(m,[4,4],[5,4]),true);assert.deepEqual(m.triggers[0].at,[5,4]);
+  B.addHazard(m,'thorns',6,8);assert.equal(B.moveThing(m,[6,8],[6,9]),true);assert.deepEqual(m.hazards[0].at,[6,9]);
+  const key=m.map.findIndex(r=>r.includes('K')),kx=m.map[key].indexOf('K');assert.equal(B.moveThing(m,[kx,key],[kx-1,key]),true);assert.equal(m.map[key][kx-1],'K');assert.equal(m.map[key][kx],'.');
+  B.paint(m,3,3,'2');const t=B.addTrigger(m,'lever',2,10);B.addEnemy(m,'beetle',15,9);B.toggleLink(m,'chest:3,3',m.guards[1].id);
+  assert.equal(B.moveThing(m,[3,3],[3,2]),true);assert.ok(m.links.some(([s])=>s==='chest:3,2'),'the chest keeps its links');
+  B.toggleCrate(m,12,10);assert.equal(B.moveThing(m,[12,10],[13,10]),true);assert.deepEqual(m.crates,[[13,10]]);
+  B.addCap(m,16,4);B.setCapEnd(m,16,2);assert.equal(B.moveThing(m,[16,2],[17,2]),true);assert.deepEqual(m.caps[0].to,[17,2]);
+  assert.equal(B.moveThing(m,[11,11],[11,10]),false,'nothing there');assert.deepEqual(B.validate(m).filter(p=>!/too close|not linked/.test(p)),[]);
+});

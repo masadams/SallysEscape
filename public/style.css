@@ -806,3 +806,6 @@ body.pad-nav .pad-glyph { display:inline-block; }
 .builder-steps li.edited > button { color:#ffe2a0; }
 .builder-step-ctl { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
 .builder-step-ctl input[type=number] { width:64px; font:inherit; }
+.builder-difficulty { margin:4px 0; padding:4px 0; border-top:1px solid #5d7a6244; border-bottom:1px solid #5d7a6244; }
+.builder-difficulty label { margin-left:8px; }
+.builder-cell.builder-selected { cursor:grab; }
