@@ -712,7 +712,11 @@ function drawEscapeStillTiles(g,cell,palette,index){
   // top left), longer below a wall since walls stand tall, so mazes read in depth.
   if(escapeLightingFull())for(let y=1;y<g.height;y++)for(let x=1;x<g.width;x++){if(!g.floor(x,y))continue;noStroke();
     if(!g.floor(x,y-1))for(let i=0;i<4;i++){fill(0,0,0,[62,40,22,10][i]);rect(x*cell,y*cell+i*cell*.08,cell,cell*.08);}
-    if(!g.floor(x-1,y))for(let i=0;i<3;i++){fill(0,0,0,[40,22,10][i]);rect(x*cell+i*cell*.06,y*cell,cell*.06,cell);}}
+    if(!g.floor(x-1,y))for(let i=0;i<3;i++){fill(0,0,0,[40,22,10][i]);rect(x*cell+i*cell*.06,y*cell,cell*.06,cell);}
+    // Floor meeting a wall's foot on the right or below darkens a touch too, where light can't reach the corner.
+    const solidAt=(a,b)=>typeof escapeTerrainSolid==='function'?escapeTerrainSolid(g,a,b):!g.floor(a,b);
+    if(solidAt(x+1,y))for(let i=0;i<2;i++){fill(0,0,0,[30,12][i]);rect((x+1)*cell-(i+1)*cell*.05,y*cell,cell*.05,cell);}
+    if(solidAt(x,y+1))for(let i=0;i<2;i++){fill(0,0,0,[34,14][i]);rect(x*cell,(y+1)*cell-(i+1)*cell*.05,cell,cell*.05);}}
 }
 function drawEscapeTiles(g,screenCell,palette,index){
   // The cached layers are drawn at the camera's size before its chase pull-back or moment lean-in, and
@@ -743,6 +747,36 @@ function drawEscapeTiles(g,screenCell,palette,index){
   {const cell=screenCell;if(!escapeLightingFull())for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(g.grid[y][x]==='U'){
       noStroke();fill(22,99,121);rect(x*cell,y*cell,cell,cell);stroke(112,213,211,100);strokeWeight(cell*.035);const tide=Math.sin(g.elapsed*1.4+x*.5+y)*.05;for(const dy of [.3,.7])line((x+.15)*cell,(y+dy+tide)*cell,(x+.85)*cell,(y+dy-tide)*cell);
     }}
+}
+// Depth layers, all Full lighting only. The map floats over a dim, slower ground (drawn on the screen,
+// sliding at half the camera's pace) with a soft shadow under it; a near layer of leaves or roots over
+// its rim slides the other way as Sally moves. Both layers are drawn once and only moved each frame.
+let escapeBackdrop=null,escapeOverhang=null,escapeParallax={x:0,y:0};
+function drawEscapeBackdrop(g,cell,palette,ox,oy){
+  if(!escapeLightingFull()||typeof drawEscapeBackdropTile!=='function'||!p5.instance?._renderer||!drawingContext.drawImage)return;const size=360,key=palette[0].join();
+  if(escapeBackdrop?.key!==key){escapeBackdrop?.layer.remove();const layer=createGraphics(size,size),host=p5.instance,renderer=host._renderer;host._renderer=layer._renderer;try{push();drawEscapeBackdropTile(size,palette);pop();}finally{host._renderer=renderer;}escapeBackdrop={layer,key};}
+  const sx=((ox*.5-escapeParallax.x*.6)%size+size)%size-size,sy=((oy*.5-escapeParallax.y*.6)%size+size)%size-size;
+  // Only the screen past the map's edges: tiles the map fully covers are skipped.
+  const mx0=ox,my0=oy,mx1=ox+g.width*cell,my1=oy+g.height*cell;
+  for(let y=sy;y<height;y+=size)for(let x=sx;x<width;x+=size){if(x>=mx0&&y>=my0&&x+size<=mx1&&y+size<=my1)continue;drawingContext.drawImage(escapeBackdrop.layer.elt,x,y,size,size);}
+}
+// The map's shadow on the ground below: soft bands just past its right and bottom edges, nothing under it.
+function drawEscapeMapLift(g,cell){if(!escapeLightingFull())return;noStroke();const w=g.width*cell,h=g.height*cell;
+  for(let i=1;i<=5;i++){const d=i*cell*.08;fill(0,0,0,40-i*7);rect(w,cell*.3,d,h-cell*.3+d);rect(cell*.25,h,w-cell*.25,d);}}
+function drawEscapeOverhangLayer(g,cell,palette){
+  if(!escapeLightingFull()||typeof drawEscapeOverhang!=='function'||!p5.instance?._renderer)return;
+  // Cached at the camera's resting size (its chase pull-back eases every frame) and scaled to the screen.
+  const screenCell=cell;cell=+(cell/(escapeCam.applied||1)).toFixed(3);const k=screenCell/cell,key=g.level.id+'|'+cell+'|'+palette[1].join();
+  if(escapeOverhang?.key!==key){escapeOverhang?.layer?.remove();const w=(g.width+2)*cell,h=(g.height+2)*cell,layer=createGraphics(w,h),host=p5.instance,renderer=host._renderer;let drew=false;
+    host._renderer=layer._renderer;try{push();translate(cell,cell);drew=drawEscapeOverhang(g,cell,palette);pop();}finally{host._renderer=renderer;}
+    if(!drew){layer.remove();escapeOverhang={key,layer:null};}else escapeOverhang={key,layer,w,h};}
+  // Eased toward the far side of the map from Sally, a little more than half a tile at most.
+  const p=g.player,tx=Math.max(-.55,Math.min(.55,(g.width/2-p.x)*.07))*screenCell,ty=Math.max(-.55,Math.min(.55,(g.height/2-p.y)*.07))*screenCell;
+  escapeParallax.x+=(tx-escapeParallax.x)*.08;escapeParallax.y+=(ty-escapeParallax.y)*.08;
+  // Only its rim bands are copied: the middle of the layer is empty.
+  const L=escapeOverhang.layer?.elt;if(!L)return;const W=escapeOverhang.w,H=escapeOverhang.h,b=Math.min(W/2,H/2,cell*2.4),dx=-screenCell+escapeParallax.x,dy=-screenCell+escapeParallax.y;
+  const pd=L.width/W;const src=(sx,sy,sw,sh)=>drawingContext.drawImage(L,sx*pd,sy*pd,sw*pd,sh*pd,dx+sx*k,dy+sy*k,sw*k,sh*k);
+  src(0,0,W,b);src(0,H-b,W,b);src(0,b,b,H-2*b);src(W-b,b,b,H-2*b);
 }
 // The tall walls' tops, over whatever stands just north of them: Sally and the creatures step behind a wall.
 function drawEscapeWallLips(g,cell){const lip=escapeTerrainBase?.lip;if(!lip||!escapeTerrainOn()||!drawingContext.drawImage)return;drawingContext.drawImage(lip.elt,0,0,g.width*cell,g.height*cell);}
@@ -972,8 +1006,8 @@ function drawEscapeVault(){
   const grottoPalettes=[[[20,18,30],[56,44,78],[104,90,140]],[[16,22,28],[44,62,72],[90,130,140]],[[24,18,28],[72,46,76],[130,90,130]],[[18,20,30],[50,52,86],[96,104,150]],[[22,20,24],[66,52,62],[124,100,112]]];
   const ventPalettes=[[[30,24,22],[96,66,52],[160,112,84]],[[26,24,26],[84,70,66],[148,124,112]],[[32,26,20],[104,74,44],[172,128,80]],[[28,22,24],[92,58,56],[158,100,92]],[[30,26,22],[100,80,60],[166,136,100]]];
   const palette=(g.level.seasonal||g.level.costume)?seasonPalette(g.level):g.level.kids?[[28,50,40],[84,128,80],[150,192,118]]:g.level.custom?[[24,40,34],[58,84,70],[110,140,110]]:g.level.hidden?[[38,30,14],[96,76,32],[176,144,64]]:index>=93?homePalettes[(index-93)%homePalettes.length]:index>=88?tidePalettes[(index-88)%tidePalettes.length]:index>=83?stormPalettes[(index-83)%stormPalettes.length]:index>=78?grottoPalettes[(index-78)%grottoPalettes.length]:index>=73?ventPalettes[(index-73)%ventPalettes.length]:index>=68?frostPalettes[(index-68)%frostPalettes.length]:index>=63?antPalettes[(index-63)%antPalettes.length]:index>=58?rooftopPalettes[(index-58)%rooftopPalettes.length]:index>=53?lanternPalettes[(index-53)%lanternPalettes.length]:index>=49?hollowPalettes[(index-49)%hollowPalettes.length]:index>=47?biomePalettes[index-47]:index>=42?livingPalettes[index-42]:index>=37?glowPalettes[index-37]:index>=32?junglePalettes[index-32]:index>=27?wakingPalettes[index-27]:palettes[index]||(index>=17?deepPalettes[(index-17)%deepPalettes.length]:palettes[0]);
-  background(10,18,25);push();translate(ox,oy);textFont('sans-serif');textAlign(CENTER,CENTER);
-  drawEscapeTiles(g,cell,palette,index);
+  background(10,18,25);drawEscapeBackdrop(g,cell,palette,ox,oy);push();translate(ox,oy);textFont('sans-serif');textAlign(CENTER,CENTER);
+  drawEscapeMapLift(g,cell);drawEscapeTiles(g,cell,palette,index);
   drawEscapeWaterSurface(g,cell,view,index);drawEscapeLightningShadows(g,cell);
   drawEscapeWet(g,cell,view);drawEscapeSway(g,cell,view);drawEscapeDapple(g,cell);
   tickEscapeCritters(g);drawEscapeTricks(g,cell,view);drawEscapePrints(g,cell);drawEscapeCritters(g,cell,view,'ground');drawEscapeReeds(g,cell,view);
@@ -1154,6 +1188,7 @@ function drawEscapeVault(){
   const place=escapePlace(g.level),mood=place?EscapeLighting.moodFor(place.key,place.step):null;
   drawEscapeCloudShadows(g,cell,mood);drawEscapeLights(g,cell,mood);
   if(view.follow){drawEscapeFog(g,cell);drawEscapeGlowWatchers(g,cell);}
+  drawEscapeOverhangLayer(g,cell,palette);
   pop();
   drawEscapeGrade(mood,g);
   // Storm: the sky darkens while thunder rumbles, then a white flash lights everything for a moment.
