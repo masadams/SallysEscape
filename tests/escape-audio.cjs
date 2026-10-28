@@ -37,3 +37,17 @@ test('every creature gait the game plays has its own voice, so hunters can be he
   for(const k of ['snake','beetle','fox','owl','spider','dragonfly'])assert.ok(kinds.includes(k),k+' has a gait');
   for(const g of gaits){const ctx=fakeContext();ctx.currentTime=5;assert.equal(EscapeAudio.play(ctx,'gait',.25,{gait:g}),true,g);assert.ok(ctx.calls.some(c=>c==='osc'||c==='noise'),g+' makes a sound');}
 });
+test('common sounds replay a touch higher or lower and louder or softer each time',async()=>{
+  globalThis.OfflineAudioContext=class{constructor(c,n,rate){this.destination={};this.sampleRate=rate;this.currentTime=0;}
+    createGain(){return {connect(){},gain:{value:0,setValueAtTime(){},exponentialRampToValueAtTime(){}}};}createOscillator(){return fakeContext().createOscillator();}createBiquadFilter(){return fakeContext().createBiquadFilter();}createBufferSource(){return fakeContext().createBufferSource();}
+    startRendering(){return Promise.resolve({sampleRate:this.sampleRate,getChannelData:()=>new Float32Array(16000).fill(.1)});}};
+  globalThis.AudioBuffer=class{constructor(o){this.length=o.length;this.sampleRate=o.sampleRate;this.duration=o.length/o.sampleRate;}copyToChannel(){}};
+  try{EscapeAudio.reset();const ctx=fakeContext(),gains=[],rates=[];
+    ctx.createGain=()=>{const g={connect(){},disconnect(){},gain:{value:0,setValueAtTime(){},exponentialRampToValueAtTime(){}}};gains.push(g);return g;};
+    ctx.createBufferSource=()=>{const s={connect(){},disconnect(){},start(){},stop(){},playbackRate:{value:1},buffer:null};rates.push(s.playbackRate);return s;};
+    EscapeAudio.play(ctx,'hop',.3);await new Promise(r=>setTimeout(r,5));const before=gains.length;
+    for(let i=0;i<8;i++){ctx.currentTime=1+i;EscapeAudio.play(ctx,'hop',.3);}
+    const levels=new Set(gains.slice(before).map(g=>g.gain.value.toFixed(4)));assert.ok(levels.size>3,'levels vary: '+levels.size);
+    assert.ok(new Set(rates.slice(-8).map(r=>r.value.toFixed(4))).size>3,'pitches vary');
+  }finally{delete globalThis.OfflineAudioContext;delete globalThis.AudioBuffer;EscapeAudio.reset();}
+});

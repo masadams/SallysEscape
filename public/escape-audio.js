@@ -192,11 +192,13 @@
   // the loudest and quietest toward the middle; 1 leaves a sound as it is.
   // Measured in Chromium (dB RMS over the loudest 100 ms): rewards near -17, danger tells near
   // -27 so a hunter's warning is never lost under the music, footsteps and a crawl left soft.
-  const TRIM={croak:1.4,freeze:1.3,maze:.62,won:.86,snap:1.41,charge:1.78,sting:2.24,buzz:1.78,hiss:1.41,dive:1.6,clash:2.5,rumble:2.5,skitter:3.16,scrape:3.16,flutter:2,rustle:1.6,clack:3.16,decoy:3.16,toss:2};
+  // Levels set by measuring every sound's loudness: gameplay cues sit together, the key no longer
+  // towers over the rest, and quiet tells (a frog's call, a missed tongue, a hall's echo) can be heard.
+  const TRIM={key:.7,caught:1.6,ribbit:3.16,thwip:2.5,echo:2.2,squish:2,'winter-snowball':1.8,croak:1.4,freeze:1.3,maze:.62,won:.86,snap:1.41,charge:1.78,sting:2.24,buzz:1.78,hiss:1.41,dive:1.6,clash:2.5,rumble:2.5,skitter:3.16,scrape:3.16,flutter:2,rustle:1.6,clack:3.16,decoy:3.16,toss:2};
   // Each recipe is rendered once to a buffer offline and replayed from then on: one buffer
   // source instead of a fresh graph of oscillators, filters and LFOs per sound. Footsteps and
   // other noisy sounds keep three takes and a slight pitch drift so repeats never sound stamped.
-  const VARIED=new Set(['gait','flow','gloop','icecrack','step','paddle','tail','rustle','skitter','scrape','splash','flutter','clash','wingbeat','tweet','plop','lap','drip']);
+  const VARIED=new Set(['gait','flow','gloop','icecrack','hop','squish','clack','decoy','toss','click','glint','chirp','ribbit','croak','hiss','buzz','caw','boing','step','paddle','tail','rustle','skitter','scrape','splash','flutter','clash','wingbeat','tweet','plop','lap','drip']);
   const cache=new Map(),rendering=new Set(),lastPlayed=new Map(),active=[];
   const MAX_VOICES=14,REPEAT_GAP=.045;
   const keyFor=(name,o)=>name+(o.gait?':'+o.gait:'')+(o.sprint?':s':'')+(o.alt?':a':'')+(o.surface&&o.surface!=='floor'?':'+o.surface:'');
@@ -213,7 +215,8 @@
     const out=new AudioBuffer({length:Math.max(1,end),numberOfChannels:1,sampleRate:buffer.sampleRate});out.copyToChannel(data.subarray(0,Math.max(1,end)),0);return out;}
   function replay(ctx,buffers,volume,varied,pan=0){
     const src=ctx.createBufferSource(),amp=ctx.createGain();src.buffer=buffers[Math.floor(Math.random()*buffers.length)];
-    if(varied)src.playbackRate.value=.94+Math.random()*.12;amp.gain.value=volume;src.connect(amp);
+    // Each replay of a common sound is a touch higher or lower and louder or softer, so a run of them never sounds stamped out.
+    if(varied)src.playbackRate.value=.94+Math.random()*.12;amp.gain.value=volume*(varied?.88+Math.random()*.24:1);src.connect(amp);
     // A sound from off to one side comes from that side.
     const panner=pan&&ctx.createStereoPanner?ctx.createStereoPanner():null;if(panner){panner.pan.value=Math.max(-1,Math.min(1,pan));amp.connect(panner);panner.connect(master);}else amp.connect(master);src.start();
     const voice={src,ends:ctx.currentTime+src.buffer.duration};active.push(voice);src.onended=()=>{src.disconnect();amp.disconnect();panner?.disconnect();const i=active.indexOf(voice);if(i>=0)active.splice(i,1);};

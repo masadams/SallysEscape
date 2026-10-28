@@ -260,7 +260,8 @@
         // Everything passes a low-pass that stays wide open until Sally swims (muffled, as if heard
         // underwater) or hides in leaves (a little softened).
         this.muffleFilter=new T.Filter({frequency:18000,type:'lowpass',rolloff:-12}).connect(new T.Limiter(-6).toDestination());
-        this.master=new T.Gain({gain:this.muted?0:this.volume}).connect(this.muffleFilter);
+        this.ducker=new T.Gain({gain:1}).connect(this.muffleFilter);
+        this.master=new T.Gain({gain:this.muted?0:this.volume}).connect(this.ducker);
         // A TV box skips the reverb and the vibrato/tremolo wobbles: they cost the sound engine the most.
         let reverb;if(lite)reverb=new T.Gain({gain:1}).connect(this.master);else{reverb=new T.Reverb({decay:3.2,wet:.28}).connect(this.master);await reverb.ready;}
         const wobble=(make,dest)=>lite?dest:make().connect(dest);
@@ -374,6 +375,9 @@
       const t=this.context.currentTime,g=layer.gain.gain;layer.target=target;layer.quietAt=t+1;g.cancelAndHoldAtTime(t);g.linearRampToValueAtTime(target,t+1.2);return true;}
     // Turning the music off really stops it: the transport pauses once the fade is done, so no notes are
     // scheduled or synthesised while it is silent. Turning it back on carries on from where it was.
+    // A big sound (a crash, thunder, a dropped tail) briefly pushes the music back so it lands clearly.
+    duck(depth=.5,hold=.5,release=1.2){const g=this.ducker?.gain;if(!g||!this.started)return false;const t=this.context.currentTime;
+      try{g.cancelAndHoldAtTime(t);g.linearRampToValueAtTime(depth,t+.06);g.setValueAtTime(depth,t+.06+hold);g.linearRampToValueAtTime(1,t+.06+hold+release);}catch(_){}return true;}
     setVolume(volume,muted=this.muted){if(volume===this.volume&&muted===this.muted&&this.volumeSet)return;const was=this.muted;this.volume=volume;this.muted=muted;if(!this.master)return;this.volumeSet=true;this.master.gain.rampTo(muted?0:volume,.25);
       const transport=this.context?.transport;if(!this.started||!transport||was===muted&&this.volumeSet)return;
       try{if(muted)transport.pause?.(this.context.currentTime+.3);else{transport.start?.('+0.05');if(this.state)this.apply(this.state,1);}}catch(_){}}
