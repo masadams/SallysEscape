@@ -343,7 +343,7 @@ function playEscape(){
   const open=escapeGame.hasKey&&escapeGame.treasure>=escapeGame.requiredTreasure;
   if(open&&!escapeHatchCued&&escapeGame.requiredTreasure>0){escapeHatchCued=true;if(!events.includes('key'))escapeMusic?.cue('hatch');}
   if(!open)escapeHatchCued=false;
-  if(gameState==='escape'&&!paused){if(escapeGame.status==='playing')escapeFootsteps(escapeGame.player);tickEscapeFx(escapeGame);escapeShakeFor(events);}
+  if(gameState==='escape'&&!paused){if(escapeGame.status==='playing'){escapeFootsteps(escapeGame.player);escapeCreatureSteps(escapeGame);}tickEscapeFx(escapeGame);escapeShakeFor(events);}
   if(mobile&&typeof EscapeFeel!=='undefined'&&events.length)EscapeFeel.buzz(events);
   if(events.length&&typeof escapePadRumble==='function')escapePadRumble(events);
   drawEscapeVault();drawEscapeMoment();drawEscapeCurtain();renderEscapeHUD();seasonWarningNames();
@@ -501,6 +501,25 @@ function escapeFootsteps(p){
     const inRun=gameState==='escape'&&escapeGame&&typeof EscapeFeel!=='undefined',surface=inRun?EscapeFeel.surface(escapeGame):gameState==='seasonalHub'&&seasonWorld?seasonWorld.surfaceAt(p):'floor';
     escapeSound(p.swimming?'paddle':p.crawling?'crawl':'step',{sprint:p.sprinting,alt:escapeStepAlt,surface});
     if(inRun&&!p.swimming&&!p.crawling)EscapeFeel.step(escapeFx,escapeGame,{t:escapeFxClock,sprint:p.sprinting,alt:escapeStepAlt});}
+}
+// Creatures on the move can be heard before they are seen: each gait strides at its own pace,
+// panned to its side and fading with distance, so a hunter off-screen gives itself away.
+const ESCAPE_GAITS={snake:['slither',.9],cobra:['slither',.9],'sea-snake':['swim',.9],eel:['swim',.9],fish:['swim',1.1],angler:['swim',1.2],
+  spider:['skitter',.35],scorpion:['skitter',.4],ladybird:['skitter',.45],gecko:['skitter',.35],crab:['skitter',.35],cricket:['skitter',.4],millipede:['skitter',.3],mantis:['skitter',.5],
+  beetle:['heavy',.55],mole:['heavy',.7],fox:['pad',.5],chameleon:['pad',.55],toad:['hop',1],echofrog:['hop',1],
+  owl:['wings',1.2],bat:['wings',1.1],magpie:['wings',1.2],moth:['wings',.9],cloudray:['wings',1.6],dragonfly:['buzz',.7],wasp:['buzz',.6]};
+const ESCAPE_GAIT_RANGE=9,escapeGaitSeen=new WeakMap();
+function escapeCreatureSteps(g){
+  const p=g.player;let played=0;
+  for(const h of g.hunters){const gait=ESCAPE_GAITS[h.kind],last=escapeGaitSeen.get(h);if(!gait)continue;
+    if(!last){escapeGaitSeen.set(h,{x:h.x,y:h.y,run:0});continue;}
+    const moved=Math.hypot(h.x-last.x,h.y-last.y);last.x=h.x;last.y=h.y;
+    // A jump across the map (a burrow, a reset) is not a stride; a buried or sleeping one is silent.
+    if(moved>1.5||['buried','under','asleep','rooted','hidden'].includes(h.state))continue;
+    last.run+=moved;if(last.run<gait[1])continue;last.run=0;
+    const d=Math.hypot(h.x-p.x,h.y-p.y);if(d>ESCAPE_GAIT_RANGE||played>=2)continue;
+    const near=1-d/ESCAPE_GAIT_RANGE;played++;
+    escapeSound('gait',{gait:gait[0],pan:Math.max(-.85,Math.min(.85,(h.x-p.x)/7)),gain:(h.state==='chase'?1.25:.85)*near*near});}
 }
 // Feel: footprints, dust, leaves, sparks and noise rings, kept in one small pool per run. Rings
 // show how far a noise carries, so they stay on in Simple lighting; the rest is Full only.
