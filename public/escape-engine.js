@@ -135,7 +135,7 @@
       this.visible=new Set();this.discovered=new Set();this.visibilityAt=-Infinity;this.updateVisibility(true);
       this.motion=new CreatureMotion(this);
     }
-    makeHunter(guard){return {...centre(...guard.spawn),id:guard.id||null,kind:guard.kind||'snake',facing:guard.facing,state:guard.kind==='echofrog'?'listen':guard.kind==='sentinel'?'watch':guard.kind==='cloudray'?'glide':guard.kind==='mimic'?'rooted':guard.kind==='cobra'?'coiled':guard.kind==='angler'?'lurking':guard.kind==='flytrap'?'open':guard.kind==='heron'||guard.kind==='mantis'?'still':guard.kind==='wasp'?'nest':guard.kind==='dragonfly'?'fly':guard.kind==='mole'?'under':guard.kind==='bat'?'fly':guard.kind==='eel'?'lurk':guard.kind==='crab'?'shell':'patrol',awareness:0,lastKnown:null,lastObserved:-Infinity,reason:'seen',path:[],routeIndex:0,pauseUntil:0,searchUntil:0,patrol:guard.patrol.map(p=>centre(...p)),aim:null,phaseUntil:0,distanceMoved:0,...(guard.kind==='cobra'?{post:centre(...guard.spawn),reach:guard.reach||2.6}:{}),...(guard.kind==='angler'?{lure:centre(...(guard.lure||guard.spawn))}:{}),...(guard.kind==='sentinel'?{facing:guard.looks?guard.looks[0]:guard.facing,looks:guard.looks||null,every:guard.every||3.5,look:0,turnAt:guard.every||3.5,range:guard.range||9,beams:[],readyAt:0}:{}),...(guard.kind==='cloudray'?{leg:0,speed:guard.speed||1.4,shadowR:guard.range||2.1}:{}),...(guard.kind==='heron'||guard.kind==='mantis'?{facing:guard.looks?guard.looks[0]:guard.facing,reach:guard.reach||(guard.kind==='mantis'?1.7:2.6),looks:guard.looks||null,every:guard.every||3.2,look:0,turnAt:guard.every||3.2}:{}),...(guard.kind==='eel'?{post:centre(...guard.spawn)}:{}),...(guard.kind==='bat'?{leg:0,speed:guard.speed||1.8,every:guard.every||2.4,range:guard.range||4.5,pulseAt:(guard.offset||0)-2,pulseFrom:null}:{}),...(guard.kind==='dragonfly'?{leg:0,hoverUntil:0,speed:guard.speed||4.6,hover:guard.hover??.4}:{}),...(guard.kind==='wasp'?{nest:centre(...guard.spawn),swarm:null,leash:guard.leash||6,readyAt:0}:{}),...(guard.kind==='crab'?{home:centre(...guard.spawn),axis:guard.axis||'x',range:guard.range||3}:{}),...(guard.kind==='scorpion'?{reach:guard.reach||1.8,buried:Boolean(guard.buried),offset:guard.offset??(guard.spawn[0]*.7+guard.spawn[1]*.3)%3.8,post:centre(...guard.spawn)}:{})};}
+    makeHunter(guard){return {...centre(...guard.spawn),id:guard.id||null,kind:guard.kind||'snake',facing:guard.facing,state:guard.kind==='echofrog'?'listen':guard.kind==='sentinel'?'watch':guard.kind==='cloudray'?'glide':guard.kind==='mimic'?'rooted':guard.kind==='cobra'?'coiled':guard.kind==='angler'?'lurking':guard.kind==='flytrap'?'open':guard.kind==='heron'||guard.kind==='mantis'?'still':guard.kind==='wasp'?'nest':guard.kind==='dragonfly'?'fly':guard.kind==='mole'?'under':guard.kind==='bat'?'fly':guard.kind==='eel'?'lurk':guard.kind==='crab'?'shell':'patrol',awareness:0,lastKnown:null,lastObserved:-Infinity,reason:'seen',path:[],routeIndex:0,pauseUntil:0,searchUntil:0,patrol:guard.patrol.map(p=>centre(...p)),...(Number.isFinite(guard.cunning)?{cun:CUNNING[Math.max(0,Math.min(3,Math.round(guard.cunning)))]}:{}),...(guard.pace>0&&guard.pace!==1?{pace:guard.pace}:{}),aim:null,phaseUntil:0,distanceMoved:0,...(guard.kind==='cobra'?{post:centre(...guard.spawn),reach:guard.reach||2.6}:{}),...(guard.kind==='angler'?{lure:centre(...(guard.lure||guard.spawn))}:{}),...(guard.kind==='sentinel'?{facing:guard.looks?guard.looks[0]:guard.facing,looks:guard.looks||null,every:guard.every||3.5,look:0,turnAt:guard.every||3.5,range:guard.range||9,beams:[],readyAt:0}:{}),...(guard.kind==='cloudray'?{leg:0,speed:guard.speed||1.4,shadowR:guard.range||2.1}:{}),...(guard.kind==='heron'||guard.kind==='mantis'?{facing:guard.looks?guard.looks[0]:guard.facing,reach:guard.reach||(guard.kind==='mantis'?1.7:2.6),looks:guard.looks||null,every:guard.every||3.2,look:0,turnAt:guard.every||3.2}:{}),...(guard.kind==='eel'?{post:centre(...guard.spawn)}:{}),...(guard.kind==='bat'?{leg:0,speed:guard.speed||1.8,every:guard.every||2.4,range:guard.range||4.5,pulseAt:(guard.offset||0)-2,pulseFrom:null}:{}),...(guard.kind==='dragonfly'?{leg:0,hoverUntil:0,speed:guard.speed||4.6,hover:guard.hover??.4}:{}),...(guard.kind==='wasp'?{nest:centre(...guard.spawn),swarm:null,leash:guard.leash||6,readyAt:0}:{}),...(guard.kind==='crab'?{home:centre(...guard.spawn),axis:guard.axis||'x',range:guard.range||3}:{}),...(guard.kind==='scorpion'?{reach:guard.reach||1.8,buried:Boolean(guard.buried),offset:guard.offset??(guard.spawn[0]*.7+guard.spawn[1]*.3)%3.8,post:centre(...guard.spawn)}:{})};}
     floor(x,y){const t=this.grid[y]?.[x];return t!==undefined&&t!=='#'&&t!=='B'&&t!=='G'&&t!=='P'&&!this.crateAt?.[y*this.width+x];}
     water(p){return this.grid[Math.floor(p.y)]?.[Math.floor(p.x)]==='U';}
     // A crack (Y; S in text maps) is wide enough for Sally only: no hunter can squeeze through or see into it.
@@ -532,7 +532,7 @@
       if(h.state==='clash'||h.state==='emerge')return false;
       const p=this.player,inside=this.inLight(h,.35),sheltered=this.inLight(p),old=h.glowFear;
       if(old?.lastSeen&&!inside)h.facing=Math.atan2(old.lastSeen.y-h.y,old.lastSeen.x-h.x);
-      const seen=this.seesPlayer(h),remembered=old?.lastSeen&&this.elapsed-old.seenAt<=this.cunning.memory;
+      const seen=this.seesPlayer(h),remembered=old?.lastSeen&&this.elapsed-old.seenAt<=(h.cun||this.cunning).memory;
       const sourceLive=old?.sources.some(l=>l.until>this.elapsed&&this.lights.includes(l));
       if(inside||sheltered&&(seen||remembered)||old&&sourceLive&&!seen){
         const fear=h.glowFear||(h.glowFear={sources:[],lastSeen:null,seenAt:-Infinity,destination:null,retryAt:0,version:-1});
@@ -941,7 +941,7 @@
       this.hunterDt=dt;
       if(h.eaten)return;
       if(h.state==='steamed'){if(this.elapsed>=h.phaseUntil){h.state=h.kind==='mimic'?'rooted':'patrol';h.graceUntil=this.elapsed+.5;h.dazed=false;
-        if(h.bonkFrom){if(['snake','sea-snake','cobra','chameleon','spider','toad','beetle','gecko'].includes(h.kind)){h.state='search';h.lastKnown=h.bonkFrom;h.searchUntil=this.elapsed+this.cunning.search+1.5;}h.bonkFrom=null;}}return;}
+        if(h.bonkFrom){if(['snake','sea-snake','cobra','chameleon','spider','toad','beetle','gecko'].includes(h.kind)){h.state='search';h.lastKnown=h.bonkFrom;h.searchUntil=this.elapsed+(h.cun||this.cunning).search+1.5;}h.bonkFrom=null;}}return;}
       if(this.updateGlowFear(dt,h))return;
       if(h.tailLureUntil){
         if(this.elapsed<h.tailLureUntil&&this.droppedTail){h.state='decoy';h.awareness=0;h.lastKnown=null;h.aim=null;if(distance(h,this.droppedTail)>.3)this.moveHunter(this.droppedTail,1.3*dt,h);return;}
@@ -986,7 +986,7 @@
         h.state='decoy';h.awareness=0;h.lastKnown=null;target=this.decoy;speed=1.7;
       }else if(seen||heard){
         h.reason=seen?'seen':'heard';h.lastKnown=copy(p);h.lastObserved=this.elapsed;
-        const sure=(p.crawling&&!heard?1.2:0.7)*this.cunning.react;h.awareness=Math.min(1,h.awareness+dt/sure);
+        const sure=(p.crawling&&!heard?1.2:0.7)*(h.cun||this.cunning).react;h.awareness=Math.min(1,h.awareness+dt/sure);
         h.state=h.awareness>=1?'chase':'alert';target=h.lastKnown;
         if(h.state==='alert'){
           if(h.awareness-dt/sure<=0)this.cue('warning',h);
@@ -995,9 +995,9 @@
       }else if(h.state==='alert'){
         h.awareness=Math.max(0,h.awareness-dt*1.5);speed=0;
         if(h.awareness===0){h.lastKnown=null;h.state='patrol';}
-      }else if(h.lastKnown&&this.elapsed-h.lastObserved<this.cunning.memory){h.state='chase';target=h.lastKnown;speed=2.75;}
+      }else if(h.lastKnown&&this.elapsed-h.lastObserved<(h.cun||this.cunning).memory){h.state='chase';target=h.lastKnown;speed=2.75;}
       else if(h.state==='chase'){
-        h.state='search';h.searchUntil=this.elapsed+this.cunning.search;h.awareness=0;
+        h.state='search';h.searchUntil=this.elapsed+(h.cun||this.cunning).search;h.awareness=0;
         this.closeCalls++;this.notice('Lost it. Catch your breath.','lost');target=h.lastKnown;speed=1.3;
       }else if(h.state==='search'&&this.elapsed<h.searchUntil){
         target=h.lastKnown;speed=1.3;if(target&&distance(h,target)<0.15){h.facing+=dt;speed=0;}
@@ -1055,14 +1055,14 @@
       if(h.state==='crouch'){if(this.elapsed>=h.phaseUntil){h.state='pounce';h.pounceFrom=copy(h);h.phaseUntil=this.elapsed+.6;this.cue('skitter',h);}return;}
       if(h.state==='pounce'){
         const remaining=distance(h,h.aim),step=Math.min(remaining,8*dt),next={x:h.x+Math.cos(h.facing)*step,y:h.y+Math.sin(h.facing)*step};
-        if(remaining<.05||this.elapsed>=h.phaseUntil||!this.fits(next,.22,h)){h.state='sniff';h.phaseUntil=this.elapsed+1.6*this.cunning.rest;h.path=[];return;}
+        if(remaining<.05||this.elapsed>=h.phaseUntil||!this.fits(next,.22,h)){h.state='sniff';h.phaseUntil=this.elapsed+1.6*(h.cun||this.cunning).rest;h.path=[];return;}
         h.x=next.x;h.y=next.y;h.distanceMoved+=step;return;
       }
-      const heard=(p.noisy||p.loud)&&this.audible(h,p,7)||p.moving&&!p.hidden&&!p.silent&&this.audible(h,p,(p.crawling?1:2.6)*this.cunning.ear),lure=this.decoy&&this.decoy.expires!==h.lastLure&&this.audible(h,this.decoy,7);
+      const heard=(p.noisy||p.loud)&&this.audible(h,p,7)||p.moving&&!p.hidden&&!p.silent&&this.audible(h,p,(p.crawling?1:2.6)*(h.cun||this.cunning).ear),lure=this.decoy&&this.decoy.expires!==h.lastLure&&this.audible(h,this.decoy,7);
       if((heard||lure)&&this.elapsed>=(h.calmUntil||0)){
-        const target=lure&&!heard?copy(this.decoy):this.lead(.2*this.cunning.aim);if(lure)h.lastLure=this.decoy.expires;
+        const target=lure&&!heard?copy(this.decoy):this.lead(.2*(h.cun||this.cunning).aim);if(lure)h.lastLure=this.decoy.expires;
         const d=Math.min(distance(h,target)+.4,4.5),a=Math.atan2(target.y-h.y,target.x-h.x);
-        h.aim={x:h.x+Math.cos(a)*d,y:h.y+Math.sin(a)*d};h.facing=a;h.state='crouch';h.phaseUntil=this.elapsed+(this.level.foxWarn??.22)*this.cunning.warn;if(this.level.seasonal==='autumn-hollow')this.cue('gobble',h);h.reason='heard';h.calmUntil=this.elapsed+2.2;this.alarms++;return;
+        h.aim={x:h.x+Math.cos(a)*d,y:h.y+Math.sin(a)*d};h.facing=a;h.state='crouch';h.phaseUntil=this.elapsed+(this.level.foxWarn??.22)*(h.cun||this.cunning).warn;if(this.level.seasonal==='autumn-hollow')this.cue('gobble',h);h.reason='heard';h.calmUntil=this.elapsed+2.2;this.alarms++;return;
       }
       if(h.state==='sniff'){if(this.elapsed<h.phaseUntil)return;h.state='patrol';}
       const target=h.patrol[h.routeIndex];if(distance(h,target)<.1){h.routeIndex=(h.routeIndex+1)%h.patrol.length;return;}
@@ -1414,9 +1414,9 @@
       if(h.state==='glare'){if(this.elapsed>=h.phaseUntil){h.state='swoop';this.alarms++;this.cue('flutter',h);}return;}
       if(h.state==='swoop'){
         // The swoop bends toward Sally, so a straight dash is not enough; hide or turn sharply.
-        h.swoopTime=(h.swoopTime||0)+dt;if(!p.hidden&&h.swoopTime<1){const want=Math.atan2(p.y-h.aim.y,p.x-h.aim.x),gap=distance(h.aim,p),pull=Math.min(gap,3*this.cunning.aim*dt);h.aim={x:h.aim.x+Math.cos(want)*pull,y:h.aim.y+Math.sin(want)*pull};}
+        h.swoopTime=(h.swoopTime||0)+dt;if(!p.hidden&&h.swoopTime<1){const want=Math.atan2(p.y-h.aim.y,p.x-h.aim.x),gap=distance(h.aim,p),pull=Math.min(gap,3*(h.cun||this.cunning).aim*dt);h.aim={x:h.aim.x+Math.cos(want)*pull,y:h.aim.y+Math.sin(want)*pull};}
         const d=distance(h,h.aim),step=Math.min(d,6.5*dt);
-        if(d<.05||h.swoopTime>=1.2){h.state='return';h.phaseUntil=this.elapsed+.6*this.cunning.rest;h.swoopTime=0;return;}
+        if(d<.05||h.swoopTime>=1.2){h.state='return';h.phaseUntil=this.elapsed+.6*(h.cun||this.cunning).rest;h.swoopTime=0;return;}
         h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.x+=Math.cos(h.facing)*step;h.y+=Math.sin(h.facing)*step;h.distanceMoved+=step;return;
       }
       if(h.state==='return'){
@@ -1428,7 +1428,7 @@
       const lure=this.decoy&&!this.decoy.owled&&distance(h,this.decoy)<=8&&this.clear(h,this.decoy,true);
       if(lure||this.owlSees(h)){
         const target=lure?this.decoy:p;if(lure)this.decoy.owled=true;
-        h.aim=copy(target);h.facing=Math.atan2(target.y-h.y,target.x-h.x);h.state='glare';h.phaseUntil=this.elapsed+.7*this.cunning.warn;h.swoopTime=0;this.cue('hoot',h);return;
+        h.aim=copy(target);h.facing=Math.atan2(target.y-h.y,target.x-h.x);h.state='glare';h.phaseUntil=this.elapsed+.7*(h.cun||this.cunning).warn;h.swoopTime=0;this.cue('hoot',h);return;
       }
       const look=h.patrol[h.routeIndex],want=Math.atan2(look.y-h.y,look.x-h.x),turn=Math.atan2(Math.sin(want-h.facing),Math.cos(want-h.facing));
       if(Math.abs(turn)>.02){h.facing+=Math.sign(turn)*Math.min(Math.abs(turn),1.1*dt);h.lookUntil=this.elapsed+1.8;}
@@ -1573,7 +1573,7 @@
         h.chargeFrom||=copy(h);if(!this.fits(next,.22,h)||this.elapsed>=h.phaseUntil||h.aim&&distance(h.chargeFrom,next)>distance(h.chargeFrom,h.aim)+3){
           const straight=Math.abs(dx)>.92||Math.abs(dy)>.92,wall=[Math.floor(h.x+Math.round(dx)*.75),Math.floor(h.y+Math.round(dy)*.75)];
           const hitWall=!this.fits(next,.22,h);if(straight&&hitWall)this.smash(...wall);
-          h.state=hitWall?'stunned':'recover';h.phaseUntil=this.elapsed+(hitWall?1.8:1)*this.cunning.rest;h.awareness=0;h.path=[];this.cue('clash',h);return;
+          h.state=hitWall?'stunned':'recover';h.phaseUntil=this.elapsed+(hitWall?1.8:1)*(h.cun||this.cunning).rest;h.awareness=0;h.path=[];this.cue('clash',h);return;
         }
         h.x=next.x;h.y=next.y;h.distanceMoved+=step;return;
       }
@@ -1582,7 +1582,7 @@
       if(seen){
         h.awareness=Math.min(1,h.awareness+dt/.6);h.state='alert';h.reason='seen';
         h.facing=Math.atan2(this.player.y-h.y,this.player.x-h.x);
-        if(h.awareness>=1){h.aim=this.lead(.45*this.cunning.aim);h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='windup';h.phaseUntil=this.elapsed+.55*this.cunning.warn;this.alarms++;this.notice('The beetle lowers its horn. Get out of its lane!','warning');}
+        if(h.awareness>=1){h.aim=this.lead(.45*(h.cun||this.cunning).aim);h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='windup';h.phaseUntil=this.elapsed+.55*(h.cun||this.cunning).warn;this.alarms++;this.notice('The beetle lowers its horn. Get out of its lane!','warning');}
         return;
       }
       if(h.state==='alert'){h.awareness=Math.max(0,h.awareness-dt*1.5);if(h.awareness>0)return;h.state='patrol';}
@@ -1607,13 +1607,13 @@
         return;
       }
       if(h.state==='emerge'){if(this.elapsed>=h.phaseUntil)h.state='patrol';return;}
-      if(h.state==='raise'){h.tailUp=true;if(this.elapsed>=h.phaseUntil){if(inRing){h.aim=this.lead(.27*this.cunning.aim);h.state='windup';h.phaseUntil=this.elapsed+.33*this.cunning.warn;}else h.state='alert';}return;}
+      if(h.state==='raise'){h.tailUp=true;if(this.elapsed>=h.phaseUntil){if(inRing){h.aim=this.lead(.27*(h.cun||this.cunning).aim);h.state='windup';h.phaseUntil=this.elapsed+.33*(h.cun||this.cunning).warn;}else h.state='alert';}return;}
       if(h.state==='windup'){
         if(this.elapsed>=h.phaseUntil){h.state='sting';h.phaseUntil=this.elapsed+.2;this.cue('sting',h);}
         return;
       }
       if(h.state==='sting'){
-        if(this.elapsed>=h.phaseUntil){h.state='recover';h.phaseUntil=this.elapsed+this.cunning.rest;h.awareness=0;h.alertUntil=0;}
+        if(this.elapsed>=h.phaseUntil){h.state='recover';h.phaseUntil=this.elapsed+(h.cun||this.cunning).rest;h.awareness=0;h.alertUntil=0;}
         return;
       }
       if(h.state==='recover'){h.tailUp=false;if(this.elapsed>=h.phaseUntil){h.state='patrol';h.aim=null;h.path=[];h.restUntil=this.elapsed+.6;}return;}
@@ -1622,7 +1622,7 @@
       h.tailUp=this.elapsed>=(h.restUntil||0)&&(cycle<2||this.elapsed<(h.alertUntil||0));
       if(inRing){
         h.facing=Math.atan2(p.y-h.y,p.x-h.x);this.alarms++;
-        if(h.tailUp){h.aim=this.lead(.27*this.cunning.aim);h.state='windup';h.phaseUntil=this.elapsed+.44*this.cunning.warn;this.notice('Scorpion strike! Change direction!','tail');}
+        if(h.tailUp){h.aim=this.lead(.27*(h.cun||this.cunning).aim);h.state='windup';h.phaseUntil=this.elapsed+.44*(h.cun||this.cunning).warn;this.notice('Scorpion strike! Change direction!','tail');}
         else{h.state='raise';h.phaseUntil=this.elapsed+.6;h.alertUntil=this.elapsed+2.5;this.notice('The scorpion raises its tail!','tail');}
         return;
       }
@@ -1718,6 +1718,8 @@
       const p=this.player;return this.hunters.find(h=>h.kind==='toad'&&h.state==='tongue'&&h.tongueLength>0&&(()=>{const dx=Math.cos(h.facing),dy=Math.sin(h.facing),t=(p.x-h.x)*dx+(p.y-h.y)*dy;if(t<0||t>h.tongueLength+.2)return false;return Math.abs((p.x-h.x)*dy-(p.y-h.y)*dx)<.4;})());
     }
     moveHunter(target,budget,h=this.hunter,fleeGlow=false){
+      // A creature set to its own pace in the builder moves that much slower or quicker.
+      if(h.pace)budget*=h.pace;
       const m=MOMENTUM[h.kind];
       if(m&&h.state==='chase'&&this.hunterDt>0)return this.glideHunter(target,budget,h,m);
       h.heading=undefined;
@@ -1754,12 +1756,12 @@
     }
     // A heavy hunter mid-chase feels Sally close by whichever way it faces, so sliding past her does
     // not lose her; leaves, cover or a crawl still do.
-    feelsPlayer(h){const p=this.player;return h.state==='chase'&&Boolean(MOMENTUM[h.kind])&&!p.hidden&&!p.crawling&&!p.camo&&distance(h,p)<this.cunning.feel&&this.clear(h,p);}
+    feelsPlayer(h){const p=this.player;return h.state==='chase'&&Boolean(MOMENTUM[h.kind])&&!p.hidden&&!p.crawling&&!p.camo&&distance(h,p)<(h.cun||this.cunning).feel&&this.clear(h,p);}
     // Where a chasing hunter aims: where Sally will be by the time it gets there, following her curve,
     // so a loop round it or a long arc gets cut across. It never aims through a wall. Run rings round
     // it and it reads the loop: it leads further, turns sharper and cuts inside.
     chaseAim(target,h,m){
-      const p=this.player,t=this.sallyTrack,k=this.cunning;if(!t||!m.lead||!k.lead||distance(target,p)>.3||p.hidden)return target;
+      const p=this.player,t=this.sallyTrack,k=(h.cun||this.cunning);if(!t||!m.lead||!k.lead||distance(target,p)>.3||p.hidden)return target;
       if(Math.abs(t.loop)>k.loop&&!(h.wiseUntil>this.elapsed)&&distance(h,p)<6){h.wiseUntil=this.elapsed+6;this.cue('warning',h);if(!h.wiseNoted){h.wiseNoted=true;this.notice('It has read your loop. Circling will not shake it now.','warning');}}
       const wise=h.wiseUntil>this.elapsed,d=distance(h,p);if(d<.5)return target;
       let x=p.x,y=p.y,vx=t.vx,vy=t.vy;const lead=Math.max(.25,Math.min(wise?1.2:.85,d/2.75))*m.lead*k.lead*(wise?1.4:1),steps=6,dt=lead/steps,curve=t.curve*(wise?1.2:1);
@@ -1774,7 +1776,7 @@
       if(this.grid[Math.floor(h.y)]?.[Math.floor(h.x)]==='M')budget*=.72;
       if(h.kind==='sea-snake')budget*=this.water(h)?1.05:.65;
       if(this.cold.has(this.tileKey(h)))budget*=.6;
-      const k=this.cunning;budget*=k.pace;
+      const k=(h.cun||this.cunning);budget*=k.pace;
       target=this.chaseAim(target,h,m);const wise=h.wiseUntil>this.elapsed;
       const id=Math.floor(target.x)+','+Math.floor(target.y);
       if(h.targetId!==id||!h.path.length||distance(h,h.path[0])>1.6){h.path=this.route(h,target,h);h.targetId=id;}

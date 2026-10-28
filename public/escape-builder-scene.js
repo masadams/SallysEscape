@@ -36,7 +36,7 @@ const ESCAPE_BUILDER_DETAILS={
   'trig:plate':'Pressure plate: Sally standing on it opens its linked doors (set it to close them again after a time).','trig:heavy':'Heavy plate: ignores Sally. Only a beetle’s weight presses it, so lure one on.',
   'trig:lever':'Lever: Sally walks into it to flip it; it stays flipped.','trig:switch':'Switch: Sally steps on it, or hits it from range with her tongue.',
   'haz:vent':'Steam vent: sits in a wall and blasts steam across the floor in front of it on a rhythm. It stuns hunters too.','haz:thorns':'Thorn bed: rises and sinks on a rhythm. Cross while it is down.','haz:log':'Rolling log (a snowball in winter): rumbles a warning, then rolls along its line.',
-  'select':'Select: click anything to see and change its settings on the right.','link':'Link: click a trigger, the key or a chest, then the doors, bridges or creatures it should affect.',
+  'select':'Select: click anything to see and change its settings on the right, or drag it to move it.','link':'Link: click a trigger, the key or a chest, then the doors, bridges or creatures it should affect.',
   'patrol':'Patrol: click a creature, then the tiles it walks to, in order.','turn':'Turn: turns a creature or a vent a quarter turn.','remove':'Remove: clears a creature, trigger, hazard, door tile or extra from a tile.'
 };
 function escapeBuilderHintsOn(){try{return escapeStore.getItem(ESCAPE_BUILDER_HINT_KEY)!=='0';}catch(_){return true;}}
@@ -466,6 +466,14 @@ function escapeBuilderCell(x,y,ch,linked){
   const patrolGuard=p?.kind==='guard'?m.guards.find(q=>q.id===p.id):null,step=patrolGuard?patrolGuard.patrol.findIndex(q=>q[0]===x&&q[1]===y):-1;
   return '<div class="'+cls+'" data-x="'+x+'" data-y="'+y+'" style="background:'+bg+(shadow?';box-shadow:'+shadow.slice(0,-1):'')+'">'+glyph+(step>=0?'<i>'+(step+1)+'</i>':'')+'</div>';
 }
+// How hard this one creature is: its own cunning (or the level's) and how quick it is on its feet.
+const ESCAPE_BUILDER_CUNNING=['0, simple','1, sharpening','2, sharp','3, wise'],ESCAPE_BUILDER_PACE=[[.75,'Slow'],[.9,'Steady'],[1,'Normal'],[1.15,'Quick'],[1.3,'Fast']];
+function escapeBuilderGuardDifficulty(g,level){
+  const pace=g.pace??1,near=ESCAPE_BUILDER_PACE.reduce((a,b)=>Math.abs(b[0]-pace)<Math.abs(a[0]-pace)?b:a);
+  return '<div class="builder-difficulty"><b>Difficulty</b> <label title="How quickly it reacts, how long it remembers Sally, how far ahead it reads her and how short its warnings are">Cunning <select data-ginsp="cunning"><option value="">Level\u2019s ('+ESCAPE_BUILDER_CUNNING[level]+')</option>'+
+    ESCAPE_BUILDER_CUNNING.map((l,i)=>'<option value="'+i+'"'+(g.cunning===i?' selected':'')+'>'+l+'</option>').join('')+'</select></label>'+
+    '<label title="How fast it walks and chases">Pace <select data-ginsp="pace">'+ESCAPE_BUILDER_PACE.map(([v,l])=>'<option value="'+v+'"'+(near[0]===v?' selected':'')+'>'+l+'</option>').join('')+'</select></label></div>';
+}
 // The settings only some enemies have.
 function escapeBuilderGuardExtras(g){
   const n=(key,label,step=.1)=>' <label>'+label+' <input type="number" step="'+step+'" data-ginsp="'+key+'" value="'+(g[key]??'')+'"></label>';
@@ -484,14 +492,14 @@ function escapeBuilderGuardExtras(g){
 }
 function escapeBuilderInspector(){
   const m=escapeBuilderModel,B=EscapeBuilder,p=escapeBuilderPick;
-  if(!p)return '<div class="builder-inspector"><b>Nothing selected.</b> Use ☝ Select to pick an enemy, door, trigger or hazard and change its settings. Use 🔗 Link to tie triggers (plates, levers, the key, a chest) to doors, bridges or sleeping enemies.</div>';
+  if(!p)return '<div class="builder-inspector"><b>Nothing selected.</b> Use ☝ Select to pick an enemy, door, trigger or hazard and change its settings, or drag anything that isn’t wall or floor to move it. Use 🔗 Link to tie triggers (plates, levers, the key, a chest) to doors, bridges or sleeping enemies.</div>';
   const links=ids=>ids.length?ids.map(id=>escapeHtml(escapeBuilderLabel(id))).join(', '):'nothing yet';
   let html='';
   if(p.kind==='guard'){const g=m.guards.find(q=>q.id===p.id);if(!g)return '';
     html='<b>'+ESCAPE_BUILDER_ENEMY[g.kind]+' '+B.ENEMIES[g.kind]+'</b> at '+g.spawn.join(',')+' · faces '+ESCAPE_BUILDER_ARROW[((Math.round((g.facing??Math.PI)/(Math.PI/2))%4)+4)%4]+
       (B.POSTED.has(g.kind)?' · keeps its post':' · walks '+g.patrol.length+' patrol point'+(g.patrol.length===1?'':'s')+' <button data-insp="clear-patrol">Clear patrol</button>')+
       '<label class="builder-check"><input type="checkbox" data-insp="sleep"'+(g.sleep?' checked':'')+'> Asleep until woken</label>'+(g.sleep?' Woken by: '+links(B.linksTo(m,g.id)):'')+
-      escapeBuilderGuardExtras(g)+(m.rivalries||[]).filter(r=>r.includes(g.id)).map(r=>'<br>Rival of '+escapeHtml(escapeBuilderLabel(r[0]===g.id?r[1]:r[0]))).join('');}
+      escapeBuilderGuardDifficulty(g,m.cunning??2)+escapeBuilderGuardExtras(g)+(m.rivalries||[]).filter(r=>r.includes(g.id)).map(r=>'<br>Rival of '+escapeHtml(escapeBuilderLabel(r[0]===g.id?r[1]:r[0]))).join('');}
   else if(p.kind==='door'){const d=m.doors.find(q=>q.id===p.id);if(!d)return '';
     html='<b>'+B.doorName(d)+'</b> ('+d.tiles.length+' tile'+(d.tiles.length===1?'':'s')+') <select data-insp="mode">'+Object.entries(B.MODES).filter(([k])=>k!=='crumble'||d.bridge).map(([k,v])=>'<option value="'+k+'"'+(d.mode===k?' selected':'')+'>'+v+'</option>').join('')+'</select>'+
       (['timed','once'].includes(d.mode)?' <label>Seconds <input type="number" min="1" max="30" data-insp="seconds" value="'+d.seconds+'"></label>':'')+
@@ -552,7 +560,7 @@ function escapeBuilderSettings(){
 // selected on the right. Level details, weather, quick build, sharing and My levels open as
 // dialogs; right-click on the map opens a menu for whatever is under the pointer; every change
 // can be undone (Ctrl+Z) and redone (Ctrl+Shift+Z).
-let escapeBuilderDialog=null,escapeBuilderMenu=null,escapeBuilderUndo=[],escapeBuilderRedo=[],escapeBuilderState=null,escapeBuilderStroke=null;
+let escapeBuilderDialog=null,escapeBuilderGrab=null,escapeBuilderMenu=null,escapeBuilderUndo=[],escapeBuilderRedo=[],escapeBuilderState=null,escapeBuilderStroke=null;
 const ESCAPE_BUILDER_TABS=[['tiles','Ground'],['places','Places'],['creatures','Creatures'],['doors','Doors & switches'],['hazards','Hazards'],['extras','Extras']];
 const ESCAPE_BUILDER_MODES=[['select','☝','Select','V','Pick something to see and change its settings'],['link','🔗','Link','L','Click a trigger, the key or a chest, then the doors, bridges or enemies to link or unlink'],
   ['patrol','➜','Patrol','P','Click an enemy, then the tiles it should walk to, in order'],['turn','↻','Turn','T','Turn an enemy or a vent a quarter turn'],['remove','✕','Remove','X','Remove an enemy, trigger, hazard, door tile or mark']];
@@ -792,10 +800,12 @@ function wireEscapeBuilder(){
   for(const el of document.querySelectorAll('[data-sky]'))el.onchange=e=>{B.setSettings(m,{[el.dataset.sky]:e.target.checked?skyDefault[el.dataset.sky]:null});rerender();};
   for(const el of document.querySelectorAll('[data-skyf]'))el.onchange=e=>{const [k,f]=el.dataset.skyf.split('.');B.setSettings(m,{[k]:{...m[k],[f]:Number(e.target.value)}});rerender();};
   const grid=$('builder-grid'),cellAt=e=>{const el=document.elementFromPoint(e.clientX,e.clientY)?.closest?.('.builder-cell');return el?[Number(el.dataset.x),Number(el.dataset.y)]:null;};
-  grid.onpointerdown=e=>{if(e.button===2)return;e.preventDefault();const c=cellAt(e);if(!c)return;if(escapeBuilderStepPick(...c))return rerender();escapeBuilderStroke={pushed:false};escapeBuilderPainting=escapeBuilderDrags(escapeBuilderTool);if(escapeBuilderApply(...c))rerender();};
-  grid.onpointermove=e=>{if(!escapeBuilderPainting||!e.buttons)return;const c=cellAt(e);if(c&&escapeBuilderModel.map[c[1]][c[0]]!==escapeBuilderTool&&escapeBuilderApply(...c))rerender();};
+  grid.onpointerdown=e=>{if(e.button===2)return;e.preventDefault();const c=cellAt(e);if(!c)return;if(escapeBuilderStepPick(...c))return rerender();escapeBuilderStroke={pushed:false};escapeBuilderPainting=escapeBuilderDrags(escapeBuilderTool);escapeBuilderGrab=escapeBuilderTool==='select'?{from:c}:null;if(escapeBuilderApply(...c))rerender();};
+  // With Select, dragging picks up what was clicked and carries it tile by tile; one drag is one undo.
+  grid.onpointermove=e=>{const grab=escapeBuilderGrab;if(grab&&e.buttons){const c=cellAt(e);if(c&&!(c[0]===grab.from[0]&&c[1]===grab.from[1])&&B.moveThing(escapeBuilderModel,grab.from,c)){grab.from=c;grab.moved=true;escapeBuilderPick=escapeBuilderPickAt(...c);escapeBuilderNote='Moved to '+c.join(',')+'.';rerender();}return;}
+    if(!escapeBuilderPainting||!e.buttons)return;const c=cellAt(e);if(c&&escapeBuilderModel.map[c[1]][c[0]]!==escapeBuilderTool&&escapeBuilderApply(...c))rerender();};
   grid.oncontextmenu=e=>{e.preventDefault();const c=cellAt(e);if(!c)return;escapeBuilderMenu={kind:'context',cell:c,left:Math.min(e.clientX,(window.innerWidth||1e4)-230),top:Math.min(e.clientY,(window.innerHeight||1e4)-380)};rerender();};
-  document.onpointerup=()=>{escapeBuilderPainting=false;escapeBuilderStroke=null;};
+  document.onpointerup=()=>{escapeBuilderPainting=false;escapeBuilderStroke=null;escapeBuilderGrab=null;};
   on('builder-play',()=>{if(!B.validate(m).length)startEscape({custom:B.toRoute(m),from:'builder'});});
   on('builder-route',()=>escapeBuilderRunToggle());on('builder-run-recheck',()=>escapeBuilderRunTrace());on('builder-solve',()=>escapeBuilderSolve());
   if($('builder-run-pick'))$('builder-run-pick').onchange=e=>{escapeBuilderRun.pick=Number(e.target.value)||0;escapeBuilderRun.solved=null;escapeBuilderRunLoadSaved();escapeBuilderRunTrace();};
