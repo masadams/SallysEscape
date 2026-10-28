@@ -471,7 +471,9 @@ function tickEscapeMusic(){
   // Places off the trail have their own themes: each secret spot, the Gilded Burrow, the bonus
   // maze, and the finale for the last escape and the long run home.
   const lvl=screen==='game'&&escapeGame?escapeGame.level:null,hiddenAt=lvl?.hidden?EscapeCatalog.hidden.findIndex(l=>l.id===lvl.id):-1;
-  const special=seasonTheme||(!lvl?null:lvl.secret?'secret:'+lvl.secret:lvl.id==='the-long-way-home'||lvl.id==='home'?'finale':lvl.bonus?'hollow':lvl.hidden?'gilded':null);
+  // On the map, standing in a secret spot plays that spot's own theme; the main menu has the title theme.
+  const spotHere=screen==='world'&&escapeWorld?escapeWorld.secrets?.find(q=>EscapeMusic.STYLES['secret:'+q.id]&&Math.abs(escapeWorld.player.x-(q.x+.5))<=q.rx+1.5&&Math.abs(escapeWorld.player.y-(q.y+.5))<=q.ry+1.5):null;
+  const special=seasonTheme||(screen==='menu'?'title':spotHere?'secret:'+spotHere.id:!lvl?null:lvl.secret?'secret:'+lvl.secret:lvl.id==='the-long-way-home'||lvl.id==='home'?'finale':lvl.bonus?'hollow':lvl.hidden?'gilded':null);
   escapeMusic.setStyle(special&&EscapeMusic.STYLES[special]?EscapeMusic.styleFor(special,seasonTheme?(lvl?.index??-1):special==='hollow'?1:Math.max(0,hiddenAt)):EscapeMusic.styleFor(chapter?.theme||'meadow',index>=0&&chapter?index-chapter.start:-1));
   escapeMusic.setFlavor?.(screen==='game'&&escapeGame?EscapeMusic.flavorFor(escapeGame):null);
   // Under the water the music is muffled, and hidden still in leaves it softens a little. The

@@ -158,7 +158,7 @@ function openEscapeLibrary(){
 }
 // The boat at the Far Coast: where Episode 2 will set out from.
 const ESCAPE_BOAT_LINE='A little boat, its sail still furled, pointed at the island. Episode 2: coming soon.';
-function enterEscapeWorld(){const id=escapeWorld?.enter();if(id==='room:sallys-burrow'){const waiting=escapeStoryWaiting();if(waiting.length){for(const c of waiting)queueEscapeStory(c.id);return;}openEscapeTrophies();return;}if(id==='room:moss-den'){openEscapeMossDen();return;}if(id==='boat'){escapeWorldToast(ESCAPE_BOAT_LINE);return;}if(id?.startsWith('hidden:'))startEscape({hiddenId:id.slice(7)});else if(id)startEscape({levelId:id});}
+function enterEscapeWorld(){const id=escapeWorld?.enter();if(id==='room:sallys-burrow'){const waiting=escapeStoryWaiting();if(waiting.length){for(const c of waiting)queueEscapeStory(c.id);return;}openEscapeTrophies();return;}if(id==='room:moss-den'){openEscapeMossDen();return;}if(id==='boat'){escapeWorldToast(ESCAPE_BOAT_LINE);if(typeof escapeMusic!=='undefined')escapeMusic?.cue('teaser');return;}if(id?.startsWith('hidden:'))startEscape({hiddenId:id.slice(7)});else if(id)startEscape({levelId:id});}
 // The Gilded Burrow's three escapes, shown only to those who found it.
 function renderEscapeHiddenHUD(node){
   document.getElementById('world-route')?.classList.remove('world-route-idle');

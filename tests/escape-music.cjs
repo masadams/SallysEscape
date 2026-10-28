@@ -97,3 +97,12 @@ test('each season plays on its own band: sleigh bells, harp and birds, steel dru
  const winter=voices('winter-village'),spring=voices('spring-garden'),summer=voices('summer-dunes'),autumn=voices('autumn-festival');
  for(const v of ['sleigh','celesta','choir','pizz'])assert.ok(winter.has(v),'winter '+v);for(const v of ['harp','bird','choir'])assert.ok(spring.has(v),'spring '+v);for(const v of ['steel','marimba','conga'])assert.ok(summer.has(v),'summer '+v);for(const v of ['accordion','stomp','clap','pah'])assert.ok(autumn.has(v),'autumn '+v);
  assert.ok(!voices('meadow').has('sleigh')&&!voices('meadow').has('steel'),'the campaign keeps its own sound');});
+test('the Far Coast and the title screen have themes of their own, and the boat answers with a teaser',()=>{
+  assert.equal(EscapeMusic.styleFor('secret:far-coast').mood,'farcoast');assert.equal(EscapeMusic.styleFor('title').mood,'title');
+  assert.notDeepEqual(EscapeMusic.melody('farcoast'),EscapeMusic.melody('wreck'));assert.notDeepEqual(EscapeMusic.melody('title'),EscapeMusic.melody('meadow'));
+  const t=EscapeMusic.cue('farcoast','teaser'),last=t.filter(n=>n.at===.7).map(n=>n.note).sort((a,b)=>a-b);
+  assert.deepEqual([last[1]-last[0],last[2]-last[0]],[5,7],'it stops on a suspended chord, waiting for an answer');
+});
+test('win and loss stingers take turns between three shapes',()=>{
+  for(const kind of ['victory','caught']){const shapes=[0,1,2].map(v=>JSON.stringify(EscapeMusic.stinger('meadow',kind,v)));assert.equal(new Set(shapes).size,3,kind);assert.equal(JSON.stringify(EscapeMusic.stinger('meadow',kind,3)),shapes[0]);}
+});

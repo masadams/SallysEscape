@@ -53,6 +53,10 @@
     tale:{chords:[['C3','E3','G3','B3'],['A2','C3','E3','G3'],['F2','A2','C3','E3'],['G2','B2','D3','F3']],bass:['C2','A1','F1','G1'],fifth:['G2','E2','C2','D2'],scale:['C5','D5','E5','G5','A5','C6'],seed:109},
     wayfinder:{chords:[['D3','F#3','A3','C#4'],['B2','D3','F#3','A3'],['G2','B2','D3','F#3'],['A2','C#3','E3','G3']],bass:['D2','B1','G1','A1'],fifth:['A2','F#2','D2','E2'],scale:['D5','E5','F#5','A5','B5','D6'],seed:113},
     wreck:{chords:[['B2','D3','F#3'],['G3','B3','D4'],['A3','C#4','E4'],['F#3','A#3','C#4']],bass:['B1','G2','A2','F#2'],fifth:['F#2','D3','E3','C#3'],scale:['B4','C#5','D5','E5','F#5','A5'],seed:107},
+    // The Far Coast: a wistful sea song in D dorian that ends each phrase on an open, unanswered chord.
+    farcoast:{chords:[['D3','F3','A3'],['C3','E3','G3'],['Bb2','D3','F3'],['A2','D3','E3']],bass:['D2','C2','Bb1','A1'],fifth:['A2','G2','F2','E2'],scale:['D4','E4','F4','A4','C5','D5'],seed:191},
+    // The title theme: warm and homely, the tune the whole game grows from.
+    title:{chords:[['G3','B3','D4'],['E3','G3','B3','D4'],['C3','E3','G3','B3'],['D3','F#3','A3','C4']],bass:['G2','E2','C2','D2'],fifth:['D3','B2','G2','A2'],scale:['G4','A4','B4','D5','E5','G5'],seed:193},
     // The Blind Grove: hushed and watchful, a minor key lifted by a dreamy major seventh, ending on an unresolved sus chord.
     blind:{chords:[['E3','B3','F#4'],['C3','G3','B3','E4'],['A2','E3','B3','C4'],['B2','E3','F#3','A3']],bass:['E2','C2','A1','B1'],fifth:['B2','G2','E2','F#2'],scale:['E4','F#4','G4','B4','C5','D5'],seed:109}
   };
@@ -108,7 +112,8 @@
     'secret:blind-grove':{mood:'blind',lead:'bell',bpm:70,groove:3},
     // The Magpie Roost: a bright, bouncy bonus tune, like the shrine's but quicker and higher.
     'secret:magpie-roost':{mood:'shrine',lead:'pluck',bpm:100,groove:2,transpose:2},
-    'secret:far-coast':{mood:'wreck',lead:'pluck',bpm:84,groove:1,transpose:-2}
+    'secret:far-coast':{mood:'farcoast',lead:'flute',bpm:80,groove:2},
+    title:{mood:'title',lead:'bell',bpm:84,groove:2}
   };
   // Each season plays on its own band, so the areas sound unmistakably different, not just in another
   // key: winter on sleigh bells, a music-box celesta and a soft choir; spring on harp and birdsong;
@@ -126,7 +131,7 @@
   }
   // How loud each layer is in each state (0–1), and how long the fades take.
   const MIX={
-    menu:{pad:.7,melody:.55},
+    menu:{pad:.65,melody:.55,bass:.3,perc:.12},
     story:{pad:.5,melody:.6},
     world:{pad:.55,melody:.6,bass:.35,perc:.3},
     explore:{pad:.4,bass:.65,melody:.3,perc:.35},
@@ -196,7 +201,12 @@
     if(swoop&&(s===2||s===10))add('chase','swoop',root+19,'8n',.45);
     return out;
   }
-  function stinger(mood,kind){const m=MOODS[mood]||MOODS.meadow,tonic=m.chords[0].map(midi);
+  // Win and loss stingers come in three shapes, taken in turn, so a run of retries never hears the same one twice.
+  function stinger(mood,kind,variant=0){const m=MOODS[mood]||MOODS.meadow,tonic=m.chords[0].map(midi),scale=m.scale.map(midi),v=((variant%3)+3)%3;
+    if(kind==='victory'&&v===1)return [[0,0],[1,.14],[0,.28],[2,.42]].flatMap(([d,at],i)=>(i===3?tonic.concat(tonic[0]+12):[tonic[0]+(d===1?7:0)+12*(d===2)]).map(n=>({note:n,at,dur:i===3?1.3:.12,vel:i===3?.42:.5})));
+    if(kind==='victory'&&v===2)return [...scale.map((n,i)=>({note:n,at:i*.06,dur:.14,vel:.38})),...tonic.map(n=>({note:n+12,at:scale.length*.06+.04,dur:1.2,vel:.42}))];
+    if(kind!=='victory'&&v===1)return [{note:tonic[1],at:0,dur:.3,vel:.42},{note:tonic[1]-1,at:.32,dur:.3,vel:.4},{note:tonic[0]-1,at:.64,dur:.9,vel:.4},{note:tonic[0]-13,at:.64,dur:.9,vel:.3}];
+    if(kind!=='victory'&&v===2)return [0,1,2,3,4].map(i=>({note:tonic[2]-i*2,at:i*.09,dur:i===4?1:.12,vel:.4-i*.03}));
     return kind==='victory'?[...tonic,tonic[0]+12,tonic[1]+12,tonic[0]+24].map((n,i)=>({note:n,at:i*.09,dur:i===5?1.2:.3,vel:.5})):[tonic[2],tonic[1],tonic[0]-1,tonic[0]-12].map((n,i)=>({note:n,at:i*.16,dur:i===3?1:.25,vel:.45}));}
   // The flavour of a chase, from whatever is chasing. Pure, so it is easy to test.
   const FLAVORS={heavy:['beetle','cobra','fox','crab','mole','eel','toad'],skitter:['spider','gecko','cricket','millipede','scorpion','mantis','wasp'],swoop:['owl','magpie','bat','dragonfly','moth','heron']};
@@ -214,6 +224,8 @@
     if(kind==='key')return [tonic[0],tonic[1],tonic[2],tonic[0]+12].map((n,i)=>({note:n,at:i*.07,dur:i===3?.6:.18,vel:.42}));
     if(kind==='hatch')return [...tonic.map(n=>({note:n,at:0,dur:.5,vel:.32})),...tonic.map(n=>({note:n+7,at:.22,dur:.9,vel:.36}))];
     if(kind==='secret')return scale.concat(scale.slice(0,2).map(n=>n+12)).map((n,i)=>({note:n+12,at:i*.06,dur:i===7?1:.16,vel:.3}));
+    // To be continued: a rising call that stops on a suspended chord, waiting for an answer.
+    if(kind==='teaser')return [...[0,2,4,5].map((d,i)=>({note:scale[Math.min(d,scale.length-1)]+12,at:i*.16,dur:.2,vel:.34})),...[tonic[0],tonic[0]+5,tonic[0]+7].map(n=>({note:n+12,at:.7,dur:1.8,vel:.3})),{note:tonic[0]+24,at:1.05,dur:1.4,vel:.22}];
     if(kind==='area')return [...tonic.map((n,i)=>({note:n,at:i*.1,dur:.3,vel:.4})),...tonic.map(n=>({note:n+12,at:.36,dur:1.4,vel:.4}))];
     return [];
   }
@@ -309,7 +321,7 @@
     }
     tick(time){
       // A new style starts on the next bar, from the top of its own tune.
-      if(this.nextStyle&&this.step%16===0){this.style=this.nextStyle;this.nextStyle=null;this.mood=this.style.mood;this.nextMood=null;this.step=0;this.tempo(.5);}
+      if(this.nextStyle&&this.step%16===0){this.style=this.nextStyle;this.nextStyle=null;this.mood=this.style.mood;this.nextMood=null;this.step=0;this.tempo(.5);if(this.state)this.apply(this.state,1.4);}
       this.glideTempo();
       const now=this.context.currentTime;
       for(const e of events(this.mood,this.step,this.style,this.flavor)){const layer=this.layers.get(e.layer);if(!layer||layer.target===0&&now>layer.quietAt)continue;this.play(this.voices[e.voice],e,time);}
@@ -324,7 +336,10 @@
     setStyle(style,force=false){
       if(!style||!MOODS[style.mood]||!force&&style.id===(this.nextStyle||this.style).id)return false;
       if(!this.started){this.style=style;this.mood=style.mood;return true;}
-      this.nextStyle=style;this.nextMood=style.mood;return true;
+      this.nextStyle=style;this.nextMood=style.mood;
+      // The tune and its beat ease down while the old bar finishes, so the new key slips in rather than cuts in.
+      if(this.ready&&this.state){const t=this.context.currentTime;for(const name of ['melody','perc','bass']){const layer=this.layers.get(name);if(!layer)continue;const g=layer.gain.gain;g.cancelAndHoldAtTime(t);g.linearRampToValueAtTime(layer.target*.3,t+.45);}}
+      return true;
     }
     // Chases push the tempo up; it settles back when the danger passes.
         tempo(seconds){const bpm=this.context?.transport?.bpm;if(!bpm)return;this.bpmTarget=(this.style.bpm||BPM)*(this.state==='chase'?1.22:1);this.bpmGlide=Math.max(.05,seconds);}
@@ -340,7 +355,7 @@
       const previous=this.state;this.state=state;if(state==='chase')this.holdUntil=now+CHASE_HOLD;
       this.apply(state,FADES[previous+'>'+state]??FADES['*>'+state]??FADES[previous+'>*']??FADES.default);
       if(this.ready&&this.started&&(state==='chase'||previous==='chase')){this.tempo(state==='chase'?.4:2.5);if(state==='chase')this.alarm();}
-      if((state==='victory'||state==='caught')&&this.ready&&this.started){const t=this.context.currentTime+.05;for(const n of stinger(this.mood,state))this.voices.sting.triggerAttackRelease(hz(n.note),n.dur,t+n.at,n.vel);}
+      if((state==='victory'||state==='caught')&&this.ready&&this.started){const t=this.context.currentTime+.05;for(const n of stinger(this.mood,state,this.stings=(this.stings||0)+1))this.voices.sting.triggerAttackRelease(hz(n.note),n.dur,t+n.at,n.vel);}
       return true;
     }
     // A low boom under a clashing chord: impossible to miss, and over in a second.
