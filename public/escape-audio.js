@@ -94,6 +94,8 @@
     // A boogoo winding up to ram: a whistle that climbs to a shriek. Its swipe: a quick whoosh and a scrape of claws.
     whistle:(v)=>{tone(v,{freq:900,to:2600,dur:.55,type:'sine',gain:.16,wobble:40,wobbleRate:9,attack:.05});noise(v,{dur:.5,gain:.04,filter:'bandpass',freq:1800,to:4200,q:5,attack:.1});},
     swipe:(v)=>{noise(v,{dur:.2,gain:.22,filter:'bandpass',freq:2200,to:600,q:1.2,attack:.02});for(let i=0;i<3;i++)noise(v,{dur:.02,delay:.08+i*.025,gain:.12,filter:'highpass',freq:3800});},
+    // A cave folk's shout calling the pack: a gruff two-note hoo-HAH.
+    shout:(v)=>{tone(v,{freq:210,to:180,dur:.16,type:'sawtooth',gain:.09,wobble:6,wobbleRate:12});tone(v,{freq:310,to:250,dur:.26,delay:.17,type:'sawtooth',gain:.12,wobble:9,wobbleRate:10});noise(v,{dur:.4,gain:.05,filter:'bandpass',freq:900,q:1.5,attack:.03});},
     charge:(v)=>{noise(v,{dur:.35,gain:.25,filter:'lowpass',freq:300,to:900});tone(v,{freq:110,to:180,dur:.3,type:'sawtooth',gain:.1});},
     hop:(v)=>tone(v,{freq:180,to:420,dur:.16,type:'sine',gain:.35}),
     scrape:(v)=>noise(v,{dur:.25,gain:.2,freq:1600,to:900,q:6}),

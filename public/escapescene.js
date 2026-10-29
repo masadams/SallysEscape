@@ -510,7 +510,7 @@ function escapeFootsteps(p){
 // panned to its side and fading with distance, so a hunter off-screen gives itself away.
 const ESCAPE_GAITS={snake:['slither',.9],cobra:['slither',.9],'sea-snake':['swim',.9],eel:['swim',.9],fish:['swim',1.1],angler:['swim',1.2],
   spider:['skitter',.35],scorpion:['skitter',.4],ladybird:['skitter',.45],gecko:['skitter',.35],crab:['skitter',.35],cricket:['skitter',.4],millipede:['skitter',.3],mantis:['skitter',.5],
-  beetle:['heavy',.55],boogoo:['whistle',.8],mole:['heavy',.7],fox:['pad',.5],chameleon:['pad',.55],toad:['hop',1],echofrog:['hop',1],
+  beetle:['heavy',.55],boogoo:['whistle',.8],cavefolk:['pad',.5],mole:['heavy',.7],fox:['pad',.5],chameleon:['pad',.55],toad:['hop',1],echofrog:['hop',1],
   owl:['wings',1.2],bat:['wings',1.1],magpie:['wings',1.2],moth:['wings',.9],cloudray:['wings',1.6],dragonfly:['buzz',.7],wasp:['buzz',.6]};
 const ESCAPE_GAIT_RANGE=9,escapeGaitSeen=new WeakMap();
 function escapeCreatureSteps(g){
@@ -626,7 +626,7 @@ function escapeHunterMark(h,cell,g){
   // A creature bonked by a pebble sees stars for a moment (shown even in hard mode: it is the creature's own tell).
   if((h.bonkFrom||h.dazed)&&h.state==='steamed'){push();noStroke();fill(255,226,120);textAlign(CENTER,CENTER);textSize(cell*.28);for(let i=0;i<3;i++){const a=g.elapsed*6+i*2.09;text('★',h.x*cell+Math.cos(a)*cell*.32,(h.y-.55)*cell+Math.sin(a)*cell*.12);}pop();}
   if(escapeAidsHidden(g))return;
-  const mark=h.state==='alert'?'?':['chase','windup','charge','swipe','sting','leap','glimmer','swoop','reveal','lunge','snap','peek','scuttle','aim','raise','stir','surface','ripple'].includes(h.state)?'!':h.state==='decoy'?'♪':'…';
+  const mark=h.state==='alert'?'?':['chase','flank','windup','charge','swipe','sting','leap','glimmer','swoop','reveal','lunge','snap','peek','scuttle','aim','raise','stir','surface','ripple'].includes(h.state)?'!':h.state==='decoy'?'♪':'…';
   let seen=escapeMarkPops.get(h);if(!seen||seen.mark!==mark){seen={mark,at:escapeFxClock};escapeMarkPops.set(h,seen);}
   const age=escapeFxClock-seen.at,scale=mark==='!'&&age<.3?1+.6*Math.sin(Math.min(1,age/.3)*Math.PI):1,y=(h.y-.65)*cell;
   if(mark==='?'&&h.awareness>0){noFill();stroke(255,214,133,90);strokeWeight(Math.max(1.5,cell*.06));ellipse(h.x*cell,y,cell*.62,cell*.62);
@@ -781,7 +781,7 @@ function drawEscapeOverhangLayer(g,cell,palette){
 // The tall walls' tops, over whatever stands just north of them: Sally and the creatures step behind a wall.
 function drawEscapeWallLips(g,cell){const lip=escapeTerrainBase?.lip;if(!lip||!escapeTerrainOn()||!drawingContext.drawImage)return;drawingContext.drawImage(lip.elt,0,0,g.width*cell,g.height*cell);}
 // Everything that stands on the ground casts a soft shadow down and to the right, away from the light.
-const ESCAPE_SHADOW_SIZE={beetle:[.95,.5],boogoo:[.85,.55],fox:[.9,.42],mole:[.8,.45],toad:[.8,.45],echofrog:[.8,.45],crab:[.75,.42],scorpion:[.85,.45],spider:[.8,.5],gecko:[.75,.32],chameleon:[.8,.36],
+const ESCAPE_SHADOW_SIZE={beetle:[.95,.5],boogoo:[.85,.55],cavefolk:[.75,.7],fox:[.9,.42],mole:[.8,.45],toad:[.8,.45],echofrog:[.8,.45],crab:[.75,.42],scorpion:[.85,.45],spider:[.8,.5],gecko:[.75,.32],chameleon:[.8,.36],
   snake:[.85,.32],cobra:[.95,.38],'sea-snake':[.8,.3],millipede:[1,.36],heron:[.7,.4],mantis:[.7,.35],mimic:[.8,.5],flytrap:[.8,.5],sentinel:[.9,.55],ladybird:[.55,.32],cricket:[.5,.28],magpie:[.6,.3],wasp:[.7,.4]};
 const ESCAPE_NO_SHADOW=new Set(['buried','under','lurk','lurking','hidden','asleep','emerge']);
 function drawEscapeContactShadows(g,cell,view){
@@ -1154,7 +1154,7 @@ function drawEscapeVault(){
   g.motion.refresh?.();
   for(const h of g.hunters)if(h.kind==='flytrap')drawEscapeDew(g,h,cell,view);
   drawEscapeContactShadows(g,cell,view);
-  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='magpie'||h.kind==='angler'||h.kind==='cloudray')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}const breathing=escapeBreathe(g,h,i,cell);if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))(g.level.seasonal||g.level.costume)&&drawSeasonCreature(h,g.motion.snakes[i],cell,g)?null:h.kind==='ladybird'?drawEscapeLadybird(h,cell,g.elapsed):h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='wasp'?drawEscapeWaspNest(h,cell,g.elapsed):h.kind==='dragonfly'?drawEscapeDragonfly(h,cell,g.elapsed):h.kind==='mole'?drawEscapeMole(h,cell,g.elapsed):h.kind==='bat'?drawEscapeBat(h,cell,g.elapsed,g):h.kind==='eel'?drawEscapeEel(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='echofrog'?drawEscapeEchoFrog(h,cell,g.elapsed):h.kind==='sentinel'?drawEscapeSentinel(h,cell,g.elapsed):h.kind==='chameleon'?drawEscapeChameleon(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='boogoo'?drawEscapeBoogoo(h,cell,g.elapsed):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');if(breathing)pop();});
+  g.hunters.forEach((h,i)=>{if(h.kind==='moth'||h.kind==='owl'||h.kind==='magpie'||h.kind==='angler'||h.kind==='cloudray')return;if(g.level.dark&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noStroke();fill(103,238,210,35);ellipse(h.x*cell,h.y*cell,cell*1.2,cell*1.2);}const breathing=escapeBreathe(g,h,i,cell);if(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y)))(g.level.seasonal||g.level.costume)&&drawSeasonCreature(h,g.motion.snakes[i],cell,g)?null:h.kind==='ladybird'?drawEscapeLadybird(h,cell,g.elapsed):h.kind==='fish'?drawEscapeFish(h,cell,g.elapsed):h.kind==='flytrap'?drawEscapeFlytrap(h,cell,g.elapsed):h.kind==='heron'?drawEscapeHeron(h,cell,g.elapsed):h.kind==='mantis'?drawEscapeMantis(h,cell,g.elapsed,g.mantisShown(h)):h.kind==='wasp'?drawEscapeWaspNest(h,cell,g.elapsed):h.kind==='dragonfly'?drawEscapeDragonfly(h,cell,g.elapsed):h.kind==='mole'?drawEscapeMole(h,cell,g.elapsed):h.kind==='bat'?drawEscapeBat(h,cell,g.elapsed,g):h.kind==='eel'?drawEscapeEel(h,cell,g.elapsed):h.kind==='crab'?drawEscapeCrab(h,cell,g.elapsed):h.kind==='fox'?drawEscapeFox(h,cell,g.elapsed):h.kind==='echofrog'?drawEscapeEchoFrog(h,cell,g.elapsed):h.kind==='sentinel'?drawEscapeSentinel(h,cell,g.elapsed):h.kind==='chameleon'?drawEscapeChameleon(h,cell,g.elapsed):h.kind==='mimic'?drawEscapeMimic(h,cell,g.elapsed):h.kind==='millipede'?drawEscapeMillipede(h,g.motion.snakes[i],cell,g.playerSees(h),g.elapsed):h.kind==='cricket'?drawEscapeCricket(h,cell,g.elapsed):['toad','spider'].includes(h.kind)?drawEscapeNestMonster(h,cell,g.elapsed):h.kind==='scorpion'?drawEscapeScorpion(h,cell,g.elapsed):h.kind==='beetle'?drawEscapeBeetle(h,cell):h.kind==='boogoo'?drawEscapeBoogoo(h,cell,g.elapsed):h.kind==='cavefolk'?drawEscapeCaveFolk(h,cell,g.elapsed):h.kind==='gecko'?drawEscapeGecko(h,cell,g.elapsed):drawEscapeSnake(g.motion.snakes[i],cell,h.state,h.kind==='sea-snake',h.kind==='cobra');if(breathing)pop();});
   drawingContext.save();drawingContext.globalAlpha*=g.player.hidden?.48:1;
   for(const h of g.hunters)if(h.state==='clash'&&g.visibleTile(Math.floor(h.x),Math.floor(h.y))){noFill();stroke(255,193,107,180);strokeWeight(cell*.035);ellipse(h.x*cell,h.y*cell,cell*(.9+Math.sin(g.elapsed*14)*.08),cell*.75);}
   // Mid-flight off a bounce cap, Sally rises over her shadow.
@@ -1612,6 +1612,36 @@ function drawEscapeScorpion(h,cell,clock){
   bezier(-cell*.3,0,-cell*.64,cell*.2,-cell*.68,-cell*.42,-cell*raised,-cell*.4);
   noStroke();fill(hot?255:232,hot?176:151,hot?85:145);triangle(-cell*raised,-cell*.45,cell*(.08-raised),-cell*.36,-cell*raised,-cell*.27);
   fill(255,215,166);ellipse(cell*.18,-cell*.065,cell*.06,cell*.06);ellipse(cell*.18,cell*.065,cell*.06,cell*.06);pop();
+}
+// Cave folk colours from the drawings, as skin, outline and hair.
+const ESCAPE_CAVE_TINTS={orange:[[232,112,62],[160,58,26],[206,78,34]],blue:[[92,112,206],[34,40,120],[48,58,150]],green:[[110,190,90],[40,110,44],[64,150,60]]};
+// Cave folk, seen from above: a round head of spiky orange hair with two eyes at its front edge,
+// shoulders, and arms held out to the sides ending in round fists. Chasing, the arms reach forward
+// to grab and the feet stride out in front; a shout rolls out from the head in rings.
+function drawEscapeCaveFolk(h,cell,clock){
+  push();translate(h.x*cell,h.y*cell);rotate(h.facing);scale(1.25);
+  const stride=h.distanceMoved*10,hunting=['chase','flank'].includes(h.state),[skin,line_,hair]=ESCAPE_CAVE_TINTS[h.tint]||ESCAPE_CAVE_TINTS.orange;
+  noStroke();fill(8,14,18,110);ellipse(-cell*.02,cell*.05,cell*.56,cell*.62);
+  // Feet stepping out in front in turn.
+  for(const side of [-1,1]){const step=Math.sin(stride+(side>0?0:Math.PI))*.1;fill(...line_);ellipse(cell*step*1.6,side*cell*.15,cell*.17,cell*.1);}
+  // Arms: out to the sides like the drawing; reaching forward to grab on a hunt.
+  const reach=hunting?.3:.06,spread=hunting?.26:.42,swing=hunting?Math.sin(clock*9)*.03:0;
+  for(const side of [-1,1]){const hx=cell*(reach+side*swing),hy=side*cell*spread;
+    stroke(...line_);strokeWeight(cell*.1);line(-cell*.02,side*cell*.2,hx,hy);stroke(...skin);strokeWeight(cell*.065);line(-cell*.02,side*cell*.2,hx,hy);
+    noStroke();fill(...line_);ellipse(hx,hy,cell*.15,cell*.15);fill(...skin);ellipse(hx-cell*.01,hy,cell*.11,cell*.11);}
+  // Shoulders, then the head on top of them.
+  stroke(...line_);strokeWeight(cell*.025);fill(...skin);ellipse(-cell*.03,0,cell*.24,cell*.46);ellipse(cell*.03,0,cell*.36,cell*.34);
+  // Spiky hair: a tuft on the crown, its spikes standing up and fanning out toward the back.
+  fill(...hair);stroke(...line_);strokeWeight(cell*.015);
+  for(let k=0;k<6;k++){const a=Math.PI*.62+k*(Math.PI*.76/5),c={x:-cell*.04,y:0},r2=cell*(.19+(k%2)*.04);
+    triangle(c.x+Math.cos(a-.5)*cell*.07,c.y+Math.sin(a-.5)*cell*.07,c.x+Math.cos(a+.5)*cell*.07,c.y+Math.sin(a+.5)*cell*.07,c.x+Math.cos(a)*r2,c.y+Math.sin(a)*r2);}
+  noStroke();ellipse(-cell*.04,0,cell*.17,cell*.2);
+  // Eyes peeking over the front edge, brows down when hunting.
+  for(const side of [-1,1]){fill(250,244,232);ellipse(cell*.15,side*cell*.065,cell*.07,cell*.07);fill(30,20,16);ellipse(cell*.165,side*cell*.065,cell*.04,cell*.04);
+    if(hunting){stroke(...line_);strokeWeight(cell*.022);line(cell*.12,side*cell*.11,cell*.19,side*cell*.035);noStroke();}}
+  pop();
+  // A shout: rings rolling out from the head for a moment.
+  const age=clock-(h.shoutAt??-9);if(age>=0&&age<.7){noFill();for(let k=0;k<2;k++){const t=Math.min(1,age/.7+k*.3);stroke(255,190,120,200*(1-t));strokeWeight(cell*.04);ellipse(h.x*cell,h.y*cell,cell*(.6+t*1.6),cell*(.6+t*1.6));}}
 }
 // The boogoo, seen from above like everything else: a green egg of a body with one big eye on top,
 // a fanged mouth at its front edge, two purple horns, long arms ending in a cross of purple-tipped

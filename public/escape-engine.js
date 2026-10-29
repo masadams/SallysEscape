@@ -27,7 +27,7 @@
   // How far a boogoo's claws reach in a swipe.
   const BOOGOO_CLAW=1.25;
   // Creatures a thrown pebble can bonk on the way: the ones that walk the floor in the open.
-  const BONKABLE=new Set(['snake','sea-snake','cobra','beetle','boogoo','toad','spider','fox','chameleon','gecko','millipede','cricket']);
+  const BONKABLE=new Set(['snake','sea-snake','cobra','beetle','boogoo','cavefolk','toad','spider','fox','chameleon','gecko','millipede','cricket']);
   // How far a pebble's landing carries, by the ground it lands on: gravel clatters, leaves and mud
   // muffle it, moss swallows it.
   const LANDING={N:12,L:5,M:5,m:2.5,t:6};
@@ -58,6 +58,8 @@
       this.crateAt=new Uint8Array(this.width*this.height);this.crates=(this.level.crates||[]).filter(([x,y])=>this.floor(x,y)&&this.grid[y][x]!=='U'&&!this.crateAt[y*this.width+x]).map(([x,y],i)=>{this.crateAt[y*this.width+x]=1;return {id:i,x,y,from:null,start:0,dir:[0,0]};});this.crateVersion=0;this.loudUntil=-1;this.lean=null;
       this.player={...centre(...this.level.spawn),facing:{x:0,y:-1},tongueAim:null,stamina:100,exhausted:false,moving:false,sprinting:false,crawling:false,hidden:false,noisy:false};
       this.hunters=this.level.guards.map(guard=>this.makeHunter(guard));for(const h of this.hunters)h.restState=h.state;
+      // Cave folk come in colours; ones not given one take turns: orange, blue, green.
+      {const tints=['orange','blue','green'];let turn=0;this.level.guards.forEach((guard,i)=>{if(guard.kind==='cavefolk')this.hunters[i].tint=tints.includes(guard.tint)?guard.tint:tints[turn++%3];});}
       // Gentle levels (Little Explorers, for young children) can't be lost: a catch is an "Oops!"
       // that hops Sally back to the last checkpoint she reached, and the creatures move slower.
       this.gentle=this.level.gentle?{pace:typeof this.level.gentle==='number'?this.level.gentle:.6}:null;this.oopses=0;
@@ -902,10 +904,10 @@
       const clawed=this.elapsed>=this.invulnerableUntil&&this.boogooClaws();
       if(clawed){this.alarms++;if(this.shedTail(clawed))return;this.finish('caught','The boogoo\'s claws caught Sally. When it swings its arms forward, back away fast.');return;}
       // Capture wins over picking up the key or escaping in the same simulation step.
-      const captor=this.hunters.find(h=>!(LIGHT_SHY.has(h.kind)&&this.lights.length&&this.inLight(p))&&!h.eaten&&!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='magpie'&&h.kind!=='ladybird'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='sentinel'&&h.kind!=='cloudray'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(['beetle','boogoo'].includes(h.kind)&&h.state==='charge'?.62:.48)&&this.clear(p,h));
+      const captor=this.hunters.find(h=>!(LIGHT_SHY.has(h.kind)&&this.lights.length&&this.inLight(p))&&!h.eaten&&!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='magpie'&&h.kind!=='ladybird'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='sentinel'&&h.kind!=='cloudray'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(['beetle','boogoo'].includes(h.kind)&&h.state==='charge'?.62:h.kind==='cavefolk'?.56:.48)&&this.clear(p,h));
       if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
       if(this.elapsed>=this.invulnerableUntil && captor){
-        this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. It crept up while Sally looked away. Keep it in view as you back off.':captor.kind==='mimic'?'That chest was a mimic! Watch for its tell, or throw a pebble to make it snap first.':captor.kind==='fox'?'A snow fox heard Sally and pounced. Stand still, keep to quiet ground, or toss a pebble to send it pouncing elsewhere.':captor.kind==='crab'?'A hermit crab scuttled out and pinched Sally. Pass its lane while it is tucked in, or send it back into its shell with a pebble.':captor.kind==='boogoo'?'The boogoo rammed Sally. When it whistles, step out of its lane.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'A hunter spotted you. Break sight at a corner or use a pebble.');return;
+        this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. It crept up while Sally looked away. Keep it in view as you back off.':captor.kind==='mimic'?'That chest was a mimic! Watch for its tell, or throw a pebble to make it snap first.':captor.kind==='fox'?'A snow fox heard Sally and pounced. Stand still, keep to quiet ground, or toss a pebble to send it pouncing elsewhere.':captor.kind==='crab'?'A hermit crab scuttled out and pinched Sally. Pass its lane while it is tucked in, or send it back into its shell with a pebble.':captor.kind==='cavefolk'?'The cave folk closed in from all sides. Break their sight before the pack can spread out.':captor.kind==='boogoo'?'The boogoo rammed Sally. When it whistles, step out of its lane.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'A hunter spotted you. Break sight at a corner or use a pebble.');return;
       }
       if(this.challenge?.noChase&&this.alarms>0){this.finish('failed','A hunter gave chase. Break sight before it is sure next time.');return;}
       if(this.challenge?.noChill&&this.player.chilled){this.finish('failed','Sally got too cold. Thaw on warm stones before the frost slows her.');return;}
@@ -946,7 +948,7 @@
       this.hunterDt=dt;
       if(h.eaten)return;
       if(h.state==='steamed'){if(this.elapsed>=h.phaseUntil){h.state=h.kind==='mimic'?'rooted':'patrol';h.graceUntil=this.elapsed+.5;h.dazed=false;
-        if(h.bonkFrom){if(['snake','sea-snake','cobra','chameleon','spider','toad','beetle','gecko'].includes(h.kind)){h.state='search';h.lastKnown=h.bonkFrom;h.searchUntil=this.elapsed+(h.cun||this.cunning).search+1.5;}h.bonkFrom=null;}}return;}
+        if(h.bonkFrom){if(['snake','sea-snake','cobra','chameleon','spider','toad','beetle','gecko','cavefolk'].includes(h.kind)){h.state='search';h.lastKnown=h.bonkFrom;h.searchUntil=this.elapsed+(h.cun||this.cunning).search+1.5;}h.bonkFrom=null;}}return;}
       if(this.updateGlowFear(dt,h))return;
       if(h.tailLureUntil){
         if(this.elapsed<h.tailLureUntil&&this.droppedTail){h.state='decoy';h.awareness=0;h.lastKnown=null;h.aim=null;if(distance(h,this.droppedTail)>.3)this.moveHunter(this.droppedTail,1.3*dt,h);return;}
@@ -967,6 +969,7 @@
       if(h.kind==='scorpion'){this.updateScorpion(dt,h);return;}
       if(h.kind==='beetle'){this.updateBeetle(dt,h);return;}
       if(h.kind==='boogoo'){this.updateBoogoo(dt,h);return;}
+      if(h.kind==='cavefolk'){this.updateCaveFolk(dt,h);return;}
       if(h.kind==='cobra'&&this.updateCobra(dt,h))return;
       if(h.kind==='angler'){this.updateAngler(dt,h);return;}
       if(h.kind==='flytrap'){this.updateFlytrap(dt,h);return;}
@@ -1645,6 +1648,53 @@
     // A swipe catches Sally anywhere in front of the boogoo within its reach.
     boogooClaws(){
       const p=this.player;return this.hunters.find(h=>h.kind==='boogoo'&&h.state==='swipe'&&distance(h,p)<=BOOGOO_CLAW&&Math.abs(Math.atan2(Math.sin(Math.atan2(p.y-h.y,p.x-h.x)-h.facing),Math.cos(Math.atan2(p.y-h.y,p.x-h.x)-h.facing)))<1.25&&this.clear(h,p));
+    }
+    // Cave folk hunt as a pack. The first to spot Sally shouts; every one of its pack within earshot
+    // knows where she is and fans out, half to her left and half to her right, aiming a little ahead
+    // of where she is heading to cut her off, then closes in with arms out to grab. What any of them
+    // sees, the whole pack knows. Lose her long enough and they search, then go back to their rounds.
+    updateCaveFolk(dt,h){
+      const p=this.player,cun=h.cun||this.cunning,pack=this.hunters.filter(o=>o.kind==='cavefolk'&&o!==h&&!o.eaten);
+      const seen=this.seesPlayer(h),heard=p.noisy&&!p.hidden&&this.audible(h,p,p.loud?6:3.5);
+      if(seen){
+        const was=h.awareness;h.awareness=Math.min(1,h.awareness+dt/(.7*cun.react));h.reason='seen';h.facing=Math.atan2(p.y-h.y,p.x-h.x);
+        if(h.awareness<1){if(!was)this.cue('warning',h);if(!['chase','flank'].includes(h.state))h.state='alert';return;}
+        this.caveSighting={x:p.x,y:p.y,t:this.elapsed};
+        if(!['chase','flank'].includes(h.state)){
+          h.state='chase';h.shoutAt=this.elapsed;this.alarms++;this.cue('shout',h);
+          let side=1;const called=pack.filter(o=>!['chase','flank','steamed','stunned','clash'].includes(o.state)&&this.audible(o,h,10));
+          for(const o of called){o.state='flank';o.flankSide=side;side=-side;o.awareness=1;o.path=[];}
+          this.notice(called.length?'A cave folk shouts! The pack fans out to cut Sally off.':'A cave folk shouts and gives chase!','warning');
+        }
+      }
+      const sight=this.caveSighting,fresh=sight&&this.elapsed-sight.t<cun.memory+1.5;
+      if(['chase','flank'].includes(h.state)){
+        if(!fresh){h.state='search';h.searchUntil=this.elapsed+cun.search;h.lastKnown={x:sight?.x??h.x,y:sight?.y??h.y};this.closeCalls++;this.notice('Lost it. Catch your breath.','lost');}
+        else{
+          let target={x:sight.x,y:sight.y};
+          // A flanker heads for a spot beside and ahead of her, until it is close enough to grab.
+          if(h.state==='flank'&&distance(h,sight)>2){
+            const v=this.playerVelocity||{x:0,y:0},speed=Math.hypot(v.x,v.y),dir=speed>.2?{x:v.x/speed,y:v.y/speed}:{x:(sight.x-h.x)/(distance(h,sight)||1),y:(sight.y-h.y)/(distance(h,sight)||1)};
+            const spot={x:sight.x+dir.x*1.4-dir.y*h.flankSide*2,y:sight.y+dir.y*1.4+dir.x*h.flankSide*2};
+            if(this.fits(spot,.22,h)&&this.actorFloor(Math.floor(spot.x),Math.floor(spot.y),h))target=spot;
+          }
+          this.moveHunter(target,(h.state==='flank'?2.6:2.4)*dt,h);h.movedAt=this.elapsed;return;
+        }
+      }
+      if(h.state==='alert'){h.awareness=Math.max(0,h.awareness-dt*1.5);if(h.awareness>0)return;h.state='patrol';}
+      const lure=this.decoy&&this.audible(h,this.decoy,9);
+      if(lure||heard){h.state='decoy';this.moveHunter(lure?this.decoy:p,1.5*dt,h);return;}
+      if(h.state==='search'){
+        if(this.elapsed<h.searchUntil){if(distance(h,h.lastKnown)>.15)this.moveHunter(h.lastKnown,1.2*dt,h);else h.facing+=dt*1.6;return;}
+        h.lastKnown=null;h.awareness=0;
+      }
+      h.state='patrol';let target=h.patrol[h.routeIndex];
+      if(distance(h,target)<.1){
+        if(!h.pauseUntil)h.pauseUntil=this.elapsed+.9;
+        if(this.elapsed<h.pauseUntil){h.facing+=Math.sin(this.elapsed*1.5)*dt;return;}
+        h.pauseUntil=0;h.routeIndex=(h.routeIndex+1)%h.patrol.length;target=h.patrol[h.routeIndex];
+      }
+      this.moveHunter(target,1.15*dt,h);
     }
     // The scorpion is a living trap. Its strike ring travels with it; while the tail
     // is up, anything that steps into the ring is stung where it is heading. The tail
