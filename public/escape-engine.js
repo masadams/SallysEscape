@@ -900,7 +900,7 @@
       if(this.elapsed>=this.invulnerableUntil&&stinger&&this.shedTail(stinger))return;
       if(this.elapsed>=this.invulnerableUntil&&stinger){this.finish('caught','The scorpion struck. Cross its ring while the tail is down, or change direction when it strikes.');return;}
       const clawed=this.elapsed>=this.invulnerableUntil&&this.boogooClaws();
-      if(clawed){this.alarms++;if(this.shedTail(clawed))return;this.finish('caught','The boogoo\'s claws caught Sally. When it rears up close, back away fast.');return;}
+      if(clawed){this.alarms++;if(this.shedTail(clawed))return;this.finish('caught','The boogoo\'s claws caught Sally. When it swings its arms forward, back away fast.');return;}
       // Capture wins over picking up the key or escaping in the same simulation step.
       const captor=this.hunters.find(h=>!(LIGHT_SHY.has(h.kind)&&this.lights.length&&this.inLight(p))&&!h.eaten&&!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='magpie'&&h.kind!=='ladybird'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='sentinel'&&h.kind!=='cloudray'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(['beetle','boogoo'].includes(h.kind)&&h.state==='charge'?.62:.48)&&this.clear(p,h));
       if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
@@ -1603,8 +1603,8 @@
       this.moveHunter(target,1.3*dt,h);
     }
     // The boogoo: a one-eyed, purple-horned stalker that whistles as it walks. Seeing Sally far off,
-    // it shrieks a rising whistle, then rams down a locked lane like a beetle; close up it rears its
-    // clawed arms and swipes the space in front of it. In between it closes in, still whistling.
+    // it shrieks a rising whistle, then rams down a locked lane like a beetle; close up it swings its
+    // clawed arms forward and swipes the space in front of it. In between it closes in, still whistling.
     updateBoogoo(dt,h){
       const p=this.player,cun=h.cun||this.cunning;
       if(h.state==='windup'){if(this.elapsed>=h.phaseUntil){h.state='charge';h.phaseUntil=this.elapsed+2.2;h.chargeFrom=copy(h);this.cue('charge',h);}return;}
@@ -1622,9 +1622,9 @@
         h.reason='seen';h.lastKnown=copy(p);h.lastObserved=this.elapsed;h.facing=Math.atan2(p.y-h.y,p.x-h.x);
         if(h.awareness<1){const was=h.awareness;h.awareness=Math.min(1,h.awareness+dt/(.6*cun.react));if(!was)this.cue('warning',h);if(h.awareness<1){h.state='alert';return;}this.alarms++;}
         // Close enough to claw: rear up, then swipe where she stands.
-        if(d<=BOOGOO_CLAW-.15){h.aim=copy(p);h.state='raise';h.phaseUntil=this.elapsed+.4*cun.warn;this.notice('The boogoo rears its claws. Back off!','warning');return;}
+        if(d<=BOOGOO_CLAW-.15){h.aim=copy(p);h.state='raise';h.phaseUntil=this.elapsed+.4*cun.warn;this.notice('The boogoo swings its claws forward. Back off!','warning');return;}
         // Far off: a rising whistle, then a ram down the lane.
-        if(d>=3&&this.clear(h,p)){h.aim=this.lead(.4*cun.aim);h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='windup';h.phaseUntil=this.elapsed+.6*cun.warn;this.cue('whistle',h);this.notice('The boogoo whistles and lowers its horns. Get out of its lane!','warning');return;}
+        if(d>=3&&this.clear(h,p)){h.aim=this.lead(.4*cun.aim);h.facing=Math.atan2(h.aim.y-h.y,h.aim.x-h.x);h.state='windup';h.phaseUntil=this.elapsed+.6*cun.warn;this.cue('whistle',h);this.notice('The boogoo whistles and points its horns. Get out of its lane!','warning');return;}
         h.state='chase';this.moveHunter(p,2.3*dt,h);h.movedAt=this.elapsed;return;
       }
       if(h.state==='alert'){h.awareness=Math.max(0,h.awareness-dt*1.5);if(h.awareness>0)return;h.state='patrol';h.lastKnown=null;}

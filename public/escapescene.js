@@ -1134,7 +1134,7 @@ function drawEscapeVault(){
   if(aids&&h.kind==='scorpion'&&h.state!=='buried'){const up=h.tailUp||['raise','windup','sting'].includes(h.state),r=(h.reach||1.8)*2*cell;noStroke();fill(255,140,70,up?34:12);ellipse(h.x*cell,h.y*cell,r,r);noFill();stroke(255,up?150:200,up?70:150,up?200:70);strokeWeight(cell*(up?.06:.035));drawingContext.setLineDash(up?[]:[cell*.18,cell*.14]);ellipse(h.x*cell,h.y*cell,r,r);drawingContext.setLineDash([]);}
   // A charging beetle's lane runs until the first wall, so Sally can see where not to stand.
   if(aids&&['beetle','boogoo'].includes(h.kind)&&['windup','charge'].includes(h.state)){let d=0;const dx=Math.cos(h.facing),dy=Math.sin(h.facing),from=h.state==='charge'&&h.chargeFrom?h.chargeFrom:h,limit=h.aim?Math.hypot(h.aim.x-from.x,h.aim.y-from.y)+(h.kind==='boogoo'?2.5:3)-Math.hypot(h.x-from.x,h.y-from.y):18;while(d<limit&&g.fits({x:h.x+dx*(d+.25),y:h.y+dy*(d+.25)},.22))d+=.25;const pulse=h.state==='windup'?.5+.5*Math.sin(g.elapsed*18):1;push();translate(h.x*cell,h.y*cell);rotate(h.facing);noStroke();fill(255,110,60,50+50*pulse);rect(0,-cell*.42,d*cell,cell*.84);fill(255,200,120,40+40*pulse);for(let s=.3;s<d;s+=.6)quad(s*cell,-cell*.42,(s+.25)*cell,-cell*.42,(s+.05)*cell,cell*.42,(s-.2)*cell,cell*.42);stroke(255,150,80,160+80*pulse);strokeWeight(cell*.05);line(0,-cell*.42,d*cell,-cell*.42);line(0,cell*.42,d*cell,cell*.42);pop();}
-  // A boogoo rearing up close shows the reach of its swipe in front of it.
+  // A boogoo winding up a swipe shows the reach of its claws in front of it.
   if(aids&&h.kind==='boogoo'&&['raise','swipe'].includes(h.state)){const r=EscapeAdventure.BOOGOO_CLAW*2*cell,hot=h.state==='swipe';noStroke();fill(255,110,90,hot?90:40+30*Math.sin(g.elapsed*20));arc(h.x*cell,h.y*cell,r,r,h.facing-1.25,h.facing+1.25,PIE);noFill();stroke(255,140,100,hot?230:170);strokeWeight(cell*.04);arc(h.x*cell,h.y*cell,r,r,h.facing-1.25,h.facing+1.25,PIE);}
   if(h.kind==='beetle'&&h.state==='stunned'){noStroke();fill(255,236,150);textSize(cell*.32);for(let i=0;i<3;i++){const a=g.elapsed*5+i*TWO_PI/3;text('✦',(h.x+Math.cos(a)*.38)*cell,(h.y-.55+Math.sin(a)*.12)*cell);}}
   if(aids&&['windup','sting','glimmer','swoop','reveal','lunge','glare','rear'].includes(h.state)&&h.aim&&!['beetle','boogoo'].includes(h.kind)){stroke(255,191,80,180);strokeWeight(cell*.07);line(h.x*cell,h.y*cell,h.aim.x*cell,h.aim.y*cell);noFill();ellipse(h.aim.x*cell,h.aim.y*cell,cell*(h.kind==='scorpion'?1.8:h.kind==='spider'?1.3:.7),cell*(h.kind==='scorpion'?1.8:h.kind==='spider'?1.3:.7));}
@@ -1613,9 +1613,10 @@ function drawEscapeScorpion(h,cell,clock){
   noStroke();fill(hot?255:232,hot?176:151,hot?85:145);triangle(-cell*raised,-cell*.45,cell*(.08-raised),-cell*.36,-cell*raised,-cell*.27);
   fill(255,215,166);ellipse(cell*.18,-cell*.065,cell*.06,cell*.06);ellipse(cell*.18,cell*.065,cell*.06,cell*.06);pop();
 }
-// The boogoo, from above: a green egg of a body with one big eye and a fanged red mouth, two
-// purple horns, long arms ending in a cross of purple-tipped claws, and two legs that split into
-// three toes. It rears its arms before a swipe and tucks them back to ram; a ram glows its horns.
+// The boogoo, seen from above like everything else: a green egg of a body with one big eye on top,
+// a fanged mouth at its front edge, two purple horns, long arms ending in a cross of purple-tipped
+// claws, and two legs that split into three toes. It swings its arms forward before a swipe and
+// tucks them in to ram; a ram glows its horns. Its whistle shows as sound rings ahead of it.
 function drawEscapeBoogoo(h,cell,clock){
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);
   const stride=h.distanceMoved*9,hot=['windup','charge','raise','swipe'].includes(h.state),green=[46,128,78],dark=[22,74,44],purple=[124,64,176];
@@ -1632,18 +1633,19 @@ function drawEscapeBoogoo(h,cell,clock){
     push();translate(hx,hy);rotate(Math.atan2(hy,hx)+(h.state==='swipe'?clock*20:0));
     for(let k=0;k<4;k++){const a=k*HALF_PI+QUARTER_PI*.3,ex=Math.cos(a)*cell*.15,ey=Math.sin(a)*cell*.15;stroke(...green);strokeWeight(cell*.045);line(0,0,ex*.55,ey*.55);stroke(...purple);line(ex*.55,ey*.55,ex,ey);}
     pop();}
-  // Body, the eye on top, the mouth at the front with two fangs.
+  // Body, then the mouth along its front edge (a dark slit, wider when hot, two fangs pointing ahead).
   stroke(...dark);strokeWeight(cell*.03);fill(...(hot?[66,150,92]:green));ellipse(0,0,cell*.52,cell*.42);
   noStroke();fill(255,255,255,40);ellipse(-cell*.06,-cell*.08,cell*.22,cell*.1);
   // Two purple horns from the sides of the head, sweeping forward and out, glowing on a ram.
   for(const side of [-1,1]){fill(...(h.state==='charge'?[196,120,255]:purple));stroke(70,30,110);strokeWeight(cell*.015);triangle(cell*.06,side*cell*.12,0,side*cell*.22,cell*.4,side*cell*.36);}
-  const gape=hot?.12:.07;fill(150,22,72);stroke(...dark);strokeWeight(cell*.02);ellipse(cell*.2,0,cell*gape,cell*.16);
-  noStroke();fill(250,246,236);for(const side of [-1,1])triangle(cell*(.2+gape*.3),side*cell*.05,cell*(.2+gape*.3),side*cell*.02,cell*(.2-gape*.1),side*cell*.035);
+  const gape=hot?.2:.13;noStroke();fill(110,16,56);arc(cell*.21,0,cell*.1,cell*gape*1.6,-HALF_PI,HALF_PI,CHORD);
+  fill(250,246,236);for(const side of [-1,1])triangle(cell*.24,side*cell*(gape*.55),cell*.24,side*cell*(gape*.3),cell*.3,side*cell*(gape*.42));
   escapeCreatureEye(cell*.02,0,cell*.17,hot,[250,246,236]);
   pop();
-  // The whistle: little rising notes while it rears to ram.
-  if(h.state==='windup'){noStroke();fill(200,240,255,200);textAlign(CENTER,CENTER);textSize(cell*.26);for(let k=0;k<2;k++){const t=(clock*2+k*.5)%1;text('♪',(h.x+.28+t*.25)*cell,(h.y-.35-t*.4)*cell);}}
-  if(h.state==='stunned'){noStroke();fill(255,236,150);textSize(cell*.32);for(let i=0;i<3;i++){const a=clock*5+i*TWO_PI/3;text('✦',(h.x+Math.cos(a)*.38)*cell,(h.y-.55+Math.sin(a)*.12)*cell);}}
+  // The whistle before a ram: sound rings rolling out ahead of its mouth, along the way it faces.
+  if(h.state==='windup'){push();translate(h.x*cell,h.y*cell);rotate(h.facing);noFill();for(let k=0;k<3;k++){const t=(clock*2.5+k/3)%1;stroke(200,240,255,220*(1-t));strokeWeight(cell*.035);arc(cell*.25,0,cell*(.2+t*.9),cell*(.2+t*.9),-.7,.7);}pop();}
+  // Dazed after hitting a wall: stars circling round its body on the ground.
+  if(h.state==='stunned'){noStroke();fill(255,236,150);textAlign(CENTER,CENTER);textSize(cell*.26);for(let i=0;i<3;i++){const a=clock*5+i*TWO_PI/3;text('✦',(h.x+Math.cos(a)*.42)*cell,(h.y+Math.sin(a)*.42)*cell);}}
 }
 function drawEscapeBeetle(h,cell){
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);

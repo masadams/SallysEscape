@@ -488,7 +488,7 @@ function escapeBuilderGuardExtras(g){
   if(g.kind==='dragonfly')return '<br>'+n('speed','speed');
   if(g.kind==='scorpion')return '<br><label class="builder-check"><input type="checkbox" data-ginsp="buried"'+(g.buried?' checked':'')+'> Buried until Sally is close</label>'+n('offset','tail rhythm delay s');
   if(g.kind==='owl')return '<br>Its patrol points are its look-outs.';
-  if(g.kind==='boogoo')return '<br>Walks its patrol points, whistling. Spotting Sally far off it whistles high and rams down a lane; up close it rears and swipes with its claws.';
+  if(g.kind==='boogoo')return '<br>Walks its patrol points, whistling. Spotting Sally far off it whistles high and rams down a lane; up close it swings its arms forward and swipes with its claws.';
   return '';
 }
 function escapeBuilderInspector(){

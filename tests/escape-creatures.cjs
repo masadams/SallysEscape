@@ -68,7 +68,7 @@ test('a boogoo whistles and rams Sally from afar, and a ram into a wall leaves i
   for(let i=0;i<240&&b.state==='charge';i++){dodge.player.y=3.5;dodge.advance(1/120,{});}
   assert.equal(dodge.status,'playing','Sally stepped out of the lane');assert.equal(b.state,'stunned','it hit the wall');
 });
-test('up close a boogoo rears and swipes its claws instead of ramming; backing away escapes the swipe',()=>{
+test('up close a boogoo swings its arms forward and swipes its claws instead of ramming; backing away escapes the swipe',()=>{
   const map=['##########','#@.....K.#','#........#','#X.......#','##########'];
   const g=make(map,[{kind:'boogoo',spawn:[3,1],facing:PI,patrol:[[3,1]]}]),h=g.hunters[0],seen=new Set();
   for(let i=0;i<480&&g.status==='playing';i++){g.advance(1/120,{});seen.add(h.state);}
