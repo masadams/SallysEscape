@@ -131,3 +131,12 @@ test('a boogoo closing in mid-range swings wide and skids when Sally cuts back',
   for(let i=0;i<120*6;i++){const t=i/120;g.advance(1/120,{x:t%1<.5?1:-1,y:t%1.6<.8?1:-1,sprint:true});if(h.skidAt)skid=true;}
   assert.ok(skid,'it skids');
 });
+test('cave folk that blunder into each other bump (once, not every frame), and they hop with excitement',()=>{
+  const map=['##########','#........#','#........#','#X.....@K#','##########'];
+  const g=make(map,[{kind:'cavefolk',spawn:[3,1],facing:0,patrol:[[6,1]]},{kind:'cavefolk',spawn:[6,1],facing:PI,patrol:[[3,1]]}]);
+  g.player.x=8.5;g.player.y=3.5;g.player.hidden=true;let bumps=0;
+  for(let i=0;i<360;i++){g.advance(1/120,{});bumps+=g.drainEvents().filter(e=>e==='bump').length;}
+  assert.ok(bumps>=1&&bumps<=3,'a bump or two, not a stream: '+bumps);assert.ok(g.hunters[0].bumpSpot,'with a spot for the dust');
+  const p=make(['##########','#@.......#','#........#','#X......K#','##########'],[{kind:'cavefolk',spawn:[4,1],facing:PI,patrol:[[4,1]]}]);p.invulnerableUntil=1e9;
+  run(p,{},1.5);assert.ok(p.hunters[0].hopAt>0,'it hops when it shouts');
+});

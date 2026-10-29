@@ -539,7 +539,7 @@ function escapePhysicsSounds(g){
 // Feel: footprints, dust, leaves, sparks and noise rings, kept in one small pool per run. Rings
 // show how far a noise carries, so they stay on in Simple lighting; the rest is Full only.
 const escapeFx=typeof EscapeFeel!=='undefined'?new EscapeFeel.Particles():{items:[],add(){},update(){},clear(){}};
-let escapeFxDecoy=null,escapeFxClock=0,escapeSkid={at:0,puff:0,v:null};const escapeSkidSeen=new WeakMap();
+let escapeFxDecoy=null,escapeFxClock=0,escapeSkid={at:0,puff:0,v:null};const escapeSkidSeen=new WeakMap(),escapeBumpSeen=new WeakSet();
 function tickEscapeFx(g){
   escapeFxClock+=Math.min(.1,deltaTime/1000);escapeFx.update(escapeFxClock,deltaTime/1000);
   if(g.decoy&&g.decoy!==escapeFxDecoy&&typeof EscapeFeel!=='undefined')EscapeFeel.land(escapeFx,g.decoy,escapeFxClock,Math.random,g);escapeFxDecoy=g.decoy;tickEscapeAtmo(g);
@@ -547,6 +547,9 @@ function tickEscapeFx(g){
   for(const h of g.hunters)if(h.skidAt&&h.skidAt!==escapeSkidSeen.get(h)&&typeof EscapeFeel!=='undefined'){escapeSkidSeen.set(h,h.skidAt);const a=h.skidFrom?.heading??h.facing;
     for(let i=0;i<9;i++){const side=(i%2?1:-1)*(1.2+Math.random()*.6);escapeFx.add('dust',h.x,h.y+.15,{t:escapeFxClock,life:.55+Math.random()*.25,size:.15+Math.random()*.12,vx:Math.cos(a)*(1.8+Math.random()*1.4)+Math.cos(a+side)*1.1,vy:Math.sin(a)*(1.8+Math.random()*1.4)+Math.sin(a+side)*1.1-.25,color:[186,170,138]});}
     if(g.visibleTile(Math.floor(h.x),Math.floor(h.y)))escapeSound('scrape',{gain:.6});}
+  // Cave folk that bump into each other throw up a little ring of dust between them.
+  for(const h of g.hunters)if(h.kind==='cavefolk'&&h.bumpSpot&&!escapeBumpSeen.has(h.bumpSpot)&&typeof EscapeFeel!=='undefined'){const at=h.bumpSpot;escapeBumpSeen.add(at);
+    for(let i=0;i<10;i++){const a=i/10*TWO_PI+Math.random()*.4,v=.9+Math.random()*.8;escapeFx.add('dust',at.x,at.y+.1,{t:escapeFxClock,life:.4+Math.random()*.2,size:.1+Math.random()*.08,vx:Math.cos(a)*v,vy:Math.sin(a)*v*.7-.2,color:[196,182,150]});}}
   // Sally skids a little when she doubles back at a sprint: a puff of dust thrown the way she was
   // going and a soft scuff. It is only for the look; she still turns on the spot.
   const v=g.playerVelocity,sk=escapeSkid;if(v&&escapeFxClock-sk.at>.12){const pv=sk.v,sp=Math.hypot(v.x,v.y),pp=pv?Math.hypot(pv.x,pv.y):0;
@@ -1619,9 +1622,13 @@ const ESCAPE_CAVE_TINTS={orange:[[232,112,62],[160,58,26],[206,78,34]],blue:[[92
 // shoulders, and arms held out to the sides ending in round fists. Chasing, the arms reach forward
 // to grab; shouting, it points at Sally or shakes its fists, and the shout rolls out in rings.
 function drawEscapeCaveFolk(h,cell,clock,target=null){
-  push();translate(h.x*cell,h.y*cell);rotate(h.facing);
+  // Excited, it hops three times on the spot: from above, it rises up the screen and grows a little
+  // while its shadow stays on the ground and shrinks. After a bump it squashes and wobbles.
+  const hopT=clock-(h.hopAt??-9),lift=hopT>=0&&hopT<.9?Math.abs(Math.sin(hopT/.9*3*Math.PI))*(1-hopT/.9*.4):0;
+  const bumpT=clock-(h.bumpAt??-9),wob=bumpT>=0&&bumpT<.45?Math.sin(bumpT*40)*(1-bumpT/.45):0;
+  push();translate(h.x*cell,h.y*cell);noStroke();fill(8,14,18,110*(1-lift*.5));ellipse(-cell*.02,cell*.05,cell*.56*(1-lift*.3),cell*.56*(1-lift*.3));
+  translate(0,-lift*cell*.22);scale((1+lift*.12)*(1+wob*.14),(1+lift*.12)*(1-wob*.14));rotate(h.facing+wob*.3);
   const stride=h.distanceMoved*10,hunting=['chase','flank'].includes(h.state),[skin,line_,hair]=ESCAPE_CAVE_TINTS[h.tint]||ESCAPE_CAVE_TINTS.orange;
-  noStroke();fill(8,14,18,110);ellipse(-cell*.02,cell*.05,cell*.56,cell*.62);
   // Feet stepping out in front in turn.
   for(const side of [-1,1]){const step=Math.sin(stride+(side>0?0:Math.PI))*.1;fill(...line_);ellipse(cell*step*1.6,side*cell*.15,cell*.17,cell*.1);}
   // Arms: out to the sides like the drawing; reaching forward to grab on a hunt.
@@ -1656,11 +1663,11 @@ function drawEscapeBoogoo(h,cell,clock){
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);
   const stride=h.distanceMoved*9,hot=['windup','charge','raise','swipe'].includes(h.state),green=[46,128,78],dark=[22,74,44],purple=[124,64,176];
   noStroke();fill(8,14,18,120);ellipse(-cell*.04,cell*.05,cell*.6,cell*.5);
-  // Legs: out from the back of the body to a foot, then three toes fanned forward and out the way
-  // it walks, purple at the tips. Each foot swings forward and back in turn.
-  for(const side of [-1,1]){const step=Math.sin(stride+(side>0?0:Math.PI))*.08,kx=-cell*(.4-step),ky=side*cell*.24;
-    stroke(...dark);strokeWeight(cell*.11);line(-cell*.12,side*cell*.08,kx,ky);stroke(...green);strokeWeight(cell*.08);line(-cell*.12,side*cell*.08,kx,ky);
-    for(const t of [-1,0,1]){const a=side*(.55+t*.4),ex=kx+Math.cos(a)*cell*.17,ey=ky+Math.sin(a)*cell*.17,mx=kx+(ex-kx)*.6,my=ky+(ey-ky)*.6;
+  // Legs, from above: out to each side of the body to a foot that steps forward and back in turn as
+  // it walks, three short toes pointing ahead, purple at the tips.
+  for(const side of [-1,1]){const step=Math.sin(stride+(side>0?0:Math.PI))*.12,kx=cell*(-.2+step),ky=side*cell*.27;
+    stroke(...dark);strokeWeight(cell*.11);line(-cell*.08,side*cell*.12,kx,ky);stroke(...green);strokeWeight(cell*.08);line(-cell*.08,side*cell*.12,kx,ky);
+    for(const t of [-1,0,1]){const a=side*t*.38,ex=kx+Math.cos(a)*cell*.15,ey=ky+Math.sin(a)*cell*.15,mx=kx+(ex-kx)*.55,my=ky+(ey-ky)*.55;
       stroke(...green);strokeWeight(cell*.05);line(kx,ky,mx,my);stroke(...purple);line(mx,my,ex,ey);}}
   // Arms: out to the side, swung forward to rear, sweeping across the front in a swipe, tucked in a ram.
   const swing=h.state==='raise'?.32:h.state==='swipe'?.5:['windup','charge'].includes(h.state)?-.12:Math.sin(stride*.5)*.05,reach=h.state==='swipe'?.32:h.state==='charge'?.34:.5;

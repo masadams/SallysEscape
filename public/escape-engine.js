@@ -1672,6 +1672,8 @@
           called.forEach((o,i)=>{o.state='flank';o.flankSide=side;side=-side;o.awareness=1;o.path=[];o.answerAt=this.elapsed+.3+i*.22;});
           this.notice(called.length?'A cave folk shouts! The pack fans out to cut Sally off.':'A cave folk shouts and gives chase!','warning');
         }else if(this.elapsed>=(h.nextShoutAt||0))this.caveShout(h,'point');
+        // Every so often, seeing her, it hops up and down on the spot with excitement.
+        else if(this.elapsed>=(h.nextHopAt||0)){h.hopAt=this.elapsed;h.nextHopAt=this.elapsed+1.8+((h.x*5.1+h.y*2.9)%1.6);}
       }
       const sight=this.caveSighting,fresh=sight&&this.elapsed-sight.t<cun.memory+1.5;
       if(['chase','flank'].includes(h.state)){
@@ -1714,13 +1716,15 @@
       for(const o of this.hunters){if(o===h||o.kind!=='cavefolk'||o.eaten)continue;let d=distance(h,o),ux=(h.x-o.x)/d,uy=(h.y-o.y)/d;
         if(!(d>1e-3)){const a=this.hunters.indexOf(h);ux=Math.cos(a);uy=Math.sin(a);d=0;}
         // Gentler than a walk, so one can always edge past another, and with a sidestep so they slip round each other.
+        // Two that blunder right into each other bump: a puff of dust, a boink, and both wobble.
+        if(d<.42&&this.elapsed>=(h.bumpReady||0)&&this.elapsed>=(o.bumpReady||0)){const at={x:(h.x+o.x)/2,y:(h.y+o.y)/2};h.bumpAt=o.bumpAt=this.elapsed;h.bumpReady=o.bumpReady=this.elapsed+1.2;h.bumpSpot=o.bumpSpot=at;this.cue('bump',at);}
         if(d>=.8)continue;const push=Math.min(.7*dt,(.8-d)*2*dt),turn=this.hunters.indexOf(h)%2?1:-1,px=ux-uy*turn*.6,py=uy+ux*turn*.6;
         for(const [x,y] of [[h.x+px*push,h.y+py*push],[h.x+px*push,h.y],[h.x,h.y+py*push]]){const next={x,y};if(this.fits(next,.22,h)&&this.clear(h,next,false,h)){h.x=x;h.y=y;break;}}}
     }
     // A cave folk shouts in its own voice: the one that spotted Sally points at her, the ones answering
     // shake their fists. While it can see her it shouts again every few seconds.
     caveShout(h,gesture){
-      h.shoutAt=this.elapsed;h.gesture=gesture;h.gestureUntil=this.elapsed+.9;h.nextShoutAt=this.elapsed+3+((h.x*7.3+h.y*3.1)%1.5);this.cue(h.voice||'shout',h);
+      h.shoutAt=this.elapsed;h.hopAt=this.elapsed;h.nextHopAt=this.elapsed+1.6;h.gesture=gesture;h.gestureUntil=this.elapsed+.9;h.nextShoutAt=this.elapsed+3+((h.x*7.3+h.y*3.1)%1.5);this.cue(h.voice||'shout',h);
     }
     // The scorpion is a living trap. Its strike ring travels with it; while the tail
     // is up, anything that steps into the ring is stung where it is heading. The tail
