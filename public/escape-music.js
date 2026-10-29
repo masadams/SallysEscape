@@ -209,7 +209,7 @@
     if(kind!=='victory'&&v===2)return [0,1,2,3,4].map(i=>({note:tonic[2]-i*2,at:i*.09,dur:i===4?1:.12,vel:.4-i*.03}));
     return kind==='victory'?[...tonic,tonic[0]+12,tonic[1]+12,tonic[0]+24].map((n,i)=>({note:n,at:i*.09,dur:i===5?1.2:.3,vel:.5})):[tonic[2],tonic[1],tonic[0]-1,tonic[0]-12].map((n,i)=>({note:n,at:i*.16,dur:i===3?1:.25,vel:.45}));}
   // The flavour of a chase, from whatever is chasing. Pure, so it is easy to test.
-  const FLAVORS={heavy:['beetle','boogoo','cobra','fox','crab','mole','eel','toad'],skitter:['spider','gecko','cricket','millipede','scorpion','mantis','wasp'],swoop:['owl','magpie','bat','dragonfly','moth','heron']};
+  const FLAVORS={heavy:['beetle','boogoo','cavefolk','cobra','fox','crab','mole','eel','toad'],skitter:['spider','gecko','cricket','millipede','scorpion','mantis','wasp'],swoop:['owl','magpie','bat','dragonfly','moth','heron']};
   function flavorFor(game){
     const chasing=['chase','charge','sting','leap','swoop','lunge','dash','flee','rush','tongue','pounce','dive','scuttle'];
     if(game?.hawk?.state==='dive')return 'swoop';

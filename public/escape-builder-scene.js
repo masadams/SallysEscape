@@ -6,7 +6,7 @@
 let escapeBuilderModel=null,escapeBuilderTool='#',escapeBuilderColor=0,escapeBuilderPick=null,escapeBuilderPainting=false,escapeBuilderNote='',escapeBuilderAnchor=null;
 const ESCAPE_BUILDER_STORE=(()=>{try{return typeof localStorage==='undefined'?null:localStorage;}catch(_){return null;}})();
 const ESCAPE_BUILDER_LOOK={'#':['#2d4a43',''],'.':['#183029',''],'L':['#2f6b45','❀'],'N':['#3b3a32','∴'],'B':['#3c5a5e','⟋'],'M':['#4a3a26','≈'],'~':['#1f5a76','~'],'_':['#07120f',''],'c':['#3d3424','⁘'],'T':['#24452a','෴'],'o':['#2a3a2a','●'],'t':['#5a5040','≋'],'m':['#3f6b3a','ʬ'],'d':['#5a4128','∵'],'s':['#8a7550','⁖'],'I':['#8fc4dc','❄'],'S':['#2d4a43','⦚'],'@':['#183029','🦎'],'K':['#183029','🔑'],'X':['#1d5a4f','⇩'],'1':['#183029','◆'],'2':['#183029','◆◆'],'3':['#183029','▣']};
-const ESCAPE_BUILDER_ENEMY={snake:'🐍',ladybird:'🐞',beetle:'🪲',scorpion:'🦂',toad:'🐸',spider:'🕷',cricket:'🦗',moth:'🦋',mimic:'🎁',millipede:'🐛',cobra:'👑',flytrap:'🌺',crab:'🦀',fox:'🦊',heron:'🦩',mantis:'🌿',wasp:'🐝',dragonfly:'🪰',mole:'🐹',bat:'🦇',eel:'🪱',angler:'🎣',fish:'🐟','sea-snake':'🌊',owl:'🦉',gecko:'🐾',echofrog:'🔊',chameleon:'🦎',sentinel:'💎',cloudray:'☁',magpie:'🐦',boogoo:'👾'};
+const ESCAPE_BUILDER_ENEMY={snake:'🐍',ladybird:'🐞',beetle:'🪲',scorpion:'🦂',toad:'🐸',spider:'🕷',cricket:'🦗',moth:'🦋',mimic:'🎁',millipede:'🐛',cobra:'👑',flytrap:'🌺',crab:'🦀',fox:'🦊',heron:'🦩',mantis:'🌿',wasp:'🐝',dragonfly:'🪰',mole:'🐹',bat:'🦇',eel:'🪱',angler:'🎣',fish:'🐟','sea-snake':'🌊',owl:'🦉',gecko:'🐾',echofrog:'🔊',chameleon:'🦎',sentinel:'💎',cloudray:'☁',magpie:'🐦',boogoo:'👾',cavefolk:'👥'};
 const ESCAPE_BUILDER_TRIGGER={plate:'◉',heavy:'⬛',lever:'⚲',switch:'▣'},ESCAPE_BUILDER_HAZARD={vent:'♨',thorns:'⋀',log:'●'};
 const ESCAPE_BUILDER_ARROW=['→','↓','←','↑'];
 // The extras placed on top of the map: what each tool is called and how it looks on the grid.
@@ -488,6 +488,7 @@ function escapeBuilderGuardExtras(g){
   if(g.kind==='dragonfly')return '<br>'+n('speed','speed');
   if(g.kind==='scorpion')return '<br><label class="builder-check"><input type="checkbox" data-ginsp="buried"'+(g.buried?' checked':'')+'> Buried until Sally is close</label>'+n('offset','tail rhythm delay s');
   if(g.kind==='owl')return '<br>Its patrol points are its look-outs.';
+  if(g.kind==='cavefolk')return '<br>Colour <select data-ginsp="tint"><option value="">Take turns</option>'+Object.entries(EscapeBuilder.TINTS).map(([k,v])=>'<option value="'+k+'"'+(g.tint===k?' selected':'')+'>'+v+'</option>').join('')+'</select><br>Hunts as a pack: place two or three. When one spots Sally it shouts, and the rest within earshot fan out to her sides and ahead of her, then close in.';
   if(g.kind==='boogoo')return '<br>Walks its patrol points, whistling. Spotting Sally far off it whistles high and rams down a lane; up close it swings its arms forward and swipes with its claws.';
   return '';
 }
@@ -784,7 +785,7 @@ function wireEscapeBuilder(){
   for(const box of document.querySelectorAll('[data-insp-close]'))box.onchange=e=>{B.setLinkAction(m,p.id,box.dataset.inspClose,e.target.checked?'close':'open');rerender();};
   if(insp('message'))insp('message').onchange=insp('objective').onchange=()=>{B.setMessage(m,p.id,insp('message').value,insp('objective').value);};
   if(insp('set-lure'))insp('set-lure').onclick=()=>{escapeBuilderPick={kind:'lure',id:p.id};escapeBuilderTool='select';escapeBuilderNote='Click the tile where the lure dangles.';rerender();};
-  for(const el of document.querySelectorAll('[data-ginsp]'))el.onchange=e=>{const k=el.dataset.ginsp;B.setGuard(m,p.id,{[k]:k==='buried'?e.target.checked:k==='axis'?e.target.value:val(e)});rerender();};
+  for(const el of document.querySelectorAll('[data-ginsp]'))el.onchange=e=>{const k=el.dataset.ginsp;B.setGuard(m,p.id,{[k]:k==='buried'?e.target.checked:k==='axis'||k==='tint'?e.target.value:val(e)});rerender();};
   const looks=document.querySelectorAll('[data-look]');for(const el of looks)el.onchange=()=>{B.setGuard(m,p.id,{looks:[...looks].filter(q=>q.checked).map(q=>Number(q.dataset.look)*Math.PI/2)});rerender();};
   for(const [k,f] of [['wdir','dir'],['wperiod','period'],['won','on'],['woffset','offset'],['wstrength','strength']])if(insp(k))insp(k).onchange=e=>{B.setWind(m,p.index,{[f]:Number(e.target.value)});rerender();};
   for(const [k,f] of [['rperiod','period'],['rphase','phase']])if(insp(k))insp(k).onchange=e=>{B.setRope(m,p.index,{[f]:Number(e.target.value)});rerender();};

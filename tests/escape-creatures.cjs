@@ -86,3 +86,31 @@ test('the builder offers the boogoo, and it plays from a built level',()=>{
   const {EscapeBestiary}=require('../public/escape-bestiary.js');assert.ok(EscapeBestiary.byKind('boogoo').hunts);
   assert.ok(!EscapeBestiary.book.some(e=>e.kind==='boogoo'),'builder-only for now: not in the bestiary book');
 });
+test('cave folk hunt as a pack: the first to spot Sally shouts, and the others fan out to either side of her',()=>{
+  const map=['################','#@.............#','#..............#','#..............#','#..............#','#X............K#','################'];
+  const g=make(map,[{kind:'cavefolk',spawn:[5,1],facing:PI,patrol:[[5,1]]},{kind:'cavefolk',spawn:[12,4],facing:0,patrol:[[12,4]]},{kind:'cavefolk',spawn:[12,2],facing:0,patrol:[[12,2]]}]);
+  let shouted=false;for(let i=0;i<300&&g.hunters[0].state!=='chase';i++){g.advance(1/120,{});if(g.events.includes('shout'))shouted=true;}
+  assert.equal(g.hunters[0].state,'chase');assert.ok(shouted||g.hunters[0].shoutAt>=0,'it shouts');
+  assert.deepEqual(g.hunters.slice(1).map(h=>h.state),['flank','flank'],'the pack is called in');
+  assert.deepEqual(g.hunters.slice(1).map(h=>h.flankSide).sort(),[-1,1],'one to each side');
+  run(g,{},6);assert.equal(g.status,'caught');assert.match(g.message,/cave folk/);
+});
+test('a lone cave folk out of earshot of the shout keeps to its rounds',()=>{
+  const map=['##################','#@.......#.......#','#........#.......#','#........#.......#','#X.......#......K#','##################'];
+  const g=make(map,[{kind:'cavefolk',spawn:[5,1],facing:PI,patrol:[[5,1]]},{kind:'cavefolk',spawn:[14,2],facing:0,patrol:[[14,2]]}]);
+  for(let i=0;i<300&&g.hunters[0].state!=='chase';i++)g.advance(1/120,{});
+  assert.equal(g.hunters[0].state,'chase');assert.equal(g.hunters[1].state,'patrol','walled off, it never heard');
+});
+test('the builder offers cave folk',()=>{
+  const B=require('../public/escape-builder.js'),m=B.blank(21,13);assert.equal(B.ENEMIES.cavefolk,'Cave folk');
+  assert.ok(B.addEnemy(m,'cavefolk',4,3));assert.ok(B.addEnemy(m,'cavefolk',6,3));
+  const {EscapeBestiary}=require('../public/escape-bestiary.js');assert.ok(EscapeBestiary.byKind('cavefolk').hunts);assert.ok(!EscapeBestiary.book.some(e=>e.kind==='cavefolk'));
+});
+test('cave folk come in colours: unset ones take turns, and a colour picked in the builder plays',()=>{
+  const map=['##########','#@.......#','#........#','#X......K#','##########'],at=[[3,2],[4,2],[5,2],[6,2]];
+  const g=make(map,at.map(s=>({kind:'cavefolk',spawn:s,facing:0,patrol:[s]})));
+  assert.deepEqual(g.hunters.map(h=>h.tint),['orange','blue','green','orange']);
+  const B=require('../public/escape-builder.js'),m=B.blank(21,13);B.addEnemy(m,'cavefolk',4,3);const id=m.guards.at(-1).id;
+  B.setGuard(m,id,{tint:'blue'});assert.equal(m.guards.at(-1).tint,'blue');B.setGuard(m,id,{tint:'purple'});assert.equal(m.guards.at(-1).tint,undefined,'only the drawn colours');
+  B.setGuard(m,id,{tint:'green'});const route=B.toRoute(m);assert.equal(route.guards.find(q=>q.kind==='cavefolk').tint,'green');
+});

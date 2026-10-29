@@ -6,8 +6,10 @@
   const KEY='sally-escape-custom-v1',VERSION=3;
   const TILES={'#':'Wall','.':'Floor','L':'Leaves','N':'Gravel','B':'Cracked wall','M':'Mud (slows Sally; linger and she sinks, run and she splashes loudly)','~':'Water','_':'Gap','c':'Crumbling floor','T':'Tangle vine','S':'Crack (Sally only)','o':'Spore puffball','t':'Tide flat','m':'Moss (silent)','d':'Soft dirt (Sally digs in)','s':'Soft sand (slows Sally, keeps her tracks)','I':'Ice wall (a sentinel’s gaze glances off it)'};
   const MARKS={'@':'Sally','K':'Key','X':'Hatch','1':'Treasure 1','2':'Treasure 2','3':'Chest 3'};
-  const ENEMIES={snake:'Snake',ladybird:'Ladybird',beetle:'Beetle',scorpion:'Scorpion',toad:'Toad',spider:'Spider',cricket:'Cricket',moth:'Moth',mimic:'Mimic',millipede:'Millipede',cobra:'King cobra',flytrap:'Flytrap',crab:'Hermit crab',fox:'Snow fox',heron:'Bog heron',mantis:'Praying mantis',wasp:'Wasp nest',dragonfly:'Dragonfly',mole:'Mole',bat:'Echo bat',eel:'Eel',angler:'Angler',fish:'Reef fish','sea-snake':'Sea snake',owl:'Owl',gecko:'Gecko',echofrog:'Echo frog',chameleon:'Chameleon',sentinel:'Frost sentinel',cloudray:'Cloud ray',magpie:'Magpie',boogoo:'Boogoo'};
+  const ENEMIES={snake:'Snake',ladybird:'Ladybird',beetle:'Beetle',scorpion:'Scorpion',toad:'Toad',spider:'Spider',cricket:'Cricket',moth:'Moth',mimic:'Mimic',millipede:'Millipede',cobra:'King cobra',flytrap:'Flytrap',crab:'Hermit crab',fox:'Snow fox',heron:'Bog heron',mantis:'Praying mantis',wasp:'Wasp nest',dragonfly:'Dragonfly',mole:'Mole',bat:'Echo bat',eel:'Eel',angler:'Angler',fish:'Reef fish','sea-snake':'Sea snake',owl:'Owl',gecko:'Gecko',echofrog:'Echo frog',chameleon:'Chameleon',sentinel:'Frost sentinel',cloudray:'Cloud ray',magpie:'Magpie',boogoo:'Boogoo',cavefolk:'Cave folk'};
   // Enemies that stay on their post; the rest walk their patrol.
+  // The colours cave folk come in, from the drawings: orange, navy blue and green.
+  const TINTS={orange:'Orange',blue:'Blue',green:'Green'};
   const POSTED=new Set(['scorpion','toad','mimic','millipede','cobra','flytrap','crab','heron','mantis','wasp','eel','angler','gecko','echofrog','sentinel','magpie']);
   const LIMITS={minW:11,maxW:45,minH:6,maxH:29,doors:6,triggers:24,hazards:40,guards:30};
   // Doors and bridges come in six colours; each colour is one door and one bridge.
@@ -300,6 +302,7 @@
     const g=model.guards.find(q=>q.id===id);if(!g)return false;
     if(changes.lure!==undefined)g.lure=changes.lure&&point(changes.lure,model.map[0].length,model.map.length);
     if(changes.axis!==undefined)g.axis=changes.axis==='y'?'y':changes.axis==='x'?'x':undefined;
+    if(changes.tint!==undefined)g.tint=TINTS[changes.tint]?changes.tint:undefined;
     for(const [k,lo,hi] of [['range',0,12],['every',0,20],['speed',0,8],['offset',0,20]])if(changes[k]!==undefined)g[k]=changes[k]===null||changes[k]===''?undefined:clampNum(changes[k],lo,hi);
     if(changes.looks!==undefined)g.looks=Array.isArray(changes.looks)&&changes.looks.length?changes.looks.slice(0,4).map(Number).filter(Number.isFinite):undefined;
     if(changes.buried!==undefined)g.buried=Boolean(changes.buried)||undefined;
@@ -378,7 +381,7 @@ function validate(model){
   function toRoute(model){
     const awake=model.guards.filter(g=>!g.sleep),asleep=model.guards.filter(g=>g.sleep);
     const guard=g=>{const out={id:g.id,kind:g.kind,spawn:g.spawn.slice(),facing:g.facing??Math.PI,patrol:(g.patrol.length?g.patrol:[g.spawn]).map(p=>p.slice())};
-      if(g.lure)out.lure=g.lure.slice();if(g.axis)out.axis=g.axis;if(g.looks)out.looks=g.looks.slice();if(g.buried)out.buried=true;
+      if(g.lure)out.lure=g.lure.slice();if(g.axis)out.axis=g.axis;if(g.tint)out.tint=g.tint;if(g.looks)out.looks=g.looks.slice();if(g.buried)out.buried=true;
       for(const k of ['range','every','speed','offset','cunning','pace'])if(g[k]!==undefined)out[k]=g[k];return out;};
     const triggersFor=(d,type)=>model.triggers.filter(t=>t.type===type&&linksTo(model,d.id).includes(t.id)).map(t=>t.at.slice());
     const gates=model.doors.map(d=>{const sw=triggersFor(d,'switch')[0];return {id:d.id,name:d.name||COLORS[d.color][0],color:d.rgb||COLORS[d.color][1],tiles:d.tiles.map(t=>t.slice()),...(d.bridge?{bridge:true}:{}),...(d.root?{root:true}:{}),
@@ -443,7 +446,7 @@ function validate(model){
     // An official escape brings its story page along, so it can be seen and moved while editing.
     if(!m.pages.length&&root.EscapeNotes){const n=root.EscapeNotes.NOTES.find(q=>q.levelId===route.id);if(n)m.pages=[{at:n.at.slice(),title:n.title,body:n.body,author:n.author,id:n.id}];}
     const ids={},guardOf=(g,sleep)=>{const id=newId(m,'e');if(g.id)ids[g.id]=id;const out={id,kind:g.kind||'snake',spawn:g.spawn.slice(),facing:g.facing??Math.PI,patrol:(g.patrol||[g.spawn]).map(p=>p.slice()),sleep};
-      if(g.lure)out.lure=g.lure.slice();if(g.axis)out.axis=g.axis;if(g.looks)out.looks=g.looks.slice();if(g.buried)out.buried=true;for(const k of ['range','every','speed','offset','cunning','pace'])if(g[k]!==undefined)out[k]=g[k];return out;};
+      if(g.lure)out.lure=g.lure.slice();if(g.axis)out.axis=g.axis;if(g.tint)out.tint=g.tint;if(g.looks)out.looks=g.looks.slice();if(g.buried)out.buried=true;for(const k of ['range','every','speed','offset','cunning','pace'])if(g[k]!==undefined)out[k]=g[k];return out;};
     m.guards=[...(route.guards||[]).map(g=>guardOf(g,false)),...(route.reinforcements||[]).map(g=>guardOf(g,true))];
     m.rivalries=(route.rivalries||[]).map(([a,b])=>[ids[a],ids[b]]).filter(([a,b])=>a&&b);
     const doorIds={};
@@ -490,7 +493,7 @@ function validate(model){
     let n=0;const fresh=prefix=>prefix+(1e6+(++n));
     model.guards=list(r.guards,LIMITS.guards).filter(g=>ENEMIES[g?.kind]&&point(g.spawn,w,h)).map(g=>{const out={id:safeId(g.id,/^e[0-9]{1,8}$/)||fresh('e'),kind:g.kind,spawn:point(g.spawn,w,h),facing:Number.isFinite(g.facing)?g.facing:Math.PI,
       patrol:list(g.patrol,6).map(p=>point(p,w,h)).filter(Boolean),sleep:Boolean(g.sleep)};
-      if(point(g.lure,w,h))out.lure=point(g.lure,w,h);if(g.axis==='x'||g.axis==='y')out.axis=g.axis;if(g.buried)out.buried=true;
+      if(point(g.lure,w,h))out.lure=point(g.lure,w,h);if(g.axis==='x'||g.axis==='y')out.axis=g.axis;if(TINTS[g.tint])out.tint=g.tint;if(g.buried)out.buried=true;
       if(Array.isArray(g.looks)&&g.looks.length)out.looks=g.looks.slice(0,4).map(Number).filter(Number.isFinite);
       for(const [k,lo,hi] of [['range',0,12],['every',0,20],['speed',0,8],['offset',0,20]])if(Number.isFinite(Number(g[k]))&&g[k]!==null&&g[k]!=='')out[k]=clampNum(g[k],lo,hi);
       if(Number.isFinite(g.cunning))out.cunning=clampInt(g.cunning,0,3);if(Number(g.pace)>0&&Number(g.pace)!==1)out.pace=clampNum(g.pace,.5,1.6,1);return out;});
@@ -534,7 +537,7 @@ function validate(model){
   function saveOne(storage,model){const saved=loadAll(storage).filter(l=>l.id!==model.id);saved.unshift(sanitize(model));try{storage?.setItem(KEY,JSON.stringify(saved.slice(0,50)));return true;}catch(_){return false;}}
   function removeOne(storage,id){const saved=loadAll(storage).filter(l=>l.id!==id);try{storage?.setItem(KEY,JSON.stringify(saved));return true;}catch(_){return false;}}
 
-  const api={TILES,MARKS,ENEMIES,POSTED,LIMITS,COLORS,MODES,TRIGGERS,HAZARDS,SPEEDS,blank,paint,resize,addEnemy,removeEnemy,turnEnemy,addPatrol,clearPatrol,setSleep,
+  const api={TILES,MARKS,ENEMIES,TINTS,POSTED,LIMITS,COLORS,MODES,TRIGGERS,HAZARDS,SPEEDS,blank,paint,resize,addEnemy,removeEnemy,turnEnemy,addPatrol,clearPatrol,setSleep,
     paintDoor,removeDoorTile,setDoor,addTrigger,removeAt,toggleLink,linksFrom,linksTo,sourceAt,doorAt,triggerAt,hazardAt,guardAt,addHazard,setLogEnd,setHazard,paintClimate,doorName,
     validate,toRoute,fromRoute,mergeInto,treasureTotal,exportText,importText,sanitize,loadAll,saveOne,removeOne,
     LOOKS,PROPS,toggleCheckpoint,toggleCrate,addSign,setSign,signAt,toggleProp,setMillWheel,LAYERS,DIRS,toggleLayer,addPage,setPage,pageAt,PAGE_LIMIT,addCap,setCap,setCapEnd,addRope,setRopeEnd,setRope,addWind,setWind,addEcho,addCurrent,setCurrent,addTunnel,addRegion,setRegion,addAntPoint,setAnts,addSeedCrossing,setRootWheel,toggleRival,removeExtraAt,moveThing,setGuard,setSettings,setMessage,setLinkAction,regionAt};
