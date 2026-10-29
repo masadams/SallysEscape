@@ -94,8 +94,10 @@
     // A boogoo winding up to ram: a whistle that climbs to a shriek. Its swipe: a quick whoosh and a scrape of claws.
     whistle:(v)=>{tone(v,{freq:900,to:2600,dur:.55,type:'sine',gain:.16,wobble:40,wobbleRate:9,attack:.05});noise(v,{dur:.5,gain:.04,filter:'bandpass',freq:1800,to:4200,q:5,attack:.1});},
     swipe:(v)=>{noise(v,{dur:.2,gain:.22,filter:'bandpass',freq:2200,to:600,q:1.2,attack:.02});for(let i=0;i<3;i++)noise(v,{dur:.02,delay:.08+i*.025,gain:.12,filter:'highpass',freq:3800});},
-    // A cave folk's shout calling the pack: a gruff two-note hoo-HAH.
-    shout:(v)=>{tone(v,{freq:210,to:180,dur:.16,type:'sawtooth',gain:.09,wobble:6,wobbleRate:12});tone(v,{freq:310,to:250,dur:.26,delay:.17,type:'sawtooth',gain:.12,wobble:9,wobbleRate:10});noise(v,{dur:.4,gain:.05,filter:'bandpass',freq:900,q:1.5,attack:.03});},
+    // Cave folk calling the pack, in three small voices: a squeaky hey-YAH, a run of yips, a rising whoop.
+    shout:(v)=>{tone(v,{freq:420,to:360,dur:.12,type:'square',gain:.1,wobble:14,wobbleRate:22});tone(v,{freq:600,to:470,dur:.24,delay:.13,type:'square',gain:.13,wobble:22,wobbleRate:16});noise(v,{dur:.36,gain:.06,filter:'bandpass',freq:1500,q:2,attack:.02});},
+    'shout-yip':(v)=>{for(let i=0;i<3;i++){tone(v,{freq:700+i*60,to:920+i*80,dur:.07,delay:i*.1,type:'square',gain:.12,wobble:18,wobbleRate:30});noise(v,{dur:.05,delay:i*.1,gain:.05,filter:'bandpass',freq:2200,q:3});}},
+    'shout-whoop':(v)=>{tone(v,{freq:320,to:760,dur:.32,type:'square',gain:.11,wobble:24,wobbleRate:12,attack:.03});tone(v,{freq:740,to:540,dur:.14,delay:.31,type:'square',gain:.1,wobble:16,wobbleRate:18});noise(v,{dur:.42,gain:.05,filter:'bandpass',freq:1700,q:2,attack:.04});},
     charge:(v)=>{noise(v,{dur:.35,gain:.25,filter:'lowpass',freq:300,to:900});tone(v,{freq:110,to:180,dur:.3,type:'sawtooth',gain:.1});},
     hop:(v)=>tone(v,{freq:180,to:420,dur:.16,type:'sine',gain:.35}),
     scrape:(v)=>noise(v,{dur:.25,gain:.2,freq:1600,to:900,q:6}),
@@ -200,11 +202,11 @@
   // -27 so a hunter's warning is never lost under the music, footsteps and a crawl left soft.
   // Levels set by measuring every sound's loudness: gameplay cues sit together, the key no longer
   // towers over the rest, and quiet tells (a frog's call, a missed tongue, a hall's echo) can be heard.
-  const TRIM={key:.7,caught:1.6,ribbit:3.16,thwip:2.5,echo:2.2,squish:2,'winter-snowball':1.8,croak:1.4,freeze:1.3,maze:.62,won:.86,snap:1.41,charge:1.78,sting:2.24,buzz:1.78,hiss:1.41,dive:1.6,clash:2.5,rumble:2.5,skitter:3.16,scrape:3.16,flutter:2,rustle:1.6,clack:3.16,decoy:3.16,toss:2};
+  const TRIM={shout:1.41,'shout-yip':2.8,'shout-whoop':1.41,key:.7,caught:1.6,ribbit:3.16,thwip:2.5,echo:2.2,squish:2,'winter-snowball':1.8,croak:1.4,freeze:1.3,maze:.62,won:.86,snap:1.41,charge:1.78,sting:2.24,buzz:1.78,hiss:1.41,dive:1.6,clash:2.5,rumble:2.5,skitter:3.16,scrape:3.16,flutter:2,rustle:1.6,clack:3.16,decoy:3.16,toss:2};
   // Each recipe is rendered once to a buffer offline and replayed from then on: one buffer
   // source instead of a fresh graph of oscillators, filters and LFOs per sound. Footsteps and
   // other noisy sounds keep three takes and a slight pitch drift so repeats never sound stamped.
-  const VARIED=new Set(['gait','flow','gloop','icecrack','hop','squish','clack','decoy','toss','click','glint','chirp','ribbit','croak','hiss','buzz','caw','boing','step','paddle','tail','rustle','skitter','scrape','splash','flutter','clash','wingbeat','tweet','plop','lap','drip']);
+  const VARIED=new Set(['gait','shout','shout-yip','shout-whoop','flow','gloop','icecrack','hop','squish','clack','decoy','toss','click','glint','chirp','ribbit','croak','hiss','buzz','caw','boing','step','paddle','tail','rustle','skitter','scrape','splash','flutter','clash','wingbeat','tweet','plop','lap','drip']);
   const cache=new Map(),rendering=new Set(),lastPlayed=new Map(),active=[];
   const MAX_VOICES=14,REPEAT_GAP=.045;
   const keyFor=(name,o)=>name+(o.gait?':'+o.gait:'')+(o.sprint?':s':'')+(o.alt?':a':'')+(o.surface&&o.surface!=='floor'?':'+o.surface:'');

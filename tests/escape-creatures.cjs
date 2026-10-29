@@ -114,3 +114,20 @@ test('cave folk come in colours: unset ones take turns, and a colour picked in t
   B.setGuard(m,id,{tint:'blue'});assert.equal(m.guards.at(-1).tint,'blue');B.setGuard(m,id,{tint:'purple'});assert.equal(m.guards.at(-1).tint,undefined,'only the drawn colours');
   B.setGuard(m,id,{tint:'green'});const route=B.toRoute(m);assert.equal(route.guards.find(q=>q.kind==='cavefolk').tint,'green');
 });
+test('cave folk answer the shout in their own voices, chase with momentum and skid, then spread out going home',()=>{
+  const map=['######################','#....................#','#....................#','#....@...............#','#....................#','#....................#','#....................#','#X..................K#','######################'];
+  const g=make(map,[{kind:'cavefolk',spawn:[8,3],facing:PI,patrol:[[8,3],[9,3]]},{kind:'cavefolk',spawn:[12,5],facing:0,patrol:[[12,5],[14,5]]},{kind:'cavefolk',spawn:[12,6],facing:0,patrol:[[12,6],[14,6]]}]);
+  g.invulnerableUntil=1e9;const voices=new Set(),skids=new Set(),gestures=new Set();
+  for(let i=0;i<120*5;i++){const t=i/120;g.advance(1/120,{x:t%1.2<.6?1:-1,y:t%2<1?1:-1,sprint:true});for(const e of g.drainEvents())if(e.startsWith('shout'))voices.add(e);for(const h of g.hunters){if(h.skidAt)skids.add(h);if(h.gesture)gestures.add(h.gesture);}}
+  assert.deepEqual([...voices].sort(),['shout','shout-whoop','shout-yip'],'three voices');assert.deepEqual([...gestures].sort(),['fist','point']);
+  assert.ok(skids.size>0,'a sharp cut-back throws them into a skid');
+  g.player.x=20.5;g.player.y=1.5;g.player.hidden=true;run(g,{},20);
+  assert.deepEqual(g.hunters.map(h=>h.state),['patrol','patrol','patrol']);
+  for(const h of g.hunters)assert.ok(Math.min(...h.patrol.map(q=>Math.hypot(q.x-h.x,q.y-h.y)))<2.2,'each is back on its own rounds');
+});
+test('a boogoo closing in mid-range swings wide and skids when Sally cuts back',()=>{
+  const map=['##############','#............#','#............#','#.....@......#','#............#','#............#','#X..........K#','##############'];
+  const g=make(map,[{kind:'boogoo',spawn:[8,3],facing:PI,patrol:[[8,3]]}]),h=g.hunters[0];g.invulnerableUntil=1e9;let skid=false;
+  for(let i=0;i<120*6;i++){const t=i/120;g.advance(1/120,{x:t%1<.5?1:-1,y:t%1.6<.8?1:-1,sprint:true});if(h.skidAt)skid=true;}
+  assert.ok(skid,'it skids');
+});
