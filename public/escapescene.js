@@ -781,7 +781,7 @@ function drawEscapeOverhangLayer(g,cell,palette){
 // The tall walls' tops, over whatever stands just north of them: Sally and the creatures step behind a wall.
 function drawEscapeWallLips(g,cell){const lip=escapeTerrainBase?.lip;if(!lip||!escapeTerrainOn()||!drawingContext.drawImage)return;drawingContext.drawImage(lip.elt,0,0,g.width*cell,g.height*cell);}
 // Everything that stands on the ground casts a soft shadow down and to the right, away from the light.
-const ESCAPE_SHADOW_SIZE={beetle:[.95,.5],boogoo:[.85,.55],cavefolk:[.75,.7],fox:[.9,.42],mole:[.8,.45],toad:[.8,.45],echofrog:[.8,.45],crab:[.75,.42],scorpion:[.85,.45],spider:[.8,.5],gecko:[.75,.32],chameleon:[.8,.36],
+const ESCAPE_SHADOW_SIZE={beetle:[.95,.5],boogoo:[.85,.55],cavefolk:[.6,.55],fox:[.9,.42],mole:[.8,.45],toad:[.8,.45],echofrog:[.8,.45],crab:[.75,.42],scorpion:[.85,.45],spider:[.8,.5],gecko:[.75,.32],chameleon:[.8,.36],
   snake:[.85,.32],cobra:[.95,.38],'sea-snake':[.8,.3],millipede:[1,.36],heron:[.7,.4],mantis:[.7,.35],mimic:[.8,.5],flytrap:[.8,.5],sentinel:[.9,.55],ladybird:[.55,.32],cricket:[.5,.28],magpie:[.6,.3],wasp:[.7,.4]};
 const ESCAPE_NO_SHADOW=new Set(['buried','under','lurk','lurking','hidden','asleep','emerge']);
 function drawEscapeContactShadows(g,cell,view){
@@ -1615,11 +1615,11 @@ function drawEscapeScorpion(h,cell,clock){
 }
 // Cave folk colours from the drawings, as skin, outline and hair.
 const ESCAPE_CAVE_TINTS={orange:[[232,112,62],[160,58,26],[206,78,34]],blue:[[92,112,206],[34,40,120],[48,58,150]],green:[[110,190,90],[40,110,44],[64,150,60]]};
-// Cave folk, seen from above: a round head of spiky orange hair with two eyes at its front edge,
+// Cave folk, seen from above and kept small, a little mob of them: a round head of spiky orange hair with two eyes at its front edge,
 // shoulders, and arms held out to the sides ending in round fists. Chasing, the arms reach forward
 // to grab and the feet stride out in front; a shout rolls out from the head in rings.
 function drawEscapeCaveFolk(h,cell,clock){
-  push();translate(h.x*cell,h.y*cell);rotate(h.facing);scale(1.25);
+  push();translate(h.x*cell,h.y*cell);rotate(h.facing);
   const stride=h.distanceMoved*10,hunting=['chase','flank'].includes(h.state),[skin,line_,hair]=ESCAPE_CAVE_TINTS[h.tint]||ESCAPE_CAVE_TINTS.orange;
   noStroke();fill(8,14,18,110);ellipse(-cell*.02,cell*.05,cell*.56,cell*.62);
   // Feet stepping out in front in turn.
