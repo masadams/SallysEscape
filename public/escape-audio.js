@@ -98,6 +98,8 @@
     shout:(v)=>{tone(v,{freq:420,to:360,dur:.12,type:'square',gain:.1,wobble:14,wobbleRate:22});tone(v,{freq:600,to:470,dur:.24,delay:.13,type:'square',gain:.13,wobble:22,wobbleRate:16});noise(v,{dur:.36,gain:.06,filter:'bandpass',freq:1500,q:2,attack:.02});},
     'shout-yip':(v)=>{for(let i=0;i<3;i++){tone(v,{freq:700+i*60,to:920+i*80,dur:.07,delay:i*.1,type:'square',gain:.12,wobble:18,wobbleRate:30});noise(v,{dur:.05,delay:i*.1,gain:.05,filter:'bandpass',freq:2200,q:3});}},
     'shout-whoop':(v)=>{tone(v,{freq:320,to:760,dur:.32,type:'square',gain:.11,wobble:24,wobbleRate:12,attack:.03});tone(v,{freq:740,to:540,dur:.14,delay:.31,type:'square',gain:.1,wobble:16,wobbleRate:18});noise(v,{dur:.42,gain:.05,filter:'bandpass',freq:1700,q:2,attack:.04});},
+    // A frightened cave folk: a tiny high squeal that wobbles.
+    eek:(v)=>{tone(v,{freq:1100,to:1600,dur:.18,type:'sine',gain:.14,wobble:60,wobbleRate:26,attack:.01});tone(v,{freq:2200,to:3000,dur:.12,delay:.02,type:'sine',gain:.04});},
     // Two cave folk bumping into each other: a soft thud and a squeaky boink.
     bump:(v)=>{tone(v,{freq:150,to:90,dur:.1,type:'sine',gain:.16});noise(v,{dur:.06,gain:.08,filter:'lowpass',freq:500});tone(v,{freq:520,to:900,dur:.14,delay:.04,type:'sine',gain:.08,wobble:30,wobbleRate:20});},
     charge:(v)=>{noise(v,{dur:.35,gain:.25,filter:'lowpass',freq:300,to:900});tone(v,{freq:110,to:180,dur:.3,type:'sawtooth',gain:.1});},

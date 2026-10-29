@@ -1188,7 +1188,7 @@ function drawEscapeVault(){
   if(g.hawk)drawEscapeHawk(g.hawk,cell,g.elapsed);
   for(const h of g.hunters)if(h.kind==='cloudray')drawEscapeCloudRay(h,cell,g.elapsed);
   if(g.player.frozenUntil>g.elapsed){const p=g.player,k=Math.min(1,(g.player.frozenUntil-g.elapsed)/1.6);noStroke();fill(200,236,250,120*k);ellipse(p.x*cell,p.y*cell,cell*.9,cell*.9);stroke(235,250,255,200*k);strokeWeight(Math.max(1,cell*.035));for(let a=0;a<6;a++){const r=a*Math.PI/3;line(p.x*cell,p.y*cell,(p.x+Math.cos(r)*.45)*cell,(p.y+Math.sin(r)*.45)*cell);}}
-  for(const h of g.hunters)if(h.kind!=='millipede'&&h.state!=='rooted'&&h.state!=='patrol'&&!(['angler','flytrap'].includes(h.kind)&&h.state!=='snap')&&!(h.kind==='heron'&&h.state!=='aim')&&!(h.kind==='mantis'&&h.state!=='raise')&&!(h.kind==='wasp'&&h.state!=='stir')&&h.kind!=='dragonfly'&&h.kind!=='cloudray'&&h.kind!=='sentinel'&&!(h.kind==='mole'&&h.state!=='surface')&&!(h.kind==='bat'&&h.state!=='dive')&&!(h.kind==='magpie'&&h.state!=='caw')&&!(h.kind==='eel'&&h.state!=='ripple')&&!(h.kind==='crab'&&!['peek','scuttle'].includes(h.state))&&h.kind!=='fox'&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y))))escapeHunterMark(h,cell,g);
+  for(const h of g.hunters)if(h.kind!=='millipede'&&h.state!=='rooted'&&h.state!=='patrol'&&!(['angler','flytrap'].includes(h.kind)&&h.state!=='snap')&&!(h.kind==='heron'&&h.state!=='aim')&&!(h.kind==='mantis'&&h.state!=='raise')&&!(h.kind==='wasp'&&h.state!=='stir')&&h.kind!=='dragonfly'&&h.kind!=='cloudray'&&h.kind!=='sentinel'&&!(h.kind==='mole'&&h.state!=='surface')&&!(h.kind==='bat'&&h.state!=='dive')&&!(h.kind==='magpie'&&h.state!=='caw')&&!(h.kind==='eel'&&h.state!=='ripple')&&!(h.kind==='crab'&&!['peek','scuttle'].includes(h.state))&&!(h.kind==='cavefolk'&&['scared','wary'].includes(h.state))&&h.kind!=='fox'&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y))))escapeHunterMark(h,cell,g);
   drawEscapeCritters(g,cell,view,'air');drawEscapeFx(g,cell);drawEscapeMotes(g,cell);
   const place=escapePlace(g.level),mood=place?EscapeLighting.moodFor(place.key,place.step):null;
   drawEscapeCloudShadows(g,cell,mood);drawEscapeLights(g,cell,mood);
@@ -1626,7 +1626,9 @@ function drawEscapeCaveFolk(h,cell,clock,target=null){
   // while its shadow stays on the ground and shrinks. After a bump it squashes and wobbles.
   const hopT=clock-(h.hopAt??-9),lift=hopT>=0&&hopT<.9?Math.abs(Math.sin(hopT/.9*3*Math.PI))*(1-hopT/.9*.4):0;
   const bumpT=clock-(h.bumpAt??-9),wob=bumpT>=0&&bumpT<.45?Math.sin(bumpT*40)*(1-bumpT/.45):0;
-  push();translate(h.x*cell,h.y*cell);noStroke();fill(8,14,18,110*(1-lift*.5));ellipse(-cell*.02,cell*.05,cell*.56*(1-lift*.3),cell*.56*(1-lift*.3));
+  // Frightened, it trembles with its hands clamped on its head and a bead of sweat flying off.
+  const scared=['scared','wary'].includes(h.state),shiver=scared?Math.sin(clock*70)*cell*.02:0;
+  push();translate(h.x*cell+shiver,h.y*cell);noStroke();fill(8,14,18,110*(1-lift*.5));ellipse(-cell*.02,cell*.05,cell*.56*(1-lift*.3),cell*.56*(1-lift*.3));
   translate(0,-lift*cell*.22);scale((1+lift*.12)*(1+wob*.14),(1+lift*.12)*(1-wob*.14));rotate(h.facing+wob*.3);
   const stride=h.distanceMoved*10,hunting=['chase','flank'].includes(h.state),[skin,line_,hair]=ESCAPE_CAVE_TINTS[h.tint]||ESCAPE_CAVE_TINTS.orange;
   // Feet stepping out in front in turn.
@@ -1638,6 +1640,7 @@ function drawEscapeCaveFolk(h,cell,clock,target=null){
   for(const side of [-1,1]){let hx=cell*(reach+side*swing),hy=side*cell*spread;
     if(gesture==='point'&&side===pointer){hx=Math.cos(toward)*cell*.55;hy=side*cell*.12+Math.sin(toward)*cell*.55;}
     else if(gesture==='fist'){hx=cell*(.26+shake*side);hy=side*cell*(.34+shake);}
+    if(scared){hx=cell*.02;hy=side*cell*.16;}
     stroke(...line_);strokeWeight(cell*.1);line(-cell*.02,side*cell*.2,hx,hy);stroke(...skin);strokeWeight(cell*.065);line(-cell*.02,side*cell*.2,hx,hy);
     if(gesture==='point'&&side===pointer){stroke(...line_);strokeWeight(cell*.05);line(hx,hy,hx+Math.cos(toward)*cell*.14,hy+Math.sin(toward)*cell*.14);}
     noStroke();fill(...line_);ellipse(hx,hy,cell*.15,cell*.15);fill(...skin);ellipse(hx-cell*.01,hy,cell*.11,cell*.11);}
@@ -1652,6 +1655,7 @@ function drawEscapeCaveFolk(h,cell,clock,target=null){
   for(const side of [-1,1]){fill(250,244,232);ellipse(cell*.15,side*cell*.065,cell*.07,cell*.07);fill(30,20,16);ellipse(cell*.165,side*cell*.065,cell*.04,cell*.04);
     if(hunting){stroke(...line_);strokeWeight(cell*.022);line(cell*.12,side*cell*.11,cell*.19,side*cell*.035);noStroke();}}
   pop();
+  if(scared){const t=(clock*1.6+h.x)%1;noStroke();fill(190,232,255,255*(1-t*.6));ellipse((h.x+.2+t*.18)*cell,(h.y-.28-t*.12)*cell,cell*.09,cell*.13);}
   // A shout: rings rolling out from the head for a moment.
   const age=clock-(h.shoutAt??-9);if(age>=0&&age<.7){noFill();for(let k=0;k<2;k++){const t=Math.min(1,age/.7+k*.3);stroke(255,190,120,200*(1-t));strokeWeight(cell*.04);ellipse(h.x*cell,h.y*cell,cell*(.6+t*1.6),cell*(.6+t*1.6));}}
 }
