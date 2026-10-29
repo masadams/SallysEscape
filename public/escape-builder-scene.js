@@ -488,7 +488,7 @@ function escapeBuilderGuardExtras(g){
   if(g.kind==='dragonfly')return '<br>'+n('speed','speed');
   if(g.kind==='scorpion')return '<br><label class="builder-check"><input type="checkbox" data-ginsp="buried"'+(g.buried?' checked':'')+'> Buried until Sally is close</label>'+n('offset','tail rhythm delay s');
   if(g.kind==='owl')return '<br>Its patrol points are its look-outs.';
-  if(g.kind==='cavefolk')return '<br>Colour <select data-ginsp="tint"><option value="">Take turns</option>'+Object.entries(EscapeBuilder.TINTS).map(([k,v])=>'<option value="'+k+'"'+(g.tint===k?' selected':'')+'>'+v+'</option>').join('')+'</select><br>Hunts as a pack: place two or three. When one spots Sally it shouts, and the rest within earshot fan out to her sides and ahead of her, then close in.';
+  if(g.kind==='cavefolk')return '<br>Colour <select data-ginsp="tint"><option value="">Take turns</option>'+Object.entries(EscapeBuilder.TINTS).map(([k,v])=>'<option value="'+k+'"'+(g.tint===k?' selected':'')+'>'+v+'</option>').join('')+'</select><br>Hunts as a pack: place two or three. When one spots Sally it shouts, and the rest within earshot fan out to her sides and ahead of her, then close in. They run from snakes, spiders, scorpions, wasp nests, mantises and the boogoo, and wait at a safe distance.';
   if(g.kind==='boogoo')return '<br>Walks its patrol points, whistling. Spotting Sally far off it whistles high and rams down a lane; up close it swings its arms forward and swipes with its claws.';
   return '';
 }

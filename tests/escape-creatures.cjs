@@ -140,3 +140,13 @@ test('cave folk that blunder into each other bump (once, not every frame), and t
   const p=make(['##########','#@.......#','#........#','#X......K#','##########'],[{kind:'cavefolk',spawn:[4,1],facing:PI,patrol:[[4,1]]}]);p.invulnerableUntil=1e9;
   run(p,{},1.5);assert.ok(p.hunters[0].hopAt>0,'it hops when it shouts');
 });
+test('cave folk are scared of snakes: they run to a safe distance, wait, and cannot catch Sally while frightened',()=>{
+  const map=['####################','#..................#','#..................#','#..................#','#..................#','#..................#','#X...............@K#','####################'];
+  const g=make(map,[{kind:'cavefolk',spawn:[3,3],facing:0,patrol:[[3,3],[12,3]]},{kind:'snake',spawn:[9,3],facing:PI,patrol:[[9,3]]}]),c=g.hunters[0],s=g.hunters[1];
+  g.player.hidden=true;let fled=false,waited=false,eek=false;
+  for(let i=0;i<120*8;i++){g.advance(1/120,{});if(c.state==='scared')fled=true;if(c.state==='wary'){waited=true;assert.ok(Math.hypot(c.x-s.x,c.y-s.y)>=4,'waits a safe way off');}if(g.drainEvents().includes('eek'))eek=true;}
+  assert.ok(fled&&waited&&eek,'it squeaks, runs, then waits');
+  const t=make(map,[{kind:'cavefolk',spawn:[8,3],facing:0,patrol:[[8,3]]},{kind:'snake',spawn:[10,3],facing:PI,patrol:[[10,3]]}]);t.advance(1/120,{});
+  assert.equal(t.hunters[0].state,'scared');t.player.x=t.hunters[0].x;t.player.y=t.hunters[0].y;t.invulnerableUntil=0;t.hunters[1].x=18.5;t.hunters[1].y=1.5;
+  t.hunters[0].fear.calmAt=0;t.advance(1/120,{});assert.notEqual(t.status==='caught'&&/cave folk/.test(t.message),true,'a frightened one does not grab her');
+});

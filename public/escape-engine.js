@@ -26,6 +26,9 @@
   const TRAP_PROOF=new Set(['owl','magpie','moth','dragonfly','wasp','bat','cloudray','fish','eel','angler','flytrap','mimic','heron','sentinel','mole']);
   // Hunters heavy enough to press a heavy plate.
   const HEAVY=new Set(['beetle']);
+  // What frightens cave folk, and how close it must be (in tiles) before they run.
+  const CAVE_FEARS={snake:2.6,cobra:3,'sea-snake':2.6,spider:2.4,scorpion:2.4,wasp:2.6,mantis:2.2,boogoo:3};
+  const CAVE_FEAR_NAMES={cobra:'king cobra','sea-snake':'sea snake',wasp:'wasp nest'};
   // Cave folk call in three voices, so a pack shouting together sounds like a crowd.
   const CAVE_VOICES=['shout','shout-yip','shout-whoop'];
   // How far a boogoo's claws reach in a swipe.
@@ -908,7 +911,7 @@
       const clawed=this.elapsed>=this.invulnerableUntil&&this.boogooClaws();
       if(clawed){this.alarms++;if(this.shedTail(clawed))return;this.finish('caught','The boogoo\'s claws caught Sally. When it swings its arms forward, back away fast.');return;}
       // Capture wins over picking up the key or escaping in the same simulation step.
-      const captor=this.hunters.find(h=>!(LIGHT_SHY.has(h.kind)&&this.lights.length&&this.inLight(p))&&!h.eaten&&!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='magpie'&&h.kind!=='ladybird'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='sentinel'&&h.kind!=='cloudray'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&distance(p,h)<(['beetle','boogoo'].includes(h.kind)&&h.state==='charge'?.62:h.kind==='cavefolk'?.56:.48)&&this.clear(p,h));
+      const captor=this.hunters.find(h=>!(LIGHT_SHY.has(h.kind)&&this.lights.length&&this.inLight(p))&&!h.eaten&&!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='magpie'&&h.kind!=='ladybird'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='sentinel'&&h.kind!=='cloudray'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&!(h.kind==='cavefolk'&&['scared','wary'].includes(h.state))&&distance(p,h)<(['beetle','boogoo'].includes(h.kind)&&h.state==='charge'?.62:h.kind==='cavefolk'?.56:.48)&&this.clear(p,h));
       if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
       if(this.elapsed>=this.invulnerableUntil && captor){
         this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. It crept up while Sally looked away. Keep it in view as you back off.':captor.kind==='mimic'?'That chest was a mimic! Watch for its tell, or throw a pebble to make it snap first.':captor.kind==='fox'?'A snow fox heard Sally and pounced. Stand still, keep to quiet ground, or toss a pebble to send it pouncing elsewhere.':captor.kind==='crab'?'A hermit crab scuttled out and pinched Sally. Pass its lane while it is tucked in, or send it back into its shell with a pebble.':captor.kind==='cavefolk'?'The cave folk closed in from all sides. Break their sight before the pack can spread out.':captor.kind==='boogoo'?'The boogoo rammed Sally. When it whistles, step out of its lane.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'A hunter spotted you. Break sight at a corner or use a pebble.');return;
@@ -1660,6 +1663,7 @@
     updateCaveFolk(dt,h){
       const p=this.player,cun=h.cun||this.cunning,pack=this.hunters.filter(o=>o.kind==='cavefolk'&&o!==h&&!o.eaten);
       if(h.answerAt&&this.elapsed>=h.answerAt){h.answerAt=0;this.caveShout(h,'fist');}
+      if(this.caveFear(dt,h))return;
       const seen=this.seesPlayer(h),heard=p.noisy&&!p.hidden&&this.audible(h,p,p.loud?6:3.5);
       if(seen){
         const was=h.awareness;h.awareness=Math.min(1,h.awareness+dt/(.7*cun.react));h.reason='seen';h.facing=Math.atan2(p.y-h.y,p.x-h.x);
@@ -1668,7 +1672,7 @@
         if(!['chase','flank'].includes(h.state)){
           h.state='chase';this.alarms++;this.caveShout(h,'point');
           // The rest answer one after another, each shaking a fist, then fan out.
-          let side=1;const called=pack.filter(o=>!['chase','flank','steamed','stunned','clash'].includes(o.state)&&this.audible(o,h,10));
+          let side=1;const called=pack.filter(o=>!['chase','flank','steamed','stunned','clash','scared','wary'].includes(o.state)&&this.audible(o,h,10));
           called.forEach((o,i)=>{o.state='flank';o.flankSide=side;side=-side;o.awareness=1;o.path=[];o.answerAt=this.elapsed+.3+i*.22;});
           this.notice(called.length?'A cave folk shouts! The pack fans out to cut Sally off.':'A cave folk shouts and gives chase!','warning');
         }else if(this.elapsed>=(h.nextShoutAt||0))this.caveShout(h,'point');
@@ -1710,6 +1714,43 @@
         h.pauseUntil=0;h.routeIndex=(h.routeIndex+1)%h.patrol.length;target=h.patrol[h.routeIndex];
       }
       this.moveHunter(target,1.15*dt,h);
+    }
+    // Cave folk are frightened of snakes, spiders and the like. One that comes too close, in plain view,
+    // sends a cave folk squeaking off to a spot a safe way away, by a route that does not pass it. There
+    // it waits, trembling and watching, until the danger has kept its distance for a moment; then it
+    // goes back to the hunt if the pack still knows where Sally is, or else to its rounds.
+    caveFear(dt,h){
+      const hidden=o=>o.eaten||o.buried||['buried','under','dig','emerge'].includes(o.state)||o.kind==='mantis'&&!this.mantisShown(o);
+      const threat=this.hunters.filter(o=>CAVE_FEARS[o.kind]&&!hidden(o)&&distance(h,o)<CAVE_FEARS[o.kind]&&this.clear(h,o,true)).sort((a,b)=>distance(h,a)-distance(h,b))[0];
+      if(threat&&h.fear?.from!==threat){
+        if(!h.fear){this.cue('eek',h);if(this.visibleTile(Math.floor(h.x),Math.floor(h.y))&&this.elapsed>=(this.caveFearNoted||0)){this.caveFearNoted=this.elapsed+4;this.notice('The cave folk scatter from the '+(CAVE_FEAR_NAMES[threat.kind]||threat.kind)+'!','warning');}}
+        h.fear={from:threat,spot:null,retryAt:0,calmAt:0};h.answerAt=0;h.gestureUntil=0;
+      }
+      if(!h.fear)return false;
+      const o=h.fear.from,safe=CAVE_FEARS[o.kind]+1.5;
+      if(hidden(o)){h.fear=null;return false;}
+      h.awareness=0;h.aim=null;
+      if(distance(h,o)<safe){
+        h.state='scared';h.fear.calmAt=0;
+        if(!h.fear.spot||this.elapsed>=h.fear.retryAt&&(!h.path.length||distance(h.fear.spot,o)<safe)){h.fear.spot=this.caveSafeSpot(h,o,safe);h.fear.retryAt=this.elapsed+.5;h.path=[];h.targetId=null;}
+        if(h.fear.spot)this.moveHunter(h.fear.spot,2.9*dt,h);else h.facing=Math.atan2(o.y-h.y,o.x-h.x);
+        return true;
+      }
+      h.state='wary';h.path=[];h.targetId=null;h.facing=Math.atan2(o.y-h.y,o.x-h.x);
+      if(!h.fear.calmAt)h.fear.calmAt=this.elapsed+1.2;
+      if(this.elapsed<h.fear.calmAt)return true;
+      const sight=this.caveSighting;h.fear=null;h.heading=undefined;
+      h.state=sight&&this.elapsed-sight.t<(h.cun||this.cunning).memory+1.5?'chase':'patrol';if(h.state==='chase')h.awareness=1;
+      return false;
+    }
+    // Somewhere safe from a frightening creature: open floor at least `safe` tiles from it, reached by a
+    // route that never passes close to it (nor any closer than it already is), the nearest such spot first.
+    caveSafeSpot(h,o,safe){
+      const spots=[];for(const r of [safe+.4,safe+1.4,safe+2.4])for(let k=0;k<16;k++){const a=k/16*Math.PI*2,q={x:Math.floor(o.x+Math.cos(a)*r)+.5,y:Math.floor(o.y+Math.sin(a)*r)+.5};
+        if(distance(q,o)>=safe&&this.fits(q,.22,h)&&this.actorFloor(Math.floor(q.x),Math.floor(q.y),h)&&!spots.some(s=>s.x===q.x&&s.y===q.y))spots.push(q);}
+      spots.sort((a,b)=>distance(h,a)-distance(h,b));
+      for(const q of spots.slice(0,10)){const path=this.route(h,q,h);if(path.length&&path.length<14&&path.every(s=>distance(s,o)>=Math.min(CAVE_FEARS[o.kind]-.4,distance(h,o)-.2)))return q;}
+      return null;
     }
     // Cave folk keep a little room between them: closer than most of a tile, each eases away from the other.
     spreadCaveFolk(dt,h){
