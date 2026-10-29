@@ -19,11 +19,15 @@
   // Hunters that keep their own counsel and do not answer a magpie's caw.
   const MAGPIE_DEAF=new Set(['magpie','ladybird','owl','moth','cricket','angler','mimic','flytrap','sentinel','cloudray','echofrog','toad','scorpion','millipede','heron','mantis','wasp','eel','crab','gecko']);
   // lead is how far ahead it reads Sally: 1 aims where she will be by the time it gets there, 0 where she is.
-  const MOMENTUM={snake:{turn:2.4,grip:.55,accel:1.6,pulse:1.5,lead:.85},cobra:{turn:2,grip:.5,accel:1.3,pulse:1.1,lead:1},'sea-snake':{turn:2.4,grip:.55,accel:1.6,pulse:1.4,lead:.85},fish:{turn:4.5,grip:.6,accel:2.5,pulse:2.2,lead:.5},chameleon:{turn:3.5,grip:.55,accel:2,pulse:1,lead:.4}};
+  const MOMENTUM={snake:{turn:2.4,grip:.55,accel:1.6,pulse:1.5,lead:.85},cobra:{turn:2,grip:.5,accel:1.3,pulse:1.1,lead:1},'sea-snake':{turn:2.4,grip:.55,accel:1.6,pulse:1.4,lead:.85},fish:{turn:4.5,grip:.6,accel:2.5,pulse:2.2,lead:.5},chameleon:{turn:3.5,grip:.55,accel:2,pulse:1,lead:.4},
+    // The boogoo is big and swings wide; cave folk are small and scrambling, quick to turn in short bursts.
+    boogoo:{turn:2.6,grip:.5,accel:1.5,pulse:1.2,lead:.9},cavefolk:{turn:4.2,grip:.6,accel:2.4,pulse:2.2,lead:.75}};
   // Creatures a trap on the ground cannot reach: fliers, swimmers and the rooted.
   const TRAP_PROOF=new Set(['owl','magpie','moth','dragonfly','wasp','bat','cloudray','fish','eel','angler','flytrap','mimic','heron','sentinel','mole']);
   // Hunters heavy enough to press a heavy plate.
   const HEAVY=new Set(['beetle']);
+  // Cave folk call in three voices, so a pack shouting together sounds like a crowd.
+  const CAVE_VOICES=['shout','shout-yip','shout-whoop'];
   // How far a boogoo's claws reach in a swipe.
   const BOOGOO_CLAW=1.25;
   // Creatures a thrown pebble can bonk on the way: the ones that walk the floor in the open.
@@ -59,7 +63,7 @@
       this.player={...centre(...this.level.spawn),facing:{x:0,y:-1},tongueAim:null,stamina:100,exhausted:false,moving:false,sprinting:false,crawling:false,hidden:false,noisy:false};
       this.hunters=this.level.guards.map(guard=>this.makeHunter(guard));for(const h of this.hunters)h.restState=h.state;
       // Cave folk come in colours; ones not given one take turns: orange, blue, green.
-      {const tints=['orange','blue','green'];let turn=0;this.level.guards.forEach((guard,i)=>{if(guard.kind==='cavefolk')this.hunters[i].tint=tints.includes(guard.tint)?guard.tint:tints[turn++%3];});}
+      {const tints=['orange','blue','green'];let turn=0;this.level.guards.forEach((guard,i)=>{if(guard.kind==='cavefolk'){const h=this.hunters[i];h.tint=tints.includes(guard.tint)?guard.tint:tints[turn%3];h.voice=CAVE_VOICES[turn%3];turn++;}});}
       // Gentle levels (Little Explorers, for young children) can't be lost: a catch is an "Oops!"
       // that hops Sally back to the last checkpoint she reached, and the creatures move slower.
       this.gentle=this.level.gentle?{pace:typeof this.level.gentle==='number'?this.level.gentle:.6}:null;this.oopses=0;
@@ -969,7 +973,7 @@
       if(h.kind==='scorpion'){this.updateScorpion(dt,h);return;}
       if(h.kind==='beetle'){this.updateBeetle(dt,h);return;}
       if(h.kind==='boogoo'){this.updateBoogoo(dt,h);return;}
-      if(h.kind==='cavefolk'){this.updateCaveFolk(dt,h);return;}
+      if(h.kind==='cavefolk'){this.updateCaveFolk(dt,h);this.spreadCaveFolk(dt,h);return;}
       if(h.kind==='cobra'&&this.updateCobra(dt,h))return;
       if(h.kind==='angler'){this.updateAngler(dt,h);return;}
       if(h.kind==='flytrap'){this.updateFlytrap(dt,h);return;}
@@ -1614,7 +1618,7 @@
       if(h.state==='charge'){
         const dx=Math.cos(h.facing),dy=Math.sin(h.facing),step=7*dt,next={x:h.x+dx*step,y:h.y+dy*step};
         if(!this.fits(next,.22,h)||this.elapsed>=h.phaseUntil||h.aim&&distance(h.chargeFrom,next)>distance(h.chargeFrom,h.aim)+2.5){
-          const hitWall=!this.fits(next,.22,h);h.state=hitWall?'stunned':'recover';h.phaseUntil=this.elapsed+(hitWall?1.6:.9)*cun.rest;h.awareness=0;h.path=[];this.cue('clash',h);return;}
+          const hitWall=!this.fits(next,.22,h);h.heading=h.facing;h.glide=.3;h.state=hitWall?'stunned':'recover';h.phaseUntil=this.elapsed+(hitWall?1.6:.9)*cun.rest;h.awareness=0;h.path=[];this.cue('clash',h);return;}
         h.x=next.x;h.y=next.y;h.distanceMoved+=step;return;
       }
       if(h.state==='raise'){if(this.elapsed>=h.phaseUntil){h.state='swipe';h.phaseUntil=this.elapsed+.25;this.cue('swipe',h);}return;}
@@ -1655,27 +1659,36 @@
     // sees, the whole pack knows. Lose her long enough and they search, then go back to their rounds.
     updateCaveFolk(dt,h){
       const p=this.player,cun=h.cun||this.cunning,pack=this.hunters.filter(o=>o.kind==='cavefolk'&&o!==h&&!o.eaten);
+      if(h.answerAt&&this.elapsed>=h.answerAt){h.answerAt=0;this.caveShout(h,'fist');}
       const seen=this.seesPlayer(h),heard=p.noisy&&!p.hidden&&this.audible(h,p,p.loud?6:3.5);
       if(seen){
         const was=h.awareness;h.awareness=Math.min(1,h.awareness+dt/(.7*cun.react));h.reason='seen';h.facing=Math.atan2(p.y-h.y,p.x-h.x);
         if(h.awareness<1){if(!was)this.cue('warning',h);if(!['chase','flank'].includes(h.state))h.state='alert';return;}
         this.caveSighting={x:p.x,y:p.y,t:this.elapsed};
         if(!['chase','flank'].includes(h.state)){
-          h.state='chase';h.shoutAt=this.elapsed;this.alarms++;this.cue('shout',h);
+          h.state='chase';this.alarms++;this.caveShout(h,'point');
+          // The rest answer one after another, each shaking a fist, then fan out.
           let side=1;const called=pack.filter(o=>!['chase','flank','steamed','stunned','clash'].includes(o.state)&&this.audible(o,h,10));
-          for(const o of called){o.state='flank';o.flankSide=side;side=-side;o.awareness=1;o.path=[];}
+          called.forEach((o,i)=>{o.state='flank';o.flankSide=side;side=-side;o.awareness=1;o.path=[];o.answerAt=this.elapsed+.3+i*.22;});
           this.notice(called.length?'A cave folk shouts! The pack fans out to cut Sally off.':'A cave folk shouts and gives chase!','warning');
-        }
+        }else if(this.elapsed>=(h.nextShoutAt||0))this.caveShout(h,'point');
       }
       const sight=this.caveSighting,fresh=sight&&this.elapsed-sight.t<cun.memory+1.5;
       if(['chase','flank'].includes(h.state)){
-        if(!fresh){h.state='search';h.searchUntil=this.elapsed+cun.search;h.lastKnown={x:sight?.x??h.x,y:sight?.y??h.y};this.closeCalls++;this.notice('Lost it. Catch your breath.','lost');}
+        if(!fresh){
+          // Each searches its own spot round where she was last seen, and gives up in its own time, so
+          // the pack does not pile onto one tile or troop home in single file.
+          const n=this.hunters.filter(o=>o.kind==='cavefolk').indexOf(h),at={x:sight?.x??h.x,y:sight?.y??h.y},a=n*2.4,spot={x:at.x+Math.cos(a)*1.3,y:at.y+Math.sin(a)*1.3};
+          h.state='search';h.searchUntil=this.elapsed+cun.search+n*.5;h.lastKnown=n&&this.fits(spot,.22,h)&&this.actorFloor(Math.floor(spot.x),Math.floor(spot.y),h)&&this.clear(at,spot)?spot:at;
+          if(!this.caveLostAt||this.elapsed-this.caveLostAt>1){this.caveLostAt=this.elapsed;this.closeCalls++;this.notice('Lost it. Catch your breath.','lost');}}
         else{
           let target={x:sight.x,y:sight.y};
           // A flanker heads for a spot beside and ahead of her, until it is close enough to grab.
           if(h.state==='flank'&&distance(h,sight)>2){
-            const v=this.playerVelocity||{x:0,y:0},speed=Math.hypot(v.x,v.y),dir=speed>.2?{x:v.x/speed,y:v.y/speed}:{x:(sight.x-h.x)/(distance(h,sight)||1),y:(sight.y-h.y)/(distance(h,sight)||1)};
-            const spot={x:sight.x+dir.x*1.4-dir.y*h.flankSide*2,y:sight.y+dir.y*1.4+dir.x*h.flankSide*2};
+            // Aim for where she will be by the time it gets there, on her running line (smoothed), then off to its side.
+            const v=this.sallyTrack||this.playerVelocity||{x:0,y:0},vx=v.vx??v.x,vy=v.vy??v.y,speed=Math.hypot(vx,vy),lead=Math.min(1.4,distance(h,sight)/2.6)*cun.aim;
+            const dir=speed>.2?{x:vx/speed,y:vy/speed}:{x:(sight.x-h.x)/(distance(h,sight)||1),y:(sight.y-h.y)/(distance(h,sight)||1)},ahead={x:sight.x+vx*lead,y:sight.y+vy*lead};
+            const spot={x:ahead.x+dir.x*.8-dir.y*h.flankSide*1.8,y:ahead.y+dir.y*.8+dir.x*h.flankSide*1.8};
             if(this.fits(spot,.22,h)&&this.actorFloor(Math.floor(spot.x),Math.floor(spot.y),h))target=spot;
           }
           this.moveHunter(target,(h.state==='flank'?2.6:2.4)*dt,h);h.movedAt=this.elapsed;return;
@@ -1695,6 +1708,19 @@
         h.pauseUntil=0;h.routeIndex=(h.routeIndex+1)%h.patrol.length;target=h.patrol[h.routeIndex];
       }
       this.moveHunter(target,1.15*dt,h);
+    }
+    // Cave folk keep a little room between them: closer than most of a tile, each eases away from the other.
+    spreadCaveFolk(dt,h){
+      for(const o of this.hunters){if(o===h||o.kind!=='cavefolk'||o.eaten)continue;let d=distance(h,o),ux=(h.x-o.x)/d,uy=(h.y-o.y)/d;
+        if(!(d>1e-3)){const a=this.hunters.indexOf(h);ux=Math.cos(a);uy=Math.sin(a);d=0;}
+        // Gentler than a walk, so one can always edge past another, and with a sidestep so they slip round each other.
+        if(d>=.8)continue;const push=Math.min(.7*dt,(.8-d)*2*dt),turn=this.hunters.indexOf(h)%2?1:-1,px=ux-uy*turn*.6,py=uy+ux*turn*.6;
+        for(const [x,y] of [[h.x+px*push,h.y+py*push],[h.x+px*push,h.y],[h.x,h.y+py*push]]){const next={x,y};if(this.fits(next,.22,h)&&this.clear(h,next,false,h)){h.x=x;h.y=y;break;}}}
+    }
+    // A cave folk shouts in its own voice: the one that spotted Sally points at her, the ones answering
+    // shake their fists. While it can see her it shouts again every few seconds.
+    caveShout(h,gesture){
+      h.shoutAt=this.elapsed;h.gesture=gesture;h.gestureUntil=this.elapsed+.9;h.nextShoutAt=this.elapsed+3+((h.x*7.3+h.y*3.1)%1.5);this.cue(h.voice||'shout',h);
     }
     // The scorpion is a living trap. Its strike ring travels with it; while the tail
     // is up, anything that steps into the ring is stung where it is heading. The tail
@@ -1821,7 +1847,7 @@
       // A creature set to its own pace in the builder moves that much slower or quicker.
       if(h.pace)budget*=h.pace;
       const m=MOMENTUM[h.kind];
-      if(m&&h.state==='chase'&&this.hunterDt>0)return this.glideHunter(target,budget,h,m);
+      if(m&&(h.state==='chase'||h.state==='flank')&&this.hunterDt>0)return this.glideHunter(target,budget,h,m);
       h.heading=undefined;
       if(this.slippery.has(this.tileKey(h))&&this.hunterDt>0&&!['owl','fox','beetle'].includes(h.kind)){const point=this.route(h,target,h)[0];if(point){const d=distance(h,point),v=h.iceVelocity||(h.iceVelocity={x:0,y:0}),dt=this.hunterDt,q=Ice.steer(v,{x:(point.x-h.x)/(d||1),y:(point.y-h.y)/(d||1)},budget/dt,dt,{ice:true,brake:true,grip:1.25});for(const axis of ['x','y']){const next={x:h.x,y:h.y,[axis]:h[axis]+q[axis]};if(this.fits(next,.22,h)&&(!this.lights.length||fleeGlow||!LIGHT_SHY.has(h.kind)||!this.inLight(next,.35))){h[axis]=next[axis];h.distanceMoved+=Math.abs(q[axis]);}else v[axis]=0;}h.facing=Math.atan2(v.y,v.x);return;}}else h.iceVelocity=null;
       if(this.grid[Math.floor(h.y)]?.[Math.floor(h.x)]==='M')budget*=.72;
