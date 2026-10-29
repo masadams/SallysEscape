@@ -91,6 +91,9 @@
     snap:(v)=>{noise(v,{dur:.12,gain:.4,filter:'lowpass',freq:900,q:2});tone(v,{freq:180,to:70,dur:.18,type:'square',gain:.14});},
     tail:(v)=>noise(v,{dur:.12,gain:.2,freq:900,q:3}),
     sting:(v)=>{tone(v,{freq:1400,to:400,dur:.12,type:'sawtooth',gain:.12});noise(v,{dur:.06,gain:.25,freq:4000,q:2});},
+    // A boogoo winding up to ram: a whistle that climbs to a shriek. Its swipe: a quick whoosh and a scrape of claws.
+    whistle:(v)=>{tone(v,{freq:900,to:2600,dur:.55,type:'sine',gain:.16,wobble:40,wobbleRate:9,attack:.05});noise(v,{dur:.5,gain:.04,filter:'bandpass',freq:1800,to:4200,q:5,attack:.1});},
+    swipe:(v)=>{noise(v,{dur:.2,gain:.22,filter:'bandpass',freq:2200,to:600,q:1.2,attack:.02});for(let i=0;i<3;i++)noise(v,{dur:.02,delay:.08+i*.025,gain:.12,filter:'highpass',freq:3800});},
     charge:(v)=>{noise(v,{dur:.35,gain:.25,filter:'lowpass',freq:300,to:900});tone(v,{freq:110,to:180,dur:.3,type:'sawtooth',gain:.1});},
     hop:(v)=>tone(v,{freq:180,to:420,dur:.16,type:'sine',gain:.35}),
     scrape:(v)=>noise(v,{dur:.25,gain:.2,freq:1600,to:900,q:6}),
@@ -177,6 +180,7 @@
       case 'hop':tone(v,{freq:230,to:120,dur:.08,type:'sine',gain:.05});noise(v,{dur:.07,delay:.05,gain:.07,filter:'lowpass',freq:700,to:300});break;
       case 'wings':for(let i=0;i<2;i++)noise(v,{dur:.16,delay:i*.17,gain:.085,filter:'bandpass',freq:950,to:480,q:.8,attack:.05});break;
       case 'buzz':tone(v,{freq:205,dur:.26,type:'sawtooth',gain:.022,wobble:9,wobbleRate:31,attack:.05});tone(v,{freq:412,dur:.24,type:'square',gain:.008,wobble:14,wobbleRate:29,attack:.05});break;
+      case 'whistle':tone(v,{freq:1250,to:1480,dur:.32,type:'sine',gain:.035,wobble:30,wobbleRate:7,attack:.08});noise(v,{dur:.3,gain:.018,filter:'bandpass',freq:2600,q:6,attack:.08});break;
       case 'swim':noise(v,{dur:.22,gain:.065,filter:'bandpass',freq:760,to:340,q:1.4,attack:.05});break;}},
     // Physics: thin ice crackling and giving way, a rope's creak and rush, a bounce cap's spring,
     // a current's burble and mud pulling at Sally's feet.
