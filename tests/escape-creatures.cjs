@@ -57,3 +57,32 @@ test('the builder knows ice walls, frost sentinels, cloud rays, echo frogs and c
   const g=new EscapeAdventure({level:escapeBuildCustom(r)});assert.equal(g.ice.size,1);assert.equal(g.grid[5][5],'#','ice is a wall');
   assert.equal(g.hunters.find(h=>h.kind==='sentinel').range,7);
 });
+
+test('a boogoo whistles and rams Sally from afar, and a ram into a wall leaves it dizzy',()=>{
+  const map=['##########','#@......K#','#........#','#X.......#','##########'];
+  const g=make(map,[{kind:'boogoo',spawn:[5,1],facing:PI,patrol:[[5,1]]}]),h=g.hunters[0];let wound=false;
+  for(let i=0;i<240&&g.status==='playing';i++){g.advance(1/120,{});if(h.state==='windup')wound=true;}
+  assert.ok(wound,'it winds up to ram');assert.equal(g.status,'caught');assert.match(g.message,/rammed/);
+  const dodge=make(map,[{kind:'boogoo',spawn:[5,1],facing:PI,patrol:[[5,1]]}]),b=dodge.hunters[0];
+  for(let i=0;i<360&&b.state!=='charge';i++)dodge.advance(1/120,{});assert.equal(b.state,'charge');
+  for(let i=0;i<240&&b.state==='charge';i++){dodge.player.y=3.5;dodge.advance(1/120,{});}
+  assert.equal(dodge.status,'playing','Sally stepped out of the lane');assert.equal(b.state,'stunned','it hit the wall');
+});
+test('up close a boogoo swings its arms forward and swipes its claws instead of ramming; backing away escapes the swipe',()=>{
+  const map=['##########','#@.....K.#','#........#','#X.......#','##########'];
+  const g=make(map,[{kind:'boogoo',spawn:[3,1],facing:PI,patrol:[[3,1]]}]),h=g.hunters[0],seen=new Set();
+  for(let i=0;i<480&&g.status==='playing';i++){g.advance(1/120,{});seen.add(h.state);}
+  assert.ok(seen.has('raise')&&seen.has('swipe'),'it rears, then swipes');assert.ok(!seen.has('charge'),'no ram at close range');
+  assert.equal(g.status,'caught');assert.match(g.message,/claws/);
+  const back=make(map,[{kind:'boogoo',spawn:[3,1],facing:PI,patrol:[[3,1]]}]),b=back.hunters[0];
+  for(let i=0;i<480&&b.state!=='raise';i++)back.advance(1/120,{});assert.equal(b.state,'raise');
+  back.player.y=3.5;back.player.x=b.x-2;
+  for(let i=0;i<40;i++)back.advance(1/120,{});assert.equal(back.status,'playing','out of reach when it swipes');
+});
+test('the builder offers the boogoo, and it plays from a built level',()=>{
+  const B=require('../public/escape-builder.js'),m=B.blank(21,13);
+  assert.equal(B.ENEMIES.boogoo,'Boogoo');assert.ok(!B.POSTED.has('boogoo'),'it walks a patrol');
+  assert.ok(B.addEnemy(m,'boogoo',4,3));assert.equal(m.guards.at(-1).kind,'boogoo');
+  const {EscapeBestiary}=require('../public/escape-bestiary.js');assert.ok(EscapeBestiary.byKind('boogoo').hunts);
+  assert.ok(!EscapeBestiary.book.some(e=>e.kind==='boogoo'),'builder-only for now: not in the bestiary book');
+});

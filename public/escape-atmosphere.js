@@ -119,7 +119,7 @@ function drawEscapeAtmoParticle(p,cell,age,k){
   return false;
 }
 // A creature at rest breathes: a slow swell, barely there, so still things still read as alive.
-const ESCAPE_ATMO_BREATHERS=new Set(['fox','toad','spider','scorpion','beetle','gecko','crab','echofrog','chameleon','mimic','cricket','mantis','heron','flytrap']);
+const ESCAPE_ATMO_BREATHERS=new Set(['fox','toad','spider','scorpion','beetle','boogoo','gecko','crab','echofrog','chameleon','mimic','cricket','mantis','heron','flytrap']);
 function escapeBreathe(g,h,i,cell){
   if(!ESCAPE_ATMO_BREATHERS.has(h.kind))return false;const last=escapeAtmo.lastMoved.get(h),still=last!==undefined&&Math.abs(h.distanceMoved-last)<1e-4;escapeAtmo.lastMoved.set(h,h.distanceMoved);
   if(!still||!escapeLightingFull())return false;const s=1+.03*Math.sin(g.elapsed*2+i*1.7);
