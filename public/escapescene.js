@@ -1621,10 +1621,11 @@ function drawEscapeBoogoo(h,cell,clock){
   push();translate(h.x*cell,h.y*cell);rotate(h.facing);
   const stride=h.distanceMoved*9,hot=['windup','charge','raise','swipe'].includes(h.state),green=[46,128,78],dark=[22,74,44],purple=[124,64,176];
   noStroke();fill(8,14,18,120);ellipse(-cell*.04,cell*.05,cell*.6,cell*.5);
-  // Legs: thigh back from the body, then three toes fanned behind, purple at the tips.
-  for(const side of [-1,1]){const step=Math.sin(stride+(side>0?0:Math.PI))*.07,kx=-cell*(.36+step),ky=side*cell*.15;
+  // Legs: out from the back of the body to a foot, then three toes fanned forward and out the way
+  // it walks, purple at the tips. Each foot swings forward and back in turn.
+  for(const side of [-1,1]){const step=Math.sin(stride+(side>0?0:Math.PI))*.08,kx=-cell*(.4-step),ky=side*cell*.24;
     stroke(...dark);strokeWeight(cell*.11);line(-cell*.12,side*cell*.08,kx,ky);stroke(...green);strokeWeight(cell*.08);line(-cell*.12,side*cell*.08,kx,ky);
-    for(const t of [-1,0,1]){const ex=kx-cell*.17,ey=ky+side*cell*.04+t*cell*.09,mx=kx+(ex-kx)*.6,my=ky+(ey-ky)*.6;
+    for(const t of [-1,0,1]){const a=side*(.55+t*.4),ex=kx+Math.cos(a)*cell*.17,ey=ky+Math.sin(a)*cell*.17,mx=kx+(ex-kx)*.6,my=ky+(ey-ky)*.6;
       stroke(...green);strokeWeight(cell*.05);line(kx,ky,mx,my);stroke(...purple);line(mx,my,ex,ey);}}
   // Arms: out to the side, swung forward to rear, sweeping across the front in a swipe, tucked in a ram.
   const swing=h.state==='raise'?.32:h.state==='swipe'?.5:['windup','charge'].includes(h.state)?-.12:Math.sin(stride*.5)*.05,reach=h.state==='swipe'?.32:h.state==='charge'?.34:.5;
