@@ -24,6 +24,9 @@
     boogoo:{turn:2.6,grip:.5,accel:1.5,pulse:1.2,lead:.9},cavefolk:{turn:4.2,grip:.6,accel:2.4,pulse:2.2,lead:.75}};
   // Creatures a trap on the ground cannot reach: fliers, swimmers and the rooted.
   const TRAP_PROOF=new Set(['owl','magpie','moth','dragonfly','wasp','bat','cloudray','fish','eel','angler','flytrap','mimic','heron','sentinel','mole']);
+  // How hard each creature cracks fast thin ice as it walks over it (Sally walking is 1): the heavy
+  // ones break it quickly, cave folk are light on their feet.
+  const ICE_WEIGHT={beetle:1.8,boogoo:1.6,fox:1.1,cavefolk:.8,spider:.7,cricket:.4,ladybird:.4,gecko:.6,chameleon:.8};
   // Hunters heavy enough to press a heavy plate.
   const HEAVY=new Set(['beetle']);
   // What frightens cave folk, and how close it must be (in tiles) before they run.
@@ -104,7 +107,8 @@
       // speed and turns wide, and a slope underneath carries her on down; Crawl grips.
       this.wet=new Set((this.level.wet||[]).map(p=>p.join(',')));
       // Thin ice cracks under Sally (fastest when she stands or runs, barely when she crawls) and gives way to water.
-      this.thinIce=new Map((this.level.thinIce||[]).filter(([x,y])=>this.floor(x,y)&&this.grid[y][x]!=='U').map(([x,y])=>[x+','+y,{x,y,crack:0,broken:false,warned:false}]));this.softSand=new Set((this.level.softSand||[]).map(p=>p.join(',')));this.slideVelocity={x:0,y:0};
+      // Laid over water it is ice to walk on until it breaks, and then it is the water again.
+      this.thinIce=new Map((this.level.thinIce||[]).filter(([x,y])=>this.floor(x,y)).map(([x,y])=>{const overWater=this.grid[y][x]==='U';if(overWater)this.grid[y][x]='.';return [x+','+y,{x,y,crack:0,broken:false,warned:false,overWater}];}));this.softSand=new Set((this.level.softSand||[]).map(p=>p.join(',')));this.slideVelocity={x:0,y:0};
       this.cold=new Set();for(const [x1,y1,x2,y2] of this.level.cold||[])for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)this.cold.add(x+','+y);
       this.warm=new Set((this.level.warm||[]).map(([x,y])=>x+','+y));
       // Steam Vents: wall vents fire jets down a lane on a fixed rhythm.
@@ -150,7 +154,7 @@
     floor(x,y){const t=this.grid[y]?.[x];return t!==undefined&&t!=='#'&&t!=='B'&&t!=='G'&&t!=='P'&&!this.crateAt?.[y*this.width+x];}
     water(p){return this.grid[Math.floor(p.y)]?.[Math.floor(p.x)]==='U';}
     // A crack (Y; S in text maps) is wide enough for Sally only: no hunter can squeeze through or see into it.
-    actorFloor(x,y,h){const wet=this.grid[y]?.[x]==='U';if(h&&this.grid[y]?.[x]==='Y')return false;return this.floor(x,y)&&(!h||h.kind==='sea-snake'||(h.kind==='fish'?wet:!wet));}
+    actorFloor(x,y,h){const wet=this.grid[y]?.[x]==='U';if(h&&this.grid[y]?.[x]==='Y')return false;return this.floor(x,y)&&(!h||h.kind==='sea-snake'||h.swimming||(h.kind==='fish'?wet:!wet));}
     sightFloor(x,y){const c=this.grid[y]?.[x];return c!=='Y'&&(this.floor(x,y)||c==='P');}
     visibleTile(x,y){return !this.level.explore||this.visible.has(x+','+y);}
     lineVisible(a,b){
@@ -320,6 +324,41 @@
     // drops in and fills it (a way across), and pushed onto ice it slides until something stops it.
     breakIce(t){t.broken=true;t.crack=1;this.grid[t.y][t.x]='U';this.events.push('splash','icebreak');this.loudUntil=this.elapsed+.9;
       for(const h of this.hunters){h.path=[];h.targetId=null;}this.updateVisibility(true);if(this.tileKey(this.player)===t.x+','+t.y)this.notice('Splash! The thin ice gave way.','warning');}
+    // On fast ice (new and builder levels) the creatures are heavy enough to crack it too, as they walk
+    // over it. Ice that gives way under one, or under Sally beside it, drops it in the water.
+    walksOnIce(h){return !h.eaten&&!h.swimming&&!TRAP_PROOF.has(h.kind)&&!['sea-snake','fish','eel','angler'].includes(h.kind)&&!h.buried&&!['buried','under','dig','emerge'].includes(h.state);}
+    iceUnderHunters(dt){
+      if(this.level.iceSpeed!=='fast')return;
+      for(const h of this.hunters){if(!this.walksOnIce(h))continue;
+        const t=this.thinIce.get(this.tileKey(h));if(t?.broken&&this.water(h)){this.dunk(h);continue;}
+        const last=h.iceFrom;h.iceFrom={x:h.x,y:h.y};if(!t||t.broken||!last||Math.hypot(h.x-last.x,h.y-last.y)<1e-4)continue;
+        t.crack+=1.8*(ICE_WEIGHT[h.kind]||1)*dt;if(!t.ticked&&t.crack>=.2){t.ticked=true;this.cue('icecrack',h);}
+        if(t.crack>=1){this.breakIce(t);this.dunk(h);}
+      }
+    }
+    // In the water a land creature can only paddle for the nearest shore. It cannot grab Sally while it
+    // swims, and an eel or an angler may take it; on dry ground again it shakes off and carries on.
+    dunk(h){
+      h.swimming=true;h.state='swim';h.path=[];h.targetId=null;h.aim=null;h.awareness=0;h.answerAt=0;h.fear=null;h.heading=undefined;h.shore=this.nearestShore(h);h.shoreAt=this.elapsed;
+      this.cue('splash',h);if(this.visibleTile(Math.floor(h.x),Math.floor(h.y)))this.notice('Splash! The '+(CAVE_FEAR_NAMES[h.kind]||(h.kind==='cavefolk'?'cave folk':h.kind))+' fell through the ice!','warning');
+    }
+    nearestShore(h){
+      // Through the water, tile by tile, to the first dry ground; firm ground before more thin ice.
+      const start=[Math.floor(h.x),Math.floor(h.y)],seen=new Set([start.join(',')]),queue=[start];let ice=null;
+      while(queue.length){const [x,y]=queue.shift();for(const [dx,dy] of directions){const nx=x+dx,ny=y+dy,k=nx+','+ny;if(seen.has(k))continue;seen.add(k);
+        if(!this.floor(nx,ny))continue;if(this.grid[ny][nx]==='U'){queue.push([nx,ny]);continue;}
+        if(this.grid[ny][nx]==='Y')continue;const t=this.thinIce.get(k);if(t&&!t.broken){ice=ice||centre(nx,ny);continue;}return centre(nx,ny);}}
+      return ice;
+    }
+    updateSwimmer(dt,h){
+      if(!h.shore&&this.elapsed-h.shoreAt>1){h.shore=this.nearestShore(h);h.shoreAt=this.elapsed;}
+      if(h.shore)this.moveHunter(h.shore,.85*dt,h);
+      if(!this.water(h)&&(!h.shore||distance(h,h.shore)<.3)){
+        // It hauls itself right up onto the bank, clear of the water's edge.
+        if(h.shore){h.x=h.shore.x;h.y=h.shore.y;}h.swimming=false;h.shore=null;h.path=[];h.targetId=null;h.state=h.restState==='patrol'?'patrol':h.restState;h.graceUntil=this.elapsed+1;h.dripUntil=this.elapsed+2;this.cue('splash',h);}
+    }
+    // A creature taken by something in the water is gone for the rest of the run.
+    eatSwimmer(by,h){h.eaten=true;h.swimming=false;h.state='eaten';h.x=-99;h.y=-99;this.cue('snap',by);this.notice('The '+by.kind+' snapped up the '+(h.kind==='cavefolk'?'cave folk':CAVE_FEAR_NAMES[h.kind]||h.kind)+'!','warning');}
     crateTile(x,y){return this.crates.find(c=>!c.sunk&&c.x===x&&c.y===y)||null;}
     leanOnCrate(axis,s,dt){
       const p=this.player,other=axis==='x'?'y':'x',tx=Math.floor(p.x+(axis==='x'?s*.3:0)),ty=Math.floor(p.y+(axis==='y'?s*.3:0)),c=this.crateTile(tx,ty);
@@ -885,7 +924,9 @@
         if(p.moving&&this.elapsed>=this.trailAt){this.glowTrail.push({...copy(p),born:this.elapsed,expires:this.elapsed+8});this.trailAt=this.elapsed+.18;}
       }
       if(this.thinIce.size&&!p.flight&&!p.underground&&!p.swimming){const t=this.thinIce.get(this.tileKey(p));
-        if(t&&!t.broken){t.crack+=(crawl?.15:p.sprinting?2.4:p.moving?.95:1.5)*dt;
+        // Fast ice (new and builder levels) gives way about twice as quickly as the older, gentler ice
+        // the first winter levels were tuned for, which they keep.
+        if(t&&!t.broken){t.crack+=(this.level.iceSpeed==='fast'?(crawl?.2:p.sprinting?3.4:p.moving?1.8:2.6):(crawl?.15:p.sprinting?2.4:p.moving?.95:1.5))*dt;
           if(!t.ticked&&t.crack>=.2){t.ticked=true;this.events.push('icecrack');}
           if(!t.warned&&t.crack>=.5){t.warned=true;this.events.push('icecrack');this.notice('The thin ice creaks! Keep moving, or crawl to spread your weight.','warning');}
           if(t.crack>=1)this.breakIce(t);}}
@@ -894,7 +935,7 @@
       if(this.flights.length||this.lights.length)this.updateFlights();
       if(this.decoy&&this.decoy.expires<=this.elapsed)this.decoy=null;
       if(this.decoy&&this.currents.length&&this.water(this.decoy)){const c=Ice.currentAt(this.currents,this.decoy,true);if(c&&c.surface!=='ground'){const s=this.flowSpeed(c)*.9;for(const [axis,d] of [['x',c.dir[0]],['y',c.dir[1]]]){if(!d)continue;const next={...this.decoy,[axis]:this.decoy[axis]+d*s*dt};if(this.water(next)&&this.fits(next,.1))this.decoy[axis]=next[axis];}this.decoy.floating=true;}}
-      this.updateRivalries();for(const hunter of this.hunters)this.updateHunter(dt*(this.gentle?.pace||1),hunter);this.updateRivalries();
+      this.updateRivalries();for(const hunter of this.hunters)this.updateHunter(dt*(this.gentle?.pace||1),hunter);this.updateRivalries();if(this.thinIce.size)this.iceUnderHunters(dt);
       this.motion.update(dt,this);this.checkTailTouch();
       if(this.vents.length)this.updateVents();
       if(this.vines.length)this.updateVines();if(this.status!=='playing')return;
@@ -911,7 +952,7 @@
       const clawed=this.elapsed>=this.invulnerableUntil&&this.boogooClaws();
       if(clawed){this.alarms++;if(this.shedTail(clawed))return;this.finish('caught','The boogoo\'s claws caught Sally. When it swings its arms forward, back away fast.');return;}
       // Capture wins over picking up the key or escaping in the same simulation step.
-      const captor=this.hunters.find(h=>!(LIGHT_SHY.has(h.kind)&&this.lights.length&&this.inLight(p))&&!h.eaten&&!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='magpie'&&h.kind!=='ladybird'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='sentinel'&&h.kind!=='cloudray'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&!(h.kind==='cavefolk'&&['scared','wary'].includes(h.state))&&distance(p,h)<(['beetle','boogoo'].includes(h.kind)&&h.state==='charge'?.62:h.kind==='cavefolk'?.56:.48)&&this.clear(p,h));
+      const captor=this.hunters.find(h=>!(LIGHT_SHY.has(h.kind)&&this.lights.length&&this.inLight(p))&&!h.eaten&&!['emerge','dig','buried','rise','clash','steamed','stunned'].includes(h.state)&&this.elapsed>=(h.graceUntil||0)&&!(h.kind==='mimic'&&['rooted','reveal'].includes(h.state))&&!(h.kind==='owl'&&h.state!=='swoop')&&h.kind!=='gecko'&&h.kind!=='cricket'&&h.kind!=='magpie'&&h.kind!=='ladybird'&&h.kind!=='angler'&&h.kind!=='echofrog'&&h.kind!=='sentinel'&&h.kind!=='cloudray'&&h.kind!=='flytrap'&&h.kind!=='heron'&&h.kind!=='mantis'&&h.kind!=='wasp'&&h.kind!=='dragonfly'&&h.kind!=='mole'&&h.kind!=='bat'&&h.kind!=='eel'&&!(h.kind==='crab'&&h.state!=='scuttle')&&!(h.kind==='cavefolk'&&['scared','wary'].includes(h.state))&&!h.swimming&&distance(p,h)<(['beetle','boogoo'].includes(h.kind)&&h.state==='charge'?.62:h.kind==='cavefolk'?.56:.48)&&this.clear(p,h));
       if(this.elapsed>=this.invulnerableUntil&&captor&&this.shedTail(captor))return;
       if(this.elapsed>=this.invulnerableUntil && captor){
         this.finish('caught',captor.kind==='owl'?'The owl dropped onto its marked spot. Leave the glare before it swoops.':captor.kind==='millipede'?'A rustle, then darkness. It crept up while Sally looked away. Keep it in view as you back off.':captor.kind==='mimic'?'That chest was a mimic! Watch for its tell, or throw a pebble to make it snap first.':captor.kind==='fox'?'A snow fox heard Sally and pounced. Stand still, keep to quiet ground, or toss a pebble to send it pouncing elsewhere.':captor.kind==='crab'?'A hermit crab scuttled out and pinched Sally. Pass its lane while it is tucked in, or send it back into its shell with a pebble.':captor.kind==='cavefolk'?'The cave folk closed in from all sides. Break their sight before the pack can spread out.':captor.kind==='boogoo'?'The boogoo rammed Sally. When it whistles, step out of its lane.':captor.kind==='cobra'?'The king cobra struck. Step out of its line the moment it rears, then break its sight.':captor.kind==='moth'?'Pale wings found the glowing trail. Leave the marked ground before the swoop.':captor.reason==='heard'?'Noise gave you away. Find quiet floor or use cover.':'A hunter spotted you. Break sight at a corner or use a pebble.');return;
@@ -954,6 +995,7 @@
     updateHunter(dt,h=this.hunter){
       this.hunterDt=dt;
       if(h.eaten)return;
+      if(h.swimming){this.updateSwimmer(dt,h);return;}
       if(h.state==='steamed'){if(this.elapsed>=h.phaseUntil){h.state=h.kind==='mimic'?'rooted':'patrol';h.graceUntil=this.elapsed+.5;h.dazed=false;
         if(h.bonkFrom){if(['snake','sea-snake','cobra','chameleon','spider','toad','beetle','gecko','cavefolk'].includes(h.kind)){h.state='search';h.lastKnown=h.bonkFrom;h.searchUntil=this.elapsed+(h.cun||this.cunning).search+1.5;}h.bonkFrom=null;}}return;}
       if(this.updateGlowFear(dt,h))return;
@@ -1054,10 +1096,12 @@
     updateAngler(dt,h){
       const p=this.player;
       // A pebble landing by the lure springs it too, so a careful player can empty a pool from afar.
-      if(h.state==='lurking'){if(distance(p,h.lure)<.6)this.springAngler(h,copy(h.lure),.22);else if(this.decoy&&!this.decoy.chirp&&distance(this.decoy,h.lure)<.9)this.springAngler(h,copy(h.lure),.22);return;}
+      if(h.state==='lurking'){const prey=this.hunters.find(o=>o.swimming&&!o.eaten&&distance(o,h.lure)<.8);if(prey){this.springAngler(h,copy(prey),.22);h.prey=prey;return;}
+        if(distance(p,h.lure)<.6)this.springAngler(h,copy(h.lure),.22);else if(this.decoy&&!this.decoy.chirp&&distance(this.decoy,h.lure)<.9)this.springAngler(h,copy(h.lure),.22);return;}
       if(h.state==='snap'){
         if(this.elapsed<h.phaseUntil)return;
         h.state='sink';h.phaseUntil=this.elapsed+3.5;this.cue('snap',h);
+        if(h.prey){const prey=h.prey;h.prey=null;if(prey.swimming&&distance(prey,h.aim)<1.1)this.eatSwimmer(h,prey);}
         if(distance(p,h.aim)<.95&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(h))this.finish('caught','An angler snapped from the dark water. A glow that bobs on a line is bait.');
         return;
       }
@@ -1294,10 +1338,14 @@
       if(!wet){h.state='buried';h.x=home.x;h.y=home.y;return;}
       if(h.state==='buried')h.state='lurk';
       if(h.state==='ripple'){if(this.elapsed<h.phaseUntil)return;h.state='lunge';h.phaseUntil=this.elapsed+.25;h.x=h.aim.x;h.y=h.aim.y;this.cue('snap',h);
+        if(h.prey){const prey=h.prey;h.prey=null;if(prey.swimming&&distance(prey,h.aim)<.9)this.eatSwimmer(h,prey);return;}
         if(distance(p,h.aim)<.75&&!p.flight&&this.elapsed>=this.invulnerableUntil&&!this.shedTail(h))this.finish('caught','An eel lunged from the water. Keep a tile back from its pool, swim wide of it, or come by when the tide is out.');return;}
       if(h.state==='lunge'){if(this.elapsed>=h.phaseUntil){h.state='sulk';h.phaseUntil=this.elapsed+1.6;h.x=home.x;h.y=home.y;}return;}
       if(h.state==='sulk'){if(this.elapsed>=h.phaseUntil)h.state='lurk';return;}
       const reach=p.swimming?2.2:1.6;
+      // A land creature floundering in its water is fair game too.
+      const prey=this.hunters.find(o=>o.swimming&&!o.eaten&&distance(o,home)<=2.2&&this.clear(home,o,true));
+      if(prey&&!(distance(p,home)<=reach)){h.state='ripple';h.prey=prey;h.aim=copy(prey);h.phaseUntil=this.elapsed+.3;this.cue('splash',h);return;}
       if(distance(p,home)<=reach&&!p.flight&&this.clear(home,p,true)){h.state='ripple';h.aim=this.lead(.3);if(distance(h.aim,home)>reach+.5)h.aim=copy(p);h.phaseUntil=this.elapsed+.3;this.cue('splash',h);}
     }
     // Spore puffballs: Sally treading on one, a hunter walking over it or a pebble landing by it

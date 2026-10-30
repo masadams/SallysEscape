@@ -309,3 +309,16 @@ test('the frame-rate guard ignores a level opening and one-off hitches, and says
   h.run('for(let i=0;i<200;i++)escapeWatchFrameRate(30);');assert.equal(h.run('escapeLightingAuto'),true,'steady slowness switches');
   assert.match(h.run('escapeGame.message'),/Lighting switched to Simple/);
 });
+
+test('natural movement is drawn only: creatures ease and turn smoothly on screen, but the rules never see it',()=>{
+  const fs=require('node:fs'),path=require('node:path'),src=fs.readFileSync(path.join(__dirname,'../public/escapescene.js'),'utf8');
+  const start=src.indexOf('const ESCAPE_EASE_SKIP'),end=src.indexOf('function drawEscapeVault(){');const ease=new Function(src.slice(start,end)+';return escapeEaseHunters;')();
+  const h={kind:'beetle',x:1.5,y:1.5,facing:0,state:'patrol',distanceMoved:0},snake={kind:'snake',x:3.5,y:1.5,facing:0},g={elapsed:0,hunters:[h,snake]};
+  ease(g)();for(let i=1;i<=20;i++){g.elapsed=i/60;h.x+=.03;h.distanceMoved+=.03;ease(g)();}
+  // Round a corner: the real one turns at once, the drawn one cuts the corner and turns over a moment.
+  h.facing=Math.PI/2;let shown=null;for(let i=21;i<=24;i++){g.elapsed=i/60;h.y+=.03;h.distanceMoved+=.03;const restore=ease(g);shown={x:h.x,y:h.y,f:h.facing};restore();}
+  assert.equal(h.facing,Math.PI/2,'the real facing is put back');assert.ok(shown.f<Math.PI/2-.1,'the drawn one is still turning');
+  assert.ok(Math.hypot(shown.x-h.x,shown.y-h.y)<=.2,'never strays more than a step');
+  const before=h.x;g.elapsed=1;h.x+=5;const r=ease(g);assert.equal(h.x,before+5,'a jump is shown as a jump');r();
+  const s0={...snake};g.elapsed=1.1;ease(g)();assert.deepEqual(snake,s0,'snakes flow through their own bodies');
+});
