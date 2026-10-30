@@ -989,6 +989,40 @@ function escapeLayout(g){
 }
 // How high Sally rides over her shadow mid-flight (a cap hop or a rope swing); the rope's end follows her.
 function escapeFlightLift(g,cell){const f=g.player.flight;if(!f)return 0;const s=f.rope&&g.ropeSwing?g.ropeSwing(f.rope):0,t=f.rope?(f.toward?s:1-s):(g.elapsed-f.start)/f.dur;return Math.sin(Math.max(0,Math.min(1,t))*Math.PI)*cell*.9*Math.max(.8,Math.min(1.6,Math.hypot(f.to.x-f.from.x,f.to.y-f.from.y)/6));}
+// Natural movement, drawn only: the rules still move every creature tile to tile exactly as before,
+// so no level plays any differently. On screen each creature eases in and out of a walk, rounds its
+// corners and sways a little as it goes, and turns to face a new way over a moment instead of in a
+// blink. What it shows never strays more than a step from where it really is, and a jump (a burrow,
+// a reset) is shown as a jump. Snakes and millipedes already flow through their jointed bodies.
+const ESCAPE_EASE_SKIP=new Set(['snake','cobra','sea-snake','millipede']);
+// Creatures whose facing aims something (a tongue, a gaze, a strike) keep their exact facing.
+const ESCAPE_EASE_AIMED=new Set(['toad','sentinel','heron','mantis','owl','magpie','echofrog','angler','flytrap','wasp']);
+const ESCAPE_EASE_STRIKES=new Set(['windup','charge','tongue','sting','strike','lunge','swipe','raise','aim','snap','rear','swoop','dive','glare','pounce','leap','rush']);
+const escapeEase=new WeakMap(),escapeEaseClock=new WeakMap();
+function escapeEaseHunters(g){
+  const last=escapeEaseClock.get(g),dt=last===undefined?0:Math.max(0,Math.min(.05,g.elapsed-last));escapeEaseClock.set(g,g.elapsed);
+  const swapped=[];
+  for(const h of g.hunters){if(ESCAPE_EASE_SKIP.has(h.kind))continue;
+    let e=escapeEase.get(h);
+    if(!e||Math.hypot(h.x-e.sx,h.y-e.sy)>1.5){e={x:h.x,y:h.y,vx:0,vy:0,sx:h.x,sy:h.y,facing:h.facing??0};escapeEase.set(h,e);}
+    if(dt>0){
+      // Follow its true velocity, smoothed, so straight runs keep pace and corners round off; then
+      // ease toward the true spot so it never drifts.
+      const vx=(h.x-e.sx)/dt,vy=(h.y-e.sy)/dt,k=Math.min(1,dt*9);e.vx+=(vx-e.vx)*k;e.vy+=(vy-e.vy)*k;
+      e.x+=e.vx*dt;e.y+=e.vy*dt;const pull=Math.min(1,dt*7);e.x+=(h.x-e.x)*pull;e.y+=(h.y-e.y)*pull;
+      const off=Math.hypot(e.x-h.x,e.y-h.y),cap=.16;if(off>cap){e.x=h.x+(e.x-h.x)*cap/off;e.y=h.y+(e.y-h.y)*cap/off;}
+      // It turns at a lively but limited rate; quicker in a chase.
+      const want=h.facing??0,diff=Math.atan2(Math.sin(want-e.facing),Math.cos(want-e.facing)),rate=(['chase','flank','flee','scared'].includes(h.state)?13:8)*dt;
+      e.facing+=Math.max(-rate,Math.min(rate,diff));
+    }
+    e.sx=h.x;e.sy=h.y;
+    // A slight side-to-side sway in its stride, more the faster it goes.
+    const speed=Math.hypot(e.vx,e.vy),sway=speed>.2?Math.sin((h.distanceMoved||0)*5.5)*.025*Math.min(1,speed/1.6):0,nx=speed>.2?-e.vy/speed:0,ny=speed>.2?e.vx/speed:0;
+    const aimed=ESCAPE_EASE_AIMED.has(h.kind)||ESCAPE_EASE_STRIKES.has(h.state);if(aimed)e.facing=h.facing??e.facing;
+    swapped.push([h,h.x,h.y,h.facing]);h.x=e.x+nx*sway;h.y=e.y+ny*sway;if(h.facing!==undefined)h.facing=e.facing;
+  }
+  return ()=>{for(const [h,x,y,f] of swapped){h.x=x;h.y=y;h.facing=f;}};
+}
 function drawEscapeVault(){
   const g=escapeGame,area=escapeLayout(g),close=Boolean(area.close),view=escapeCameraFor(g,area.w,area.h,escapeProgress.data.view==='overview',close,mobile?1:ESCAPE_ZOOMS[escapeZoomStep()]);escapeCameraMotion(view,g,area.w,area.h);view.ox+=area.x;view.oy+=area.y;const {cell,ox,oy}=view;
   const palettes=[[[16,30,36],[39,65,74],[65,93,101]],[[19,34,29],[48,74,56],[78,103,76]],[[33,29,26],[77,63,48],[108,89,66]],[[21,28,37],[46,61,80],[75,91,109]],[[22,24,41],[54,57,85],[86,89,124]],[[14,31,26],[38,68,49],[58,92,66]],[[34,29,20],[80,67,39],[123,102,60]],[[16,30,39],[34,61,73],[55,90,103]],[[26,22,37],[62,48,76],[100,81,116]]];
@@ -1116,6 +1150,7 @@ function drawEscapeVault(){
   // A short, subtle gaze shows where the guard is looking; walls stop detection.
   for(const w of g.webs){if(view.follow&&!g.visibleTile(Math.floor(w.x),Math.floor(w.y)))continue;if(w.trip){noFill();stroke(220,210,245,120+60*Math.max(0,1-(g.elapsed-(w.pluckedAt||-9))));strokeWeight(cell*.022);for(const [a,b] of [[[-.45,-.45],[.45,.45]],[[-.45,.45],[.45,-.45]],[[-.5,0],[.5,0]],[[0,-.5],[0,.5]]])line((w.x+a[0])*cell,(w.y+a[1])*cell,(w.x+b[0])*cell,(w.y+b[1])*cell);ellipse(w.x*cell,w.y*cell,cell*.5,cell*.5);continue;}noFill();stroke(197,183,236,180);strokeWeight(cell*.025);for(const r of [.3,.65])ellipse(w.x*cell,w.y*cell,cell*r*2,cell*r*2);for(let a=0;a<TWO_PI;a+=PI/4)line(w.x*cell,w.y*cell,(w.x+Math.cos(a)*.65)*cell,(w.y+Math.sin(a)*.65)*cell);}
   for(const den of g.pendingSpawns){if(view.follow&&!g.visibleTile(Math.floor(den.x),Math.floor(den.y)))continue;noFill();stroke(231,161,121);strokeWeight(cell*.05);ellipse(den.x*cell,den.y*cell,cell*(.7+Math.sin(g.elapsed*8)*.12),cell*.5);fill(237,177,142);noStroke();textSize(cell*.5);text('!',den.x*cell,(den.y-.5)*cell);}
+  const escapeEaseRestore=escapeEaseHunters(g);try{
   for(const h of g.hunters){const ang=h.facing,cone=h.kind==='beetle'?PI/5:PI/3;
   if(view.follow&&!g.visibleTile(Math.floor(h.x),Math.floor(h.y)))continue;
   const aids=!escapeAidsHidden(g);
@@ -1189,6 +1224,7 @@ function drawEscapeVault(){
   for(const h of g.hunters)if(h.kind==='cloudray')drawEscapeCloudRay(h,cell,g.elapsed);
   if(g.player.frozenUntil>g.elapsed){const p=g.player,k=Math.min(1,(g.player.frozenUntil-g.elapsed)/1.6);noStroke();fill(200,236,250,120*k);ellipse(p.x*cell,p.y*cell,cell*.9,cell*.9);stroke(235,250,255,200*k);strokeWeight(Math.max(1,cell*.035));for(let a=0;a<6;a++){const r=a*Math.PI/3;line(p.x*cell,p.y*cell,(p.x+Math.cos(r)*.45)*cell,(p.y+Math.sin(r)*.45)*cell);}}
   for(const h of g.hunters)if(h.kind!=='millipede'&&h.state!=='rooted'&&h.state!=='patrol'&&!(['angler','flytrap'].includes(h.kind)&&h.state!=='snap')&&!(h.kind==='heron'&&h.state!=='aim')&&!(h.kind==='mantis'&&h.state!=='raise')&&!(h.kind==='wasp'&&h.state!=='stir')&&h.kind!=='dragonfly'&&h.kind!=='cloudray'&&h.kind!=='sentinel'&&!(h.kind==='mole'&&h.state!=='surface')&&!(h.kind==='bat'&&h.state!=='dive')&&!(h.kind==='magpie'&&h.state!=='caw')&&!(h.kind==='eel'&&h.state!=='ripple')&&!(h.kind==='crab'&&!['peek','scuttle'].includes(h.state))&&!(h.kind==='cavefolk'&&['scared','wary'].includes(h.state))&&h.kind!=='fox'&&(!view.follow||g.visibleTile(Math.floor(h.x),Math.floor(h.y))))escapeHunterMark(h,cell,g);
+  }finally{escapeEaseRestore();}
   drawEscapeCritters(g,cell,view,'air');drawEscapeFx(g,cell);drawEscapeMotes(g,cell);
   const place=escapePlace(g.level),mood=place?EscapeLighting.moodFor(place.key,place.step):null;
   drawEscapeCloudShadows(g,cell,mood);drawEscapeLights(g,cell,mood);
